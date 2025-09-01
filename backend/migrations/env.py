@@ -9,26 +9,27 @@ from alembic import context
 # Add the backend directory to the Python path
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
-# Import the SQLAlchemy Base and models to ensure they're registered
+# Import the SQLAlchemy Base and settings
 from app.db.base import Base
-from app.config import settings
+from app.config import settings  # Your FastAPI settings
 
-# this is the Alembic Config object, which provides
-# access to the values within the .ini file in use.
+# Alembic Config object
 config = context.config
 
-# Interpret the config file for Python logging.
-# This line sets up loggers basically.
+# Override the sqlalchemy.url from alembic.ini with your FastAPI settings
+config.set_main_option("sqlalchemy.url", settings.DATABASE_URI)
+
+# Set up Python logging from the config file
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# Import all models to ensure they are registered with SQLAlchemy
+# Import all models so Alembic can detect schema changes
 import app.models.menu
 import app.models.order
 import app.models.table
 import app.models.user
 
-# Set the metadata object for Alembic to use
+# Metadata object for Alembic
 target_metadata = Base.metadata
 
 def run_migrations_offline() -> None:
@@ -56,7 +57,7 @@ def run_migrations_online() -> None:
 
     with connectable.connect() as connection:
         context.configure(
-            connection=connection, 
+            connection=connection,
             target_metadata=target_metadata,
             compare_type=True,
             compare_server_default=True,
@@ -65,6 +66,7 @@ def run_migrations_online() -> None:
         with context.begin_transaction():
             context.run_migrations()
 
+# Decide offline vs online mode
 if context.is_offline_mode():
     run_migrations_offline()
 else:
