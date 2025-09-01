@@ -1,0 +1,165 @@
+from pydantic import BaseModel, Field, validator, ConfigDict
+from enum import Enum
+from typing import Optional, List, Union, Any
+from datetime import datetime
+from ..models.menu import Category as CategoryModel
+
+# Category schemas
+class CategoryBase(BaseModel):
+    name: str = Field(..., min_length=1, max_length=50)
+    description: Optional[str] = None
+
+class CategoryCreate(CategoryBase):
+    pass
+
+class CategoryUpdate(CategoryBase):
+    name: Optional[str] = Field(None, min_length=1, max_length=50)
+
+class CategoryInDB(CategoryBase):
+    id: int
+    
+    model_config = ConfigDict(from_attributes=True)
+
+from pydantic import GetJsonSchemaHandler
+from pydantic.json_schema import JsonSchemaValue
+from pydantic_core import core_schema
+
+# Use the same enum from models for consistency
+class Category(str, Enum):
+    COFFEE = "COFFEE"
+    TEA = "TEA"
+    PASTRY = "PASTRY"
+    SANDWICH = "SANDWICH"
+    DESSERT = "DESSERT"
+    OTHER = "OTHER"
+    
+    @classmethod
+    def _missing_(cls, value):
+        if not isinstance(value, str):
+            return None
+        value = value.upper()
+        for member in cls:
+            if member.value.upper() == value:
+                return member
+        return None
+    
+    @classmethod
+    def _validate(cls, value):
+        if isinstance(value, cls):
+            return value
+        try:
+            # Convert any case to uppercase and get the enum member
+            if isinstance(value, str):
+                value = value.upper()
+            return cls(value)
+        except ValueError:
+            raise ValueError(f"'{value}' is not a valid {cls.__name__}")
+    
+    @classmethod
+    def __get_pydantic_core_schema__(
+        cls,
+        _source_type: Any,
+        _handler: Any,
+    ) -> core_schema.CoreSchema:
+        def validate(value: Union[str, 'Category']) -> 'Category':
+            return cls._validate(value)
+            
+        from_str_schema = core_schema.chain_schema([
+            core_schema.str_schema(),
+            core_schema.no_info_plain_validator_function(validate)
+        ])
+        
+        return core_schema.json_or_python_schema(
+            json_schema=core_schema.union_schema([
+                core_schema.literal_schema([x.value for x in cls]),
+                from_str_schema
+            ]),
+            python_schema=core_schema.union_schema([
+                core_schema.is_instance_schema(cls),
+                from_str_schema
+            ]),
+            serialization=core_schema.plain_serializer_function_ser_schema(
+                lambda x: x.value
+            ),
+        )
+    
+    @classmethod
+    def __get_pydantic_json_schema__(
+        cls, core_schema: core_schema.CoreSchema, handler: GetJsonSchemaHandler
+    ) -> JsonSchemaValue:
+        return {
+            'enum': [e.value for e in cls],
+            'title': cls.__name__,
+        }
+    
+    def __str__(self):
+        return self.value
+
+class MenuItemBase(BaseModel):
+    name: str = Field(..., min_length=1, max_length=100)
+    description: Optional[str] = None
+    price: float = Field(..., gt=0)
+    is_available: bool = True
+    image_url: Optional[str] = None
+
+    model_config = ConfigDict(
+        use_enum_values=True,
+        json_encoders={
+            Category: lambda v: v.value if v else None,
+        }
+    )
+
+class MenuItemCreate(MenuItemBase):
+    category_name: str = Field(..., min_length=1, max_length=50)
+
+class MenuItemUpdate(BaseModel):
+    name: Optional[str] = Field(None, min_length=1, max_length=100)
+    description: Optional[str] = None
+    price: Optional[float] = Field(None, gt=0)
+    category_id: Optional[int] = None
+    category_name: Optional[str] = Field(None, min_length=1, max_length=50)
+    is_available: Optional[bool] = None
+    image_url: Optional[str] = None
+
+class MenuItemInDBBase(MenuItemBase):
+    id: int
+    category_id: int
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+class MenuItem(MenuItemInDBBase):
+    category: Optional[CategoryInDB] = None
+    
+    model_config = ConfigDict(from_attributes=True)
+    
+    @classmethod
+    def from_orm(cls, obj):
+        # Create a dictionary of the model's fields
+        data = {
+            'id': obj.id,
+            'name': obj.name,
+            'description': obj.description,
+            'price': obj.price,
+            'category_id': obj.category_id,
+            'is_available': obj.is_available,
+            'image_url': obj.image_url,
+            'created_at': obj.created_at,
+            'updated_at': obj.updated_at,
+        }
+        
+        # Add category details if available
+        if hasattr(obj, 'category') and obj.category is not None:
+            data['category'] = CategoryInDB(
+                id=obj.category.id,
+                name=obj.category.name,
+                description=obj.category.description,
+                created_at=obj.category.created_at,
+                updated_at=obj.category.updated_at
+            )
+            
+        return cls(**data)
+
+class MenuItemInDB(MenuItemInDBBase):
+    pass
