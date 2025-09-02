@@ -1,5 +1,5 @@
 <template>
-  <div class="space-y-6">
+  <div class="tables-view space-y-6">
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
       <div>
         <h2 class="text-2xl font-bold text-gray-900">Tables</h2>
@@ -120,7 +120,8 @@
               <label for="table-number" class="block text-sm font-medium text-gray-700">Table Number</label>
               <input
                 id="table-number"
-                v-model="formData.number"
+                :value="formData.number"
+                @input="formData.number = Number(($event.target as HTMLInputElement).value)"
                 type="number"
                 min="1"
                 required
@@ -132,7 +133,8 @@
               <label for="table-capacity" class="block text-sm font-medium text-gray-700">Capacity</label>
               <input
                 id="table-capacity"
-                v-model="formData.capacity"
+                :value="formData.capacity"
+                @input="formData.capacity = Number(($event.target as HTMLInputElement).value)"
                 type="number"
                 min="1"
                 required
@@ -173,16 +175,16 @@
         </form>
       </div>
     </div>
+    <!-- Order Modal -->
+    <div v-if="showOrderModal && selectedTableForOrder">
+      <OrderModal
+        :table-id="selectedTableForOrder.id"
+        :table-number="selectedTableForOrder.number"
+        @close="showOrderModal = false"
+        @order-created="handleOrderCreated"
+      />
+    </div>
   </div>
-  
-  <!-- Order Modal -->
-  <OrderModal
-    v-if="showOrderModal && selectedTableForOrder"
-    :table-id="selectedTableForOrder.id"
-    :table-number="selectedTableForOrder.number"
-    @close="showOrderModal = false"
-    @order-created="handleOrderCreated"
-  />
 </template>
 
 <script setup lang="ts">
@@ -192,16 +194,25 @@ import tableService from '@/services/tableService';
 import OrderModal from '@/components/orders/OrderModal.vue';
 import { formatDistanceToNow } from 'date-fns';
 
-const tables = ref([]);
+import type { Table } from '@/services/tableService';
+
+const tables = ref<Table[]>([]);
 const loading = ref(false);
 const error = ref('');
-const selectedTableId = ref(null);
+const selectedTableId = ref<number | null>(null);
 const showTableModal = ref(false);
-const editingTable = ref(null);
+const editingTable = ref<number | null>(null);
 
-const formData = ref({
-  number: '',
-  capacity: 2,
+interface TableFormData {
+  number: number;
+  capacity: number;
+  location: string;
+  is_occupied: boolean;
+}
+
+const formData = ref<TableFormData>({
+  number: 1, // Number type
+  capacity: 2, // Number type
   location: 'Inside',
   is_occupied: false
 });
@@ -240,7 +251,7 @@ const toggleOccupancy = async (table) => {
 // Open modal to add new table
 const openAddTableModal = () => {
   formData.value = {
-    number: '',
+    number: 1,
     capacity: 2,
     location: 'Inside',
     is_occupied: false
@@ -250,14 +261,14 @@ const openAddTableModal = () => {
 };
 
 // Open modal to edit table
-const editTable = (table) => {
+const editTable = (table: Table) => {
   formData.value = {
     number: table.number,
     capacity: table.capacity,
     location: table.location,
     is_occupied: table.is_occupied
   };
-  editingTable.value = table;
+  editingTable.value = table.id;
   showTableModal.value = true;
 };
 
@@ -269,16 +280,22 @@ const closeModal = () => {
 // Save table (create or update)
 const saveTable = async () => {
   try {
-    if (editingTable.value) {
-      await tableService.updateTable(editingTable.value.id, formData.value);
+    const tableData = {
+      ...formData.value,
+      number: Number(formData.value.number),
+      capacity: Number(formData.value.capacity)
+    };
+    
+    if (editingTable.value !== null) {
+      await tableService.updateTable(editingTable.value, tableData);
     } else {
-      await tableService.createTable(formData.value);
+      await tableService.createTable(tableData);
     }
     await fetchTables();
     closeModal();
   } catch (err) {
     console.error('Error saving table:', err);
-    error.value = `Failed to ${editingTable.value ? 'update' : 'create'} table. Please try again.`;
+    error.value = `Failed to ${editingTable.value !== null ? 'update' : 'create'} table. Please try again.`;
   }
 };
 
@@ -291,7 +308,7 @@ const selectTable = (table) => {
 
 // Order modal state
 const showOrderModal = ref(false);
-const selectedTableForOrder = ref(null);
+const selectedTableForOrder = ref<Table | null>(null);
 
 // Open order modal for a table
 const openOrderModal = (table) => {

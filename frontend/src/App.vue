@@ -140,11 +140,13 @@
     </nav>
 
     <!-- Main content -->
-    <main>
+    <main class="bg-gray-50 min-h-[calc(100vh-4rem)]">
       <div class="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
         <router-view v-slot="{ Component }">
           <transition name="fade" mode="out-in">
-            <component :is="Component" />
+            <div class="transition-all duration-200">
+              <component :is="Component" />
+            </div>
           </transition>
         </router-view>
       </div>
@@ -171,21 +173,39 @@ const route = useRoute();
 const router = useRouter();
 const { showSuccess } = useToast();
 
-const navigation = [
-  { name: 'Dashboard', to: '/', current: true },
+const navigation = ref([
+  { name: 'Dashboard', to: '/', current: false },
   { name: 'Menu', to: '/menu', current: false },
   { name: 'Orders', to: '/orders', current: false },
   { name: 'Tables', to: '/tables', current: false },
-];
+]);
 
 const isMobileMenuOpen = ref(false);
 const isProfileMenuOpen = ref(false);
 
 // Update current route in navigation
-watch(route, (newRoute) => {
-  navigation.forEach((item) => {
-    item.current = item.to === newRoute.path;
-  });
+const updateCurrentRoute = (path) => {
+  navigation.value = navigation.value.map(item => ({
+    ...item,
+    // Match exact paths or subpaths for non-root routes
+    current: item.to === path || 
+             (item.to === '/' && path === '') ||
+             (item.to !== '/' && path.startsWith(item.to) && 
+              (path === item.to || path.startsWith(`${item.to}/`)))
+  }));
+};
+
+// Initialize current route
+const initializeRoute = () => {
+  const path = window.location.pathname;
+  updateCurrentRoute(path);
+};
+
+initializeRoute();
+
+// Watch for route changes
+watch(() => route.path, (newPath) => {
+  updateCurrentRoute(newPath);
 }, { immediate: true });
 
 const userInitials = computed(() => {

@@ -24,8 +24,15 @@ const protectedRoutes: RouteRecordRaw[] = [
 ];
 
 const router = createRouter({
-  history: createWebHistory(),
-  routes: [...publicRoutes, ...protectedRoutes],
+  history: createWebHistory(import.meta.env.BASE_URL),
+  routes: [
+    ...publicRoutes,
+    ...protectedRoutes,
+    { path: '/:pathMatch(.*)*', name: 'NotFound', component: () => import('./views/NotFoundView.vue') },
+  ],
+  scrollBehavior(to, from, savedPosition) {
+    return savedPosition || { top: 0 }
+  }
 });
 
 router.beforeEach((to, from, next) => {
