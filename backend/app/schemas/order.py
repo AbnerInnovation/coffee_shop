@@ -34,9 +34,34 @@ class OrderItemInDBBase(OrderItemBase):
     class Config:
         orm_mode = True
 
+class MenuItemBase(BaseModel):
+    id: int
+    name: str
+    description: Optional[str] = None
+    price: float
+    category: Optional[str] = None
+    image_url: Optional[str] = None
+    is_available: bool = True
+
+    class Config:
+        orm_mode = True
+
+class VariantBase(BaseModel):
+    id: int
+    name: str
+    price: float
+    description: Optional[str] = None
+    
+    class Config:
+        orm_mode = True
+
 class OrderItem(OrderItemInDBBase):
-    variant_name: Optional[str] = None
-    variant_price: Optional[float] = None
+    variant: Optional[VariantBase] = None
+    unit_price: Optional[float] = None
+    menu_item: Optional[MenuItemBase] = None
+    
+    class Config:
+        orm_mode = True
 
 class OrderBase(BaseModel):
     table_id: int
@@ -55,13 +80,17 @@ class OrderInDBBase(OrderBase):
     id: int
     created_at: datetime
     updated_at: datetime
-    total_amount: float
+    total_amount: float = 0.0
+    table_number: Optional[int] = None
+    customer_name: Optional[str] = None
+    user_id: Optional[int] = None
+    items: List[OrderItem] = []
 
     class Config:
         orm_mode = True
 
 class Order(OrderInDBBase):
-    items: List[OrderItem] = []
+    pass
 
 class OrderInDB(OrderInDBBase):
     pass
