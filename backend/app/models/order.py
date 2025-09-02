@@ -1,42 +1,42 @@
 from enum import Enum as PyEnum
-from sqlalchemy import Integer, String, Float, ForeignKey, Column, Enum as SQLEnum
-from sqlalchemy.orm import relationship
-from .base import BaseModel
-from ..db.base import Base
+from typing import List, Optional
+from sqlalchemy import Integer, String, Float, ForeignKey, Enum as SQLEnum
+from sqlalchemy.orm import relationship, Mapped, mapped_column
+from .base import BaseModel, Base
 
-# Define DB-safe enum
+# Import the single source of OrderItem
+from .order_item import OrderItem
+
+# Enum for order status
 class OrderStatus(str, PyEnum):
     PENDING = "pending"
-    IN_PROGRESS = "in_progress"
+    PREPARING = "preparing"
+    READY = "ready"
     COMPLETED = "completed"
     CANCELLED = "cancelled"
 
 class Order(Base, BaseModel):
     __tablename__ = "orders"
 
-    table_id = Column(Integer, ForeignKey("tables.id"), nullable=False)
-    status = Column(SQLEnum(OrderStatus, name='order_status'), default=OrderStatus.PENDING, nullable=False)
-    notes = Column(String(500), nullable=True)
-    total_amount = Column(Float, default=0.0, nullable=False)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    table_id: Mapped[int] = mapped_column(Integer, ForeignKey("tables.id"), nullable=False)
+    status: Mapped[OrderStatus] = mapped_column(
+        SQLEnum(OrderStatus, name='order_status'),
+        default=OrderStatus.PENDING,
+        nullable=False
+    )
+    notes: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    total_amount: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
+    user_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("users.id"), nullable=True)
 
     # Relationships
-    table = relationship("Table", back_populates="orders")
-    items = relationship("OrderItem", back_populates="order", cascade="all, delete-orphan")
-    user = relationship("User", back_populates="orders")
+    table: Mapped["Table"] = relationship("Table", back_populates="orders")
+    items: Mapped[List[OrderItem]] = relationship(
+        "app.models.order_item.OrderItem",  # fully-qualified to avoid registry conflicts
+        back_populates="order",
+        cascade="all, delete-orphan"
+    )
+    user: Mapped[Optional["User"]] = relationship("User", back_populates="orders")
 
-class OrderItem(Base, BaseModel):
-    __tablename__ = "order_items"
-
-    order_id = Column(Integer, ForeignKey("orders.id", ondelete="CASCADE"), nullable=False)
-    menu_item_id = Column(Integer, ForeignKey("menu_items.id"), nullable=False)
-    variant_id = Column(Integer, ForeignKey("menu_item_variants.id"), nullable=True)
-    quantity = Column(Integer, default=1, nullable=False)
-    unit_price = Column(Float, nullable=False)
-    special_instructions = Column(String(500), nullable=True)
-    status = Column(SQLEnum(OrderStatus, name='order_item_status'), default=OrderStatus.PENDING, nullable=False)
-
-    # Relationships
-    order = relationship("Order", back_populates="items")
-    menu_item = relationship("MenuItem", back_populates="order_items")
-    variant = relationship("MenuItemVariant", back_populates="order_items")
+    def __repr__(self) -> str:
+        return f"<Order(id={self.id}, status='{self.status}', table_id={self.table_id})>"

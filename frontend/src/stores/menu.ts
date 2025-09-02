@@ -1,8 +1,8 @@
 import { defineStore } from 'pinia';
 import type { Ref } from 'vue';
 import { ref } from 'vue';
-import { menuService } from '@/services/menuService';
-import type { MenuItem } from '@/components/menu/MenuList.vue';
+import menuService from '@/services/menuService';
+import type { MenuItem } from '@/types/menu';
 
 export const useMenuStore = defineStore('menu', () => {
   const menuItems: Ref<MenuItem[]> = ref<MenuItem[]>([]);
@@ -23,14 +23,14 @@ export const useMenuStore = defineStore('menu', () => {
       description: item.description || '',
       price: typeof item.price === 'number' ? item.price : parseFloat(item.price) || 0,
       category: category,
-      isAvailable: item.is_available ?? item.isAvailable ?? true,
-      imageUrl: item.image_url ?? item.imageUrl ?? '',
+      is_available: item.is_available ?? true,
+      image_url: item.image_url ?? '',
       variants: Array.isArray(item.variants) 
         ? item.variants.map((v: any) => ({
             id: v.id,
             name: v.name || '',
             price: typeof v.price === 'number' ? v.price : parseFloat(v.price) || 0,
-            isAvailable: v.is_available ?? v.isAvailable ?? true
+            is_available: v.is_available ?? true
           }))
         : []
     };
@@ -71,16 +71,21 @@ export const useMenuStore = defineStore('menu', () => {
     loading.value = true;
     error.value = null;
     try {
-      const response = await menuService.createMenuItem({
+      // Prepare the data with proper variant format
+      const menuItemPayload = {
         ...menuItemData,
-        is_available: menuItemData.isAvailable,
-        image_url: menuItemData.imageUrl,
+        // Ensure variants are properly formatted
         variants: menuItemData.variants?.map(variant => ({
-          ...variant,
-          is_available: variant.isAvailable
-        }))
-      });
+          name: variant.name,
+          price: Number(variant.price),
+          is_available: variant.is_available ?? true
+        })) || []
+      };
+      
+      const response = await menuService.createMenuItem(menuItemPayload);
       const newItem = normalizeMenuItem(response);
+      
+      // Add the new item to the store
       menuItems.value.push(newItem);
       return newItem;
     } catch (err: any) {
@@ -96,22 +101,32 @@ export const useMenuStore = defineStore('menu', () => {
     loading.value = true;
     error.value = null;
     try {
-      const response = await menuService.updateMenuItem(id, {
-        ...menuItemData,
-        is_available: menuItemData.isAvailable,
-        image_url: menuItemData.imageUrl,
-        variants: menuItemData.variants?.map(variant => ({
-          ...variant,
-          is_available: variant.isAvailable
-        }))
-      });
+      // Prepare the data with proper variant format
+      const menuItemPayload: any = { ...menuItemData };
+      
+      // Only include variants if they are provided in the update
+      if (menuItemData.variants) {
+        menuItemPayload.variants = menuItemData.variants.map(variant => ({
+          ...(variant.id && { id: variant.id }), // Only include id if it exists
+          name: variant.name,
+          price: Number(variant.price),
+          is_available: variant.is_available ?? true
+        }));
+      }
+      
+      const response = await menuService.updateMenuItem(id, menuItemPayload);
+      const normalizedItem = normalizeMenuItem(response);
+      
+      // Update the item in the store
       const index = menuItems.value.findIndex(item => item.id === id);
       if (index !== -1) {
-        const updatedItem = { ...menuItems.value[index], ...normalizeMenuItem(response) };
-        menuItems.value[index] = updatedItem;
-        return updatedItem;
+        menuItems.value[index] = normalizedItem;
+        return normalizedItem;
       }
-      return response;
+      
+      // If item wasn't in the store, add it
+      menuItems.value.push(normalizedItem);
+      return normalizedItem;
     } catch (err: any) {
       const message = err.response?.data?.message || err.message || `Failed to update menu item ${id}`;
       error.value = message;
@@ -146,7 +161,7 @@ export const useMenuStore = defineStore('menu', () => {
     loading.value = true;
     error.value = null;
     try {
-      const response = await menuService.updateMenuItemAvailability(id, !item.isAvailable);
+      const response = await menuService.updateMenuItemAvailability(id, !item.is_available);
       const updatedItem = normalizeMenuItem(response);
       const index = menuItems.value.findIndex(item => item.id === id);
       if (index !== -1) {
@@ -173,30 +188,32 @@ export const useMenuStore = defineStore('menu', () => {
     error.value = null;
     try {
       console.log('Fetching categories from API...');
-      const categoryNames = await menuService.getCategories();
-      console.log('Raw categories from API:', categoryNames);
-      
-      // Ensure we have an array of strings
-      if (Array.isArray(categoryNames)) {
-        // Filter out any invalid values and ensure uniqueness
-        const validCategories = [...new Set(categoryNames)].filter(Boolean);
-        console.log('Processed categories:', validCategories);
-        categories.value = validCategories;
-      } else {
-        console.warn('Unexpected categories format:', categoryNames);
-        categories.value = [];
+      let categoryData;
+      try {
+        categoryData = await menuService.getCategories();
+        console.log('Raw categories from API:', categoryData);
+      } catch (err) {
+        console.error('Error fetching categories from API:', err);
+        categoryData = []; // Fallback to empty array on error
       }
       
-      // If we still don't have categories, use defaults
-      if (categories.value.length === 0) {
-        console.warn('No categories found, using defaults');
+      // Ensure we have valid data
+      if (Array.isArray(categoryData) && categoryData.length > 0) {
+        // If items are objects with name property, extract names
+        if (typeof categoryData[0] === 'object' && categoryData[0] !== null) {
+          categories.value = categoryData.map(cat => cat.name || String(cat));
+        } else {
+          // If it's an array of strings or numbers
+          categories.value = categoryData.map(String);
+        }
+      } else {
+        console.warn('No valid categories received from API, using defaults');
         categories.value = [
           'Coffee',
           'Tea',
+          'Pastries',
           'Breakfast',
           'Lunch',
-          'Snacks',
-          'Desserts',
           'Drinks',
           'Specials'
         ];
@@ -206,9 +223,17 @@ export const useMenuStore = defineStore('menu', () => {
     } catch (err: any) {
       const message = err.response?.data?.message || err.message || 'Failed to fetch categories';
       error.value = message;
-      console.error('Error fetching categories:', message);
-      // Return the current categories if available, or an empty array
-      return [...categories.value];
+      console.error('Error in getCategories:', err);
+      
+      // Return default categories on error
+      return [
+        'Coffee',
+        'Tea',
+        'Breakfast',
+        'Lunch',
+        'Drinks',
+        'Specials'
+      ];
     } finally {
       loading.value = false;
     }

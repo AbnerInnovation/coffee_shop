@@ -1,32 +1,6 @@
 <script setup lang="ts">
 import { XCircleIcon } from '@heroicons/vue/20/solid';
-
-export interface MenuItemVariant {
-  id: string | number;
-  name: string;
-  price: number;
-  isAvailable: boolean;
-}
-
-export interface Category {
-  id: string | number;
-  name: string;
-  description?: string;
-}
-
-export interface MenuItem {
-  id: string | number;
-  name: string;
-  description?: string;
-  price: number;
-  isAvailable: boolean;
-  imageUrl?: string;
-  image_url?: string; // For API compatibility
-  variants?: MenuItemVariant[];
-  is_available?: boolean; // For API compatibility
-  category: Category | string; // Support both object and string for backward compatibility
-  category_id?: string | number; // For form submissions
-}
+import type { MenuItem, MenuItemVariant } from '@/types/menu';
 
 interface Props {
   menuItems: MenuItem[];

@@ -32,9 +32,9 @@ api.interceptors.request.use(
   }
 );
 
-// Response interceptor to handle token refresh
+// Response interceptor to flatten responses and handle token refresh
 api.interceptors.response.use(
-  (response) => response,
+  (response) => response.data,  // Flatten the response
   async (error: AxiosError) => {
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
     

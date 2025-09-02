@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from typing import List
 
@@ -6,6 +7,7 @@ from ...db.base import get_db
 from ...models.table import Table as TableModel
 from ...schemas.table import Table, TableCreate, TableUpdate
 from ...services import table as table_service
+from ...models.user import User
 from ...services.user import get_current_active_user, UserRole
 
 router = APIRouter(
@@ -72,11 +74,38 @@ async def read_table(
         )
     return db_table
 
+class TableOccupancyUpdate(BaseModel):
+    is_occupied: bool
+
+@router.patch("/{table_id}/occupancy", response_model=Table)
+async def update_table_occupancy(
+    table_id: int,
+    occupancy_data: TableOccupancyUpdate,
+    db: Session = Depends(get_db)
+) -> Table:
+    """
+    Update a table's occupancy status.
+    """
+    is_occupied = occupancy_data.is_occupied
+    db_table = table_service.get_table(db, table_id=table_id)
+    if db_table is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Table not found"
+        )
+    
+    # Update only the is_occupied field
+    db_table.is_occupied = is_occupied
+    db.commit()
+    db.refresh(db_table)
+    return db_table
+
 @router.put("/{table_id}", response_model=Table)
 async def update_table(
     table_id: int, 
     table: TableUpdate, 
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
 ) -> Table:
     """
     Update a table.

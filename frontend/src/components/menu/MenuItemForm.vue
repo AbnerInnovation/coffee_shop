@@ -4,6 +4,8 @@ import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } fro
 import { XMarkIcon, PlusIcon, ArrowPathIcon, TrashIcon, ExclamationTriangleIcon } from '@heroicons/vue/24/outline';
 import type { MenuItem, MenuItemVariant, CategoryForm } from '@/types/menu';
 import { useMenuStore } from '@/stores/menu';
+import * as menuService from '@/services/menuService';
+import { useToast } from '@/composables/useToast';
 
 const props = defineProps<{
   menuItem?: MenuItem;
@@ -20,16 +22,12 @@ const emit = defineEmits<{
 }>();
 
 const menuStore = useMenuStore();
+const { showSuccess, showError } = useToast();
 const loadingCategories = ref(false);
 const showDeleteConfirm = ref(false);
 const isDeleting = ref(false);
+const isSavingVariant = ref(false);
 
-// Simple toast implementation
-const showError = (message: string) => {
-  // You can replace this with a proper toast implementation
-  console.error(message);
-  alert(message);
-};
 
 // Helper function to normalize category input
 const normalizeCategory = (category: string | CategoryForm | undefined): string => {
@@ -42,8 +40,9 @@ const normalizeCategory = (category: string | CategoryForm | undefined): string 
 // Initialize categories on component mount
 onMounted(() => {
   if (menuStore.categories.length === 0) {
-    menuStore.getCategories().catch(err => {
+    menuStore.getCategories().catch((err: unknown) => {
       console.error('Failed to load categories:', err);
+      showError('Failed to load categories');
     });
   }
 });
@@ -54,14 +53,13 @@ type FormData = {
   description: string;
   price: number;
   category: string | CategoryForm;
-  isAvailable: boolean;
-  imageUrl: string;
+  is_available: boolean;
+  image_url: string;
   variants: Array<{
     id?: string | number;
     name: string;
     price: number;
-    isAvailable: boolean;
-    is_available?: boolean;
+    is_available: boolean;
   }>;
 };
 
@@ -71,8 +69,8 @@ const formData = ref<FormData>({
   description: '',
   price: 0,
   category: '',
-  isAvailable: true,
-  imageUrl: '',
+  is_available: true,
+  image_url: '',
   variants: []
 });
 
@@ -84,14 +82,13 @@ if (props.menuItem) {
     description: menuItem.description || '',
     price: menuItem.price || 0,
     category: menuItem.category || '',
-    isAvailable: menuItem.isAvailable ?? menuItem.is_available ?? true,
-    imageUrl: menuItem.imageUrl || menuItem.image_url || '',
+    is_available: menuItem.is_available ?? true,
+    image_url: menuItem.image_url || '',
     variants: (menuItem.variants || []).map(variant => ({
       id: variant.id,
       name: variant.name,
       price: variant.price,
-      isAvailable: variant.isAvailable ?? variant.is_available ?? true,
-      is_available: variant.is_available ?? variant.isAvailable ?? true
+      is_available: variant.is_available ?? true
     }))
   };
 }
@@ -103,13 +100,13 @@ type VariantForm = {
   id?: string | number;
   name: string;
   price: number;
-  isAvailable: boolean;
+  is_available: boolean;
 };
 
 const variantForm = ref<VariantForm>({
   name: '',
   price: 0,
-  isAvailable: true
+  is_available: true
 });
 
 const formErrors = ref<Record<string, string>>({});
@@ -161,7 +158,7 @@ onMounted(async () => {
       // For new items, set the first category as default
       formData.value.category = menuStore.categories[0];
     }
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error initializing form:', error);
     showError('Failed to initialize form data');
   }
@@ -179,7 +176,7 @@ async function loadCategories() {
       console.log('Adding missing category to store:', formData.value.category);
       menuStore.categories = [formData.value.category, ...categories];
     }
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error loading categories:', error);
     showError('Failed to load categories. Please try again.');
   } finally {
@@ -187,39 +184,18 @@ async function loadCategories() {
   }
 }
 
-// Handle delete confirmation
 const handleDelete = async () => {
-  if (!props.menuItem?.id) {
-    console.error('No menu item ID found for deletion');
-    return;
-  }
-  
-  console.log('Initiating delete for menu item ID:', props.menuItem.id);
-  isDeleting.value = true;
+  if (!props.menuItem?.id) return;
   
   try {
-    console.log('Calling menuStore.deleteMenuItem...');
     await menuStore.deleteMenuItem(props.menuItem.id);
-    console.log('Menu item deleted successfully, emitting events...');
-    
-    // Emit events to notify parent components
     emit('delete', props.menuItem.id);
     emit('close');
-    
-    // Show success message
-    showError('Menu item deleted successfully');
-    console.log('Delete flow completed successfully');
-  } catch (error) {
-    console.error('Error in handleDelete:', {
-      error,
-      response: error.response,
-      message: error.message,
-      status: error.response?.status,
-      data: error.response?.data
-    });
-    showError('Failed to delete menu item. Please try again.');
+    showSuccess('Menu item deleted successfully');
+  } catch (error: unknown) {
+    console.error('Error deleting menu item:', error);
+    showError('Failed to delete menu item');
   } finally {
-    isDeleting.value = false;
     showDeleteConfirm.value = false;
   }
 };
@@ -227,50 +203,55 @@ const handleDelete = async () => {
 function handleSubmit() {
   if (!isFormValid.value) {
     showError('Please fill in all required fields');
+  }
+
+  // Basic validation
+  if (!formData.value.name.trim()) {
+    formErrors.value.name = 'Name is required';
     return;
   }
   
-  // Convert price to number if it's a string
-  const price = typeof formData.value.price === 'string' 
-    ? parseFloat(formData.value.price) 
-    : formData.value.price;
-  const variants = formData.value.variants?.map(variant => ({
-    ...variant,
-    price: typeof variant.price === 'string' 
-      ? parseFloat(variant.price) 
-      : variant.price
-  }));
+  if (!formData.value.category) {
+    formErrors.value.category = 'Category is required';
+    return;
+  }
   
-  // Prepare the submit data with proper typing
-  const submitData: Omit<MenuItem, 'id'> = {
-    name: formData.value.name,
-    description: formData.value.description || '',
-    category: typeof formData.value.category === 'string' 
-      ? formData.value.category 
-      : formData.value.category?.name || '',
-    price,
-    isAvailable: formData.value.isAvailable,
-    is_available: formData.value.isAvailable,
-    image_url: formData.value.imageUrl,
-    imageUrl: formData.value.imageUrl,
-    variants: variants.map(({ isAvailable, ...rest }) => ({
-      ...rest,
-      is_available: isAvailable,
-      isAvailable
+  if (formData.value.price < 0) {
+    formErrors.value.price = 'Price cannot be negative';
+    return;
+  }
+  
+  // Prepare data for submission
+  const submitData = {
+    ...formData.value,
+    price: Number(formData.value.price),
+    category: formData.value.category,
+    is_available: formData.value.is_available,
+    image_url: formData.value.image_url,
+    variants: formData.value.variants.map(variant => ({
+      ...variant,
+      price: Number(variant.price),
+      is_available: variant.is_available
     }))
   };
   
   console.log('Submitting menu item:', submitData);
   
-  emit('submit', submitData);
+  try {
+    emit('submit', submitData);
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+    showError(`Failed to submit form: ${errorMessage}`);
+  }
 }
 
 function handleCancel() {
   emit('cancel');
 }
 
-// Handle saving a variant
-function handleSaveVariant() {
+const handleSaveVariant = (): void => {
+  console.log('variantForm.value:', variantForm.value)
+  if (!variantForm.value || !formData.value) return;
   if (!variantForm.value.name || variantForm.value.price === undefined) {
     showError('Variant name and price are required');
     return;
@@ -280,58 +261,65 @@ function handleSaveVariant() {
     id: variantForm.value.id,
     name: variantForm.value.name,
     price: Number(variantForm.value.price),
-    isAvailable: variantForm.value.isAvailable ?? true,
-    is_available: variantForm.value.isAvailable ?? true
+    is_available: variantForm.value.is_available ?? true
   };
 
   if (editingVariantIndex.value !== null) {
+    // Update existing variant
     formData.value.variants[editingVariantIndex.value] = variantData;
   } else {
+    // Add new variant
     formData.value.variants.push(variantData);
   }
 
   resetVariantForm();
-}
+};
 
-// Handle removing a variant
-function handleRemoveVariant(index: number) {
-  formData.value.variants.splice(index, 1);
-}
+const handleRemoveVariant = (index: number): void => {
+  if (!formData.value) return;
+  formData.value.variants = formData.value.variants.filter((_, i) => i !== index);
+};
 
-// Handle adding a new variant
-function handleAddVariant() {
-  formData.value.variants.push({
-    name: '',
-    price: 0,
-    isAvailable: true,
-    is_available: true
-  });
-  editingVariantIndex.value = formData.value.variants.length - 1;
+const handleAddVariant = () => {
+  resetVariantForm();
+  editingVariantIndex.value = null;
   showVariantForm.value = true;
-}
+};
 
-function editVariant(index: number) {
-  const variant = formData.value.variants?.[index];
-  if (!variant) return;
-  
-  variantForm.value = { ...variant };
+const editVariant = (index: number): void => {
+  const variant = formData.value.variants[index];
+  variantForm.value = {
+    id: variant.id,
+    name: variant.name,
+    price: typeof variant.price === 'string' ? parseFloat(variant.price) : variant.price,
+    is_available: variant.is_available ?? true
+  };
   editingVariantIndex.value = index;
   showVariantForm.value = true;
-}
+};
 
-function resetVariantForm() {
+const resetVariantForm = (): void => {
+  if (!variantForm.value) return;
+  
   variantForm.value = {
     name: '',
     price: 0,
-    isAvailable: true
+    is_available: true
   };
   editingVariantIndex.value = null;
   showVariantForm.value = false;
 }
 
-// Export the form data type for parent components
+// Export the form data and methods for parent components
 defineExpose({
-  formData: formData
+  // Form data
+  formData,
+  // Methods
+  handleSaveVariant,
+  handleRemoveVariant,
+  handleCancel,
+  resetVariantForm,
+  editVariant
 });
 </script>
 
@@ -457,31 +445,31 @@ defineExpose({
 
       <!-- Image URL -->
       <div>
-        <label for="imageUrl" class="block text-sm font-medium text-gray-700">
+        <label for="image_url" class="block text-sm font-medium text-gray-700">
           Image URL
         </label>
         <input
-          id="imageUrl"
-          v-model="formData.imageUrl"
+          id="image_url"
+          v-model="formData.image_url"
           type="url"
           class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
-          :class="{ 'border-red-500': formErrors.imageUrl }"
+          :class="{ 'border-red-500': formErrors.image_url }"
           placeholder="https://example.com/image.jpg"
         />
-        <p v-if="formErrors.imageUrl" class="mt-1 text-sm text-red-600">
-          {{ formErrors.imageUrl }}
+        <p v-if="formErrors.image_url" class="mt-1 text-sm text-red-600">
+          {{ formErrors.image_url }}
         </p>
       </div>
 
       <!-- Availability -->
       <div class="flex items-center">
         <input
-          id="isAvailable"
-          v-model="formData.isAvailable"
+          id="is_available"
+          v-model="formData.is_available"
           type="checkbox"
           class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
         />
-        <label for="isAvailable" class="ml-2 block text-sm text-gray-700">
+        <label for="is_available" class="ml-2 block text-sm text-gray-700">
           Available for ordering
         </label>
       </div>
@@ -490,8 +478,7 @@ defineExpose({
       <div class="border-t border-gray-200 pt-4">
         <div class="flex items-center justify-between">
           <h3 class="text-sm font-medium text-gray-700">Variants</h3>
-          <button @click="handleSaveVariant" type="button" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-          >
+          <button @click="handleAddVariant" type="button" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
             <PlusIcon class="-ml-0.5 mr-2 h-4 w-4" />
             Add Variant
           </button>
@@ -508,7 +495,7 @@ defineExpose({
               <p class="text-sm font-medium text-gray-900">{{ variant.name }}</p>
               <p class="text-sm text-gray-500">${{ typeof variant.price === 'number' ? variant.price.toFixed(2) : variant.price }}</p>
               <span 
-                v-if="!variant.isAvailable"
+                v-if="!variant.is_available"
                 class="inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800"
               >
                 Unavailable
@@ -545,28 +532,30 @@ defineExpose({
         <button
           type="button"
           @click="showDeleteConfirm = true"
-          class="inline-flex items-center rounded-md border border-transparent bg-red-100 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50"
-          :disabled="isSubmitting"
+          class="inline-flex items-center rounded-md border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+          :disabled="isDeleting"
         >
-          <TrashIcon class="h-4 w-4 mr-2" />
-          Delete Item
+          <TrashIcon v-if="!isDeleting" class="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
+          <ArrowPathIcon v-else class="animate-spin -ml-1 mr-2 h-5 w-5" aria-hidden="true" />
+          {{ isDeleting ? 'Deleting...' : 'Delete Item' }}
         </button>
       </div>
       <div class="flex space-x-3">
         <button
           type="button"
-          class="rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50"
           @click="handleCancel"
-          :disabled="isSubmitting"
+          class="inline-flex items-center rounded-md border border-gray-300 shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          :disabled="loading"
         >
           Cancel
         </button>
         <button
           type="submit"
-          :disabled="!isFormValid || isSubmitting"
-          class="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50"
+          class="inline-flex justify-center items-center rounded-md border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          :disabled="!isFormValid || loading"
         >
-          {{ isSubmitting ? 'Saving...' : 'Save' }}
+          <ArrowPathIcon v-if="loading" class="animate-spin -ml-1 mr-2 h-4 w-4" />
+          {{ isEditing ? 'Update' : 'Create' }} Item
         </button>
       </div>
     </div>
@@ -714,7 +703,7 @@ defineExpose({
                         <input
                           id="variant-available"
                           type="checkbox"
-                          v-model="variantForm.isAvailable"
+                          v-model="variantForm.is_available"
                           class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
                         />
                         <label for="variant-available" class="ml-2 block text-sm text-gray-700">

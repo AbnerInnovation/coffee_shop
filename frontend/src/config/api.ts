@@ -10,6 +10,7 @@ const API_CONFIG = {
   ENDPOINTS: {
     AUTH: '/auth',
     MENU: '/menu',
+    TABLES: '/tables',
     // Add other endpoints here as needed
   },
   

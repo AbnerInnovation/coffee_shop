@@ -5,10 +5,12 @@ from typing import List
 from ...db.base import get_db
 from ...models.order import Order as OrderModel, OrderStatus
 from ...models.order_item import OrderItem as OrderItemModel
-from ...schemas.order import Order, OrderCreate, OrderUpdate, OrderItemCreate, OrderItemUpdate
+from ...models.table import Table as TableModel
+from ...models.menu import MenuItem as MenuItemModel
+from ...schemas.order import Order, OrderCreate, OrderUpdate, OrderItemCreate, OrderItemUpdate, OrderItem
 from ...services import order as order_service
 from ...services.user import get_current_active_user, UserRole
-from ...core.websocket import manager as ws_manager
+# from ...core.websocket import manager as ws_manager
 
 router = APIRouter(
     prefix="/orders",
@@ -70,16 +72,16 @@ async def create_order(
     db_order = order_service.create_order_with_items(db=db, order=order)
     
     # Notify kitchen of new order
-    background_tasks.add_task(
-        ws_manager.broadcast,
-        {
-            "event": "order_created",
-            "order_id": db_order.id,
-            "table_id": db_order.table_id,
-            "items_count": len(db_order.items)
-        },
-        room="kitchen"
-    )
+    # background_tasks.add_task(
+    #     ws_manager.broadcast,
+    #     {
+    #         "event": "order_created",
+    #         "order_id": db_order.id,
+    #         "table_id": db_order.table_id,
+    #         "items_count": len(db_order.items)
+    #     },
+    #     room="kitchen"
+    # )
     
     return db_order
 

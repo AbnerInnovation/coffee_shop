@@ -1,16 +1,7 @@
 <template>
   <div class="min-h-full">
-    <div class="py-10">
-      <header>
-        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <h1 class="text-3xl font-bold leading-tight tracking-tight text-gray-900">
-            Menu Management
-          </h1>
-        </div>
-      </header>
       <main>
         <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
-          <div class="px-4 py-8 sm:px-0">
             <!-- Menu List -->
             <MenuList
               v-if="!showForm"
@@ -39,20 +30,27 @@
               <div class="rounded-lg bg-white shadow">
                 <div class="px-4 py-5 sm:p-6">
                   <MenuItemForm
-                    :menu-item="currentItem || {}"
+                    v-if="currentItem !== null"
+                    :menu-item="currentItem"
                     :loading="formLoading"
                     :errors="formErrors"
-                    :is-editing="!!currentItem"
+                    :is-editing="true"
+                    @submit="handleSubmit"
+                    @cancel="showForm = false"
+                  />
+                  <MenuItemForm
+                    v-else
+                    :loading="formLoading"
+                    :errors="formErrors"
+                    :is-editing="false"
                     @submit="handleSubmit"
                     @cancel="showForm = false"
                   />
                 </div>
               </div>
             </div>
-          </div>
         </div>
       </main>
-    </div>
   </div>
 </template>
 
@@ -62,8 +60,8 @@ import { useMenuStore } from '@/stores/menu';
 import { useConfirm } from '@/composables/useConfirm';
 import { useToast } from '@/composables/useToast';
 import MenuList from '@/components/menu/MenuList.vue';
-import MenuItemForm, { type MenuItemFormData } from '@/components/menu/MenuItemForm.vue';
-import type { MenuItem } from '@/components/menu/MenuItemCard.vue';
+import MenuItemForm from '@/components/menu/MenuItemForm.vue';
+import type { MenuItem } from '@/types/menu';
 import { ArrowLeftIcon } from '@heroicons/vue/20/solid';
 
 const menuStore = useMenuStore();
@@ -84,13 +82,19 @@ onMounted(async () => {
 });
 
 async function loadMenuItems() {
+  console.log('Loading menu items...');
   loading.value = true;
   error.value = null;
   try {
-    menuItems.value = await menuStore.fetchMenuItems();
-  } catch (err) {
-    error.value = err.message || 'Failed to load menu items';
-    showError(error.value);
+    const items = await menuStore.fetchMenuItems();
+    console.log('Fetched menu items:', items);
+    menuItems.value = items;
+    console.log('menuItems after update:', menuItems.value);
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : 'Failed to load menu items';
+    console.error('Error loading menu items:', errorMessage);
+    error.value = errorMessage;
+    showError(errorMessage);
   } finally {
     loading.value = false;
   }
@@ -149,40 +153,32 @@ async function handleToggleAvailability(item) {
   }
 }
 
-async function handleSubmit(formData: MenuItemFormData) {
+async function handleSubmit(formData: Omit<MenuItem, 'id'>) {
   formLoading.value = true;
   formErrors.value = {};
   
   try {
     if (currentItem.value) {
       // Update existing item
-      const updatedItem = await menuStore.updateMenuItem(
-        currentItem.value.id.toString(),
-        formData
-      );
-      
-      // Update the item in the list
-      const index = menuItems.value.findIndex(i => i.id === updatedItem.id);
-      if (index !== -1) {
-        menuItems.value[index] = updatedItem;
-      }
-      
+      await menuStore.updateMenuItem(currentItem.value.id, formData);
       showSuccess('Menu item updated successfully');
     } else {
       // Create new item
-      const newItem = await menuStore.createMenuItem(formData);
-      menuItems.value.unshift(newItem);
+      await menuStore.createMenuItem(formData);
       showSuccess('Menu item created successfully');
     }
     
-    // Go back to the list
+    // Refresh the menu items list
+    await loadMenuItems();
     showForm.value = false;
     currentItem.value = null;
-  } catch (err: any) {
-    if (err.response?.data?.detail) {
-      formErrors.value = err.response.data.detail;
+  } catch (err: unknown) {
+    const error = err as any;
+    if (error?.response?.data?.errors) {
+      formErrors.value = error.response.data.errors;
     } else {
-      showError(err.message || 'An error occurred while saving the menu item');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to save menu item';
+      showError(errorMessage);
     }
   } finally {
     formLoading.value = false;

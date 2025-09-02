@@ -1,51 +1,66 @@
-from enum import Enum as PyEnum
-from sqlalchemy import String, Float, Boolean, Integer, ForeignKey, Column
-from sqlalchemy.orm import relationship
-from .base import BaseModel
-from ..db.base import Base
+from sqlalchemy import String, Float, Boolean, Integer, ForeignKey, Column, Text
+from sqlalchemy.orm import relationship, Mapped, mapped_column
+from typing import List, Optional, TYPE_CHECKING
+from .base import BaseModel, Base
 
-# Define Category model
+if TYPE_CHECKING:
+    from .order_item import OrderItem
+
 class Category(Base, BaseModel):
     __tablename__ = "categories"
     
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String(50), unique=True, nullable=False, index=True)
-    description = Column(String(255), nullable=True)
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    name: Mapped[str] = mapped_column(String(50), unique=True, nullable=False, index=True)
+    description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     
     # Relationship to menu items
-    menu_items = relationship("MenuItem", back_populates="category")
+    menu_items: Mapped[List["MenuItem"]] = relationship(
+        "MenuItem", 
+        back_populates="category",
+        cascade="all, delete-orphan"
+    )
     
-    def __init__(self, name: str, description: str = None):
+    def __init__(self, name: str, description: Optional[str] = None):
         self.name = name.upper()  # Store category names in uppercase for consistency
         self.description = description
+        
+    def __repr__(self) -> str:
+        return f"<Category(id={self.id}, name='{self.name}')>"
 
 class MenuItem(Base, BaseModel):
     __tablename__ = "menu_items"
 
-    name = Column(String(100), nullable=False)
-    description = Column(String(500), nullable=True)
-    price = Column(Float, nullable=False)
-    category_id = Column(Integer, ForeignKey("categories.id"), nullable=False)
-    is_available = Column(Boolean, default=True, nullable=False)
-    image_url = Column(String(500), nullable=True)
+    name: Mapped[str] = mapped_column(String(100), nullable=False)
+    description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    price: Mapped[float] = mapped_column(nullable=False)
+    category_id: Mapped[int] = mapped_column(ForeignKey("categories.id"), nullable=False)
+    is_available: Mapped[bool] = mapped_column(default=True, nullable=False)
+    image_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
     
     # Relationships
-    category = relationship("Category", back_populates="menu_items")
-    variants = relationship(
+    category: Mapped["Category"] = relationship("Category", back_populates="menu_items")
+    variants: Mapped[List["MenuItemVariant"]] = relationship(
         "MenuItemVariant", 
         back_populates="menu_item", 
         cascade="all, delete-orphan"
     )
-    order_items = relationship("OrderItem", back_populates="menu_item")
+    order_items: Mapped[List["OrderItem"]] = relationship("OrderItem", back_populates="menu_item")
+    
+    def __repr__(self) -> str:
+        return f"<MenuItem(id={self.id}, name='{self.name}', price={self.price})>"
 
 class MenuItemVariant(Base, BaseModel):
     __tablename__ = "menu_item_variants"
 
-    menu_item_id = Column(Integer, ForeignKey("menu_items.id"), nullable=False)
-    name = Column(String(50), nullable=False)  # e.g. "Small", "Medium", "Large"
-    price = Column(Float, nullable=False)
-    is_available = Column(Boolean, default=True, nullable=False)
+    menu_item_id: Mapped[int] = mapped_column(ForeignKey("menu_items.id"), nullable=False)
+    name: Mapped[str] = mapped_column(String(50), nullable=False)  # e.g. "Small", "Medium", "Large"
+    price: Mapped[float] = mapped_column(nullable=False)
+    is_available: Mapped[bool] = mapped_column(default=True, nullable=False)
 
     # Relationships
-    menu_item = relationship("MenuItem", back_populates="variants")
+    menu_item: Mapped["MenuItem"] = relationship("MenuItem", back_populates="variants")
+    order_items: Mapped[List["OrderItem"]] = relationship("OrderItem", back_populates="variant")
+    
+    def __repr__(self) -> str:
+        return f"<MenuItemVariant(id={self.id}, name='{self.name}', price={self.price}, menu_item_id={self.menu_item_id})>"
     order_items = relationship("OrderItem", back_populates="variant")

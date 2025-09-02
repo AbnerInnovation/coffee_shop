@@ -17,274 +17,297 @@
       </div>
     </div>
 
+    <!-- Loading State -->
+    <div v-if="loading" class="text-center py-8">
+      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+      <p class="mt-2 text-sm text-gray-600">Loading tables...</p>
+    </div>
+
+    <!-- Error State -->
+    <div v-else-if="error" class="bg-red-50 border-l-4 border-red-400 p-4 mb-4">
+      <div class="flex">
+        <div class="flex-shrink-0">
+          <XCircleIcon class="h-5 w-5 text-red-400" aria-hidden="true" />
+        </div>
+        <div class="ml-3">
+          <p class="text-sm text-red-700">{{ error }}</p>
+        </div>
+      </div>
+    </div>
+
     <!-- Tables Grid -->
-    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+    <div v-else class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       <div 
         v-for="table in tables" 
         :key="table.id"
         class="relative rounded-lg border border-gray-200 bg-white overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200"
         :class="{
-          'ring-2 ring-offset-2 ring-indigo-500': selectedTableId === table.id
+          'ring-2 ring-offset-2 ring-indigo-500': selectedTableId === table.id,
+          'border-l-4 border-red-500': table.is_occupied,
+          'border-l-4 border-green-500': !table.is_occupied
         }"
-        @click="selectTable(table.id)"
+        @click="selectTable(table)"
       >
         <!-- Table Status Badge -->
         <div 
-          class="absolute top-2 right-2 px-2 py-1 rounded-full text-xs font-medium"
-          :class="getStatusBadgeClass(table.status)"
+          class="absolute bottom-2 right-2 px-2 py-1 rounded-full text-xs font-medium"
+          :class="table.is_occupied ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'"
         >
-          {{ table.status }}
+          {{ table.is_occupied ? 'Occupied' : 'Available' }}
         </div>
 
         <div class="p-4">
           <div class="flex items-center justify-between">
-            <h3 class="text-lg font-medium text-gray-900">Table {{ table.number }}</h3>
+            <h3 class="text-lg font-medium text-gray-900">Table #{{ table.number }}</h3>
             <span class="text-sm text-gray-500">Seats: {{ table.capacity }}</span>
           </div>
           
-          <div v-if="table.currentOrder" class="mt-2">
-            <div class="text-sm text-gray-500">
-              Order #{{ table.currentOrder.id }}
-              <span class="mx-1">•</span>
-              <span>${{ table.currentOrder.total.toFixed(2) }}</span>
+          <div class="mt-2">
+            <div class="text-sm text-gray-600">
+              Location: {{ table.location }}
             </div>
             <div class="mt-1 text-xs text-gray-400">
-              {{ formatTimeAgo(table.currentOrder.createdAt) }}
+              Last updated: {{ formatTimeAgo(table.updated_at) }}
             </div>
-          </div>
-          
-          <div v-else class="mt-2 text-sm text-gray-500">
-            No active order
           </div>
           
           <div class="mt-4 flex space-x-2">
+            <div class="grid grid-cols-2 gap-2 mt-2">
+              <button
+                type="button"
+                class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded shadow-sm text-white"
+                :class="table.is_occupied ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'"
+                @click.stop="toggleOccupancy(table)"
+              >
+                {{ table.is_occupied ? 'Available' : 'Occupied' }}
+              </button>
+              <button
+                type="button"
+                class="inline-flex items-center justify-center px-3 py-1.5 border border-gray-300 text-xs font-medium rounded shadow-sm text-gray-700 bg-white hover:bg-gray-50"
+                @click.stop="openOrderModal(table)"
+              >
+                New Order
+              </button>
+            </div>
             <button
-              v-if="table.status === 'Available'"
               type="button"
-              class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-              @click.stop="startNewOrder(table.id)"
+              class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-xs font-medium rounded shadow-sm text-gray-700 bg-white hover:bg-gray-50"
+              @click.stop="editTable(table)"
             >
-              New Order
-            </button>
-            <button
-              v-else
-              type="button"
-              class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-              @click.stop="viewOrder(table.currentOrder.id)"
-            >
-              View Order
-            </button>
-            <button
-              v-if="table.status !== 'Available'"
-              type="button"
-              class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-              @click.stop="checkoutTable(table.id)"
-            >
-              Checkout
+              Edit
             </button>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Table Details Sidebar -->
-    <TableDetailsSidebar 
-      :open="isSidebarOpen" 
-      :table="selectedTable"
-      @close="closeSidebar"
-      @checkout="handleCheckout"
-      @start-order="handleStartOrder"
-    />
-    
     <!-- Add/Edit Table Modal -->
-    <TableFormModal
-      :open="isTableModalOpen"
-      :table="editingTable"
-      @close="closeTableModal"
-      @save="handleSaveTable"
-    />
+    <div v-if="showTableModal" class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4 z-50">
+      <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-lg font-medium text-gray-900">
+            {{ editingTable ? 'Edit Table' : 'Add New Table' }}
+          </h3>
+          <button @click="closeModal" class="text-gray-400 hover:text-gray-500">
+            <span class="sr-only">Close</span>
+            <XMarkIcon class="h-6 w-6" />
+          </button>
+        </div>
+        
+        <form @submit.prevent="saveTable">
+          <div class="space-y-4">
+            <div>
+              <label for="table-number" class="block text-sm font-medium text-gray-700">Table Number</label>
+              <input
+                id="table-number"
+                v-model="formData.number"
+                type="number"
+                min="1"
+                required
+                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              >
+            </div>
+            
+            <div>
+              <label for="table-capacity" class="block text-sm font-medium text-gray-700">Capacity</label>
+              <input
+                id="table-capacity"
+                v-model="formData.capacity"
+                type="number"
+                min="1"
+                required
+                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              >
+            </div>
+            
+            <div>
+              <label for="table-location" class="block text-sm font-medium text-gray-700">Location</label>
+              <select
+                id="table-location"
+                v-model="formData.location"
+                required
+                class="mt-1 block w-full rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
+              >
+                <option value="Inside">Inside</option>
+                <option value="Patio">Patio</option>
+                <option value="Bar">Bar</option>
+              </select>
+            </div>
+            
+            <div class="flex justify-end space-x-3 pt-4">
+              <button
+                type="button"
+                @click="closeModal"
+                class="inline-flex justify-center rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                class="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+              >
+                {{ editingTable ? 'Update' : 'Add' }} Table
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
   </div>
+  
+  <!-- Order Modal -->
+  <OrderModal
+    v-if="showOrderModal && selectedTableForOrder"
+    :table-id="selectedTableForOrder.id"
+    :table-number="selectedTableForOrder.number"
+    @close="showOrderModal = false"
+    @order-created="handleOrderCreated"
+  />
 </template>
 
-<script setup>
-import { ref, computed, onMounted } from 'vue';
-import { PlusIcon } from '@heroicons/vue/24/outline';
-import TableDetailsSidebar from '@/components/tables/TableDetailsSidebar.vue';
-import TableFormModal from '@/components/tables/TableFormModal.vue';
-import { useConfirm } from '@/composables/useConfirm';
-import { useToast } from '@/composables/useToast';
+<script setup lang="ts">
+import { ref, onMounted } from 'vue';
+import { PlusIcon, XMarkIcon, XCircleIcon } from '@heroicons/vue/24/outline';
+import tableService from '@/services/tableService';
+import OrderModal from '@/components/orders/OrderModal.vue';
+import { formatDistanceToNow } from 'date-fns';
 
-const { confirm } = useConfirm();
-const { showSuccess, showError } = useToast();
-
-// Mock data - replace with API calls
-const tables = ref([
-  {
-    id: '1',
-    number: '01',
-    capacity: 4,
-    status: 'Occupied',
-    location: 'Window',
-    currentOrder: {
-      id: '1001',
-      total: 42.50,
-      items: [
-        { name: 'Cappuccino', quantity: 2, price: 4.50 },
-        { name: 'Avocado Toast', quantity: 1, price: 12.00 },
-        { name: 'Orange Juice', quantity: 1, price: 5.50 }
-      ],
-      createdAt: new Date(Date.now() - 30 * 60 * 1000) // 30 minutes ago
-    }
-  },
-  {
-    id: '2',
-    number: '02',
-    capacity: 2,
-    status: 'Available',
-    location: 'Bar',
-    currentOrder: null
-  },
-  // Add more mock tables as needed
-]);
-
+const tables = ref([]);
+const loading = ref(false);
+const error = ref('');
 const selectedTableId = ref(null);
-const isSidebarOpen = ref(false);
-const isTableModalOpen = ref(false);
+const showTableModal = ref(false);
 const editingTable = ref(null);
 
-const selectedTable = computed(() => {
-  if (!selectedTableId.value) return null;
-  return tables.value.find(table => table.id === selectedTableId.value);
+const formData = ref({
+  number: '',
+  capacity: 2,
+  location: 'Inside',
+  is_occupied: false
 });
 
-function getStatusBadgeClass(status) {
-  const statusClasses = {
-    'Available': 'bg-green-100 text-green-800',
-    'Occupied': 'bg-yellow-100 text-yellow-800',
-    'Reserved': 'bg-blue-100 text-blue-800',
-    'Out of Service': 'bg-red-100 text-red-800',
-  };
-  return statusClasses[status] || 'bg-gray-100 text-gray-800';
-}
-
-function formatTimeAgo(date) {
-  const now = new Date();
-  const diffInSeconds = Math.floor((now - new Date(date)) / 1000);
-  
-  if (diffInSeconds < 60) return 'Just now';
-  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
-  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
-  return `${Math.floor(diffInSeconds / 86400)}d ago`;
-}
-
-function selectTable(tableId) {
-  selectedTableId.value = tableId;
-  isSidebarOpen.value = true;
-}
-
-function closeSidebar() {
-  isSidebarOpen.value = false;
-  // Don't reset selectedTableId to keep it highlighted
-}
-
-function startNewOrder(tableId) {
-  // In a real app, this would open a modal to create a new order
-  const table = tables.value.find(t => t.id === tableId);
-  if (table) {
-    table.status = 'Occupied';
-    table.currentOrder = {
-      id: Math.floor(1000 + Math.random() * 9000).toString(),
-      total: 0,
-      items: [],
-      createdAt: new Date()
-    };
-    showSuccess(`Started new order for Table ${table.number}`);
-    // In a real app, you would navigate to the order page
-  }
-}
-
-function viewOrder(orderId) {
-  // In a real app, you would navigate to the order details page
-  console.log('Viewing order:', orderId);
-}
-
-async function checkoutTable(tableId) {
-  const confirmed = await confirm({
-    title: 'Checkout Table',
-    message: 'Are you sure you want to checkout this table? This will mark the table as available.',
-    confirmText: 'Yes, checkout',
-    cancelText: 'No, keep it',
-    confirmClass: 'bg-green-600 hover:bg-green-700 focus:ring-green-500'
-  });
-  
-  if (confirmed) {
-    try {
-      const table = tables.value.find(t => t.id === tableId);
-      if (table) {
-        table.status = 'Available';
-        table.currentOrder = null;
-        showSuccess(`Table ${table.number} has been checked out`);
-      }
-    } catch (error) {
-      console.error('Error checking out table:', error);
-      showError('Failed to checkout table');
-    }
-  }
-}
-
-function handleCheckout(tableId) {
-  checkoutTable(tableId);
-  closeSidebar();
-}
-
-function handleStartOrder(tableId) {
-  startNewOrder(tableId);
-  closeSidebar();
-}
-
-function openAddTableModal() {
-  editingTable.value = null;
-  isTableModalOpen.value = true;
-}
-
-function openEditTableModal(table) {
-  editingTable.value = { ...table };
-  isTableModalOpen.value = true;
-}
-
-function closeTableModal() {
-  isTableModalOpen.value = false;
-  editingTable.value = null;
-}
-
-function handleSaveTable(tableData) {
+// Fetch tables from API
+const fetchTables = async () => {
   try {
-    if (tableData.id) {
-      // Update existing table
-      const index = tables.value.findIndex(t => t.id === tableData.id);
-      if (index !== -1) {
-        tables.value[index] = { ...tables.value[index], ...tableData };
-        showSuccess('Table updated successfully');
-      }
-    } else {
-      // Add new table
-      tables.value.push({
-        ...tableData,
-        id: Math.random().toString(36).substr(2, 9),
-        status: 'Available',
-        currentOrder: null
-      });
-      showSuccess('Table added successfully');
-    }
-    closeTableModal();
-  } catch (error) {
-    console.error('Error saving table:', error);
-    showError('Failed to save table');
+    loading.value = true;
+    tables.value = await tableService.getTables();
+    error.value = '';
+  } catch (err) {
+    console.error('Error fetching tables:', err);
+    error.value = 'Failed to load tables. Please try again.';
+  } finally {
+    loading.value = false;
   }
-}
+};
 
-// In a real app, you would fetch tables from an API
+// Format time ago
+const formatTimeAgo = (dateString) => {
+  if (!dateString) return '';
+  return formatDistanceToNow(new Date(dateString), { addSuffix: true });
+};
+
+// Toggle table occupancy
+const toggleOccupancy = async (table) => {
+  try {
+    await tableService.updateTableOccupancy(table.id, !table.is_occupied);
+    await fetchTables();
+  } catch (err) {
+    console.error('Error updating table status:', err);
+    error.value = 'Failed to update table status. Please try again.';
+  }
+};
+
+// Open modal to add new table
+const openAddTableModal = () => {
+  formData.value = {
+    number: '',
+    capacity: 2,
+    location: 'Inside',
+    is_occupied: false
+  };
+  editingTable.value = null;
+  showTableModal.value = true;
+};
+
+// Open modal to edit table
+const editTable = (table) => {
+  formData.value = {
+    number: table.number,
+    capacity: table.capacity,
+    location: table.location,
+    is_occupied: table.is_occupied
+  };
+  editingTable.value = table;
+  showTableModal.value = true;
+};
+
+// Close modal
+const closeModal = () => {
+  showTableModal.value = false;
+};
+
+// Save table (create or update)
+const saveTable = async () => {
+  try {
+    if (editingTable.value) {
+      await tableService.updateTable(editingTable.value.id, formData.value);
+    } else {
+      await tableService.createTable(formData.value);
+    }
+    await fetchTables();
+    closeModal();
+  } catch (err) {
+    console.error('Error saving table:', err);
+    error.value = `Failed to ${editingTable.value ? 'update' : 'create'} table. Please try again.`;
+  }
+};
+
+// Select table
+const selectTable = (table) => {
+  selectedTableId.value = table.id;
+  // Here you could add logic to show table details or orders
+  console.log('Selected table:', table);
+};
+
+// Order modal state
+const showOrderModal = ref(false);
+const selectedTableForOrder = ref(null);
+
+// Open order modal for a table
+const openOrderModal = (table) => {
+  selectedTableForOrder.value = table;
+  showOrderModal.value = true;
+};
+
+// Handle order created event
+const handleOrderCreated = (order) => {
+  console.log('Order created:', order);
+  // You might want to update the table status or show a notification
+  fetchTables(); // Refresh tables to show updated status
+};
+
+// Initialize component
 onMounted(() => {
-  // fetchTables();
+  fetchTables();
 });
 </script>

@@ -51,7 +51,7 @@
                   {{ order.customerName || 'Walk-in' }}
                 </div>
                 <div class="mt-2 flex items-center text-sm text-gray-500">
-                  <TableIcon class="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" aria-hidden="true" />
+                  <RectangleGroupIcon class="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" aria-hidden="true" />
                   {{ order.table || 'Takeaway' }}
                 </div>
                 <div class="mt-2 flex items-center text-sm text-gray-500">
@@ -135,7 +135,7 @@ import {
   CheckIcon, 
   XMarkIcon, 
   UserIcon, 
-  TableIcon, 
+  RectangleGroupIcon, 
   ClockIcon,
   CheckCircleIcon 
 } from '@heroicons/vue/24/outline';

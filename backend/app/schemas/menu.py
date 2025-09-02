@@ -110,56 +110,87 @@ class MenuItemBase(BaseModel):
     )
 
 class MenuItemCreate(MenuItemBase):
-    category_name: str = Field(..., min_length=1, max_length=50)
+    category: str = Field(..., min_length=1, max_length=50)
+    variants: List['MenuItemVariantCreate'] = []
 
 class MenuItemUpdate(BaseModel):
     name: Optional[str] = Field(None, min_length=1, max_length=100)
     description: Optional[str] = None
     price: Optional[float] = Field(None, gt=0)
     category_id: Optional[int] = None
-    category_name: Optional[str] = Field(None, min_length=1, max_length=50)
+    category: Optional[str] = Field(None, min_length=1, max_length=50)
     is_available: Optional[bool] = None
     image_url: Optional[str] = None
+    variants: List['MenuItemVariantCreate'] = []
 
 class MenuItemInDBBase(MenuItemBase):
     id: int
     category_id: int
     created_at: datetime
     updated_at: datetime
-
+    
     model_config = ConfigDict(from_attributes=True)
 
 class MenuItem(MenuItemInDBBase):
+    """Menu item with category and variants relationship."""
     category: Optional[CategoryInDB] = None
+    variants: List['MenuItemVariant'] = []
     
     model_config = ConfigDict(from_attributes=True)
     
     @classmethod
     def from_orm(cls, obj):
-        # Create a dictionary of the model's fields
-        data = {
-            'id': obj.id,
-            'name': obj.name,
-            'description': obj.description,
-            'price': obj.price,
-            'category_id': obj.category_id,
-            'is_available': obj.is_available,
-            'image_url': obj.image_url,
-            'created_at': obj.created_at,
-            'updated_at': obj.updated_at,
-        }
+        from sqlalchemy import inspect
+        # Convert the SQLAlchemy model to a dictionary
+        obj_dict = {c.key: getattr(obj, c.key) for c in inspect(obj).mapper.column_attrs}
         
-        # Add category details if available
-        if hasattr(obj, 'category') and obj.category is not None:
-            data['category'] = CategoryInDB(
+        # Handle the category relationship if it's loaded
+        if hasattr(obj, 'category') and obj.category:
+            obj_dict['category'] = CategoryInDB(
                 id=obj.category.id,
                 name=obj.category.name,
                 description=obj.category.description,
                 created_at=obj.category.created_at,
                 updated_at=obj.category.updated_at
             )
-            
-        return cls(**data)
+        
+        # Handle variants if they're loaded
+        if hasattr(obj, 'variants') and obj.variants is not None:
+            from .menu import MenuItemVariant
+            obj_dict['variants'] = [MenuItemVariant.from_orm(v) for v in obj.variants]
+        
+        # Create the model instance
+        return cls(**obj_dict)
 
 class MenuItemInDB(MenuItemInDBBase):
+    pass
+
+# Variant schemas
+class MenuItemVariantBase(BaseModel):
+    name: str = Field(..., min_length=1, max_length=50)
+    price: float = Field(..., gt=0)
+    is_available: bool = True
+
+class MenuItemVariantCreate(BaseModel):
+    name: str = Field(..., min_length=1, max_length=50)
+    price: float = Field(..., gt=0)
+    is_available: bool = True
+
+class MenuItemVariantUpdate(BaseModel):
+    name: Optional[str] = Field(None, min_length=1, max_length=50)
+    price: Optional[float] = Field(None, gt=0)
+    is_available: Optional[bool] = None
+
+class MenuItemVariantInDBBase(MenuItemVariantBase):
+    id: int
+    menu_item_id: int
+    created_at: datetime
+    updated_at: datetime
+    
+    model_config = ConfigDict(from_attributes=True)
+
+class MenuItemVariant(MenuItemVariantInDBBase):
+    pass
+
+class MenuItemVariantInDB(MenuItemVariantInDBBase):
     pass
