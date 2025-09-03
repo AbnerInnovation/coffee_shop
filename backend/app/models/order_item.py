@@ -1,6 +1,7 @@
 from enum import Enum
 from typing import Optional, TYPE_CHECKING
-from sqlalchemy import Integer, String, Float, ForeignKey, Enum as SQLEnum
+from datetime import datetime
+from sqlalchemy import Integer, String, Float, ForeignKey, Enum as SQLEnum, DateTime
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from .base import BaseModel, Base
 
@@ -38,6 +39,7 @@ class OrderItem(Base, BaseModel):
         default=OrderItemStatus.PENDING,
         nullable=False,
     )
+    deleted_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
 
     # Relationships
     order: Mapped["Order"] = relationship("Order", back_populates="items")

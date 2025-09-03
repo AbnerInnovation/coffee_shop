@@ -1,4 +1,5 @@
 from datetime import datetime
+from sqlalchemy import or_
 from typing import List, Optional
 import logging
 from sqlalchemy.orm import Session, selectinload, joinedload
@@ -81,14 +82,20 @@ def get_orders(
     limit: int = 100,
     status: Optional[OrderStatus] = None,
     table_id: Optional[int] = None,
+    include_deleted: bool = False,
 ) -> List[dict]:
     try:
         query = db.query(OrderModel).options(
-            selectinload(OrderModel.items).selectinload(OrderItemModel.menu_item),
-            selectinload(OrderModel.items).selectinload(OrderItemModel.variant),
-            selectinload(OrderModel.table),
+            joinedload(OrderModel.items).joinedload(OrderItemModel.menu_item),
+            joinedload(OrderModel.items).joinedload(OrderItemModel.variant),
+            joinedload(OrderModel.table),
+            joinedload(OrderModel.user),
         )
-
+        
+        # Filter out deleted orders unless explicitly requested
+        if not include_deleted:
+            query = query.filter(OrderModel.deleted_at.is_(None))
+        
         if status is not None:
             query = query.filter(OrderModel.status == status)
         if table_id is not None:
@@ -102,19 +109,20 @@ def get_orders(
         raise
 
 
-def get_order(db: Session, order_id: int) -> Optional[dict]:
+def get_order(db: Session, order_id: int, include_deleted: bool = False) -> Optional[dict]:
     try:
-        order = (
-            db.query(OrderModel)
-            .options(
-                selectinload(OrderModel.items).selectinload(OrderItemModel.menu_item),
-                selectinload(OrderModel.items).selectinload(OrderItemModel.variant),
-                selectinload(OrderModel.table),
-            )
-            .filter(OrderModel.id == order_id)
-            .first()
-        )
-        return serialize_order(order) if order else None
+        query = db.query(OrderModel).options(
+            joinedload(OrderModel.items).joinedload(OrderItemModel.menu_item),
+            joinedload(OrderModel.items).joinedload(OrderItemModel.variant),
+            joinedload(OrderModel.table),
+            joinedload(OrderModel.user),
+        ).filter(OrderModel.id == order_id)
+        
+        if not include_deleted:
+            query = query.filter(OrderModel.deleted_at.is_(None))
+            
+        db_order = query.first()
+        return serialize_order(db_order) if db_order else None
 
     except Exception as e:
         logging.error(f"Error in get_order: {str(e)}", exc_info=True)
@@ -193,7 +201,15 @@ def update_order(db: Session, db_order: OrderModel, order: OrderUpdate) -> dict:
 
 
 def delete_order(db: Session, db_order: OrderModel) -> None:
-    db.delete(db_order)
+    # Soft delete the order
+    db_order.deleted_at = datetime.utcnow()
+    db.add(db_order)
+    
+    # Also soft delete all order items
+    for item in db_order.items:
+        item.deleted_at = datetime.utcnow()
+        db.add(item)
+    
     db.commit()
 
 
@@ -201,8 +217,11 @@ def delete_order(db: Session, db_order: OrderModel) -> None:
 # Order items
 # -----------------------------
 
-def get_order_item(db: Session, item_id: int) -> Optional[OrderItemModel]:
-    return db.query(OrderItemModel).filter(OrderItemModel.id == item_id).first()
+def get_order_item(db: Session, item_id: int, include_deleted: bool = False) -> Optional[OrderItemModel]:
+    query = db.query(OrderItemModel).filter(OrderItemModel.id == item_id)
+    if not include_deleted:
+        query = query.filter(OrderItemModel.deleted_at.is_(None))
+    return query.first()
 
 
 def add_order_item(db: Session, db_order: OrderModel, item: OrderItemCreate, unit_price: float) -> dict:
@@ -285,10 +304,20 @@ def update_order_item(db: Session, db_item: OrderItemModel, item: OrderItemUpdat
 
 
 def delete_order_item(db: Session, db_item: OrderItemModel) -> None:
+    # Soft delete the order item
+    db_item.deleted_at = datetime.utcnow()
+    db.add(db_item)
+    
+    # Update the order total
     order = db.query(OrderModel).filter(OrderModel.id == db_item.order_id).first()
     if order:
-        order.total_amount = max(0, (order.total_amount or 0) - (db_item.quantity * db_item.unit_price))
+        # Recalculate the total based on non-deleted items
+        order.total_amount = sum(
+            item.quantity * item.unit_price 
+            for item in order.items 
+            if item.deleted_at is None and item.id != db_item.id
+        )
         order.updated_at = datetime.utcnow()
-
-    db.delete(db_item)
+        db.add(order)
+    
     db.commit()
