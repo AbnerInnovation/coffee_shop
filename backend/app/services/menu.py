@@ -1,4 +1,5 @@
 from typing import List, Optional, Dict, Any
+from datetime import datetime
 from sqlalchemy.orm import Session, joinedload
 import logging
 
@@ -21,10 +22,11 @@ def get_menu_items(
     """
     from sqlalchemy.orm import joinedload
 
-    # Start building the query with relationships
+    # Start building the query with relationships and filter out deleted items
     query = db.query(MenuItemModel).options(
-        joinedload(MenuItemModel.category), joinedload(MenuItemModel.variants)
-    )
+        joinedload(MenuItemModel.category), 
+        joinedload(MenuItemModel.variants)
+    ).filter(MenuItemModel.deleted_at.is_(None))
 
     if category is not None:
         # Look up the category by name
@@ -56,14 +58,12 @@ def get_menu_items(
 
 def get_menu_item(db: Session, item_id: int) -> Optional[MenuItemModel]:
     """
-    Get a menu item by ID with its category and variants loaded.
+    Get a non-deleted menu item by ID with its category and variants loaded.
     """
-    from sqlalchemy.orm import joinedload
-
     return (
         db.query(MenuItemModel)
         .options(joinedload(MenuItemModel.category), joinedload(MenuItemModel.variants))
-        .filter(MenuItemModel.id == item_id)
+        .filter(MenuItemModel.id == item_id, MenuItemModel.deleted_at.is_(None))
         .first()
     )
 
@@ -209,10 +209,11 @@ def update_menu_item(
                 new_variant = MenuItemVariantModel(**variant_data)
                 db.add(new_variant)
 
-        # Delete variants that were not included
+        # Soft delete variants that were not included
         for variant in db_item.variants:
             if variant.id not in sent_variant_ids:
-                db.delete(variant)
+                variant.deleted_at = datetime.utcnow()
+                db.add(variant)
 
     db.commit()
     db.refresh(db_item)  # Make sure relationships are updated
@@ -221,10 +222,11 @@ def update_menu_item(
 
 def delete_menu_item(db: Session, db_item: MenuItemModel) -> None:
     """
-    Delete a menu item.
+    Soft delete a menu item by setting the deleted_at timestamp.
     Note: This function expects to be called within an existing transaction context.
     """
-    db.delete(db_item)
+    db_item.deleted_at = datetime.utcnow()
+    db.add(db_item)
 
 
 def get_categories(db: Session) -> List[str]:

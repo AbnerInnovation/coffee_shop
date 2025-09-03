@@ -19,6 +19,7 @@ class BaseModel:
     id = Column(Integer, primary_key=True, index=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    deleted_at = Column(DateTime, nullable=True)
 
     @declared_attr
     def __tablename__(cls) -> str:

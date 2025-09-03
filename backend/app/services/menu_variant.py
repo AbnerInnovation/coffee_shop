@@ -1,4 +1,5 @@
 from typing import List, Optional
+from datetime import datetime
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 import logging
@@ -19,7 +20,8 @@ def get_variants(
     Get all variants for a menu item with optional filtering.
     """
     query = db.query(MenuItemVariant).filter(
-        MenuItemVariant.menu_item_id == menu_item_id
+        MenuItemVariant.menu_item_id == menu_item_id,
+        MenuItemVariant.deleted_at.is_(None)  # Only include non-deleted variants
     )
     
     if available is not None:
@@ -36,7 +38,8 @@ def get_variant(
     Get a specific variant by ID, optionally filtered by menu item ID.
     """
     query = db.query(MenuItemVariant).filter(
-        MenuItemVariant.id == variant_id
+        MenuItemVariant.id == variant_id,
+        MenuItemVariant.deleted_at.is_(None)  # Only include non-deleted variants
     )
     
     if menu_item_id is not None:
@@ -53,8 +56,11 @@ def create_variant(
     Create a new variant for a menu item.
     Note: This function expects to be called within an existing transaction context.
     """
-    # Verify the menu item exists
-    menu_item = db.query(MenuItem).filter(MenuItem.id == menu_item_id).first()
+    # Verify the menu item exists and is not deleted
+    menu_item = db.query(MenuItem).filter(
+        MenuItem.id == menu_item_id,
+        MenuItem.deleted_at.is_(None)
+    ).first()
     if not menu_item:
         raise ValueError(f"Menu item with ID {menu_item_id} not found")
     
@@ -90,9 +96,10 @@ def delete_variant(
     db_variant: MenuItemVariant
 ) -> bool:
     """
-    Delete a variant.
+    Soft delete a variant by setting the deleted_at timestamp.
     Note: This function expects to be called within an existing transaction context.
     """
-    db.delete(db_variant)
-    db.flush()  # Flush the deletion without committing
+    db_variant.deleted_at = datetime.utcnow()
+    db.add(db_variant)
+    db.flush()  # Flush the changes without committing
     return True
