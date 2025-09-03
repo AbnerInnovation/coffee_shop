@@ -130,10 +130,6 @@
                 </div>
                 <div class="mt-2 grid grid-cols-2 gap-x-4 gap-y-2 sm:flex sm:flex-wrap sm:space-x-6">
                   <div class="flex items-center text-sm text-gray-500">
-                    <UserIcon class="flex-shrink-0 mr-1.5 h-4 w-4 sm:h-5 sm:w-5 text-gray-400" aria-hidden="true" />
-                    <span class="truncate">{{ order.customerName || 'Walk-in' }}</span>
-                  </div>
-                  <div class="flex items-center text-sm text-gray-500">
                     <RectangleGroupIcon class="flex-shrink-0 mr-1.5 h-4 w-4 sm:h-5 sm:w-5 text-gray-400" aria-hidden="true" />
                     <span class="truncate">{{ order.table || 'Takeaway' }}</span>
                   </div>

@@ -24,7 +24,7 @@
             leave-from="opacity-100 translate-y-0 sm:scale-100"
             leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
           >
-            <DialogPanel class="relative transform overflow-hidden rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-4xl sm:p-6">
+            <DialogPanel class="relative transform overflow-hidden rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 w-full max-w-[95vw] sm:max-w-4xl sm:p-6 mx-2 sm:mx-0">
               <div>
                 <div class="flex items-center justify-between">
                   <DialogTitle as="h3" class="text-lg font-medium leading-6 text-gray-900">
@@ -40,9 +40,9 @@
                   </button>
                 </div>
 
-                <div class="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2">
+                <div class="mt-6 grid grid-cols-1 gap-4 sm:gap-6 sm:grid-cols-2">
                   <!-- Left Column: Order Details -->
-                  <div class="space-y-4">
+                  <div class="space-y-3 sm:space-y-4">
                     <div>
                       <label for="order-type" class="block text-sm font-medium text-gray-700">Order Type</label>
                       <select
@@ -99,7 +99,7 @@
                   </div>
 
                   <!-- Right Column: Menu Items -->
-                  <div class="space-y-4">
+                  <div class="space-y-3 sm:space-y-4">
                     <div>
                       <label class="block text-sm font-medium text-gray-700 mb-1">Menu Items</label>
                       <div v-if="loading.menu" class="text-center py-4">
@@ -109,10 +109,10 @@
                       <div v-else-if="error.menu" class="text-center py-4 text-red-600">
                         <p>Error loading menu items. Please try again.</p>
                       </div>
-                      <div v-else class="space-y-2">
-                        <div v-for="item in menuItems" :key="item.id" class="flex items-center justify-between p-2 border rounded-md hover:bg-gray-50">
-                          <div class="flex-1">
-                            <h4 class="text-sm font-medium text-gray-900">{{ item.name }}</h4>
+                      <div v-else class="space-y-2 max-h-[50vh] sm:max-h-none overflow-y-auto pr-1 -mr-1 sm:mr-0">
+                        <div v-for="item in menuItems" :key="item.id" class="flex items-center justify-between p-3 sm:p-2 border rounded-md hover:bg-gray-50">
+                          <div class="flex-1 min-w-0">
+                            <h4 class="text-sm font-medium text-gray-900 truncate">{{ item.name }}</h4>
                             <p class="text-sm text-gray-500">${{ (item.price || 0).toFixed(2) }}</p>
                           </div>
                           <div class="flex items-center space-x-2">
@@ -140,17 +140,17 @@
                 </div>
               </div>
 
-              <div class="mt-5 sm:mt-6 sm:grid sm:grid-flow-row-dense sm:grid-cols-2 sm:gap-3">
+              <div class="mt-5 sm:mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <button
                   type="button"
-                  class="inline-flex w-full justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-base font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:col-start-1 sm:mt-0 sm:text-sm"
+                  class="inline-flex w-full justify-center rounded-md border border-gray-300 bg-white px-4 py-3 sm:py-2 text-base font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:text-sm"
                   @click="$emit('close')"
                 >
                   Cancel
                 </button>
                 <button
                   type="button"
-                  class="inline-flex w-full justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:col-start-2 sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                  class="inline-flex w-full justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-3 sm:py-2 text-base font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                   :disabled="selectedItems.length === 0 || (form.type === 'Dine-in' && !form.tableId) || (form.type !== 'Dine-in' && !form.customerName)"
                   @click="createOrder"
                 >

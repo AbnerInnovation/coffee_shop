@@ -50,10 +50,6 @@
                 
                 <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
-                    <h4 class="text-sm font-medium text-gray-500">Customer</h4>
-                    <p class="mt-1 text-sm text-gray-900">{{ order.customerName || 'Walk-in' }}</p>
-                  </div>
-                  <div>
                     <h4 class="text-sm font-medium text-gray-500">Table</h4>
                     <p class="mt-1 text-sm text-gray-900">{{ order.table || 'Takeaway' }}</p>
                   </div>
