@@ -5,13 +5,15 @@ export type OrderStatus = 'pending' | 'preparing' | 'ready' | 'completed' | 'can
 export interface OrderItem {
   menu_item_id: number;
   quantity: number;
-  special_instructions?: string;
+  special_instructions?: string | null;
+  unit_price?: number;  // Add this to match the data we're sending
 }
 
 export interface CreateOrderData {
-  table_id: number;
+  table_id?: number | null;  // Optional for takeaway/delivery orders
+  customer_name?: string | null;  // For takeaway/delivery orders
   items: OrderItem[];
-  notes?: string;
+  notes?: string | null;
 }
 
 export interface MenuItem {
@@ -28,7 +30,15 @@ export interface OrderItemDetails extends OrderItem {
   id: number;
   name: string;
   price: number;
+  unit_price?: number;
   menu_item?: MenuItem;
+}
+
+export interface TableDetails {
+  id: number;
+  number: number;
+  capacity: number;
+  is_occupied: boolean;
 }
 
 export interface Order {
@@ -37,17 +47,29 @@ export interface Order {
   created_at: string;
   updated_at: string;
   total_amount: number;
-  customer_name?: string;
-  table_number?: number;
-  table_id: number;
-  notes?: string;
+  customer_name?: string | null;
+  table_number?: number | null;
+  table_id?: number | null;
+  table?: TableDetails;
+  notes?: string | null;
   items?: OrderItemDetails[];
 }
 
 const orderService = {
   async createOrder(orderData: CreateOrderData): Promise<Order> {
-    const response = await api.post('/orders', orderData);
-    return response.data;
+    try {
+      const response = await api.post('/orders', orderData);
+
+      return response;
+    } catch (error: any) {
+      if (error.response) {
+        throw new Error(error.response.data?.detail || 'Failed to create order');
+      } else if (error.request) {
+        throw new Error('No response received from the server');
+      } else {
+        throw error;
+      }
+    }
   },
 
   async getOrder(orderId: number): Promise<Order> {
@@ -55,8 +77,8 @@ const orderService = {
     return response.data;
   },
 
-  async updateOrderStatus(orderId: number, status: OrderStatus): Promise<Order> {
-    const response = await api.patch(`/orders/${orderId}/status`, { status });
+  async updateOrder(orderId: number, data: { status?: OrderStatus; [key: string]: any }): Promise<Order> {
+    const response = await api.put(`/orders/${orderId}`, data);
     return response.data;
   },
 

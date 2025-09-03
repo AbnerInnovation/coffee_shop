@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 from typing import List
 
 from ...db.base import get_db
@@ -82,11 +82,18 @@ async def update_order(order_id: int, order: OrderUpdate, db: Session = Depends(
     """
     Update an order.
     """
-    db_order = order_service.get_order(db, order_id=order_id)
+    # First get the database order object
+    db_order = db.query(OrderModel).filter(OrderModel.id == order_id).first()
     if db_order is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found")
     
-    return order_service.update_order(db=db, db_order=db_order, order=order)
+    # Update the order in the database
+    updated_order = order_service.update_order(db=db, db_order=db_order, order=order)
+    
+    # Return the updated order
+    return updated_order
+
+
 
 
 @router.delete("/{order_id}", status_code=status.HTTP_204_NO_CONTENT)

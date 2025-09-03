@@ -62,12 +62,8 @@
                         id="table"
                         v-model="form.tableId"
                         class="mt-1 block w-full rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
-                        :disabled="loading.tables"
                       >
-                        <option v-if="loading.tables" value="" disabled>Loading tables...</option>
-                        <option v-else-if="error.tables" value="" disabled>Error loading tables</option>
-                        <option v-else-if="availableTables.length === 0" value="" disabled>No tables available</option>
-                        <option v-else v-for="table in availableTables" :key="table.id" :value="table.id">
+                        <option v-for="table in availableTables" :key="table.id" :value="table.id">
                           Table {{ table.number }} ({{ table.capacity }} pax)
                         </option>
                       </select>
@@ -102,37 +98,46 @@
                   <div class="space-y-4">
                     <div>
                       <label class="block text-sm font-medium text-gray-700 mb-1">Menu Items</label>
-                      <div v-if="loading.menu" class="text-center py-4">
-                        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500 mx-auto"></div>
-                        <p class="mt-2 text-sm text-gray-500">Loading menu items...</p>
-                      </div>
-                      <div v-else-if="error.menu" class="text-center py-4 text-red-600">
-                        <p>Error loading menu items. Please try again.</p>
-                      </div>
-                      <div v-else class="space-y-2">
+                      <div class="space-y-2">
                         <div v-for="item in menuItems" :key="item.id" class="flex items-center justify-between p-2 border rounded-md hover:bg-gray-50">
-                          <div class="flex-1">
-                            <h4 class="text-sm font-medium text-gray-900">{{ item.name }}</h4>
-                            <p class="text-sm text-gray-500">${{ (item.price || 0).toFixed(2) }}</p>
+                          <div>
+                            <div class="font-medium text-gray-900">{{ item.name }}</div>
+                            <div class="text-sm text-gray-500">${{ item.price.toFixed(2) }}</div>
                           </div>
                           <div class="flex items-center space-x-2">
                             <button
                               type="button"
-                              class="p-1 rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                              class="inline-flex items-center p-1 border border-transparent rounded-full shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                               @click="decreaseQuantity(item.id)"
-                              :disabled="getItemQuantity(item.id) === 0"
                             >
-                              <MinusIcon class="h-5 w-5" />
+                              <MinusIcon class="h-4 w-4" aria-hidden="true" />
                             </button>
-                            <span class="w-6 text-center">{{ getItemQuantity(item.id) }}</span>
+                            <span class="w-8 text-center">{{ getItemQuantity(item.id) }}</span>
                             <button
                               type="button"
-                              class="p-1 rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                              class="inline-flex items-center p-1 border border-transparent rounded-full shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                               @click="increaseQuantity(item.id)"
                             >
-                              <PlusIcon class="h-5 w-5" />
+                              <PlusIcon class="h-4 w-4" aria-hidden="true" />
                             </button>
                           </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Selected Items -->
+                    <div v-if="selectedItems.length > 0" class="mt-4">
+                      <h4 class="text-sm font-medium text-gray-700 mb-2">Order Summary</h4>
+                      <div class="border rounded-md divide-y divide-gray-200">
+                        <div v-for="item in selectedItems" :key="item.id" class="p-3 text-sm">
+                          <div class="flex justify-between">
+                            <span class="font-medium">{{ item.quantity }}x {{ item.name }}</span>
+                            <span>${{ (item.quantity * item.price).toFixed(2) }}</span>
+                          </div>
+                          <div v-if="item.notes" class="text-xs text-gray-500 mt-1">{{ item.notes }}</div>
+                        </div>
+                        <div class="p-3 bg-gray-50 text-right">
+                          <div class="font-medium">Total: ${{ orderTotal.toFixed(2) }}</div>
                         </div>
                       </div>
                     </div>
@@ -143,18 +148,18 @@
               <div class="mt-5 sm:mt-6 sm:grid sm:grid-flow-row-dense sm:grid-cols-2 sm:gap-3">
                 <button
                   type="button"
-                  class="inline-flex w-full justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-base font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:col-start-1 sm:mt-0 sm:text-sm"
-                  @click="$emit('close')"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  class="inline-flex w-full justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:col-start-2 sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                  class="inline-flex w-full justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:col-start-2 sm:text-sm disabled:opacity-50"
                   :disabled="selectedItems.length === 0 || (form.type === 'Dine-in' && !form.tableId) || (form.type !== 'Dine-in' && !form.customerName)"
                   @click="createOrder"
                 >
                   Create Order
+                </button>
+                <button
+                  type="button"
+                  class="mt-3 inline-flex w-full justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-base font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:col-start-1 sm:mt-0 sm:text-sm"
+                  @click="$emit('close')"
+                >
+                  Cancel
                 </button>
               </div>
             </DialogPanel>
@@ -165,7 +170,7 @@
   </TransitionRoot>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import { ref, computed, onMounted } from 'vue';
 import orderService from '@/services/orderService';
 import menuService from '@/services/menuService';
@@ -180,13 +185,33 @@ import {
 } from '@headlessui/vue';
 import { XMarkIcon, PlusIcon, MinusIcon } from '@heroicons/vue/24/outline';
 
-// Types
+const props = defineProps({
+  open: {
+    type: Boolean,
+    required: true
+  }
+});
+
+const emit = defineEmits(['close', 'order-created']);
+
+const { showSuccess, showError } = useToast();
+
+// Form data
+const form = ref({
+  type: 'Dine-in',
+  tableId: '',
+  customerName: '',
+  notes: '',
+  items: [] // Array of { id, quantity, notes }
+});
+
+const { showError } = useToast();
 interface MenuItem {
   id: number;
   name: string;
   price: number;
-  description?: string;
   category: string;
+  description?: string;
   image_url?: string;
   is_available: boolean;
 }
@@ -198,51 +223,15 @@ interface TableItem {
   status: string;
 }
 
-interface FormItem {
-  id: number;
-  quantity: number;
-  notes: string;
-  special_instructions: string;
-}
-
-interface FormData {
-  type: 'Dine-in' | 'Takeaway' | 'Delivery';
-  tableId: string;
-  customerName: string;
-  notes: string;
-  items: FormItem[];
-}
-
-// Props and Emits
-const props = defineProps<{
-  open: boolean;
-}>();
-
-const emit = defineEmits<{
-  (e: 'close'): void;
-  (e: 'order-created', order: any): void;
-}>();
-
-// Form data
-const form = ref<FormData>({
-  type: 'Dine-in',
-  tableId: '',
-  customerName: '',
-  notes: '',
-  items: []
-});
-
-const { showError, showSuccess } = useToast();
 const menuItems = ref<MenuItem[]>([]);
 const availableTables = ref<TableItem[]>([]);
 const loading = ref({
   menu: false,
   tables: false
 });
-
 const error = ref({
-  menu: null as string | null,
-  tables: null as string | null
+  menu: null,
+  tables: null
 });
 
 // Fetch menu items
@@ -251,13 +240,13 @@ const fetchMenuItems = async () => {
     loading.value.menu = true;
     const items = await menuService.getMenuItems();
     menuItems.value = items.map(item => ({
-      id: Number(item.id), // Ensure ID is a number
+      id: item.id,
       name: item.name,
-      price: Number(item.price), // Ensure price is a number
+      price: parseFloat(item.price),
       category: item.category?.name || 'Uncategorized',
       description: item.description,
       image_url: item.image_url,
-      is_available: Boolean(item.is_available) // Ensure boolean
+      is_available: item.is_available
     }));
   } catch (err) {
     console.error('Error fetching menu items:', err);
@@ -297,35 +286,39 @@ const selectedItems = computed(() => {
       return {
         ...menuItem,
         quantity: item.quantity,
-        special_instructions: item.special_instructions
+        notes: item.notes
       };
     });
 });
 
 const orderTotal = computed(() => {
   return selectedItems.value.reduce((total, item) => {
-    return total + ((item.price || 0) * item.quantity);
+    return total + (item.price * item.quantity);
   }, 0);
 });
 
 // Methods
-function getItemQuantity(itemId: number): number {
+function getItemQuantity(itemId) {
   const item = form.value.items.find(i => i.id === itemId);
   return item ? item.quantity : 0;
 }
 
-function increaseQuantity(itemId: number) {
+function increaseQuantity(itemId) {
   const itemIndex = form.value.items.findIndex(i => i.id === itemId);
-  if (itemIndex !== -1) {
+  if (itemIndex === -1) {
+    form.value.items.push({ id: itemId, quantity: 1, notes: '' });
+  } else {
     form.value.items[itemIndex].quantity++;
   }
 }
 
-function decreaseQuantity(itemId: number) {
+function decreaseQuantity(itemId) {
   const itemIndex = form.value.items.findIndex(i => i.id === itemId);
   if (itemIndex !== -1) {
-    if (form.value.items[itemIndex].quantity > 0) {
+    if (form.value.items[itemIndex].quantity > 1) {
       form.value.items[itemIndex].quantity--;
+    } else {
+      form.value.items.splice(itemIndex, 1);
     }
   }
 }
@@ -334,69 +327,31 @@ async function createOrder() {
   try {
     // Prepare the order data for the API
     const orderData = {
-      table_id: form.value.type === 'Dine-in' ? parseInt(form.value.tableId) : null,
-      customer_name: form.value.type !== 'Dine-in' ? form.value.customerName : null,
-      notes: form.value.notes || null,
-      items: selectedItems.value
-        .filter(item => item.quantity > 0 && item.id !== undefined)
-        .map(item => ({
-          menu_item_id: item.id as number, // We've filtered out undefined ids
-          quantity: item.quantity,
-          special_instructions: item.special_instructions || null,
-          unit_price: menuItems.value.find(mi => mi.id === item.id)?.price || 0
-        }))
+      table_id: parseInt(form.value.tableId) || 1, // Default to table 1 if not specified
+      notes: form.value.notes,
+      items: selectedItems.value.map(item => ({
+        menu_item_id: item.id,
+        quantity: item.quantity,
+        special_instructions: item.special_instructions,
+        variant_id: item.variant_id || null
+      }))
     };
 
-    console.log('Sending order data:', orderData);
-    
     // Call the order service to create the order
-    console.log('Creating order with data:', orderData);
-    const response = await orderService.createOrder(orderData);
-    console.log('Order creation response:', response);
+    const newOrder = await orderService.createOrder(orderData);
     
-    if (!response) {
-      throw new Error('No response received from the server');
-    }
-    
-    // Reset the form
+    // Reset form
     form.value = {
       type: 'Dine-in',
       tableId: '',
       customerName: '',
       notes: '',
-      items: menuItems.value.map(item => ({
-        id: item.id,
-        quantity: 0,
-        notes: '',
-        special_instructions: ''
-      }))
+      items: []
     };
-    
-    // Create a minimal order object with required fields
-    const emittedOrder = {
-      id: response.id,
-      status: response.status || 'pending',
-      customer_name: response.customer_name || (response.table_id ? 'Dine-in' : 'Takeaway'),
-      table_id: response.table_id || null,
-      table_number: response.table?.number || (response.table_id || null),
-      table: response.table_id ? `Table ${response.table?.number || response.table_id}` : 'Takeaway',
-      total: response.total_amount || 0,
-      total_amount: response.total_amount || 0,
-      notes: response.notes || null,
-      created_at: response.created_at || new Date().toISOString(),
-      updated_at: response.updated_at || new Date().toISOString(),
-      items: (response.items || []).map(item => ({
-        ...item,
-        name: item.name || 'Unknown Item',
-        price: item.price || 0,
-        quantity: item.quantity || 0
-      }))
-    };
-    
-    console.log('Emitting order:', emittedOrder);
-    
-    // Emit the order-created event and close the modal
-    emit('order-created', emittedOrder);
+
+    // Emit the new order
+    emit('order-created', newOrder);
+    showSuccess('Order created successfully');
     emit('close');
   } catch (error) {
     console.error('Error creating order:', error);

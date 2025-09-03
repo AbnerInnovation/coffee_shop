@@ -179,13 +179,17 @@ def create_order_with_items(db: Session, order: OrderCreate) -> dict:
 
 
 def update_order(db: Session, db_order: OrderModel, order: OrderUpdate) -> dict:
-    for field, value in order.dict(exclude_unset=True).items():
+    update_data = order.dict(exclude_unset=True)
+    for field, value in update_data.items():
         setattr(db_order, field, value)
 
     db_order.updated_at = datetime.utcnow()
+    db.add(db_order)
     db.commit()
     db.refresh(db_order)
-    return get_order(db, db_order.id)
+    
+    # Return the serialized order
+    return serialize_order(db_order)
 
 
 def delete_order(db: Session, db_order: OrderModel) -> None:

@@ -76,6 +76,41 @@
           <li v-for="order in filteredOrders" :key="order.id" class="px-4 py-4 sm:px-6 hover:bg-gray-50">
             <div class="flex items-center justify-between">
               <div class="flex-1 min-w-0">
+                <!-- Status dropdown -->
+                <div class="relative inline-block text-left mb-2">
+                  <div>
+                    <button type="button" class="inline-flex items-center px-3 py-1 rounded-md text-sm font-medium" 
+                      :class="getStatusBadgeClass(order.status)"
+                      @click.stop="toggleStatusDropdown(order.id)">
+                      {{ formatStatus(order.status) }}
+                      <ChevronDownIcon class="ml-1 h-4 w-4" aria-hidden="true" />
+                    </button>
+                  </div>
+                  <div v-if="statusDropdownOpen === order.id" class="origin-top-right absolute left-0 mt-2 w-40 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
+                    <div class="py-1" role="menu" aria-orientation="vertical">
+                      <template v-if="order.status === 'pending'">
+                        <button @click="updateOrderStatus(order.id, 'preparing')" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">
+                          Mark as Preparing
+                        </button>
+                        <button @click="cancelOrder(order.id)" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100" role="menuitem">
+                          Cancel Order
+                        </button>
+                      </template>
+                      <button v-else-if="order.status === 'preparing'" 
+                        @click="updateOrderStatus(order.id, 'ready')" 
+                        class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" 
+                        role="menuitem">
+                        Mark as Ready
+                      </button>
+                      <button v-else-if="order.status === 'ready'" 
+                        @click="updateOrderStatus(order.id, 'completed')" 
+                        class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" 
+                        role="menuitem">
+                        Mark as Completed
+                      </button>
+                    </div>
+                  </div>
+                </div>
                 <div class="flex items-center">
                   <p class="text-sm font-medium text-indigo-600 truncate">
                     Order #{{ order.id }}
@@ -171,7 +206,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, type Ref } from 'vue';
+import { ref, onMounted, computed, type Ref, onUnmounted, watch } from 'vue';
 import orderService from '@/services/orderService';
 import type { Order } from '@/services/orderService';
 import { 
@@ -182,9 +217,10 @@ import {
   UserIcon, 
   RectangleGroupIcon, 
   ClockIcon,
+  ChevronDownIcon,
   CheckCircleIcon 
 } from '@heroicons/vue/24/outline';
-import OrderDetailsModal from '@/components/orders/OrderDetailsModal.vue';
+import OrderDetails from '@/components/orders/OrderDetailsModal.vue';
 import NewOrderModal from '@/components/orders/NewOrderModal.vue';
 // Removed unused imports
 
@@ -223,8 +259,9 @@ interface OrderItemLocal {
   name: string;
   price: number;
   quantity: number;
-  special_instructions?: string;
+  special_instructions?: string | null;
   menu_item?: MenuItem;
+  unit_price?: number;
 }
 
 interface OrderWithLocalFields {
@@ -235,33 +272,92 @@ interface OrderWithLocalFields {
   total: number;
   createdAt: Date;
   updated_at: string;
-  total_amount: number;
-  table_id: number;
-  notes?: string;
+  total_amount?: number;
+  table_id?: number | null;
+  notes?: string | null;
   items: OrderItemLocal[];
-  created_at: string; // For compatibility
+  created_at?: string; // For compatibility
+  customer_name?: string | null;
+  table_number?: number | null;
 }
-
-const orders = ref<OrderWithLocalFields[]>([]);
 
 // Define order status type that matches the backend
 type BackendOrderStatus = 'pending' | 'preparing' | 'ready' | 'completed' | 'cancelled';
 type OrderStatus = BackendOrderStatus | 'all';
+
+// State
+// State
+const loading = ref(false);
+const error = ref<string | null>(null);
+const statusDropdownOpen = ref<number | null>(null);
+const selectedStatus = ref<OrderStatus>('all');
+const isNewOrderModalOpen = ref(false);
+const isOrderDetailsOpen = ref(false);
+const selectedOrder = ref<OrderWithLocalFields | null>(null);
+const orders = ref<OrderWithLocalFields[]>([]);
+
+// Tab definitions
+const tabs = [
+  { id: 'all' as const, name: 'All', count: 0 },
+  { id: 'pending' as const, name: 'Pending', count: 0 },
+  { id: 'preparing' as const, name: 'Preparing', count: 0 },
+  { id: 'ready' as const, name: 'Ready', count: 0 },
+  { id: 'completed' as const, name: 'Completed', count: 0 },
+  { id: 'cancelled' as const, name: 'Cancelled', count: 0 },
+];
+
+// Update tab counts when orders change
+watch(orders, (newOrders) => {
+  tabs.forEach(tab => {
+    if (tab.id === 'all') {
+      tab.count = newOrders.length;
+    } else {
+      tab.count = newOrders.filter(order => order.status === tab.id).length;
+    }
+  });
+}, { immediate: true });
+
+// Tab selection
+const selectTab = (tabId: OrderStatus) => {
+  selectedStatus.value = tabId;
+};
+
+// Format status for display
+const formatStatus = (status: OrderStatus): string => {
+  return statusMap[status] || status;
+};
+
+
+// Status badge classes
+const getStatusBadgeClass = (status: BackendOrderStatus): string => {
+  const baseClasses = 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium';
+  
+  switch (status) {
+    case 'pending':
+      return `${baseClasses} bg-yellow-100 text-yellow-800`;
+    case 'preparing':
+      return `${baseClasses} bg-blue-100 text-blue-800`;
+    case 'ready':
+      return `${baseClasses} bg-green-100 text-green-800`;
+    case 'completed':
+      return `${baseClasses} bg-gray-100 text-gray-800`;
+    case 'cancelled':
+      return `${baseClasses} bg-red-100 text-red-800`;
+    default:
+      return `${baseClasses} bg-gray-100 text-gray-800`;
+  }
+};
 
 // Map of status to display names
 const statusMap: Record<OrderStatus, string> = {
   'all': 'All',
   'pending': 'Pending',
   'preparing': 'Preparing',
-  'ready': 'Ready',
+  'ready': 'Ready for Pickup',
   'completed': 'Completed',
   'cancelled': 'Cancelled'
-} as const;
+};
 
-const orderStatuses = Object.keys(statusMap).filter(k => k !== 'all') as BackendOrderStatus[];
-const isOrderDetailsOpen = ref(false);
-const selectedOrder = ref<OrderWithLocalFields | null>(null);
-const isNewOrderModalOpen = ref(false);
 
 const filteredOrders = computed<OrderWithLocalFields[]>(() => {
   if (selectedStatus.value === 'all') return orders.value;
@@ -272,47 +368,6 @@ const getOrderCount = (status: OrderStatus): number => {
   if (!orders.value || !orders.value.length) return 0;
   if (status === 'all') return orders.value.length;
   return orders.value.filter(order => order.status === status).length;
-};
-
-
-// Tab definitions with proper status types
-const tabs = [
-  { id: 'all', name: 'All' },
-  { id: 'pending', name: 'Pending' },
-  { id: 'preparing', name: 'Preparing' },
-  { id: 'ready', name: 'Ready' },
-  { id: 'completed', name: 'Completed' },
-  { id: 'cancelled', name: 'Cancelled' }
-] as const;
-const selectedStatus = ref<OrderStatus>('all');
-
-const selectTab = (tabId: OrderStatus) => {
-  selectedStatus.value = tabId;
-  fetchOrders();
-};
-
-const getStatusBadgeClass = (status: BackendOrderStatus) => {
-  const statusClasses: Record<BackendOrderStatus, string> = {
-    'pending': 'bg-yellow-100 text-yellow-800',
-    'preparing': 'bg-blue-100 text-blue-800',
-    'ready': 'bg-green-100 text-green-800',
-    'completed': 'bg-purple-100 text-purple-800',
-    'cancelled': 'bg-red-100 text-red-800'
-  };
-  return statusClasses[status] || 'bg-gray-100 text-gray-800';
-};
-
-// Format status for display
-const formatStatus = (status: OrderStatus): string => {
-  if (!status || status === 'all') return 'All';
-  const displayMap: Record<BackendOrderStatus, string> = {
-    'pending': 'Pending',
-    'preparing': 'Preparing',
-    'ready': 'Ready',
-    'completed': 'Completed',
-    'cancelled': 'Cancelled'
-  };
-  return displayMap[status as BackendOrderStatus] || status;
 };
 
 const formatTime = (date: string | Date): string => {
@@ -336,45 +391,61 @@ function closeOrderDetails() {
 }
 
 function openNewOrderModal() {
+  console.log('Opening new order modal');
   isNewOrderModalOpen.value = true;
+  console.log('isNewOrderModalOpen after open:', isNewOrderModalOpen.value);
 }
 
 function closeNewOrderModal() {
+  console.log('Closing new order modal');
   isNewOrderModalOpen.value = false;
+  console.log('isNewOrderModalOpen after close:', isNewOrderModalOpen.value);
 }
 
 const handleNewOrder = async (newOrder: Order) => {
   try {
-    const createdOrder = await orderService.createOrder({
-      table_id: newOrder.table_id,
-      items: (newOrder.items || []).map(item => ({
-        menu_item_id: item.menu_item_id,
-        quantity: item.quantity,
-        special_instructions: item.special_instructions
-      })),
-      notes: newOrder.notes
-    });
+    console.log('New order received:', newOrder);
+    
+    // Create a properly typed order object
     const localOrder: OrderWithLocalFields = {
-      ...createdOrder,
-      customerName: createdOrder.customer_name || 'Walk-in',
-      table: createdOrder.table_number ? `Table ${createdOrder.table_number}` : 'Takeaway',
-      total: createdOrder.total_amount,
-      createdAt: new Date(createdOrder.created_at),
-      items: (createdOrder.items || []).map(item => ({
+      id: newOrder.id,
+      status: newOrder.status as BackendOrderStatus,
+      customerName: newOrder.customer_name || (newOrder.table_number ? 'Table ' + newOrder.table_number : 'Takeaway'),
+      table: newOrder.table_number ? `Table ${newOrder.table_number}` : (newOrder.customer_name ? 'Takeaway' : 'Dine-in'),
+      total: newOrder.total_amount || 0,
+      createdAt: newOrder.created_at ? new Date(newOrder.created_at) : new Date(),
+      updated_at: newOrder.updated_at || new Date().toISOString(),
+      items: (newOrder.items || []).map(item => ({
         id: item.id,
         name: item.menu_item?.name || 'Unknown Item',
-        price: item.menu_item?.price || 0,
+        price: item.menu_item?.price || item.unit_price || 0,
         quantity: item.quantity,
-        special_instructions: item.special_instructions,
+        special_instructions: item.special_instructions || null,
         menu_item: item.menu_item
-      }))
+      })),
+      // Copy over any additional fields from the new order
+      ...(newOrder.table_id !== undefined && { table_id: newOrder.table_id }),
+      ...(newOrder.customer_name !== undefined && { customer_name: newOrder.customer_name }),
+      ...(newOrder.notes !== undefined && { notes: newOrder.notes }),
+      ...(newOrder.table_number !== undefined && { table_number: newOrder.table_number })
     };
+    
+    console.log('Processed order for display:', localOrder);
+    
+    // Add the new order to the beginning of the list
     orders.value = [localOrder, ...orders.value];
     showSuccess('Order created successfully');
     closeNewOrderModal();
   } catch (err) {
-    console.error('Error creating new order:', err);
-    showError('Failed to create new order. Please try again.');
+    console.error('Error processing new order:', err);
+    // Only show error if we don't have an order ID
+    if (!newOrder?.id) {
+      showError('Failed to create new order. Please try again.');
+    } else {
+      // If we have an order ID, it was created successfully
+      showSuccess('Order created successfully');
+      closeNewOrderModal();
+    }
   }
 };
 
@@ -385,8 +456,28 @@ const handleStatusUpdate = ({ orderId, status }: { orderId: number; status: Orde
   }
 };
 
-const loading = ref(false);
-const error = ref<string | null>(null) as Ref<string | null>;
+
+// Close dropdown when clicking outside
+const handleClickOutside = (event: MouseEvent) => {
+  const target = event.target as HTMLElement;
+  if (!target.closest('.status-dropdown')) {
+    statusDropdownOpen.value = null;
+  }
+};
+
+// Toggle status dropdown
+const toggleStatusDropdown = (orderId: number) => {
+  statusDropdownOpen.value = statusDropdownOpen.value === orderId ? null : orderId;
+};
+
+// Close dropdown when clicking outside
+onMounted(() => {
+  document.addEventListener('click', handleClickOutside);
+});
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside);
+});
 
 // Fetch orders from API
 const fetchOrders = async () => {
@@ -433,7 +524,7 @@ const fetchOrders = async () => {
 const updateOrderStatus = async (orderId: number, newStatus: BackendOrderStatus) => {
   try {
     // Update the order status in the backend
-    await orderService.updateOrderStatus(orderId, newStatus);
+    await orderService.updateOrder(orderId, { status: newStatus });
     
     // Update the order status in the local state
     const orderIndex = orders.value.findIndex(o => o.id === orderId);
@@ -460,7 +551,7 @@ const cancelOrder = async (orderId: number) => {
   if (!confirmed) return;
   
   try {
-    await orderService.updateOrderStatus(orderId, 'cancelled');
+    await orderService.updateOrder(orderId, { status: 'cancelled' });
     
     // Update the order status in the local state
     const orderIndex = orders.value.findIndex(o => o.id === orderId);
