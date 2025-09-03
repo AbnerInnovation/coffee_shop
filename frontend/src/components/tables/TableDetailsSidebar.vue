@@ -27,7 +27,7 @@
             >
               <DialogPanel class="pointer-events-auto w-screen max-w-md">
                 <div class="flex h-full flex-col overflow-y-scroll bg-white shadow-xl">
-                  <div class="px-4 py-6 sm:px-6">
+                  <div class="p-6">
                     <div class="flex items-start justify-between">
                       <DialogTitle class="text-lg font-medium text-gray-900">
                         Table {{ table?.number }}

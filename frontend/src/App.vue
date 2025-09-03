@@ -2,7 +2,7 @@
   <div class="min-h-full">
     <!-- Navigation -->
     <nav class="bg-gray-800">
-      <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 w-full">
         <div class="flex h-16 items-center justify-between">
           <div class="flex items-center">
             <div class="flex-shrink-0">
@@ -97,7 +97,7 @@
       </div>
 
       <!-- Mobile menu, show/hide based on menu state. -->
-      <div v-if="isMobileMenuOpen" class="md:hidden" id="mobile-menu">
+      <div v-if="isMobileMenuOpen" class="md:hidden border-t border-gray-700" id="mobile-menu">
         <div class="space-y-1 px-2 pb-3 pt-2 sm:px-3">
           <router-link
             v-for="item in navigation"
@@ -141,7 +141,7 @@
 
     <!-- Main content -->
     <main class="bg-gray-50 min-h-[calc(100vh-4rem)]">
-      <div class="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
+      <div class="mx-auto max-w-7xl p-4 sm:px-6 lg:px-8 py-6">
         <router-view v-slot="{ Component }">
           <transition name="fade" mode="out-in">
             <div class="transition-all duration-200">
