@@ -151,10 +151,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, defineProps, defineEmits, onMounted } from 'vue';
-import orderService from '@/services/orderService';
-import menuService from '@/services/menuService';
-import { MenuItem } from '@/types/menu';
+import { ref, defineProps, defineEmits, onMounted, computed } from 'vue';
+import orderService, { 
+  type OrderItem, 
+  type Order, 
+  type MenuItem, 
+  type CreateOrderData, 
+  type CreateOrderItemData 
+} from '@/services/orderService';
 
 const props = defineProps({
   tableId: {
@@ -170,11 +174,13 @@ const props = defineProps({
 const emit = defineEmits(['close', 'order-created']);
 
 const menuItems = ref<MenuItem[]>([]);
-const orderItems = ref<Array<{
+// This is the form data structure, not the final OrderItem type
+interface OrderItemFormData extends Omit<CreateOrderItemData, 'menu_item_id' | 'variant_id'> {
   menu_item_id: number | string;
-  quantity: number;
-  special_instructions?: string;
-}>>([{ menu_item_id: '', quantity: 1 }]);
+  variant_id: number | string | null;
+}
+
+const orderItems = ref<OrderItemFormData[]>([]);
 
 const orderNotes = ref('');
 const isSubmitting = ref(false);
@@ -182,7 +188,7 @@ const isSubmitting = ref(false);
 // Fetch menu items when component mounts
 onMounted(async () => {
   try {
-    const response = await menuService.getMenuItems();
+    const response = await orderService.getMenuItems();
     menuItems.value = response;
   } catch (error) {
     console.error('Error fetching menu items:', error);
@@ -192,7 +198,13 @@ onMounted(async () => {
 
 // Add new empty order item
 const addNewItem = () => {
-  orderItems.value.push({ menu_item_id: '', quantity: 1 });
+  orderItems.value.push({ 
+    menu_item_id: '', 
+    variant_id: null, 
+    quantity: 1, 
+    special_instructions: '',
+    unit_price: 0
+  });
 };
 
 // Remove order item
@@ -204,22 +216,44 @@ const removeItem = (index: number) => {
 
 // Get menu item name by ID
 const getMenuItemName = (id: number | string) => {
-  if (!id) return 'Select an item';
-  const item = menuItems.value.find(item => item.id === id);
+  const item = menuItems.value.find(item => item.id === Number(id));
   return item ? item.name : 'Unknown Item';
 };
 
+const selectedMenuItem = (index: number) => {
+  return menuItems.value.find(item => item.id === Number(orderItems.value[index].menu_item_id));
+};
+
+const updateUnitPrice = (index: number) => {
+  const item = selectedMenuItem(index);
+  if (item) {
+    if (orderItems.value[index].variant_id) {
+      const variant = item.variants?.find(v => v.id === Number(orderItems.value[index].variant_id));
+      orderItems.value[index].unit_price = variant ? variant.price : item.price;
+    } else {
+      orderItems.value[index].unit_price = item.price;
+    }
+  }
+};
+
 // Get menu item price by ID
-const getMenuItemPrice = (id: number | string) => {
-  if (!id) return 0;
-  const item = menuItems.value.find(item => item.id === id);
-  return item ? item.price : 0;
+const getMenuItemPrice = (id: number | string, variantId?: number | string | null) => {
+  const item = menuItems.value.find(item => item.id === Number(id));
+  if (!item) return 0;
+  
+  if (variantId && item.variants) {
+    const variant = item.variants.find(v => v.id === Number(variantId));
+    return variant ? variant.price : item.price;
+  }
+  
+  return item.price;
 };
 
 // Calculate order total
 const calculateTotal = () => {
   return orderItems.value.reduce((total, item) => {
-    return total + (getMenuItemPrice(item.menu_item_id) * item.quantity);
+    if (!item.menu_item_id) return total;
+    return total + (item.unit_price * item.quantity);
   }, 0);
 };
 
@@ -230,7 +264,6 @@ const submitOrder = async () => {
   // Validate all items have a menu item selected
   const invalidItems = orderItems.value.some(item => !item.menu_item_id);
   if (invalidItems) {
-    // Show error (you might want to add better validation feedback)
     alert('Please select a menu item for all order items');
     return;
   }
@@ -238,31 +271,28 @@ const submitOrder = async () => {
   try {
     isSubmitting.value = true;
     
-    const orderData = {
+    const orderData: CreateOrderData = {
       table_id: props.tableId,
-      items: orderItems.value.map(item => ({
-        menu_item_id: Number(item.menu_item_id),
-        quantity: item.quantity,
-        special_instructions: item.special_instructions || ''
-      })),
-      notes: orderNotes.value
+      items: orderItems.value
+        .filter(item => item.menu_item_id && item.quantity > 0)
+        .map(item => ({
+          menu_item_id: Number(item.menu_item_id),
+          variant_id: item.variant_id ? Number(item.variant_id) : null,
+          quantity: item.quantity,
+          special_instructions: item.special_instructions || null,
+          unit_price: item.unit_price
+        })),
+      notes: orderNotes.value || null,
+      customer_name: null,
+      user_id: null
     };
 
-    const newOrder = await orderService.createOrder(orderData);
-    
-    // Emit success event
-    emit('order-created', newOrder);
-    
-    // Close the modal
+    const createdOrder = await orderService.createOrder(orderData);
+    emit('order-created', createdOrder);
     emit('close');
-    
-    // Show success message (you can replace this with a toast/notification)
-    alert('Order placed successfully!');
-    
   } catch (error) {
     console.error('Error creating order:', error);
-    // Show error message (you can replace this with a toast/notification)
-    alert('Failed to place order. Please try again.');
+    alert('Failed to create order. Please try again.');
   } finally {
     isSubmitting.value = false;
   }

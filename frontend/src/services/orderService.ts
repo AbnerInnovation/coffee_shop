@@ -3,36 +3,61 @@ import api from './api';
 export type OrderStatus = 'pending' | 'preparing' | 'ready' | 'completed' | 'cancelled';
 
 export interface OrderItem {
+  id: number;
   menu_item_id: number;
+  variant_id: number | null;
   quantity: number;
-  special_instructions?: string | null;
-  unit_price?: number;  // Add this to match the data we're sending
+  special_instructions: string | null;
+  status: string;
+  order_id: number;
+  created_at: string;
+  updated_at: string;
+  variant: {
+    id: number;
+    name: string;
+    price: number;
+    description: string | null;
+  } | null;
+  unit_price: number;
+  menu_item: {
+    id: number;
+    name: string;
+    description: string;
+    price: number;
+    category: string;
+    image_url: string;
+    is_available: boolean;
+  };
+}
+
+export interface CreateOrderItemData {
+  menu_item_id: number;
+  variant_id: number | null;
+  quantity: number;
+  special_instructions: string | null;
+  unit_price: number;
 }
 
 export interface CreateOrderData {
   table_id?: number | null;  // Optional for takeaway/delivery orders
   customer_name?: string | null;  // For takeaway/delivery orders
-  items: OrderItem[];
+  items: CreateOrderItemData[];
   notes?: string | null;
+  user_id?: string | null;
 }
 
-export interface MenuItem {
+export interface Variant {
   id: number;
   name: string;
   price: number;
-  description?: string;
-  category?: string;
-  image_url?: string;
-  is_available: boolean;
+  price_adjustment: number;
+  is_default: boolean;
+  description: string | null;
 }
 
-export interface OrderItemDetails extends OrderItem {
-  id: number;
-  name: string;
-  price: number;
-  unit_price?: number;
-  menu_item?: MenuItem;
-}
+// MenuItem is now defined below with the correct variants type
+
+// Remove OrderItemDetails interface as it's no longer needed
 
 export interface TableDetails {
   id: number;
@@ -47,20 +72,40 @@ export interface Order {
   created_at: string;
   updated_at: string;
   total_amount: number;
-  customer_name?: string | null;
-  table_number?: number | null;
-  table_id?: number | null;
-  table?: TableDetails;
-  notes?: string | null;
-  items?: OrderItemDetails[];
+  table_number: number;
+  table_id: number;
+  customer_name: string | null;
+  user_id: string | null;
+  notes: string | null;
+  items: OrderItem[];
+}
+
+// Menu item variant for the frontend
+export interface MenuItemVariant {
+  id: number;
+  name: string;
+  price: number;
+  description: string | null;
+}
+
+// Menu item type for the frontend
+export interface MenuItem {
+  id: number;
+  name: string;
+  description?: string;
+  price: number;
+  category?: string;
+  image_url?: string;
+  is_available: boolean;
+  variants?: MenuItemVariant[];
+  has_variants: boolean;
 }
 
 const orderService = {
   async createOrder(orderData: CreateOrderData): Promise<Order> {
     try {
-      const response = await api.post('/orders', orderData);
-
-      return response;
+      const { data } = await api.post<Order>('/orders', orderData);
+      return data;
     } catch (error: any) {
       if (error.response) {
         throw new Error(error.response.data?.detail || 'Failed to create order');
@@ -73,18 +118,18 @@ const orderService = {
   },
 
   async getOrder(orderId: number): Promise<Order> {
-    const response = await api.get(`/orders/${orderId}`);
-    return response.data;
+    const { data } = await api.get<Order>(`/orders/${orderId}`);
+    return data;
   },
 
   async updateOrder(orderId: number, data: { status?: OrderStatus; [key: string]: any }): Promise<Order> {
-    const response = await api.put(`/orders/${orderId}`, data);
-    return response.data;
+    const { data: responseData } = await api.put<Order>(`/orders/${orderId}`, data);
+    return responseData;
   },
 
   async getTableOrders(tableId: number): Promise<Order[]> {
-    const response = await api.get(`/tables/${tableId}/orders`);
-    return response.data;
+    const { data } = await api.get<Order[]>(`/tables/${tableId}/orders`);
+    return data;
   },
 
   async getActiveOrders(status?: OrderStatus): Promise<Order[]> {
@@ -93,20 +138,29 @@ const orderService = {
       if (status) {
         params.status = status;
       }
-      const response = await api.get('/orders/', { params });
-      
-      // The response might be the array directly or wrapped in a data property
-      const responseData = Array.isArray(response) ? response : 
-                         (Array.isArray(response?.data) ? response.data : response);
-      
-      if (!Array.isArray(responseData)) {
-        console.error('Expected array but got:', response);
-        return [];
+      console.log('Fetching orders with params:', params);
+      const response = await api.get<Order[]>('/orders', { params });
+      console.log('Orders API response:', response);
+
+      const orders = response;
+
+      return orders;
+    } catch (error: any) {
+      console.error('Error fetching active orders:', error);
+      if (error?.response) {
+        console.error('Error response data:', error.response.data);
+        console.error('Error status:', error.response.status);
       }
-      
-      return responseData;
+      throw error;
+    }
+  },
+
+  async getMenuItems(): Promise<MenuItem[]> {
+    try {
+      const { data } = await api.get<MenuItem[]>('/menu/items');
+      return data;
     } catch (error) {
-      console.error('Error fetching orders:', error);
+      console.error('Error fetching menu items:', error);
       throw error;
     }
   },

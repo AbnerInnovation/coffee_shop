@@ -13,10 +13,8 @@
         </div>
         <div class="ml-3">
           <p class="text-sm text-red-700">{{ error }}</p>
-          <button 
-            @click="fetchOrders"
-            class="mt-2 text-sm font-medium text-red-700 hover:text-red-600 focus:outline-none"
-          >
+          <button @click="fetchOrders"
+            class="mt-2 text-sm font-medium text-red-700 hover:text-red-600 focus:outline-none">
             Try again <span aria-hidden="true">&rarr;</span>
           </button>
         </div>
@@ -32,11 +30,9 @@
           </p>
         </div>
         <div class="flex items-center space-x-3">
-          <button
-            type="button"
+          <button type="button"
             class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-            @click="openNewOrderModal"
-          >
+            @click="openNewOrderModal">
             <PlusIcon class="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
             New Order
           </button>
@@ -46,26 +42,18 @@
       <div class="border-b border-gray-200 overflow-x-auto">
         <nav class="flex -mb-px min-w-max" aria-label="Tabs">
           <div class="flex space-x-8 px-2 sm:px-0">
-            <button
-              v-for="tab in tabs"
-              :key="tab.id"
-              @click="selectTab(tab.id)"
-              :class="[
-                'whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium',
-                selectedStatus === tab.id 
-                  ? 'border-indigo-500 text-indigo-600' 
-                  : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
-              ]"
-            >
+            <button v-for="tab in tabs" :key="tab.id" @click="selectTab(tab.id)" :class="[
+              'whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium',
+              selectedStatus === tab.id
+                ? 'border-indigo-500 text-indigo-600'
+                : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+            ]">
               <span class="inline-flex items-center">
                 {{ tab.name }}
-                <span 
-                  v-if="getOrderCount(tab.id) > 0"
-                  :class="[
-                    selectedStatus === tab.id ? 'bg-indigo-100 text-indigo-600' : 'bg-gray-100 text-gray-900',
-                    'ml-2 py-0.5 px-2 rounded-full text-xs font-medium'
-                  ]"
-                >
+                <span v-if="getOrderCount(tab.id) > 0" :class="[
+                  selectedStatus === tab.id ? 'bg-indigo-100 text-indigo-600' : 'bg-gray-100 text-gray-900',
+                  'ml-2 py-0.5 px-2 rounded-full text-xs font-medium'
+                ]">
                   {{ getOrderCount(tab.id) }}
                 </span>
               </span>
@@ -83,34 +71,35 @@
                 <!-- Status dropdown -->
                 <div class="relative inline-block text-left mb-2">
                   <div>
-                    <button 
-                      type="button" 
-                      class="inline-flex items-center px-3 py-1 rounded-md text-sm font-medium w-full sm:w-auto justify-between sm:justify-start" 
-                      :class="getStatusBadgeClass(order.status)"
-                      @click.stop="toggleStatusDropdown(order.id)">
+                    <button type="button"
+                      class="inline-flex items-center px-3 py-1 rounded-md text-sm font-medium w-full sm:w-auto justify-between sm:justify-start"
+                      :class="getStatusBadgeClass(order.status)" @click.stop="toggleStatusDropdown(order.id)">
                       <span class="truncate">{{ formatStatus(order.status) }}</span>
                       <ChevronDownIcon class="ml-1 h-4 w-4 flex-shrink-0" aria-hidden="true" />
                     </button>
                   </div>
-                  <div v-if="statusDropdownOpen === order.id" class="origin-top-right absolute left-0 mt-2 w-40 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
+                  <div v-if="statusDropdownOpen === order.id"
+                    class="origin-top-right absolute left-0 mt-2 w-40 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
                     <div class="py-1" role="menu" aria-orientation="vertical">
                       <template v-if="order.status === 'pending'">
-                        <button @click="updateOrderStatus(order.id, 'preparing')" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">
+                        <button @click="updateOrderStatus(order.id, 'preparing')"
+                          class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          role="menuitem">
                           Mark as Preparing
                         </button>
-                        <button @click="cancelOrder(order.id)" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100" role="menuitem">
+                        <button @click="cancelOrder(order.id)"
+                          class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+                          role="menuitem">
                           Cancel Order
                         </button>
                       </template>
-                      <button v-else-if="order.status === 'preparing'" 
-                        @click="updateOrderStatus(order.id, 'ready')" 
-                        class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" 
+                      <button v-else-if="order.status === 'preparing'" @click="updateOrderStatus(order.id, 'ready')"
+                        class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                         role="menuitem">
                         Mark as Ready
                       </button>
-                      <button v-else-if="order.status === 'ready'" 
-                        @click="updateOrderStatus(order.id, 'completed')" 
-                        class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" 
+                      <button v-else-if="order.status === 'ready'" @click="updateOrderStatus(order.id, 'completed')"
+                        class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                         role="menuitem">
                         Mark as Completed
                       </button>
@@ -121,16 +110,15 @@
                   <p class="text-sm font-medium text-indigo-600 truncate">
                     #{{ order.id }}
                   </p>
-                  <span 
-                    class="hidden sm:inline-flex ml-2 px-2.5 py-0.5 rounded-full text-xs font-medium"
-                    :class="getStatusBadgeClass(order.status)"
-                  >
+                  <span class="hidden sm:inline-flex ml-2 px-2.5 py-0.5 rounded-full text-xs font-medium"
+                    :class="getStatusBadgeClass(order.status)">
                     {{ formatStatus(order.status) }}
                   </span>
                 </div>
                 <div class="mt-2 grid grid-cols-2 gap-x-4 gap-y-2 sm:flex sm:flex-wrap sm:space-x-6">
                   <div class="flex items-center text-sm text-gray-500">
-                    <RectangleGroupIcon class="flex-shrink-0 mr-1.5 h-4 w-4 sm:h-5 sm:w-5 text-gray-400" aria-hidden="true" />
+                    <RectangleGroupIcon class="flex-shrink-0 mr-1.5 h-4 w-4 sm:h-5 sm:w-5 text-gray-400"
+                      aria-hidden="true" />
                     <span class="truncate">{{ order.table || 'Takeaway' }}</span>
                   </div>
                   <div class="col-span-2 sm:col-auto flex items-center text-sm text-gray-500">
@@ -142,53 +130,40 @@
               <div class="mt-4 sm:mt-0 sm:ml-4 flex-shrink-0 flex items-center justify-between w-full sm:w-auto">
                 <p class="text-lg font-medium text-gray-900">${{ order.total.toFixed(2) }}</p>
                 <div class="ml-4 flex space-x-1 sm:space-x-2">
-                  <button
-                    type="button"
+                  <button type="button"
                     class="inline-flex items-center p-2 sm:p-1.5 border border-transparent rounded-full shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                    @click="viewOrderDetails(order)"
-                    aria-label="View order details"
-                  >
+                    @click="viewOrderDetails(order)" aria-label="View order details">
                     <EyeIcon class="h-4 w-4" aria-hidden="true" />
                     <span class="sr-only sm:not-sr-only ml-1 text-xs">View</span>
                   </button>
-                  <button
-                    v-if="order.status === 'preparing'"
-                    type="button"
+                  <button v-if="order.status === 'preparing'" type="button"
                     class="inline-flex items-center p-2 sm:p-1.5 border border-transparent rounded-full shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-                    @click="updateOrderStatus(order.id, 'ready' as const)"
-                    aria-label="Mark as ready"
-                  >
+                    @click="updateOrderStatus(order.id, 'ready' as const)" aria-label="Mark as ready">
                     <CheckIcon class="h-4 w-4" aria-hidden="true" />
                     <span class="sr-only sm:not-sr-only ml-1 text-xs">Ready</span>
                   </button>
-                  <button
-                    v-if="order.status === 'ready'"
-                    type="button"
+                  <button v-if="order.status === 'ready'" type="button"
                     class="inline-flex items-center p-2 sm:p-1.5 border border-transparent rounded-full shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-                    @click="updateOrderStatus(order.id, 'completed' as const)"
-                    aria-label="Mark as completed"
-                  >
+                    @click="updateOrderStatus(order.id, 'completed' as const)" aria-label="Mark as completed">
                     <CheckCircleIcon class="h-4 w-4" aria-hidden="true" />
                     <span class="sr-only sm:not-sr-only ml-1 text-xs">Complete</span>
                   </button>
-                  <button
-                    v-if="order.status !== 'cancelled' && order.status !== 'completed'"
-                    type="button"
+                  <button v-if="order.status !== 'cancelled' && order.status !== 'completed'" type="button"
                     class="inline-flex items-center p-2 sm:p-1.5 border border-transparent rounded-full shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-                    @click="cancelOrder(order.id)"
-                    aria-label="Cancel order"
-                  >
+                    @click="cancelOrder(order.id)" aria-label="Cancel order">
                     <XMarkIcon class="h-4 w-4" aria-hidden="true" />
                     <span class="sr-only sm:not-sr-only ml-1 text-xs">Cancel</span>
                   </button>
                 </div>
               </div>
             </div>
-            
+
             <!-- Order Items Summary -->
             <div class="mt-3 border-t border-gray-100 pt-3">
               <div class="text-sm text-gray-500 flex flex-col sm:flex-row sm:items-center">
-                <span class="font-medium text-gray-900">{{ order.items.length }} {{ order.items.length === 1 ? 'item' : 'items' }}</span>
+                <span class="font-medium text-gray-900">{{ order.items.length }} {{ order.items.length === 1 ? 'item' :
+                  'items'
+                  }}</span>
                 <span class="hidden sm:inline mx-1">•</span>
                 <span class="truncate">{{ getOrderItemsSummary(order.items) }}</span>
               </div>
@@ -198,37 +173,29 @@
       </div>
 
       <!-- Order Details Modal -->
-      <OrderDetails 
-        v-if="selectedOrder" 
-        :order="selectedOrder" 
-        @close="closeOrderDetails"
-        @status-update="handleStatusUpdate"
-      />
-      
+      <OrderDetails v-if="isOrderDetailsOpen && selectedOrder" :open="isOrderDetailsOpen" :order="selectedOrder"
+        @close="closeOrderDetails" @status-update="handleStatusUpdate" />
+
       <!-- New Order Modal -->
-      <NewOrderModal 
-        :open="isNewOrderModalOpen" 
-        @close="closeNewOrderModal"
-        @order-created="handleNewOrder"
-      />
+      <NewOrderModal :open="isNewOrderModalOpen" @close="closeNewOrderModal" @order-created="handleNewOrder" />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, type Ref, onUnmounted, watch } from 'vue';
+import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue';
 import orderService from '@/services/orderService';
 import type { Order } from '@/services/orderService';
-import { 
-  PlusIcon, 
-  EyeIcon, 
-  CheckIcon, 
-  XMarkIcon, 
-  UserIcon, 
-  RectangleGroupIcon, 
+import {
+  PlusIcon,
+  EyeIcon,
+  CheckIcon,
+  XMarkIcon,
+  UserIcon,
+  RectangleGroupIcon,
   ClockIcon,
   ChevronDownIcon,
-  CheckCircleIcon 
+  CheckCircleIcon
 } from '@heroicons/vue/24/outline';
 import OrderDetails from '@/components/orders/OrderDetailsModal.vue';
 import NewOrderModal from '@/components/orders/NewOrderModal.vue';
@@ -254,6 +221,12 @@ const confirm = async (options: { title?: string; message: string; confirmText?:
 };
 
 // Local type for the view
+interface Variant {
+  id: number;
+  name: string;
+  price_adjustment: number;
+}
+
 interface MenuItem {
   id: number;
   name: string;
@@ -262,16 +235,26 @@ interface MenuItem {
   category?: string;
   image_url?: string;
   is_available: boolean;
+  variants?: Variant[];
 }
 
 interface OrderItemLocal {
   id: number;
+  menu_item_id: number;
   name: string;
-  price: number;
   quantity: number;
-  special_instructions?: string | null;
-  menu_item?: MenuItem;
-  unit_price?: number;
+  unit_price: number;
+  total_price: number;
+  notes?: string;
+  variant_id?: number | null;
+  variant_price_adjustment?: number | null;
+  price?: number;
+  variants?: Array<{
+    id: number;
+    name: string;
+    price_adjustment: number;
+  }>;
+  special_instructions?: string;
 }
 
 interface OrderWithLocalFields {
@@ -341,7 +324,7 @@ const formatStatus = (status: OrderStatus): string => {
 // Status badge classes
 const getStatusBadgeClass = (status: BackendOrderStatus): string => {
   const baseClasses = 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium';
-  
+
   switch (status) {
     case 'pending':
       return `${baseClasses} bg-yellow-100 text-yellow-800`;
@@ -386,17 +369,44 @@ const formatTime = (date: string | Date): string => {
 
 const getOrderItemsSummary = (items: OrderItemLocal[]): string => {
   if (!items || !Array.isArray(items)) return '';
-  return items.map(item => `${item.quantity}x ${item.name}`).join(', ');
+  return items.map(item => {
+    // Start with quantity and item name
+    let itemText = `${item.quantity}x ${item.name}`;
+
+    // Handle variant display and pricing
+    const price = item.unit_price || 0;
+    itemText += ` = $${(price * item.quantity).toFixed(2)}`;
+
+    return itemText;
+  }).join(', ');
 };
 
+const isMounted = ref(true);
+
 const viewOrderDetails = (order: OrderWithLocalFields) => {
-  selectedOrder.value = order;
-  isOrderDetailsOpen.value = true;
+  if (!isMounted.value) return;
+  selectedOrder.value = { ...order };
+  nextTick(() => {
+    isOrderDetailsOpen.value = true;
+  });
 };
 
 function closeOrderDetails() {
+  if (!isMounted.value) return;
+
   isOrderDetailsOpen.value = false;
-  selectedOrder.value = null;
+  // Wait for the transition to complete before clearing the selected order
+  const cleanup = setTimeout(() => {
+    if (isMounted.value) {
+      selectedOrder.value = null;
+    }
+  }, 300); // Match this with your transition duration (300ms)
+
+  // Cleanup the timeout if the component unmounts
+  onUnmounted(() => {
+    clearTimeout(cleanup);
+  });
+
   console.log('Order details closed');
 }
 
@@ -415,7 +425,7 @@ function closeNewOrderModal() {
 const handleNewOrder = async (newOrder: Order) => {
   try {
     console.log('New order received:', newOrder);
-    
+
     // Create a properly typed order object
     const localOrder: OrderWithLocalFields = {
       id: newOrder.id,
@@ -425,23 +435,45 @@ const handleNewOrder = async (newOrder: Order) => {
       total: newOrder.total_amount || 0,
       createdAt: newOrder.created_at ? new Date(newOrder.created_at) : new Date(),
       updated_at: newOrder.updated_at || new Date().toISOString(),
-      items: (newOrder.items || []).map(item => ({
-        id: item.id,
-        name: item.menu_item?.name || 'Unknown Item',
-        price: item.menu_item?.price || item.unit_price || 0,
-        quantity: item.quantity,
-        special_instructions: item.special_instructions || null,
-        menu_item: item.menu_item
-      })),
+      items: (newOrder.items || []).map(item => {
+        // Safely find the variant if it exists
+        let variant: Variant | undefined;
+        if (item.variant_id && Array.isArray(item.menu_item?.variants)) {
+          variant = item.menu_item?.variants.find((v: Variant) => v.id === item.variant_id);
+        }
+
+        const unitPrice = item.unit_price || item.menu_item?.price || 0;
+        const quantity = item.quantity || 0;
+
+        const orderItem: OrderItemLocal = {
+          id: item.id || 0,
+          menu_item_id: item.menu_item_id,
+          name: item.menu_item?.name || 'Unknown Item',
+          quantity: quantity,
+          unit_price: unitPrice,
+          total_price: unitPrice * quantity,
+          variant_id: item.variant_id || undefined,
+          variant_price_adjustment: variant?.price_adjustment
+        };
+
+        console.log('Processed order item:', orderItem);
+
+        // Only add notes if they exist
+        if (item.special_instructions) {
+          orderItem.notes = item.special_instructions;
+        }
+
+        return orderItem;
+      }),
       // Copy over any additional fields from the new order
       ...(newOrder.table_id !== undefined && { table_id: newOrder.table_id }),
       ...(newOrder.customer_name !== undefined && { customer_name: newOrder.customer_name }),
       ...(newOrder.notes !== undefined && { notes: newOrder.notes }),
       ...(newOrder.table_number !== undefined && { table_number: newOrder.table_number })
     };
-    
+
     console.log('Processed order for display:', localOrder);
-    
+
     // Add the new order to the beginning of the list
     orders.value = [localOrder, ...orders.value];
     showSuccess('Order created successfully');
@@ -482,10 +514,12 @@ const toggleStatusDropdown = (orderId: number) => {
 
 // Close dropdown when clicking outside
 onMounted(() => {
+  isMounted.value = true;
   document.addEventListener('click', handleClickOutside);
 });
 
 onUnmounted(() => {
+  isMounted.value = false;
   document.removeEventListener('click', handleClickOutside);
 });
 
@@ -494,34 +528,85 @@ const fetchOrders = async () => {
   try {
     loading.value = true;
     error.value = null;
-    
+
     // Fetch orders with the selected status filter
     const statusToFetch = selectedStatus.value === 'all' ? undefined : selectedStatus.value;
+    console.log('Fetching orders with status:', statusToFetch);
     const response = await orderService.getActiveOrders(statusToFetch);
-    
+    console.log('API Response:', JSON.stringify(response, null, 2));
+
     // The service should return an array, but we'll double-check here
     const ordersData = Array.isArray(response) ? response : [];
-    
+    console.log('Processed orders data:', JSON.stringify(ordersData, null, 2));
+
     // Transform the API response to match our local OrderWithLocalFields type
-    orders.value = ordersData.map((order) => {
-      if (!order) return null;
-      
-      return {
-        ...order,
-        customerName: order.customer_name || 'Walk-in',
-        table: order.table_number ? `Table ${order.table_number}` : 'Takeaway',
-        total: order.total_amount || 0,
-        createdAt: new Date(order.created_at || new Date()),
-        items: Array.isArray(order.items) ? order.items.map(item => ({
-          id: item.id || 0,
-          name: item.menu_item?.name || 'Unknown Item',
-          price: item.menu_item?.price || 0,
-          quantity: item.quantity || 0,
-          special_instructions: item.special_instructions,
-          menu_item: item.menu_item
-        })) : []
-      };
-    }).filter(Boolean) as OrderWithLocalFields[];
+    const processedOrders = ordersData
+      .map((order): OrderWithLocalFields | null => {
+        if (!order) return null;
+
+        console.log('Processing order:', order.id);
+
+        const mappedItems = Array.isArray(order.items) ? order.items.map((item) => {
+          console.log('Processing order item:', {
+            id: item.id,
+            menu_item_id: item.menu_item_id,
+            variant_id: item.variant_id,
+            menu_item: item.menu_item
+          });
+
+          // Get the variant if it exists
+          const variant = item.variant;
+
+          // Get the menu item name and variants
+          const menuItemName = item.menu_item?.name || 'Unknown Item';
+          const variantName = variant?.name;
+          const itemName = variantName ? `${menuItemName} (${variantName})` : menuItemName;
+
+          // Calculate price adjustment if variant exists
+          const basePrice = item.menu_item?.price || 0;
+          const variantPrice = variant?.price || 0;
+          const priceAdjustment = variant ? variantPrice - basePrice : 0;
+
+          const unitPrice = item.unit_price || 0;
+          const quantity = item.quantity || 0;
+          const total = unitPrice * quantity;
+
+          return {
+            id: item.id,
+            menu_item_id: item.menu_item_id,
+            name: itemName,
+            variant_id: item.variant_id,
+            quantity: quantity,
+            price: unitPrice,
+            unit_price: unitPrice,
+            total_price: total,
+            notes: item.special_instructions || undefined,
+            variants: variant ? [{
+              id: variant.id,
+              name: variant.name,
+              price_adjustment: variant.price
+            }] : []
+          };
+        }) : [];
+
+        return {
+          ...order,
+          customerName: order.customer_name || 'Walk-in',
+          table: order.table_number ? `Table ${order.table_number}` : 'Takeaway',
+          total: order.total_amount || 0,
+          createdAt: new Date(order.created_at || new Date()),
+          items: mappedItems,
+          // Add any additional required fields for OrderWithLocalFields
+          status: order.status as BackendOrderStatus,
+          table_number: order.table_number,
+          customer_name: order.customer_name,
+          notes: order.notes,
+          updated_at: order.updated_at
+        };
+      })
+      .filter((order): order is OrderWithLocalFields => order !== null);
+
+    orders.value = processedOrders;
   } catch (err) {
     console.error('Error fetching orders:', err);
     error.value = 'Failed to fetch orders. Please try again.';
@@ -535,14 +620,14 @@ const updateOrderStatus = async (orderId: number, newStatus: BackendOrderStatus)
   try {
     // Update the order status in the backend
     await orderService.updateOrder(orderId, { status: newStatus });
-    
+
     // Update the order status in the local state
     const orderIndex = orders.value.findIndex(o => o.id === orderId);
     if (orderIndex !== -1) {
       const updatedOrder = { ...orders.value[orderIndex], status: newStatus };
       orders.value.splice(orderIndex, 1, updatedOrder);
     }
-    
+
     showSuccess(`Order #${orderId} status updated to ${formatStatus(newStatus)}`);
   } catch (err) {
     console.error('Error updating order status:', err);
@@ -557,22 +642,22 @@ const cancelOrder = async (orderId: number) => {
     confirmText: 'Yes, cancel order',
     cancelText: 'No, keep it'
   });
-  
+
   if (!confirmed) return;
-  
+
   try {
     await orderService.updateOrder(orderId, { status: 'cancelled' });
-    
+
     // Update the order status in the local state
     const orderIndex = orders.value.findIndex(o => o.id === orderId);
     if (orderIndex !== -1) {
-      const updatedOrder = { 
-        ...orders.value[orderIndex], 
-        status: 'cancelled' as const 
+      const updatedOrder = {
+        ...orders.value[orderIndex],
+        status: 'cancelled' as const
       };
       orders.value.splice(orderIndex, 1, updatedOrder);
     }
-    
+
     showSuccess('Order has been cancelled');
   } catch (err) {
     console.error('Error cancelling order:', err);

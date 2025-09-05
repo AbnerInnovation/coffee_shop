@@ -1,6 +1,6 @@
 <template>
   <TransitionRoot as="template" :show="open">
-    <Dialog as="div" class="relative z-10" @close="$emit('close')">
+    <Dialog as="div" class="relative z-10" @close="handleClose">
       <TransitionChild
         as="template"
         enter="ease-out duration-300"
@@ -51,15 +51,15 @@
                 <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
                     <h4 class="text-sm font-medium text-gray-500">Table</h4>
-                    <p class="mt-1 text-sm text-gray-900">{{ order.table || 'Takeaway' }}</p>
+                    <p class="mt-1 text-sm text-gray-900">{{ order.table_number || 'Takeaway' }}</p>
                   </div>
                   <div>
                     <h4 class="text-sm font-medium text-gray-500">Order Time</h4>
                     <p class="mt-1 text-sm text-gray-900">{{ formatDateTime(order.createdAt) }}</p>
                   </div>
                   <div>
-                    <h4 class="text-sm font-medium text-gray-500">Order Type</h4>
-                    <p class="mt-1 text-sm text-gray-900">{{ order.type || 'Dine-in' }}</p>
+                    <h4 class="text-sm font-medium text-gray-500">Customer</h4>
+                    <p class="mt-1 text-sm text-gray-900">{{ order.customer_name || 'No name provided' }}</p>
                   </div>
                 </div>
                 
@@ -77,18 +77,26 @@
                       </thead>
                       <tbody class="bg-white divide-y divide-gray-200">
                         <tr v-for="item in order.items" :key="item.id">
-                          <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
-                            {{ item.name }}
-                            <p v-if="item.notes" class="text-xs text-gray-500">{{ item.notes }}</p>
+                          <td class="px-4 py-3 text-sm text-gray-900">
+                            <div class="font-medium">{{ item.name }}</div>
+                            <div v-if="item.variant" class="text-xs text-gray-600 mt-1">
+                              {{ item.variant.name }}
+                            </div>
+                            <div v-if="item.notes" class="text-xs text-gray-500 mt-1">
+                              <span class="font-medium">Note:</span> {{ item.notes }}
+                            </div>
+                            <div v-if="item.special_instructions" class="text-xs text-gray-500 mt-1">
+                              <span class="font-medium">Special Instructions:</span> {{ item.special_instructions }}
+                            </div>
                           </td>
                           <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500 text-right">
                             {{ item.quantity }}
                           </td>
                           <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500 text-right">
-                            ${{ item.price.toFixed(2) }}
+                            ${{ (item.unit_price || 0).toFixed(2) }}
                           </td>
                           <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900 text-right">
-                            ${{ (item.quantity * item.price).toFixed(2) }}
+                            ${{ (item.quantity * (item.price || item.unit_price || 0)).toFixed(2) }}
                           </td>
                         </tr>
                       </tbody>
@@ -98,15 +106,15 @@
                             Subtotal
                           </td>
                           <td class="px-4 py-3 text-sm font-medium text-gray-900 text-right">
-                            ${{ order.subtotal.toFixed(2) }}
+                            ${{ (order.subtotal || 0).toFixed(2) }}
                           </td>
                         </tr>
-                        <tr v-if="order.tax > 0">
+                        <tr v-if="(order.tax || 0) > 0">
                           <td colspan="3" class="px-4 py-1 text-sm text-gray-500 text-right">
-                            Tax ({{ (order.taxRate * 100).toFixed(1) }}%)
+                            Tax ({{ ((order.taxRate || 0) * 100).toFixed(1) }}%)
                           </td>
                           <td class="px-4 py-1 text-sm text-gray-500 text-right">
-                            ${{ order.tax.toFixed(2) }}
+                            ${{ (order.tax || 0).toFixed(2) }}
                           </td>
                         </tr>
                         <tr>
@@ -114,7 +122,7 @@
                             Total
                           </td>
                           <td class="px-4 py-3 text-base font-bold text-gray-900 text-right">
-                            ${{ order.total.toFixed(2) }}
+                            ${{ (order.total || 0).toFixed(2) }}
                           </td>
                         </tr>
                       </tfoot>
@@ -170,7 +178,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { 
   Dialog, 
   DialogPanel, 
@@ -211,23 +219,37 @@ const emit = defineEmits(['close', 'status-update']);
 
 const { confirm } = useConfirm();
 const { showSuccess, showError } = useToast();
+const isMounted = ref(false);
 
-// Calculate totals if not provided
+onMounted(() => {
+  isMounted.value = true;
+});
+
+const handleClose = () => {
+  if (isMounted.value) {
+    emit('close');
+  }
+};
+
+// Calculate totals if needed
 const orderWithTotals = computed(() => {
-  if (props.order.subtotal > 0) return props.order;
+  // If total_amount is already calculated, use it
+  if (props.order.total_amount > 0) return props.order;
   
+  // Otherwise calculate from items
   const subtotal = props.order.items.reduce((sum, item) => {
-    return sum + (item.price * item.quantity);
+    return sum + (item.quantity * item.unit_price);
   }, 0);
   
-  const tax = subtotal * (props.order.taxRate || 0.1);
+  // Assuming 10% tax for example
+  const tax = subtotal * 0.1;
   const total = subtotal + tax;
   
   return {
     ...props.order,
     subtotal,
     tax,
-    total
+    total_amount: total
   };
 });
 
