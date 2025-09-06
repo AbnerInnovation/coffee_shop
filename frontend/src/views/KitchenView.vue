@@ -50,17 +50,9 @@
                 <div class="flex-1">
                   <div class="flex items-center">
                     <span class="font-medium text-lg mr-2">{{ item.quantity }}x</span>
-                    <span class="text-lg">{{ item.name }}</span>
-                    <button 
-                      v-if="item.status !== 'completed'"
-                      @click="markItemComplete(item, order)"
-                      class="ml-2 p-1 text-green-600 hover:text-green-800"
-                      title="Mark as complete"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                      </svg>
-                    </button>
+                    <span class="text-lg">{{ item.menu_item.name }}</span>
+                    <span v-if="item.variant" class="text-lg ml-2">({{ item.variant.name }})</span>
+                    
                   </div>
                   
                   <div v-if="item.special_instructions" class="ml-7 mt-1 text-sm text-gray-600">
@@ -81,7 +73,7 @@
 
           <div class="p-4 bg-gray-50 border-t border-gray-200">
             <button
-              v-if="order.status === 'preparing' && order.items.every(i => i.status === 'completed')"
+              v-if="order.status === 'preparing'"
               @click="markOrderReady(order)"
               class="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
             >
