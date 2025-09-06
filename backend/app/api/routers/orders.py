@@ -139,6 +139,28 @@ async def update_order_item(order_id: int, item_id: int, item: OrderItemUpdate, 
     return order_service.update_order_item(db=db, db_item=db_order_item, item=item)
 
 
+@router.patch("/{order_id}/items/{item_id}/status", response_model=OrderItem)
+async def update_order_item_status(
+    order_id: int, 
+    item_id: int, 
+    status: str, 
+    db: Session = Depends(get_db)
+) -> OrderItem:
+    """
+    Update the status of an order item.
+    """
+    db_order_item = order_service.get_order_item(db, item_id=item_id)
+    if not db_order_item or db_order_item.order_id != order_id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order item not found")
+    
+    # Update the status
+    db_order_item.status = status
+    db.commit()
+    db.refresh(db_order_item)
+    
+    return db_order_item
+
+
 @router.delete("/{order_id}/items/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_order_item(order_id: int, item_id: int, db: Session = Depends(get_db)) -> None:
     """

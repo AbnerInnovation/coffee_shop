@@ -164,6 +164,16 @@ const orderService = {
       throw error;
     }
   },
+
+  async updateOrderItemStatus(orderId: number, itemId: number, status: string): Promise<OrderItem> {
+    try {
+      const { data } = await api.patch<OrderItem>(`/orders/${orderId}/items/${itemId}`, { status });
+      return data;
+    } catch (error) {
+      console.error('Error updating order item status:', error);
+      throw error;
+    }
+  },
 };
 
 export default orderService;

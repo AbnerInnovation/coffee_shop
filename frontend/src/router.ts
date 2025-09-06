@@ -1,58 +1,22 @@
-import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router';
-
-const routes: RouteRecordRaw[] = [
-  {
-    path: '/',
-    name: 'Dashboard',
-    component: () => import('./views/DashboardView.vue'),
-    meta: { requiresAuth: true }
-  },
-  {
-    path: '/tables',
-    name: 'Tables',
-    component: () => import('./views/TablesView.vue'),
-    meta: { requiresAuth: true }
-  },
-  {
-    path: '/menu',
-    name: 'Menu',
-    component: () => import('./views/MenuView.vue'),
-    meta: { requiresAuth: true }
-  },
-  {
-    path: '/orders',
-    name: 'Orders',
-    component: () => import('./views/OrdersView.vue'),
-    meta: { requiresAuth: true }
-  },
-  {
-    path: '/login',
-    name: 'Login',
-    component: () => import('./views/LoginView.vue'),
-    meta: { guest: true }
-  },
-  {
-    path: '/:pathMatch(.*)*',
-    name: 'NotFound',
-    component: () => import('./views/NotFoundView.vue')
-  }
-];
+import { createRouter, createWebHistory } from 'vue-router';
+import { routes } from './routes';
+import { useAuthStore } from './stores/auth';
 
 const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHistory(import.meta.env.BASE_URL),
   routes,
   scrollBehavior(to, from, savedPosition) {
     return savedPosition || { top: 0 };
   }
 });
 
-// Navigation guard for authentication
+// Preserve original auth guard logic
 router.beforeEach((to, from, next) => {
-  const isAuthenticated = !!localStorage.getItem('token');
-  
-  if (to.meta.requiresAuth && !isAuthenticated) {
-    next({ name: 'Login' });
-  } else if (to.meta.guest && isAuthenticated) {
+  const authStore = useAuthStore();
+
+  if (to.meta.requiresAuth && !authStore.isAuthenticated) {
+    next({ name: 'Login', query: { redirect: to.fullPath } });
+  } else if ((to.name === 'Login' || to.name === 'Register') && authStore.isAuthenticated) {
     next({ name: 'Dashboard' });
   } else {
     next();

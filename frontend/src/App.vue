@@ -177,6 +177,7 @@ const navigation = ref([
   { name: 'Dashboard', to: '/', current: false },
   { name: 'Menu', to: '/menu', current: false },
   { name: 'Orders', to: '/orders', current: false },
+  { name: 'Kitchen', to: '/kitchen', current: false },
   { name: 'Tables', to: '/tables', current: false },
 ]);
 
