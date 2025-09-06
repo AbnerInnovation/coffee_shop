@@ -142,7 +142,7 @@
                   </div>
 
                   <!-- Order Summary -->
-                  <div v-if="selectedItems.length > 0" class="mt-6 border-t border-gray-200 pt-4">
+                  <div class="mt-6 border-t border-gray-200 pt-4">
                     <h4 class="text-sm font-medium text-gray-900 mb-3">Order Summary</h4>
                     <div class="space-y-3">
                       <div v-for="item in selectedItems" :key="item.id" class="flex justify-between items-start">
@@ -419,6 +419,7 @@ interface OrderItemWithDetails {
   menu_item_id: number;
   variant_id?: number | null;
   name: string;
+  variant_name?: string;
   price: number;
   quantity: number;
   notes?: string;
