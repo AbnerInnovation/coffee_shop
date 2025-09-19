@@ -1,25 +1,26 @@
-from sqlalchemy.orm import declarative_base, declared_attr
+from sqlalchemy.orm import declared_attr
 from sqlalchemy import Column, Integer, DateTime, inspect
 from datetime import datetime
 from typing import Any, Dict, Type, TypeVar, Optional
-
-# Global Base used by all models
-Base = declarative_base()
+from ..db.base import Base  # Import the Base from db.base
 
 T = TypeVar('T', bound='BaseModel')
 
-class BaseModel:
+class BaseModel(Base):
     """
     Mixin for all database models.
     Provides common columns and functionality.
     """
-    __abstract__ = True   # <-- important, prevents SQLAlchemy from treating this as a real table
+    __abstract__ = True   # Prevents SQLAlchemy from treating this as a real table
     __name__: str  # Helps with type checking
-
+    
+    # Ensure these columns are properly typed for SQLAlchemy 2.0
     id = Column(Integer, primary_key=True, index=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
     deleted_at = Column(DateTime, nullable=True)
+
+    # Columns are now defined in the class body above
 
     @declared_attr
     def __tablename__(cls) -> str:

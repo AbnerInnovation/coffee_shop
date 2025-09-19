@@ -1,12 +1,12 @@
 from sqlalchemy import String, Float, Boolean, Integer, ForeignKey, Column, Text
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from typing import List, Optional, TYPE_CHECKING
-from .base import BaseModel, Base
+from .base import BaseModel
 
 if TYPE_CHECKING:
     from .order_item import OrderItem
 
-class Category(Base, BaseModel):
+class Category(BaseModel):
     __tablename__ = "categories"
     
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
@@ -27,7 +27,7 @@ class Category(Base, BaseModel):
     def __repr__(self) -> str:
         return f"<Category(id={self.id}, name='{self.name}')>"
 
-class MenuItem(Base, BaseModel):
+class MenuItem(BaseModel):
     __tablename__ = "menu_items"
 
     name: Mapped[str] = mapped_column(String(100), nullable=False)
@@ -49,7 +49,7 @@ class MenuItem(Base, BaseModel):
     def __repr__(self) -> str:
         return f"<MenuItem(id={self.id}, name='{self.name}', price={self.price})>"
 
-class MenuItemVariant(Base, BaseModel):
+class MenuItemVariant(BaseModel):
     __tablename__ = "menu_item_variants"
 
     menu_item_id: Mapped[int] = mapped_column(ForeignKey("menu_items.id"), nullable=False)

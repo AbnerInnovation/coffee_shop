@@ -10,8 +10,14 @@ from alembic import context
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 # Import the SQLAlchemy Base and settings
-from app.db.base import Base
+from app.db.base import Base, engine
 from app.config import settings  # Your FastAPI settings
+
+# Import all models to ensure they are registered with SQLAlchemy
+from app.models.user import User, UserRole
+from app.models.menu import MenuItem, MenuItemVariant, Category
+from app.models.table import Table
+from app.models.order import Order, OrderItem, OrderStatus
 
 # Alembic Config object
 config = context.config
@@ -23,11 +29,7 @@ config.set_main_option("sqlalchemy.url", settings.DATABASE_URI)
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# Import all models so Alembic can detect schema changes
-import app.models.menu
-import app.models.order
-import app.models.table
-import app.models.user
+# All models are now imported above
 
 # Metadata object for Alembic
 target_metadata = Base.metadata

@@ -3,7 +3,7 @@ from typing import List, Optional
 from datetime import datetime
 from sqlalchemy import Integer, String, Float, ForeignKey, Enum as SQLEnum, DateTime
 from sqlalchemy.orm import relationship, Mapped, mapped_column
-from .base import BaseModel, Base
+from .base import BaseModel
 
 # Import the single source of OrderItem
 from .order_item import OrderItem
@@ -16,7 +16,7 @@ class OrderStatus(str, PyEnum):
     COMPLETED = "completed"
     CANCELLED = "cancelled"
 
-class Order(Base, BaseModel):
+class Order(BaseModel):
     __tablename__ = "orders"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)

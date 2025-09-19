@@ -1,10 +1,10 @@
 from sqlalchemy import Integer, String, Boolean, Column
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from typing import List
-from .base import BaseModel, Base
+from .base import BaseModel
 from .order import Order
 
-class Table(Base, BaseModel):
+class Table(BaseModel):
     __tablename__ = "tables"
     
     number: Mapped[int] = mapped_column(Integer, unique=True, nullable=False)

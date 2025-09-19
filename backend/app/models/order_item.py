@@ -3,7 +3,7 @@ from typing import Optional, TYPE_CHECKING
 from datetime import datetime
 from sqlalchemy import Integer, String, Float, ForeignKey, Enum as SQLEnum, DateTime
 from sqlalchemy.orm import relationship, Mapped, mapped_column
-from .base import BaseModel, Base
+from .base import BaseModel
 
 if TYPE_CHECKING:
     from .order import Order
@@ -17,7 +17,7 @@ class OrderItemStatus(str, Enum):
     COMPLETED = "completed"
     CANCELLED = "cancelled"
 
-class OrderItem(Base, BaseModel):
+class OrderItem(BaseModel):
     __tablename__ = "order_items"
     __table_args__ = {"extend_existing": True}  # avoids reload errors during dev
 
