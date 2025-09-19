@@ -375,7 +375,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, defineExpose, nextTick } from 'vue';
+import { ref, computed, onMounted, defineExpose, nextTick, watch } from 'vue';
 import orderService, { type CreateOrderData, type OrderItem, type OrderStatus } from '@/services/orderService';
 import menuService from '@/services/menuService';
 import tableService from '@/services/tableService';
@@ -471,6 +471,46 @@ const error = ref({
   menu: null as string | null,
   tables: null as string | null
 });
+
+// Helper to initialize a fresh form state
+function getInitialForm() {
+  return {
+    type: 'Dine-in',
+    tableId: null as number | null,
+    customerName: '',
+    notes: '',
+    items: [] as Array<{
+      menu_item_id: number;
+      variant_id?: number | null;
+      quantity: number;
+      notes?: string;
+      special_instructions?: string;
+      unit_price?: number;
+    }>
+  };
+}
+
+// Reset all local state of the modal
+function resetForm() {
+  // Reset base fields
+  form.value = getInitialForm();
+  selectedItem.value = null;
+  selectedVariant.value = null;
+  itemNotes.value = '';
+  showItemModal.value = false;
+
+  // Rebuild zero-quantity items list from current menu cache if available
+  if (menuItems.value.length > 0) {
+    form.value.items = menuItems.value.map(item => ({
+      menu_item_id: Number(item.id),
+      variant_id: null,
+      quantity: 0,
+      notes: '',
+      special_instructions: '',
+      unit_price: item.price
+    }));
+  }
+}
 
 // Fetch menu items with proper type handling and defaults
 const fetchMenuItems = async () => {
@@ -729,6 +769,8 @@ async function createOrder() {
 
     // Emit the order-created event and close the modal
     emit('order-created', emittedOrder);
+    // Reset internal state so the modal is fresh next time
+    resetForm();
     emit('close');
   } catch (error) {
     console.error('Error creating order:', error);
@@ -795,6 +837,26 @@ onMounted(async () => {
       special_instructions: '',
       unit_price: item.price
     }));
+  }
+});
+
+// Keep modal state clean when toggling open prop
+watch(() => props.open, (isOpen, wasOpen) => {
+  if (!isOpen && wasOpen) {
+    // Modal just closed -> ensure everything is reset
+    resetForm();
+  } else if (isOpen && !wasOpen) {
+    // Modal just opened -> if items empty but menu loaded, initialize items
+    if (form.value.items.length === 0 && menuItems.value.length > 0) {
+      form.value.items = menuItems.value.map(item => ({
+        menu_item_id: Number(item.id),
+        variant_id: null,
+        quantity: 0,
+        notes: '',
+        special_instructions: '',
+        unit_price: item.price
+      }));
+    }
   }
 });
 </script>
