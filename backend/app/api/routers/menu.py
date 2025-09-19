@@ -1,5 +1,6 @@
 import logging
 from fastapi import APIRouter, Depends, HTTPException, status, Query
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from typing import List, Optional
 
@@ -124,6 +125,41 @@ async def read_menu_item(
         db.refresh(db_item, ['variants'])
 
     return db_item
+
+class AvailabilityUpdate(BaseModel):
+    is_available: bool
+
+@items_router.patch("/{item_id}/availability", response_model=MenuItem)
+async def update_menu_item_availability(
+    item_id: int,
+    availability: AvailabilityUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+) -> MenuItem:
+    """
+    Update only the availability flag of a menu item.
+    Requires admin privileges.
+    """
+    check_admin(current_user)
+    db_item = get_menu_item(db, item_id=item_id)
+    if db_item is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Menu item with ID {item_id} not found"
+        )
+    try:
+        db_item.is_available = availability.is_available
+        db.add(db_item)
+        db.commit()
+        db.refresh(db_item, ['category', 'variants'])
+        return db_item
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Error updating availability for menu item {item_id}: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e) or "Error updating menu item availability"
+        )
 
 @items_router.put("/{item_id}", response_model=MenuItem)
 async def update_menu_item(
