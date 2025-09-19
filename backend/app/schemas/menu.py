@@ -156,7 +156,6 @@ class MenuItem(MenuItemInDBBase):
         
         # Handle variants if they're loaded
         if hasattr(obj, 'variants') and obj.variants is not None:
-            from .menu import MenuItemVariant
             obj_dict['variants'] = [MenuItemVariant.from_orm(v) for v in obj.variants]
         
         # Create the model instance
@@ -194,3 +193,11 @@ class MenuItemVariant(MenuItemVariantInDBBase):
 
 class MenuItemVariantInDB(MenuItemVariantInDBBase):
     pass
+
+# Rebuild models to resolve forward references used in type annotations
+# This is required by Pydantic v2 when using string-based forward refs
+MenuItemVariant.model_rebuild()
+MenuItemVariantCreate.model_rebuild()
+MenuItemVariantUpdate.model_rebuild()
+MenuItemVariantInDB.model_rebuild()
+MenuItemVariantInDBBase.model_rebuild()
