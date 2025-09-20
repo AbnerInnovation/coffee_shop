@@ -2,8 +2,8 @@
   <div class="tables-view space-y-6">
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
       <div>
-        <h2 class="text-2xl font-bold text-gray-900">Tables</h2>
-        <p class="mt-1 text-sm text-gray-500">Manage tables and their status</p>
+        <h2 class="text-2xl font-bold text-gray-900">{{ t('app.views.tables.title') }}</h2>
+        <p class="mt-1 text-sm text-gray-500">{{ t('app.views.tables.subtitle') }}</p>
       </div>
       <div class="flex items-center space-x-3">
         <button
@@ -12,7 +12,7 @@
           @click="openAddTableModal"
         >
           <PlusIcon class="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
-          Add Table
+          {{ t('app.views.tables.add_table') }}
         </button>
       </div>
     </div>
@@ -20,7 +20,7 @@
     <!-- Loading State -->
     <div v-if="loading" class="text-center py-8">
       <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
-      <p class="mt-2 text-sm text-gray-600">Loading tables...</p>
+      <p class="mt-2 text-sm text-gray-600">{{ t('app.views.tables.loading') }}</p>
     </div>
 
     <!-- Error State -->
@@ -53,21 +53,21 @@
           class="absolute bottom-2 right-2 px-2 py-1 rounded-full text-xs font-medium"
           :class="table.is_occupied ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'"
         >
-          {{ table.is_occupied ? 'Occupied' : 'Available' }}
+          {{ table.is_occupied ? t('app.views.tables.occupied') : t('app.views.tables.available') }}
         </div>
 
         <div class="p-4">
           <div class="flex items-center justify-between">
-            <h3 class="text-lg font-medium text-gray-900">Table #{{ table.number }}</h3>
-            <span class="text-sm text-gray-500">Seats: {{ table.capacity }}</span>
+            <h3 class="text-lg font-medium text-gray-900">{{ t('app.views.tables.table_number_header', { number: table.number }) }}</h3>
+            <span class="text-sm text-gray-500">{{ t('app.views.tables.seats', { count: table.capacity }) }}</span>
           </div>
           
           <div class="mt-2">
             <div class="text-sm text-gray-600">
-              Location: {{ table.location }}
+              {{ t('app.views.tables.location', { location: table.location }) }}
             </div>
             <div class="mt-1 text-xs text-gray-400">
-              Last updated: {{ formatTimeAgo(table.updated_at) }}
+              {{ t('app.views.tables.last_updated', { time: formatTimeAgo(table.updated_at) }) }}
             </div>
           </div>
           
@@ -79,14 +79,14 @@
                 :class="table.is_occupied ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'"
                 @click.stop="toggleOccupancy(table)"
               >
-                {{ table.is_occupied ? 'Available' : 'Occupied' }}
+                {{ table.is_occupied ? t('app.views.tables.mark_available') : t('app.views.tables.mark_occupied') }}
               </button>
               <button
                 type="button"
                 class="inline-flex items-center justify-center px-3 py-1.5 border border-gray-300 text-xs font-medium rounded shadow-sm text-gray-700 bg-white hover:bg-gray-50"
                 @click.stop="openOrderModal(table)"
               >
-                New Order
+                {{ t('app.views.tables.new_order') }}
               </button>
             </div>
             <button
@@ -94,7 +94,7 @@
               class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-xs font-medium rounded shadow-sm text-gray-700 bg-white hover:bg-gray-50"
               @click.stop="editTable(table)"
             >
-              Edit
+              {{ t('app.views.tables.edit') }}
             </button>
           </div>
         </div>
@@ -106,10 +106,10 @@
       <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
         <div class="flex justify-between items-center mb-4">
           <h3 class="text-lg font-medium text-gray-900">
-            {{ editingTable ? 'Edit Table' : 'Add New Table' }}
+            {{ editingTable ? t('app.views.tables.modal.edit_title') : t('app.views.tables.modal.add_title') }}
           </h3>
           <button @click="closeModal" class="text-gray-400 hover:text-gray-500">
-            <span class="sr-only">Close</span>
+            <span class="sr-only">{{ t('app.views.tables.modal.close') }}</span>
             <XMarkIcon class="h-6 w-6" />
           </button>
         </div>
@@ -117,7 +117,7 @@
         <form @submit.prevent="saveTable">
           <div class="space-y-4">
             <div>
-              <label for="table-number" class="block text-sm font-medium text-gray-700">Table Number</label>
+              <label for="table-number" class="block text-sm font-medium text-gray-700">{{ t('app.views.tables.modal.fields.table_number') }}</label>
               <input
                 id="table-number"
                 :value="formData.number"
@@ -130,7 +130,7 @@
             </div>
             
             <div>
-              <label for="table-capacity" class="block text-sm font-medium text-gray-700">Capacity</label>
+              <label for="table-capacity" class="block text-sm font-medium text-gray-700">{{ t('app.views.tables.modal.fields.capacity') }}</label>
               <input
                 id="table-capacity"
                 :value="formData.capacity"
@@ -143,16 +143,16 @@
             </div>
             
             <div>
-              <label for="table-location" class="block text-sm font-medium text-gray-700">Location</label>
+              <label for="table-location" class="block text-sm font-medium text-gray-700">{{ t('app.views.tables.modal.fields.location') }}</label>
               <select
                 id="table-location"
                 v-model="formData.location"
                 required
                 class="mt-1 block w-full rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
               >
-                <option value="Inside">Inside</option>
-                <option value="Patio">Patio</option>
-                <option value="Bar">Bar</option>
+                <option value="Inside">{{ t('app.views.tables.modal.fields.location_inside') }}</option>
+                <option value="Patio">{{ t('app.views.tables.modal.fields.location_patio') }}</option>
+                <option value="Bar">{{ t('app.views.tables.modal.fields.location_bar') }}</option>
               </select>
             </div>
             
@@ -162,13 +162,13 @@
                 @click="closeModal"
                 class="inline-flex justify-center rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
               >
-                Cancel
+                {{ t('app.views.tables.modal.actions.cancel') }}
               </button>
               <button
                 type="submit"
                 class="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
               >
-                {{ editingTable ? 'Update' : 'Add' }} Table
+                {{ editingTable ? t('app.views.tables.modal.actions.submit_update') : t('app.views.tables.modal.actions.submit_add') }}
               </button>
             </div>
           </div>
@@ -189,6 +189,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { PlusIcon, XMarkIcon, XCircleIcon } from '@heroicons/vue/24/outline';
 import tableService from '@/services/tableService';
 import OrderModal from '@/components/orders/OrderModal.vue';
@@ -196,6 +197,7 @@ import { formatDistanceToNow } from 'date-fns';
 
 import type { Table } from '@/services/tableService';
 
+const { t } = useI18n();
 const tables = ref<Table[]>([]);
 const loading = ref(false);
 const error = ref('');

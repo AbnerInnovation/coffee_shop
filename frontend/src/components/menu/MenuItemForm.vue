@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue';
-import { XMarkIcon, PlusIcon, ArrowPathIcon, TrashIcon, ExclamationTriangleIcon } from '@heroicons/vue/24/outline';
+import { XMarkIcon, PlusIcon, ArrowPathIcon, TrashIcon, ExclamationTriangleIcon, PencilIcon } from '@heroicons/vue/24/outline';
 import type { MenuItem, MenuItemVariant, CategoryForm } from '@/types/menu';
 import { useMenuStore } from '@/stores/menu';
 import * as menuService from '@/services/menuService';
 import { useToast } from '@/composables/useToast';
+import { useI18n } from 'vue-i18n';
 
 const props = defineProps<{
   menuItem?: MenuItem;
@@ -27,6 +28,7 @@ const loadingCategories = ref(false);
 const showDeleteConfirm = ref(false);
 const isDeleting = ref(false);
 const isSavingVariant = ref(false);
+const { t } = useI18n();
 
 
 // Helper function to normalize category input
@@ -42,7 +44,7 @@ onMounted(() => {
   if (menuStore.categories.length === 0) {
     menuStore.getCategories().catch((err: unknown) => {
       console.error('Failed to load categories:', err);
-      showError('Failed to load categories');
+      showError(t('app.messages.load_categories_failed'));
     });
   }
 });
@@ -160,7 +162,9 @@ onMounted(async () => {
     }
   } catch (error: unknown) {
     console.error('Error initializing form:', error);
-    showError('Failed to initialize form data');
+    showError(t('app.messages.init_form_failed'));
+  } finally {
+    loadingCategories.value = false;
   }
 });
 
@@ -178,7 +182,7 @@ async function loadCategories() {
     }
   } catch (error: unknown) {
     console.error('Error loading categories:', error);
-    showError('Failed to load categories. Please try again.');
+    showError(t('app.messages.load_categories_failed'));
   } finally {
     loadingCategories.value = false;
   }
@@ -191,10 +195,10 @@ const handleDelete = async () => {
     await menuStore.deleteMenuItem(props.menuItem.id);
     emit('delete', props.menuItem.id);
     emit('close');
-    showSuccess('Menu item deleted successfully');
+    showSuccess(t('app.messages.delete_item_success'));
   } catch (error: unknown) {
     console.error('Error deleting menu item:', error);
-    showError('Failed to delete menu item');
+    showError(t('app.messages.delete_item_failed'));
   } finally {
     showDeleteConfirm.value = false;
   }
@@ -202,22 +206,22 @@ const handleDelete = async () => {
 
 function handleSubmit() {
   if (!isFormValid.value) {
-    showError('Please fill in all required fields');
+    showError(t('app.messages.form_fill_required'));
   }
 
   // Basic validation
   if (!formData.value.name.trim()) {
-    formErrors.value.name = 'Name is required';
+    formErrors.value.name = t('validation.name_required');
     return;
   }
   
   if (!formData.value.category) {
-    formErrors.value.category = 'Category is required';
+    formErrors.value.category = t('validation.category_required');
     return;
   }
   
   if (formData.value.price < 0) {
-    formErrors.value.price = 'Price cannot be negative';
+    formErrors.value.price = t('validation.price_non_negative');
     return;
   }
   
@@ -241,7 +245,7 @@ function handleSubmit() {
     emit('submit', submitData);
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
-    showError(`Failed to submit form: ${errorMessage}`);
+    showError(t('app.messages.submit_failed', { message: errorMessage }));
   }
 }
 
@@ -253,7 +257,7 @@ const handleSaveVariant = (): void => {
   console.log('variantForm.value:', variantForm.value)
   if (!variantForm.value || !formData.value) return;
   if (!variantForm.value.name || variantForm.value.price === undefined) {
-    showError('Variant name and price are required');
+    showError(t('app.messages.variant_required'));
     return;
   }
 
@@ -329,7 +333,7 @@ defineExpose({
       <!-- Name -->
       <div>
         <label for="name" class="block text-sm font-medium text-gray-700">
-          Name <span class="text-red-500">*</span>
+          {{ t('app.forms.name') }} <span class="text-red-500">*</span>
         </label>
         <input
           id="name"
@@ -347,7 +351,7 @@ defineExpose({
       <!-- Description -->
       <div>
         <label for="description" class="block text-sm font-medium text-gray-700">
-          Description
+          {{ t('app.forms.description') }}
         </label>
         <textarea
           id="description"
@@ -366,7 +370,7 @@ defineExpose({
         <div>
           <div class="flex items-center justify-between">
             <label for="category" class="block text-sm font-medium text-gray-700">
-              Category <span class="text-red-500">*</span>
+              {{ t('app.forms.category') }} <span class="text-red-500">*</span>
             </label>
             <button 
               type="button"
@@ -374,7 +378,7 @@ defineExpose({
               class="text-xs text-indigo-600 hover:text-indigo-800"
               :disabled="loadingCategories"
             >
-              {{ loadingCategories ? 'Refreshing...' : 'Refresh Categories' }}
+              {{ loadingCategories ? t('app.status.loading') : t('app.forms.refresh_categories') }}
             </button>
           </div>
           <div class="mt-1 relative">
@@ -389,8 +393,8 @@ defineExpose({
               :disabled="loadingCategories || menuStore.loading"
               required
             >
-              <option v-if="loadingCategories || menuStore.loading" value="" disabled>Loading categories...</option>
-              <option v-else-if="!menuStore.categories || menuStore.categories.length === 0" value="" disabled>No categories available</option>
+              <option v-if="loadingCategories || menuStore.loading" value="" disabled>{{ t('app.forms.loading_categories') }}</option>
+              <option v-else-if="!menuStore.categories || menuStore.categories.length === 0" value="" disabled>{{ t('app.forms.no_categories') }}</option>
               <option 
                 v-else
                 v-for="category in menuStore.categories" 
@@ -409,7 +413,7 @@ defineExpose({
             :disabled="menuStore.loading"
           >
             <ArrowPathIcon class="h-4 w-4 mr-1" :class="{ 'animate-spin': menuStore.loading }" />
-            {{ menuStore.loading ? 'Loading...' : 'Refresh categories' }}
+            {{ menuStore.loading ? t('app.status.loading') : t('app.forms.refresh_categories') }}
           </button>
           <p v-if="formErrors.category" class="mt-1 text-sm text-red-600">
             {{ formErrors.category }}
@@ -419,11 +423,11 @@ defineExpose({
         <!-- Price -->
         <div>
           <label for="price" class="block text-sm font-medium text-gray-700">
-            Base Price <span class="text-red-500">*</span>
+            {{ t('app.forms.price_base') }} <span class="text-red-500">*</span>
           </label>
           <div class="relative mt-1 rounded-md shadow-sm">
             <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-              <span class="text-gray-500 sm:text-sm">$</span>
+              <span class="text-gray-500 sm:text-sm">{{ t('app.forms.price_symbol') }}</span>
             </div>
             <input
               id="price"
@@ -433,7 +437,7 @@ defineExpose({
               min="0"
               class="block w-full rounded-md border border-gray-300 pl-7 pr-12 py-2 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
               :class="{ 'border-red-500': formErrors.price }"
-              placeholder="0.00"
+              :placeholder="t('app.forms.placeholder_price')"
               required
             />
           </div>
@@ -446,7 +450,7 @@ defineExpose({
       <!-- Image URL -->
       <div>
         <label for="image_url" class="block text-sm font-medium text-gray-700">
-          Image URL
+          {{ t('app.forms.image_url') }}
         </label>
         <input
           id="image_url"
@@ -470,17 +474,17 @@ defineExpose({
           class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
         />
         <label for="is_available" class="ml-2 block text-sm text-gray-700">
-          Available for ordering
+          {{ t('app.forms.available_for_ordering') }}
         </label>
       </div>
 
       <!-- Variants Section -->
       <div class="border-t border-gray-200 pt-4">
         <div class="flex items-center justify-between">
-          <h3 class="text-sm font-medium text-gray-700">Variants</h3>
+          <h3 class="text-sm font-medium text-gray-700">{{ t('app.forms.variants') }}</h3>
           <button @click="handleAddVariant" type="button" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
             <PlusIcon class="-ml-0.5 mr-2 h-4 w-4" />
-            Add Variant
+            {{ t('app.forms.add_variant') }}
           </button>
         </div>
 
@@ -498,7 +502,7 @@ defineExpose({
                 v-if="!variant.is_available"
                 class="inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800"
               >
-                Unavailable
+                {{ t('app.status.unavailable') }}
               </span>
             </div>
             <div class="flex space-x-2">
@@ -507,7 +511,7 @@ defineExpose({
                 class="text-indigo-600 hover:text-indigo-900"
                 @click="editVariant(index)"
               >
-                <span class="sr-only">Edit</span>
+                <span class="sr-only">{{ t('app.forms.edit') }}</span>
                 <PencilIcon class="h-4 w-4" />
               </button>
               <button
@@ -521,7 +525,7 @@ defineExpose({
           </div>
         </div>
         <p v-else class="mt-2 text-sm text-gray-500">
-          No variants added. Add variants like sizes or flavors.
+          {{ t('app.forms.no_variants') }}
         </p>
       </div>
     </div>
@@ -547,7 +551,7 @@ defineExpose({
           class="inline-flex items-center px-4 py-2 rounded-md border border-gray-300 shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
           :disabled="loading"
         >
-          Cancel
+          {{ t('app.actions.cancel') }}
         </button>
         <button
           type="submit"
@@ -555,7 +559,7 @@ defineExpose({
           :disabled="!isFormValid || loading"
         >
           <ArrowPathIcon v-if="loading" class="animate-spin -ml-1 mr-2 h-4 w-4" />
-          {{ isEditing ? 'Update' : 'Create' }} Item
+          {{ isEditing ? t('app.forms.update_item') : t('app.forms.create_item') }}
         </button>
       </div>
     </div>
@@ -593,11 +597,11 @@ defineExpose({
                   </div>
                   <div class="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left">
                     <DialogTitle as="h3" class="text-base font-semibold leading-6 text-gray-900">
-                      Delete menu item
+                      {{ t('app.messages.delete_item_confirm_title') }}
                     </DialogTitle>
                     <div class="mt-2">
                       <p class="text-sm text-gray-500">
-                        Are you sure you want to delete this menu item? This action cannot be undone.
+                        {{ t('app.messages.delete_item_confirm_text') }}
                       </p>
                     </div>
                   </div>
@@ -609,7 +613,7 @@ defineExpose({
                     @click="handleDelete"
                     :disabled="isDeleting"
                   >
-                    {{ isDeleting ? 'Deleting...' : 'Delete' }}
+                    {{ isDeleting ? t('app.status.loading') : t('app.actions.delete') }}
                   </button>
                   <button
                     type="button"
@@ -617,7 +621,7 @@ defineExpose({
                     @click="showDeleteConfirm = false"
                     :disabled="isDeleting"
                   >
-                    Cancel
+                    {{ t('app.actions.cancel') }}
                   </button>
                 </div>
               </DialogPanel>
@@ -668,12 +672,12 @@ defineExpose({
               <div class="sm:flex sm:items-start">
                 <div class="mt-3 text-center sm:mt-0 sm:text-left w-full">
                   <DialogTitle as="h3" class="text-lg font-medium leading-6 text-gray-900">
-                    {{ editingVariantIndex !== null ? 'Edit Variant' : 'Add Variant' }}
+                    {{ editingVariantIndex !== null ? t('app.forms.variant.edit') : t('app.forms.variant.add') }}
                   </DialogTitle>
                   <div class="mt-5">
                     <div class="space-y-4">
                       <div>
-                        <label for="variant-name" class="block text-sm font-medium text-gray-700">Name</label>
+                        <label for="variant-name" class="block text-sm font-medium text-gray-700">{{ t('app.forms.variant.name') }}</label>
                         <input
                           type="text"
                           id="variant-name"
@@ -683,10 +687,10 @@ defineExpose({
                         />
                       </div>
                       <div>
-                        <label for="variant-price" class="block text-sm font-medium text-gray-700">Price</label>
+                        <label for="variant-price" class="block text-sm font-medium text-gray-700">{{ t('app.forms.variant.price') }}</label>
                         <div class="mt-1 relative rounded-md shadow-sm">
                           <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <span class="text-gray-500 sm:text-sm">$</span>
+                            <span class="text-gray-500 sm:text-sm">{{ t('app.forms.price_symbol') }}</span>
                           </div>
                           <input
                             type="number"
@@ -695,7 +699,7 @@ defineExpose({
                             step="0.01"
                             min="0"
                             class="block w-full pl-7 pr-12 rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                            placeholder="0.00"
+                            :placeholder="t('app.forms.placeholder_price')"
                           />
                         </div>
                       </div>
@@ -707,7 +711,7 @@ defineExpose({
                           class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
                         />
                         <label for="variant-available" class="ml-2 block text-sm text-gray-700">
-                          Available for ordering
+                          {{ t('app.forms.variant.available') }}
                         </label>
                       </div>
                     </div>
@@ -720,14 +724,14 @@ defineExpose({
                   class="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 sm:ml-3 sm:w-auto"
                   @click="handleSaveVariant"
                 >
-                  Save
+                  {{ t('app.actions.save') }}
                 </button>
                 <button
                   type="button"
                   class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto"
                   @click="resetVariantForm"
                 >
-                  Cancel
+                  {{ t('app.actions.cancel') }}
                 </button>
               </div>
             </DialogPanel>

@@ -1,0 +1,256 @@
+{
+  "app": {
+    "title": "Coffee Shop Admin",
+    "nav": {
+      "dashboard": "Dashboard",
+      "menu": "Menu",
+      "orders": "Orders",
+      "kitchen": "Kitchen",
+      "tables": "Tables"
+    },
+    "actions": {
+      "sign_out": "Sign out",
+      "open_user_menu": "Open user menu",
+      "open_main_menu": "Open main menu",
+      "view_all_orders": "View all orders",
+      "view_inventory": "View inventory",
+      "refresh": "Refresh",
+      "cancel": "Cancel",
+      "save": "Save",
+      "delete": "Delete",
+      "create": "Create",
+      "update": "Update"
+    },
+    "status": {
+      "loading": "Loading...",
+      "unavailable": "Unavailable",
+      "pending": "Pending",
+      "preparing": "Preparing",
+      "ready": "Ready",
+      "completed": "Completed",
+      "cancelled": "Cancelled",
+      "out_of_stock": "Out of Stock",
+      "low_stock": "Low Stock",
+      "in_stock": "In Stock"
+    },
+    "messages": {
+      "logout_success": "Successfully logged out",
+      "dashboard_load_failed": "Failed to load dashboard data",
+      "load_categories_failed": "Failed to load categories. Please try again.",
+      "init_form_failed": "Failed to initialize form data",
+      "delete_item_confirm_title": "Delete menu item",
+      "delete_item_confirm_text": "Are you sure you want to delete this menu item? This action cannot be undone.",
+      "delete_item_success": "Menu item deleted successfully",
+      "delete_item_failed": "Failed to delete menu item",
+      "form_fill_required": "Please fill in all required fields",
+      "variant_required": "Variant name and price are required",
+      "submit_failed": "Failed to submit form: {message}"
+    },
+    "forms": {
+      "name": "Name",
+      "description": "Description",
+      "category": "Category",
+      "price_base": "Base Price",
+      "image_url": "Image URL",
+      "available_for_ordering": "Available for ordering",
+      "variants": "Variants",
+      "add_variant": "Add Variant",
+      "edit": "Edit",
+      "delete_item": "Delete Item",
+      "create_item": "Create Item",
+      "update_item": "Update Item",
+      "loading_categories": "Loading categories...",
+      "no_categories": "No categories available",
+      "refresh_categories": "Refresh categories",
+      "price_symbol": "$",
+      "placeholder_price": "0.00",
+      "no_variants": "No variants added. Add variants like sizes or flavors.",
+      "variant": {
+        "name": "Name",
+        "price": "Price",
+        "available": "Available for ordering",
+        "add": "Add Variant",
+        "edit": "Edit Variant"
+      }
+    },
+    "dashboard": {
+      "total_orders_today": "Total Orders Today",
+      "revenue_today": "Revenue Today",
+      "active_tables": "Active Tables",
+      "popular_item": "Popular Item",
+      "recent_orders": "Recent Orders",
+      "order_number": "Order #",
+      "table": "Table",
+      "status": "Status",
+      "amount": "Amount",
+      "low_stock_items": "Low Stock Items",
+      "item": "Item",
+      "category": "Category",
+      "stock": "Stock",
+      "table_number": "Table {number}",
+      "takeaway": "Takeaway",
+      "dine_in": "Dine-in"
+    }
+  ,
+  "validation": {
+    "name_required": "Name is required",
+    "category_required": "Category is required",
+    "price_non_negative": "Price cannot be negative"
+  },
+  "views": {
+    "orders": {
+      "title": "Orders",
+      "try_again": "Try again",
+      "new_order": "New Order",
+      "tabs": {
+        "all": "All",
+        "pending": "Pending",
+        "preparing": "Preparing",
+        "ready": "Ready",
+        "completed": "Completed",
+        "cancelled": "Cancelled"
+      },
+      "status_menu": {
+        "mark_preparing": "Mark as Preparing",
+        "cancel_order": "Cancel Order",
+        "mark_ready": "Mark as Ready",
+        "mark_completed": "Mark as Completed"
+      },
+      "buttons": {
+        "view": "View",
+        "ready": "Ready",
+        "complete": "Complete",
+        "cancel": "Cancel"
+      },
+      "summary": {
+        "item": "item",
+        "items": "items"
+      },
+      "labels": {
+        "table": "Table",
+        "takeaway": "Takeaway",
+        "dine_in": "Dine-in"
+      }
+    },
+    "tables": {
+      "title": "Tables",
+      "subtitle": "Manage tables and their status",
+      "add_table": "Add Table",
+      "loading": "Loading tables...",
+      "occupied": "Occupied",
+      "available": "Available",
+      "table_number_header": "Table #{number}",
+      "seats": "Seats: {count}",
+      "location": "Location: {location}",
+      "last_updated": "Last updated: {time}",
+      "mark_available": "Available",
+      "mark_occupied": "Occupied",
+      "new_order": "New Order",
+      "edit": "Edit",
+      "modal": {
+        "edit_title": "Edit Table",
+        "add_title": "Add New Table",
+        "close": "Close",
+        "fields": {
+          "table_number": "Table Number",
+          "capacity": "Capacity",
+          "location": "Location",
+          "location_inside": "Inside",
+          "location_patio": "Patio",
+          "location_bar": "Bar"
+        },
+        "actions": {
+          "cancel": "Cancel",
+          "submit_update": "Update Table",
+          "submit_add": "Add Table"
+        }
+      },
+      "errors": {
+        "load_failed": "Failed to load tables. Please try again.",
+        "update_failed": "Failed to update table status. Please try again.",
+        "save_failed_update": "Failed to update table. Please try again.",
+        "save_failed_create": "Failed to create table. Please try again."
+      }
+    },
+    "kitchen": {
+      "title": "Kitchen Display",
+      "last_updated": "Last updated: {time}",
+      "no_active": "No active orders in the kitchen",
+      "order": "Order #{id}",
+      "table": "Table {number}",
+      "note": "Note:",
+      "actions": {
+        "order_ready": "Order Ready for Pickup",
+        "start_preparing": "Start Preparing"
+      },
+      "time": {
+        "just_now": "Just now",
+        "minutes_ago": "{m}m ago",
+        "hours_minutes_ago": "{h}h {m}m ago"
+      }
+    },
+    "auth": {
+      "login": {
+        "title": "Sign in to your account",
+        "email_placeholder": "Email address",
+        "password_placeholder": "Password",
+        "cta": "Sign in",
+        "cta_loading": "Signing in...",
+        "register_prompt": "Don't have an account? Sign up",
+        "errors": {
+          "failed": "Login failed",
+          "generic": "An error occurred during login"
+        }
+      },
+      "register": {
+        "title": "Create a new account",
+        "full_name_placeholder": "Full Name",
+        "email_placeholder": "Email address",
+        "password_placeholder": "Password",
+        "confirm_password_placeholder": "Confirm Password",
+        "cta": "Create Account",
+        "cta_loading": "Creating Account...",
+        "login_prompt": "Already have an account? Sign in",
+        "errors": {
+          "failed": "Registration failed",
+          "generic": "An error occurred during registration"
+        }
+      }
+    },
+    "notFound": {
+      "title": "Page not found",
+      "subtitle": "Sorry, we couldn't find the page you're looking for.",
+      "home": "Go back home",
+      "back": "Go back",
+      "help": "Need help?",
+      "contact": "Contact our support team"
+    },
+    "menu": {
+      "list": {
+        "title": "Menu Items",
+        "subtitle": "A list of all menu items in the system.",
+        "add": "Add menu item",
+        "error_title": "Error loading menu items",
+        "table": {
+          "name": "Name",
+          "category": "Category",
+          "price": "Price",
+          "status": "Status",
+          "actions": "Actions"
+        },
+        "variants": "{count} variants",
+        "available": "Available",
+        "unavailable": "Unavailable",
+        "edit": "Edit",
+        "enable": "Enable",
+        "disable": "Disable",
+        "delete": "Delete",
+        "empty": "No menu items found. Add your first menu item to get started."
+      },
+      "view": {
+        "back": "Back to menu items"
+      }
+    }
+  }
+  }
+}

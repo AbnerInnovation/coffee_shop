@@ -1,0 +1,256 @@
+{
+  "app": {
+    "title": "Coffee Shop Admin",
+    "nav": {
+      "dashboard": "Tablero",
+      "menu": "Menú",
+      "orders": "Órdenes",
+      "kitchen": "Cocina",
+      "tables": "Mesas"
+    },
+    "actions": {
+      "sign_out": "Cerrar sesión",
+      "open_user_menu": "Abrir menú de usuario",
+      "open_main_menu": "Abrir menú principal",
+      "view_all_orders": "Ver todas las órdenes",
+      "view_inventory": "Ver inventario",
+      "refresh": "Actualizar",
+      "cancel": "Cancelar",
+      "save": "Guardar",
+      "delete": "Eliminar",
+      "create": "Crear",
+      "update": "Actualizar"
+    },
+    "status": {
+      "loading": "Cargando...",
+      "unavailable": "No disponible",
+      "pending": "Pendiente",
+      "preparing": "Preparando",
+      "ready": "Listo",
+      "completed": "Completado",
+      "cancelled": "Cancelado",
+      "out_of_stock": "Agotado",
+      "low_stock": "Poco stock",
+      "in_stock": "En stock"
+    },
+    "messages": {
+      "logout_success": "Sesión cerrada correctamente",
+      "dashboard_load_failed": "Error al cargar los datos del tablero",
+      "load_categories_failed": "Error al cargar categorías. Inténtalo de nuevo.",
+      "init_form_failed": "Error al inicializar los datos del formulario",
+      "delete_item_confirm_title": "Eliminar artículo del menú",
+      "delete_item_confirm_text": "¿Seguro que deseas eliminar este artículo del menú? Esta acción no se puede deshacer.",
+      "delete_item_success": "Artículo eliminado correctamente",
+      "delete_item_failed": "Error al eliminar el artículo del menú",
+      "form_fill_required": "Por favor completa los campos requeridos",
+      "variant_required": "El nombre y precio de la variante son obligatorios",
+      "submit_failed": "Error al enviar el formulario: {message}"
+    },
+    "forms": {
+      "name": "Nombre",
+      "description": "Descripción",
+      "category": "Categoría",
+      "price_base": "Precio base",
+      "image_url": "URL de la imagen",
+      "available_for_ordering": "Disponible para pedidos",
+      "variants": "Variantes",
+      "add_variant": "Agregar variante",
+      "edit": "Editar",
+      "delete_item": "Eliminar artículo",
+      "create_item": "Crear artículo",
+      "update_item": "Actualizar artículo",
+      "loading_categories": "Cargando categorías...",
+      "no_categories": "No hay categorías disponibles",
+      "refresh_categories": "Actualizar categorías",
+      "price_symbol": "$",
+      "placeholder_price": "0.00",
+      "no_variants": "No hay variantes. Agrega tamaños o sabores.",
+      "variant": {
+        "name": "Nombre",
+        "price": "Precio",
+        "available": "Disponible para pedidos",
+        "add": "Agregar variante",
+        "edit": "Editar variante"
+      }
+    },
+    "dashboard": {
+      "total_orders_today": "Órdenes totales hoy",
+      "revenue_today": "Ingresos de hoy",
+      "active_tables": "Mesas activas",
+      "popular_item": "Artículo popular",
+      "recent_orders": "Órdenes recientes",
+      "order_number": "Orden #",
+      "table": "Mesa",
+      "status": "Estado",
+      "amount": "Monto",
+      "low_stock_items": "Artículos con poco stock",
+      "item": "Artículo",
+      "category": "Categoría",
+      "stock": "Stock",
+      "table_number": "Mesa {number}",
+      "takeaway": "Para llevar",
+      "dine_in": "Para comer aquí"
+    }
+  ,
+  "validation": {
+    "name_required": "El nombre es obligatorio",
+    "category_required": "La categoría es obligatoria",
+    "price_non_negative": "El precio no puede ser negativo"
+  },
+  "views": {
+    "orders": {
+      "title": "Órdenes",
+      "try_again": "Intentar de nuevo",
+      "new_order": "Nueva orden",
+      "tabs": {
+        "all": "Todas",
+        "pending": "Pendiente",
+        "preparing": "Preparando",
+        "ready": "Listo",
+        "completed": "Completado",
+        "cancelled": "Cancelado"
+      },
+      "status_menu": {
+        "mark_preparing": "Marcar como preparando",
+        "cancel_order": "Cancelar orden",
+        "mark_ready": "Marcar como listo",
+        "mark_completed": "Marcar como completado"
+      },
+      "buttons": {
+        "view": "Ver",
+        "ready": "Listo",
+        "complete": "Completar",
+        "cancel": "Cancelar"
+      },
+      "summary": {
+        "item": "artículo",
+        "items": "artículos"
+      },
+      "labels": {
+        "table": "Mesa",
+        "takeaway": "Para llevar",
+        "dine_in": "Para comer aquí"
+      }
+    },
+    "tables": {
+      "title": "Mesas",
+      "subtitle": "Gestiona las mesas y su estado",
+      "add_table": "Agregar mesa",
+      "loading": "Cargando mesas...",
+      "occupied": "Ocupada",
+      "available": "Disponible",
+      "table_number_header": "Mesa #{number}",
+      "seats": "Asientos: {count}",
+      "location": "Ubicación: {location}",
+      "last_updated": "Última actualización: {time}",
+      "mark_available": "Disponible",
+      "mark_occupied": "Ocupada",
+      "new_order": "Nueva orden",
+      "edit": "Editar",
+      "modal": {
+        "edit_title": "Editar mesa",
+        "add_title": "Agregar mesa",
+        "close": "Cerrar",
+        "fields": {
+          "table_number": "Número de mesa",
+          "capacity": "Capacidad",
+          "location": "Ubicación",
+          "location_inside": "Interior",
+          "location_patio": "Patio",
+          "location_bar": "Bar"
+        },
+        "actions": {
+          "cancel": "Cancelar",
+          "submit_update": "Actualizar mesa",
+          "submit_add": "Agregar mesa"
+        }
+      },
+      "errors": {
+        "load_failed": "No se pudieron cargar las mesas. Inténtalo de nuevo.",
+        "update_failed": "No se pudo actualizar el estado de la mesa. Inténtalo de nuevo.",
+        "save_failed_update": "No se pudo actualizar la mesa. Inténtalo de nuevo.",
+        "save_failed_create": "No se pudo crear la mesa. Inténtalo de nuevo."
+      }
+    },
+    "kitchen": {
+      "title": "Pantalla de cocina",
+      "last_updated": "Última actualización: {time}",
+      "no_active": "No hay órdenes activas en la cocina",
+      "order": "Orden #{id}",
+      "table": "Mesa {number}",
+      "note": "Nota:",
+      "actions": {
+        "order_ready": "Orden lista para recoger",
+        "start_preparing": "Comenzar a preparar"
+      },
+      "time": {
+        "just_now": "Justo ahora",
+        "minutes_ago": "Hace {m}m",
+        "hours_minutes_ago": "Hace {h}h {m}m"
+      }
+    },
+    "auth": {
+      "login": {
+        "title": "Inicia sesión en tu cuenta",
+        "email_placeholder": "Correo electrónico",
+        "password_placeholder": "Contraseña",
+        "cta": "Iniciar sesión",
+        "cta_loading": "Iniciando sesión...",
+        "register_prompt": "¿No tienes cuenta? Regístrate",
+        "errors": {
+          "failed": "Inicio de sesión fallido",
+          "generic": "Ocurrió un error durante el inicio de sesión"
+        }
+      },
+      "register": {
+        "title": "Crea una nueva cuenta",
+        "full_name_placeholder": "Nombre completo",
+        "email_placeholder": "Correo electrónico",
+        "password_placeholder": "Contraseña",
+        "confirm_password_placeholder": "Confirmar contraseña",
+        "cta": "Crear cuenta",
+        "cta_loading": "Creando cuenta...",
+        "login_prompt": "¿Ya tienes una cuenta? Inicia sesión",
+        "errors": {
+          "failed": "Registro fallido",
+          "generic": "Ocurrió un error durante el registro"
+        }
+      }
+    },
+    "notFound": {
+      "title": "Página no encontrada",
+      "subtitle": "Lo sentimos, no pudimos encontrar la página que buscas.",
+      "home": "Volver al inicio",
+      "back": "Regresar",
+      "help": "¿Necesitas ayuda?",
+      "contact": "Contacta a nuestro equipo de soporte"
+    },
+    "menu": {
+      "list": {
+        "title": "Artículos del menú",
+        "subtitle": "Lista de todos los artículos del menú en el sistema.",
+        "add": "Agregar artículo",
+        "error_title": "Error al cargar los artículos del menú",
+        "table": {
+          "name": "Nombre",
+          "category": "Categoría",
+          "price": "Precio",
+          "status": "Estado",
+          "actions": "Acciones"
+        },
+        "variants": "{count} variantes",
+        "available": "Disponible",
+        "unavailable": "No disponible",
+        "edit": "Editar",
+        "enable": "Habilitar",
+        "disable": "Deshabilitar",
+        "delete": "Eliminar",
+        "empty": "No se encontraron artículos. Agrega tu primer artículo para comenzar."
+      },
+      "view": {
+        "back": "Volver a los artículos"
+      }
+    }
+  }
+  }
+}

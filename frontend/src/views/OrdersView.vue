@@ -15,7 +15,7 @@
           <p class="text-sm text-red-700">{{ error }}</p>
           <button @click="fetchOrders"
             class="mt-2 text-sm font-medium text-red-700 hover:text-red-600 focus:outline-none">
-            Try again <span aria-hidden="true">&rarr;</span>
+            {{ t('app.views.orders.try_again') }} <span aria-hidden="true">&rarr;</span>
           </button>
         </div>
       </div>
@@ -24,9 +24,9 @@
     <div v-else class="space-y-6">
       <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 class="text-2xl font-bold text-gray-900">Orders</h2>
+          <h2 class="text-2xl font-bold text-gray-900">{{ t('app.views.orders.title') }}</h2>
           <p class="mt-1 text-sm text-gray-500">
-            {{ selectedStatus === 'all' ? 'All' : formatStatus(selectedStatus) }} orders
+            {{ selectedStatus === 'all' ? t('app.views.orders.tabs.all') : t('app.status.' + selectedStatus) }} {{ t('app.views.orders.title').toLowerCase() }}
           </p>
         </div>
         <div class="flex items-center space-x-3">
@@ -34,7 +34,7 @@
             class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
             @click="openNewOrderModal">
             <PlusIcon class="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
-            New Order
+            {{ t('app.views.orders.new_order') }}
           </button>
         </div>
       </div>
@@ -49,7 +49,7 @@
                 : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
             ]">
               <span class="inline-flex items-center">
-                {{ tab.name }}
+                {{ t('app.views.orders.tabs.' + tab.id) }}
                 <span v-if="getOrderCount(tab.id) > 0" :class="[
                   selectedStatus === tab.id ? 'bg-indigo-100 text-indigo-600' : 'bg-gray-100 text-gray-900',
                   'ml-2 py-0.5 px-2 rounded-full text-xs font-medium'
@@ -85,23 +85,23 @@
                         <button @click="updateOrderStatus(order.id, 'preparing')"
                           class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                           role="menuitem">
-                          Mark as Preparing
+                          {{ t('app.views.orders.status_menu.mark_preparing') }}
                         </button>
                         <button @click="cancelOrder(order.id)"
                           class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
                           role="menuitem">
-                          Cancel Order
+                          {{ t('app.views.orders.status_menu.cancel_order') }}
                         </button>
                       </template>
                       <button v-else-if="order.status === 'preparing'" @click="updateOrderStatus(order.id, 'ready')"
                         class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                         role="menuitem">
-                        Mark as Ready
+                        {{ t('app.views.orders.status_menu.mark_ready') }}
                       </button>
                       <button v-else-if="order.status === 'ready'" @click="updateOrderStatus(order.id, 'completed')"
                         class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                         role="menuitem">
-                        Mark as Completed
+                        {{ t('app.views.orders.status_menu.mark_completed') }}
                       </button>
                     </div>
                   </div>
@@ -112,14 +112,14 @@
                   </p>
                   <span class="hidden sm:inline-flex ml-2 px-2.5 py-0.5 rounded-full text-xs font-medium"
                     :class="getStatusBadgeClass(order.status)">
-                    {{ formatStatus(order.status) }}
+                    {{ t('app.status.' + order.status) }}
                   </span>
                 </div>
                 <div class="mt-2 grid grid-cols-2 gap-x-4 gap-y-2 sm:flex sm:flex-wrap sm:space-x-6">
                   <div class="flex items-center text-sm text-gray-500">
                     <RectangleGroupIcon class="flex-shrink-0 mr-1.5 h-4 w-4 sm:h-5 sm:w-5 text-gray-400"
                       aria-hidden="true" />
-                    <span class="truncate">{{ order.table || 'Takeaway' }}</span>
+                    <span class="truncate">{{ order.table || t('app.views.orders.labels.takeaway') }}</span>
                   </div>
                   <div class="col-span-2 sm:col-auto flex items-center text-sm text-gray-500">
                     <ClockIcon class="flex-shrink-0 mr-1.5 h-4 w-4 sm:h-5 sm:w-5 text-gray-400" aria-hidden="true" />
@@ -134,25 +134,25 @@
                     class="inline-flex items-center p-2 sm:p-1.5 border border-transparent rounded-full shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                     @click="viewOrderDetails(order)" aria-label="View order details">
                     <EyeIcon class="h-4 w-4" aria-hidden="true" />
-                    <span class="sr-only sm:not-sr-only ml-1 text-xs">View</span>
+                    <span class="sr-only sm:not-sr-only ml-1 text-xs">{{ t('app.views.orders.buttons.view') }}</span>
                   </button>
                   <button v-if="order.status === 'preparing'" type="button"
                     class="inline-flex items-center p-2 sm:p-1.5 border border-transparent rounded-full shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
                     @click="updateOrderStatus(order.id, 'ready' as const)" aria-label="Mark as ready">
                     <CheckIcon class="h-4 w-4" aria-hidden="true" />
-                    <span class="sr-only sm:not-sr-only ml-1 text-xs">Ready</span>
+                    <span class="sr-only sm:not-sr-only ml-1 text-xs">{{ t('app.views.orders.buttons.ready') }}</span>
                   </button>
                   <button v-if="order.status === 'ready'" type="button"
                     class="inline-flex items-center p-2 sm:p-1.5 border border-transparent rounded-full shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
                     @click="updateOrderStatus(order.id, 'completed' as const)" aria-label="Mark as completed">
                     <CheckCircleIcon class="h-4 w-4" aria-hidden="true" />
-                    <span class="sr-only sm:not-sr-only ml-1 text-xs">Complete</span>
+                    <span class="sr-only sm:not-sr-only ml-1 text-xs">{{ t('app.views.orders.buttons.complete') }}</span>
                   </button>
                   <button v-if="order.status !== 'cancelled' && order.status !== 'completed'" type="button"
                     class="inline-flex items-center p-2 sm:p-1.5 border border-transparent rounded-full shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                     @click="cancelOrder(order.id)" aria-label="Cancel order">
                     <XMarkIcon class="h-4 w-4" aria-hidden="true" />
-                    <span class="sr-only sm:not-sr-only ml-1 text-xs">Cancel</span>
+                    <span class="sr-only sm:not-sr-only ml-1 text-xs">{{ t('app.views.orders.buttons.cancel') }}</span>
                   </button>
                 </div>
               </div>
@@ -161,9 +161,7 @@
             <!-- Order Items Summary -->
             <div class="mt-3 border-t border-gray-100 pt-3">
               <div class="text-sm text-gray-500 flex flex-col sm:flex-row sm:items-center">
-                <span class="font-medium text-gray-900">{{ order.items.length }} {{ order.items.length === 1 ? 'item' :
-                  'items'
-                  }}</span>
+                <span class="font-medium text-gray-900">{{ order.items.length }} {{ order.items.length === 1 ? t('app.views.orders.summary.item') : t('app.views.orders.summary.items') }}</span>
                 <span class="hidden sm:inline mx-1">•</span>
                 <span class="truncate">{{ getOrderItemsSummary(order.items) }}</span>
               </div>
@@ -184,6 +182,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import orderService from '@/services/orderService';
 import type { Order } from '@/services/orderService';
 import {
@@ -200,6 +199,9 @@ import {
 import OrderDetails from '@/components/orders/OrderDetailsModal.vue';
 import NewOrderModal from '@/components/orders/NewOrderModal.vue';
 // Removed unused imports
+
+// i18n
+const { t } = useI18n();
 
 // Simple toast functions since we're not using PrimeVue
 const showSuccess = (message: string) => {
@@ -315,9 +317,11 @@ const selectTab = (tabId: OrderStatus) => {
   selectedStatus.value = tabId;
 };
 
-// Format status for display
+// Format status for display (using i18n status keys when possible)
 const formatStatus = (status: OrderStatus): string => {
-  return statusMap[status] || status;
+  const key = `app.status.${status}`;
+  const translated = t(key);
+  return typeof translated === 'string' && translated.length > 0 ? translated : (statusMap[status] || status);
 };
 
 

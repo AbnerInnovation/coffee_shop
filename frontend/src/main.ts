@@ -4,6 +4,7 @@ import axios from 'axios';
 import App from './App.vue';
 import router from './router';
 import './assets/main.css';
+import { i18n } from '@/plugins/i18n';
 
 // Configure axios
 axios.defaults.baseURL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
@@ -21,6 +22,7 @@ const app = createApp(App);
 
 app.use(pinia);
 app.use(router);
+app.use(i18n);
 app.mount('#app');
 
 export { app, router, pinia };

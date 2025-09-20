@@ -1,9 +1,9 @@
 <template>
   <div class="kitchen-view p-4">
     <div class="flex justify-between items-center mb-6">
-      <h1 class="text-3xl font-bold text-gray-900">Kitchen Display</h1>
+      <h1 class="text-3xl font-bold text-gray-900">{{ t('app.views.kitchen.title') }}</h1>
       <div class="text-sm text-gray-500">
-        Last updated: {{ new Date().toLocaleTimeString() }}
+        {{ t('app.views.kitchen.last_updated', { time: new Date().toLocaleTimeString() }) }}
       </div>
     </div>
 
@@ -13,7 +13,7 @@
 
     <div v-else>
       <div v-if="activeOrders.length === 0" class="text-center py-12">
-        <p class="text-gray-500 text-lg">No active orders in the kitchen</p>
+        <p class="text-gray-500 text-lg">{{ t('app.views.kitchen.no_active') }}</p>
       </div>
 
       <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -21,17 +21,17 @@
           <div class="p-4 border-b border-gray-200">
             <div class="flex justify-between items-start">
               <div>
-                <h3 class="text-lg font-semibold">Order #{{ order.id }}</h3>
+                <h3 class="text-lg font-semibold">{{ t('app.views.kitchen.order', { id: order.id }) }}</h3>
                 <p class="text-sm text-gray-500">
                   {{ formatTime(order.created_at) }}
-                  <span v-if="order.table_number" class="ml-2">• Table {{ order.table_number }}</span>
+                  <span v-if="order.table_number" class="ml-2">• {{ t('app.views.kitchen.table', { number: order.table_number }) }}</span>
                 </p>
               </div>
               <span 
                 class="px-2 py-1 text-xs font-medium rounded-full"
                 :class="getStatusBadgeClass(order.status)"
               >
-                {{ formatStatus(order.status) }}
+                {{ t(`app.status.${order.status}`) }}
               </span>
             </div>
             <div v-if="order.notes" class="mt-2 p-2 bg-yellow-50 text-sm text-yellow-700 rounded">
@@ -57,7 +57,7 @@
                   
                   <div v-if="item.special_instructions" class="ml-7 mt-1 text-sm text-gray-600">
                     <div>
-                      <span class="font-medium">Note:</span> {{ item.special_instructions }}
+                      <span class="font-medium">{{ t('app.views.kitchen.note') }}</span> {{ item.special_instructions }}
                     </div>
                   </div>
                 </div>
@@ -77,14 +77,14 @@
               @click="markOrderReady(order)"
               class="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
             >
-              Order Ready for Pickup
+              {{ t('app.views.kitchen.actions.order_ready') }}
             </button>
             <button
               v-else-if="order.status === 'pending'"
               @click="startPreparingOrder(order)"
               class="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
             >
-              Start Preparing
+              {{ t('app.views.kitchen.actions.start_preparing') }}
             </button>
           </div>
         </div>
@@ -95,12 +95,15 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue';
+import { useI18n } from 'vue-i18n';
 import orderService from '@/services/orderService';
 import type { Order, OrderItem } from '@/services/orderService';
 
 const loading = ref(true);
 const activeOrders = ref<Order[]>([]);
 let refreshInterval: number | null = null;
+
+const { t } = useI18n();
 
 // Format time for display
 const formatTime = (dateString: string) => {
@@ -109,7 +112,7 @@ const formatTime = (dateString: string) => {
 
 // Format status for display
 const formatStatus = (status: string) => {
-  return status.charAt(0).toUpperCase() + status.slice(1);
+  return t(`app.status.${status}`) as string;
 };
 
 // Get status badge class
@@ -127,17 +130,14 @@ const getStatusBadgeClass = (status: string) => {
 // Calculate time elapsed since item was started
 const getTimeElapsed = (startedAt: string) => {
   if (!startedAt) return '';
-  
   const start = new Date(startedAt).getTime();
   const now = new Date().getTime();
   const diffInMinutes = Math.floor((now - start) / (1000 * 60));
-  
-  if (diffInMinutes < 1) return 'Just now';
-  if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
-  
+  if (diffInMinutes < 1) return t('app.views.kitchen.time.just_now') as string;
+  if (diffInMinutes < 60) return t('app.views.kitchen.time.minutes_ago', { m: diffInMinutes }) as string;
   const hours = Math.floor(diffInMinutes / 60);
   const minutes = diffInMinutes % 60;
-  return `${hours}h ${minutes}m ago`;
+  return t('app.views.kitchen.time.hours_minutes_ago', { h: hours, m: minutes }) as string;
 };
 
 // Fetch active orders (pending or preparing)

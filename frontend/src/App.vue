@@ -6,7 +6,7 @@
         <div class="flex h-16 items-center justify-between">
           <div class="flex items-center">
             <div class="flex-shrink-0">
-              <h3 class="text-white font-bold">Coffee Shop Admin</h3>
+              <h3 class="text-white font-bold">{{ t('app.title') }}</h3>
             </div>
             <div class="hidden md:block">
               <div class="ml-10 flex items-baseline space-x-4">
@@ -22,14 +22,13 @@
                   ]"
                   :aria-current="item.current ? 'page' : undefined"
                 >
-                  {{ item.name }}
+                  {{ t(item.labelKey) }}
                 </router-link>
               </div>
             </div>
           </div>
           <div class="hidden md:block">
             <div class="ml-4 flex items-center md:ml-6">
-              <!-- Profile dropdown -->
               <div class="relative ml-3">
                 <div>
                   <button
@@ -40,7 +39,7 @@
                     aria-haspopup="true"
                     @click="toggleProfileMenu"
                   >
-                    <span class="sr-only">Open user menu</span>
+                    <span class="sr-only">{{ t('app.actions.open_user_menu') }}</span>
                     <div class="h-8 w-8 rounded-full bg-gray-600 flex items-center justify-center text-white">
                       {{ userInitials }}
                     </div>
@@ -72,7 +71,7 @@
                       id="user-menu-item-0"
                       @click="handleLogout"
                     >
-                      Sign out
+                      {{ t('app.actions.sign_out') }}
                     </a>
                   </div>
                 </transition>
@@ -88,7 +87,7 @@
               aria-expanded="false"
               @click="toggleMobileMenu"
             >
-              <span class="sr-only">Open main menu</span>
+              <span class="sr-only">{{ t('app.actions.open_main_menu') }}</span>
               <Bars3Icon v-if="!isMobileMenuOpen" class="block h-6 w-6" aria-hidden="true" />
               <XMarkIcon v-else class="block h-6 w-6" aria-hidden="true" />
             </button>
@@ -111,7 +110,7 @@
             ]"
             :aria-current="item.current ? 'page' : undefined"
           >
-            {{ item.name }}
+            {{ $t(item.labelKey) }}
           </router-link>
         </div>
         <div class="border-t border-gray-700 pb-3 pt-4">
@@ -132,7 +131,7 @@
               class="block rounded-md px-3 py-2 text-base font-medium text-gray-400 hover:bg-gray-700 hover:text-white"
               @click="handleLogout"
             >
-              Sign out
+              {{ $t('app.actions.sign_out') }}
             </a>
           </div>
         </div>
@@ -167,18 +166,20 @@ import { Bars3Icon, XMarkIcon } from '@heroicons/vue/24/outline';
 import { useAuthStore } from '@/stores/auth';
 import { useToast, ToastContainer } from '@/composables/useToast';
 import ConfirmDialog from '@/components/ui/ConfirmationDialog.vue'
+import { useI18n } from 'vue-i18n';
 
 const authStore = useAuthStore();
 const route = useRoute();
 const router = useRouter();
 const { showSuccess } = useToast();
+const { t } = useI18n();
 
 const navigation = ref([
-  { name: 'Dashboard', to: '/', current: false },
-  { name: 'Menu', to: '/menu', current: false },
-  { name: 'Orders', to: '/orders', current: false },
-  { name: 'Kitchen', to: '/kitchen', current: false },
-  { name: 'Tables', to: '/tables', current: false },
+  { name: 'dashboard', labelKey: 'app.nav.dashboard', to: '/', current: false },
+  { name: 'menu', labelKey: 'app.nav.menu', to: '/menu', current: false },
+  { name: 'orders', labelKey: 'app.nav.orders', to: '/orders', current: false },
+  { name: 'kitchen', labelKey: 'app.nav.kitchen', to: '/kitchen', current: false },
+  { name: 'tables', labelKey: 'app.nav.tables', to: '/tables', current: false },
 ]);
 
 const isMobileMenuOpen = ref(false);
@@ -239,7 +240,7 @@ function toggleProfileMenu() {
 async function handleLogout() {
   try {
     await authStore.logout();
-    showSuccess('Successfully logged out');
+    showSuccess(t('app.messages.logout_success'));
     router.push('/login');
   } catch (error) {
     console.error('Logout failed:', error);

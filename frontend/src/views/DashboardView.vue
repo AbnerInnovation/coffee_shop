@@ -3,22 +3,22 @@
     <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
       <!-- Stats Cards -->
       <div class="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6">
-        <dt class="truncate text-sm font-medium text-gray-500">Total Orders Today</dt>
+        <dt class="truncate text-sm font-medium text-gray-500">{{ t('app.dashboard.total_orders_today') }}</dt>
         <dd class="mt-1 text-3xl font-semibold tracking-tight text-gray-900">{{ stats.totalOrdersToday }}</dd>
       </div>
       
       <div class="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6">
-        <dt class="truncate text-sm font-medium text-gray-500">Revenue Today</dt>
+        <dt class="truncate text-sm font-medium text-gray-500">{{ t('app.dashboard.revenue_today') }}</dt>
         <dd class="mt-1 text-3xl font-semibold tracking-tight text-gray-900">${{ stats.revenueToday.toFixed(2) }}</dd>
       </div>
       
       <div class="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6">
-        <dt class="truncate text-sm font-medium text-gray-500">Active Tables</dt>
+        <dt class="truncate text-sm font-medium text-gray-500">{{ t('app.dashboard.active_tables') }}</dt>
         <dd class="mt-1 text-3xl font-semibold tracking-tight text-gray-900">{{ stats.activeTables }}/{{ stats.totalTables }}</dd>
       </div>
       
       <div class="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6">
-        <dt class="truncate text-sm font-medium text-gray-500">Popular Item</dt>
+        <dt class="truncate text-sm font-medium text-gray-500">{{ t('app.dashboard.popular_item') }}</dt>
         <dd class="mt-1 text-3xl font-semibold tracking-tight text-gray-900">{{ stats.popularItem || '—' }}</dd>
       </div>
     </div>
@@ -27,17 +27,17 @@
       <!-- Recent Orders -->
       <div class="overflow-hidden rounded-lg bg-white shadow">
         <div class="border-b border-gray-200 px-4 py-5 sm:px-6">
-          <h3 class="text-lg font-medium leading-6 text-gray-900">Recent Orders</h3>
+          <h3 class="text-lg font-medium leading-6 text-gray-900">{{ t('app.dashboard.recent_orders') }}</h3>
         </div>
         <div class="px-4 py-5 sm:p-6">
           <div class="overflow-hidden">
             <table class="min-w-full divide-y divide-gray-200">
               <thead class="bg-gray-50">
                 <tr>
-                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Order #</th>
-                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Table</th>
-                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Status</th>
-                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Amount</th>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{{ t('app.dashboard.order_number') }}</th>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{{ t('app.dashboard.table') }}</th>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{{ t('app.dashboard.status') }}</th>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{{ t('app.dashboard.amount') }}</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-gray-200 bg-white">
@@ -50,7 +50,7 @@
                   </td>
                   <td class="whitespace-nowrap px-6 py-4">
                     <span :class="getStatusBadgeClass(order.status)" class="inline-flex rounded-full px-2 text-xs font-semibold leading-5">
-                      {{ order.status }}
+                      {{ t('app.status.' + String(order.status).toLowerCase()) }}
                     </span>
                   </td>
                   <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
@@ -62,7 +62,7 @@
           </div>
           <div class="mt-4 text-right">
             <router-link to="/orders" class="text-sm font-medium text-indigo-600 hover:text-indigo-500">
-              View all orders
+              {{ t('app.actions.view_all_orders') }}
             </router-link>
           </div>
         </div>
@@ -71,17 +71,17 @@
       <!-- Low Stock Items (derived from menu availability) -->
       <div class="overflow-hidden rounded-lg bg-white shadow">
         <div class="border-b border-gray-200 px-4 py-5 sm:px-6">
-          <h3 class="text-lg font-medium leading-6 text-gray-900">Low Stock Items</h3>
+          <h3 class="text-lg font-medium leading-6 text-gray-900">{{ t('app.dashboard.low_stock_items') }}</h3>
         </div>
         <div class="px-4 py-5 sm:p-6">
           <div class="overflow-hidden">
             <table class="min-w-full divide-y divide-gray-200">
               <thead class="bg-gray-50">
                 <tr>
-                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Item</th>
-                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Category</th>
-                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Stock</th>
-                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Status</th>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{{ t('app.dashboard.item') }}</th>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{{ t('app.dashboard.category') }}</th>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{{ t('app.dashboard.stock') }}</th>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{{ t('app.dashboard.status') }}</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-gray-200 bg-white">
@@ -112,8 +112,8 @@
             </table>
           </div>
           <div class="mt-4 text-right">
-            <router-link to="/inventory" class="text-sm font-medium text-indigo-600 hover:text-indigo-500">
-              View inventory
+            <router-link to="/menu" class="text-sm font-medium text-indigo-600 hover:text-indigo-500">
+              {{ t('app.actions.view_inventory') }}
             </router-link>
           </div>
         </div>
@@ -127,11 +127,13 @@ import { ref, onMounted } from 'vue';
 import orderService from '@/services/orderService';
 import menuService from '@/services/menuService';
 import tableService from '@/services/tableService';
+import { useI18n } from 'vue-i18n';
 
 type BackendOrderStatus = 'pending' | 'preparing' | 'ready' | 'completed' | 'cancelled';
 
 const loading = ref(false);
 const error = ref<string | null>(null);
+const { t } = useI18n();
 
 const stats = ref({
   totalOrdersToday: 0,
@@ -161,16 +163,16 @@ function getStatusBadgeClass(status: BackendOrderStatus | string) {
   return statusClasses[status] || 'bg-gray-100 text-gray-800';
 }
 
-function getStockStatusClass(stock) {
+function getStockStatusClass(stock: number) {
   if (stock === 0) return 'bg-red-100 text-red-800';
   if (stock <= 3) return 'bg-yellow-100 text-yellow-800';
   return 'bg-green-100 text-green-800';
 }
 
-function getStockStatusLabel(stock) {
-  if (stock === 0) return 'Out of Stock';
-  if (stock <= 3) return 'Low Stock';
-  return 'In Stock';
+function getStockStatusLabel(stock: number) {
+  if (stock === 0) return t('app.status.out_of_stock');
+  if (stock <= 3) return t('app.status.low_stock');
+  return t('app.status.in_stock');
 }
 
 function isToday(dateStr: string | Date) {
@@ -208,7 +210,7 @@ onMounted(async () => {
     const sorted = [...todayOrders].sort((a,b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
     recentOrders.value = sorted.slice(0,5).map(o => ({
       id: o.id,
-      table: o.table_number ? `Table ${o.table_number}` : (o.customer_name ? 'Takeaway' : 'Dine-in'),
+      table: o.table_number ? t('app.dashboard.table_number', { number: o.table_number }) : (o.customer_name ? t('app.dashboard.takeaway') : t('app.dashboard.dine_in')),
       status: o.status,
       amount: o.total_amount || 0,
       createdAt: new Date(o.created_at || Date.now())
@@ -233,7 +235,7 @@ onMounted(async () => {
       }));
   } catch (e) {
     console.error('Dashboard load failed:', e);
-    error.value = 'Failed to load dashboard data';
+    error.value = t('app.messages.dashboard_load_failed');
   } finally {
     loading.value = false;
   }

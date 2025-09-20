@@ -23,7 +23,7 @@
                   class="inline-flex items-center text-sm text-gray-600 hover:text-gray-900"
                 >
                   <ArrowLeftIcon class="mr-1 h-4 w-4" />
-                  Back to menu items
+                  {{ t('app.views.menu.view.back') }}
                 </button>
               </div>
               
@@ -56,6 +56,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useMenuStore } from '@/stores/menu';
 import { useConfirm } from '@/composables/useConfirm';
 import { useToast } from '@/composables/useToast';
@@ -67,6 +68,7 @@ import { ArrowLeftIcon } from '@heroicons/vue/20/solid';
 const menuStore = useMenuStore();
 const { confirm } = useConfirm();
 const { showSuccess, showError } = useToast();
+const { t } = useI18n();
 
 const menuItems = ref<MenuItem[]>([]);
 const loading = ref<boolean>(false);

@@ -3,9 +3,9 @@
     <div class="w-full max-w-md space-y-8">
       <div class="text-center">
         <h1 class="text-9xl font-extrabold text-primary-600 dark:text-primary-400 mb-4">404</h1>
-        <h2 class="mt-6 text-3xl font-bold text-gray-900 dark:text-white">Page not found</h2>
+        <h2 class="mt-6 text-3xl font-bold text-gray-900 dark:text-white">{{ t('app.views.notFound.title') }}</h2>
         <p class="mt-2 text-gray-600 dark:text-gray-300">
-          Sorry, we couldn't find the page you're looking for.
+          {{ t('app.views.notFound.subtitle') }}
         </p>
       </div>
       
@@ -14,22 +14,22 @@
           to="/"
           class="btn btn-primary w-full sm:w-auto justify-center"
         >
-          <span>Go back home</span>
+          <span>{{ t('app.views.notFound.home') }}</span>
         </router-link>
         
         <button
           @click="goBack"
           class="btn btn-secondary w-full sm:w-auto justify-center"
         >
-          Go back
+          {{ t('app.views.notFound.back') }}
         </button>
       </div>
       
       <div class="mt-8 text-center">
         <p class="text-sm text-gray-500 dark:text-gray-400">
-          Need help? 
+          {{ t('app.views.notFound.help') }} 
           <a href="#" class="font-medium text-primary-600 hover:text-primary-500 dark:text-primary-400 dark:hover:text-primary-300">
-            Contact our support team
+            {{ t('app.views.notFound.contact') }}
           </a>
         </p>
       </div>
@@ -39,8 +39,10 @@
 
 <script setup lang="ts">
 import { useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 
 const router = useRouter();
+const { t } = useI18n();
 
 const goBack = () => {
   if (window.history.state.back) {

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { XCircleIcon } from '@heroicons/vue/20/solid';
 import type { MenuItem, MenuItemVariant } from '@/types/menu';
+import { useI18n } from 'vue-i18n';
 
 interface Props {
   menuItems: MenuItem[];
@@ -17,6 +18,7 @@ interface Emits {
 
 const props = defineProps<Props>();
 const emit = defineEmits<Emits>();
+const { t } = useI18n();
 
 // Helper function to get the correct image URL (handles both camelCase and snake_case)
 function getImageUrl(item: MenuItem): string | undefined {
@@ -33,9 +35,9 @@ function isItemAvailable(item: MenuItem): boolean {
   <div class="px-4 sm:px-6 lg:px-8">
     <div class="sm:flex sm:items-center">
       <div class="sm:flex-auto">
-        <h1 class="text-base font-semibold leading-6 text-gray-900">Menu Items</h1>
+        <h1 class="text-base font-semibold leading-6 text-gray-900">{{ t('app.views.menu.list.title') }}</h1>
         <p class="mt-2 text-sm text-gray-700">
-          A list of all menu items in the system.
+          {{ t('app.views.menu.list.subtitle') }}
         </p>
       </div>
       <div class="mt-4 sm:ml-16 sm:mt-0 sm:flex-none">
@@ -44,7 +46,7 @@ function isItemAvailable(item: MenuItem): boolean {
           @click="$emit('add-item')"
           class="block rounded-md bg-indigo-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
         >
-          Add menu item
+          {{ t('app.views.menu.list.add') }}
         </button>
       </div>
     </div>
@@ -60,7 +62,7 @@ function isItemAvailable(item: MenuItem): boolean {
                 <XCircleIcon class="h-5 w-5 text-red-400" aria-hidden="true" />
               </div>
               <div class="ml-3">
-                <h3 class="text-sm font-medium text-red-800">Error loading menu items</h3>
+                <h3 class="text-sm font-medium text-red-800">{{ t('app.views.menu.list.error_title') }}</h3>
                 <div class="mt-2 text-sm text-red-700">
                   <p>{{ error }}</p>
                 </div>
@@ -71,12 +73,12 @@ function isItemAvailable(item: MenuItem): boolean {
             <table class="min-w-full divide-y divide-gray-300">
               <thead class="bg-gray-50">
                 <tr>
-                  <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">Name</th>
-                  <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Category</th>
-                  <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Price</th>
-                  <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Status</th>
+                  <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">{{ t('app.views.menu.list.table.name') }}</th>
+                  <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">{{ t('app.views.menu.list.table.category') }}</th>
+                  <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">{{ t('app.views.menu.list.table.price') }}</th>
+                  <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">{{ t('app.views.menu.list.table.status') }}</th>
                   <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6">
-                    <span class="sr-only">Actions</span>
+                    <span class="sr-only">{{ t('app.views.menu.list.table.actions') }}</span>
                   </th>
                 </tr>
               </thead>
@@ -90,7 +92,7 @@ function isItemAvailable(item: MenuItem): boolean {
                       <div :class="{ 'ml-4': getImageUrl(item) }">
                         {{ item.name }}
                         <div v-if="item.variants && item.variants.length > 0" class="text-xs text-gray-500">
-                          {{ item.variants.length }} variants
+                          {{ t('app.views.menu.list.variants', { count: item.variants.length }) }}
                         </div>
                       </div>
                     </div>
@@ -122,7 +124,7 @@ function isItemAvailable(item: MenuItem): boolean {
                       }"
                       class="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset ring-green-600/20"
                     >
-                      {{ isItemAvailable(item) ? 'Available' : 'Unavailable' }}
+                      {{ isItemAvailable(item) ? t('app.views.menu.list.available') : t('app.views.menu.list.unavailable') }}
                     </span>
                   </td>
                   <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
@@ -132,28 +134,28 @@ function isItemAvailable(item: MenuItem): boolean {
                         @click="$emit('edit-item', item)"
                         class="text-indigo-600 hover:text-indigo-900"
                       >
-                        Edit<span class="sr-only">, {{ item.name }}</span>
+                        {{ t('app.views.menu.list.edit') }}<span class="sr-only">, {{ item.name }}</span>
                       </button>
                       <button 
                         type="button" 
                         @click="$emit('toggle-availability', item)"
                         class="text-gray-600 hover:text-gray-900"
                       >
-                        {{ item.is_available ? 'Disable' : 'Enable' }}<span class="sr-only">, {{ item.name }}</span>
+                        {{ item.is_available ? t('app.views.menu.list.disable') : t('app.views.menu.list.enable') }}<span class="sr-only">, {{ item.name }}</span>
                       </button>
                       <button 
                         type="button" 
                         @click="$emit('delete-item', item)"
                         class="text-red-600 hover:text-red-900"
                       >
-                        Delete<span class="sr-only">, {{ item.name }}</span>
+                        {{ t('app.views.menu.list.delete') }}<span class="sr-only">, {{ item.name }}</span>
                       </button>
                     </div>
                   </td>
                 </tr>
                 <tr v-if="menuItems.length === 0">
                   <td colspan="5" class="px-3 py-4 text-sm text-gray-500 text-center">
-                    No menu items found. Add your first menu item to get started.
+                    {{ t('app.views.menu.list.empty') }}
                   </td>
                 </tr>
               </tbody>
