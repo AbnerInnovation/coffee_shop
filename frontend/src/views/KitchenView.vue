@@ -17,8 +17,8 @@
       </div>
 
       <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <div v-for="order in activeOrders" :key="order.id" class="bg-white rounded-lg shadow overflow-hidden">
-          <div class="p-4 border-b border-gray-200">
+        <div v-for="order in activeOrders" :key="order.id" class="bg-white dark:bg-gray-900 dark:border-gray-800 border-gray-200 border-2 rounded-lg shadow overflow-hidden">
+          <div class="p-4 border-b border-gray-200 dark:border-gray-600">
             <div class="flex justify-between items-start">
               <div>
                 <h3 class="text-lg font-semibold">{{ t('app.views.kitchen.order', { id: order.id }) }}</h3>
@@ -43,8 +43,8 @@
             <div 
               v-for="item in order.items" 
               :key="item.id"
-              class="p-4 hover:bg-gray-50"
-              :class="{ 'bg-green-50': item.status === 'completed' }"
+              class="p-4 hover:bg-gray-50 dark:hover:bg-gray-900"
+              :class="{ 'bg-green-50 dark:bg-green-700': item.status === 'completed' }"
             >
               <div class="flex justify-between items-start">
                 <div class="flex-1">
@@ -55,7 +55,7 @@
                     
                   </div>
                   
-                  <div v-if="item.special_instructions" class="ml-7 mt-1 text-sm text-gray-600">
+                  <div v-if="item.special_instructions" class="ml-7 mt-1 text-sm text-gray-600 dark:text-gray-400">
                     <div>
                       <span class="font-medium">{{ t('app.views.kitchen.note') }}</span> {{ item.special_instructions }}
                     </div>
@@ -63,7 +63,7 @@
                 </div>
                 
                 <div class="flex items-center">
-                  <span class="text-gray-500">
+                  <span class="text-gray-500 dark:text-gray-400">
                     {{ getTimeElapsed(item.created_at) }}
                   </span>
                 </div>
@@ -71,7 +71,7 @@
             </div>
           </div>
 
-          <div class="p-4 bg-gray-50 border-t border-gray-200">
+          <div class="p-4 bg-gray-50 dark:bg-gray-900 border-t border-gray-200">
             <button
               v-if="order.status === 'preparing'"
               @click="markOrderReady(order)"

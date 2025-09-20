@@ -32,11 +32,11 @@ function isItemAvailable(item: MenuItem): boolean {
 </script>
 
 <template>
-  <div class="px-4 sm:px-6 lg:px-8">
+  <div class="px-4 dark:bg-gray-950 sm:px-6 lg:px-8">
     <div class="sm:flex sm:items-center">
       <div class="sm:flex-auto">
-        <h1 class="text-base font-semibold leading-6 text-gray-900">{{ t('app.views.menu.list.title') }}</h1>
-        <p class="mt-2 text-sm text-gray-700">
+        <h1 class="text-base font-semibold leading-6 text-gray-900 dark:text-gray-100">{{ t('app.views.menu.list.title') }}</h1>
+        <p class="mt-2 text-sm text-gray-700 dark:text-gray-400">
           {{ t('app.views.menu.list.subtitle') }}
         </p>
       </div>
@@ -56,7 +56,7 @@ function isItemAvailable(item: MenuItem): boolean {
           <div v-if="loading" class="text-center py-4">
             <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
           </div>
-          <div v-else-if="error" class="rounded-md bg-red-50 p-4 mb-4">
+          <div v-else-if="error" class="rounded-md bg-red-50 p-4 mb-4 dark:bg-red-950">
             <div class="flex">
               <div class="flex-shrink-0">
                 <XCircleIcon class="h-5 w-5 text-red-400" aria-hidden="true" />
@@ -69,22 +69,22 @@ function isItemAvailable(item: MenuItem): boolean {
               </div>
             </div>
           </div>
-          <div v-else class="overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg">
+          <div v-else class="overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg dark:bg-gray-950">
             <table class="min-w-full divide-y divide-gray-300">
-              <thead class="bg-gray-50">
+              <thead class="bg-gray-50 dark:bg-gray-900">
                 <tr>
-                  <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">{{ t('app.views.menu.list.table.name') }}</th>
-                  <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">{{ t('app.views.menu.list.table.category') }}</th>
-                  <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">{{ t('app.views.menu.list.table.price') }}</th>
-                  <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">{{ t('app.views.menu.list.table.status') }}</th>
+                  <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 dark:text-gray-100 sm:pl-6">{{ t('app.views.menu.list.table.name') }}</th>
+                  <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-gray-100">{{ t('app.views.menu.list.table.category') }}</th>
+                  <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-gray-100">{{ t('app.views.menu.list.table.price') }}</th>
+                  <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-gray-100">{{ t('app.views.menu.list.table.status') }}</th>
                   <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6">
                     <span class="sr-only">{{ t('app.views.menu.list.table.actions') }}</span>
                   </th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-gray-200 bg-white">
+              <tbody class="divide-y divide-gray-200 bg-white dark:bg-gray-900">
                 <tr v-for="item in menuItems" :key="item.id">
-                  <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
+                  <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6 dark:text-gray-100">
                     <div class="flex items-center">
                       <div v-if="getImageUrl(item)" class="h-10 w-10 flex-shrink-0">
                         <img class="h-10 w-10 rounded-full object-cover" :src="getImageUrl(item)" :alt="item.name" />
@@ -97,7 +97,7 @@ function isItemAvailable(item: MenuItem): boolean {
                       </div>
                     </div>
                   </td>
-                  <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                  <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400">
                     <span 
                       v-if="item.category"
                       class="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10"
@@ -116,37 +116,37 @@ function isItemAvailable(item: MenuItem): boolean {
                       ${{ item.price?.toFixed(2) || '0.00' }}
                     </template>
                   </td>
-                  <td class="whitespace-nowrap px-3 py-4 text-sm">
+                  <td class="whitespace-nowrap px-3 py-4 text-sm dark:text-gray-400">
                     <span 
                       :class="{
                         'bg-green-100 text-green-800': isItemAvailable(item),
                         'bg-red-100 text-red-800': !isItemAvailable(item)
                       }"
-                      class="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset ring-green-600/20"
+                      class="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset ring-green-600/20 dark:bg-green-950 dark:text-green-100"
                     >
                       {{ isItemAvailable(item) ? t('app.views.menu.list.available') : t('app.views.menu.list.unavailable') }}
                     </span>
                   </td>
-                  <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
+                  <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6 dark:text-gray-400">
                     <div class="flex justify-end space-x-2">
                       <button 
                         type="button" 
                         @click="$emit('edit-item', item)"
-                        class="text-indigo-600 hover:text-indigo-900"
+                        class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400"
                       >
                         {{ t('app.views.menu.list.edit') }}<span class="sr-only">, {{ item.name }}</span>
                       </button>
                       <button 
                         type="button" 
                         @click="$emit('toggle-availability', item)"
-                        class="text-gray-600 hover:text-gray-900"
+                        class="text-gray-600 hover:text-gray-900 dark:text-gray-400"
                       >
                         {{ item.is_available ? t('app.views.menu.list.disable') : t('app.views.menu.list.enable') }}<span class="sr-only">, {{ item.name }}</span>
                       </button>
                       <button 
                         type="button" 
                         @click="$emit('delete-item', item)"
-                        class="text-red-600 hover:text-red-900"
+                        class="text-red-600 hover:text-red-900 dark:text-red-400"
                       >
                         {{ t('app.views.menu.list.delete') }}<span class="sr-only">, {{ item.name }}</span>
                       </button>

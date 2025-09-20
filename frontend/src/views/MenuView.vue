@@ -1,7 +1,7 @@
 <template>
-  <div class="min-h-full">
+  <div class="min-h-full dark:bg-gray-950">
       <main>
-        <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
+        <div class="mx-auto max-w-7xl sm:px-6 lg:px-8 dark:bg-gray-950">
             <!-- Menu List -->
             <MenuList
               v-if="!showForm"

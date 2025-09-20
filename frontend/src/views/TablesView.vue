@@ -2,8 +2,8 @@
   <div class="tables-view space-y-6">
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
       <div>
-        <h2 class="text-2xl font-bold text-gray-900">{{ t('app.views.tables.title') }}</h2>
-        <p class="mt-1 text-sm text-gray-500">{{ t('app.views.tables.subtitle') }}</p>
+        <h2 class="text-2xl font-bold text-gray-900 dark:text-white">{{ t('app.views.tables.title') }}</h2>
+        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ t('app.views.tables.subtitle') }}</p>
       </div>
       <div class="flex items-center space-x-3">
         <button
@@ -20,7 +20,7 @@
     <!-- Loading State -->
     <div v-if="loading" class="text-center py-8">
       <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
-      <p class="mt-2 text-sm text-gray-600">{{ t('app.views.tables.loading') }}</p>
+      <p class="mt-2 text-sm text-gray-600 dark:text-gray-300">{{ t('app.views.tables.loading') }}</p>
     </div>
 
     <!-- Error State -->
@@ -40,7 +40,7 @@
       <div 
         v-for="table in tables" 
         :key="table.id"
-        class="relative rounded-lg border border-gray-200 bg-white overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200"
+        class="relative rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200"
         :class="{
           'ring-2 ring-offset-2 ring-indigo-500': selectedTableId === table.id,
           'border-l-4 border-red-500': table.is_occupied,
@@ -50,7 +50,7 @@
       >
         <!-- Table Status Badge -->
         <div 
-          class="absolute bottom-2 right-2 px-2 py-1 rounded-full text-xs font-medium"
+          class="absolute bottom-4 right-4 px-2 py-1 rounded-full text-xs font-medium"
           :class="table.is_occupied ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'"
         >
           {{ table.is_occupied ? t('app.views.tables.occupied') : t('app.views.tables.available') }}
@@ -58,15 +58,15 @@
 
         <div class="p-4">
           <div class="flex items-center justify-between">
-            <h3 class="text-lg font-medium text-gray-900">{{ t('app.views.tables.table_number_header', { number: table.number }) }}</h3>
-            <span class="text-sm text-gray-500">{{ t('app.views.tables.seats', { count: table.capacity }) }}</span>
+            <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">{{ t('app.views.tables.table_number_header', { number: table.number }) }}</h3>
+            <span class="text-sm text-gray-500 dark:text-gray-400">{{ t('app.views.tables.seats', { count: table.capacity }) }}</span>
           </div>
           
           <div class="mt-2">
-            <div class="text-sm text-gray-600">
+            <div class="text-sm text-gray-600 dark:text-gray-300">
               {{ t('app.views.tables.location', { location: table.location }) }}
             </div>
-            <div class="mt-1 text-xs text-gray-400">
+            <div class="mt-1 text-xs text-gray-400 dark:text-gray-500">
               {{ t('app.views.tables.last_updated', { time: formatTimeAgo(table.updated_at) }) }}
             </div>
           </div>
@@ -82,7 +82,7 @@
               </button>
             <button
               type="button"
-              class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-xs font-medium rounded shadow-sm text-gray-700 bg-white hover:bg-gray-50"
+              class="inline-flex items-center px-3 py-1.5 border text-xs font-medium rounded shadow-sm text-gray-700 bg-white hover:bg-gray-50 border-gray-300 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700 dark:hover:bg-gray-700"
               @click.stop="editTable(table)"
             >
               {{ t('app.views.tables.edit') }}
@@ -93,13 +93,13 @@
     </div>
 
     <!-- Add/Edit Table Modal -->
-    <div v-if="showTableModal" class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4 z-50">
-      <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+    <div v-if="showTableModal" class="fixed inset-0 bg-gray-900/70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+      <div class="bg-white dark:bg-gray-900 rounded-lg shadow-xl max-w-md w-full p-6 border border-gray-200 dark:border-gray-800">
         <div class="flex justify-between items-center mb-4">
-          <h3 class="text-lg font-medium text-gray-900">
+          <h3 class="text-lg font-medium text-gray-900 dark:text-white">
             {{ editingTable ? t('app.views.tables.modal.edit_title') : t('app.views.tables.modal.add_title') }}
           </h3>
-          <button @click="closeModal" class="text-gray-400 hover:text-gray-500">
+          <button @click="closeModal" class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300">
             <span class="sr-only">{{ t('app.views.tables.modal.close') }}</span>
             <XMarkIcon class="h-6 w-6" />
           </button>
@@ -108,7 +108,7 @@
         <form @submit.prevent="saveTable">
           <div class="space-y-4">
             <div>
-              <label for="table-number" class="block text-sm font-medium text-gray-700">{{ t('app.views.tables.modal.fields.table_number') }}</label>
+              <label for="table-number" class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ t('app.views.tables.modal.fields.table_number') }}</label>
               <input
                 id="table-number"
                 :value="formData.number"
@@ -116,12 +116,12 @@
                 type="number"
                 min="1"
                 required
-                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-gray-800 dark:border-gray-700 dark:text-white"
               >
             </div>
             
             <div>
-              <label for="table-capacity" class="block text-sm font-medium text-gray-700">{{ t('app.views.tables.modal.fields.capacity') }}</label>
+              <label for="table-capacity" class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ t('app.views.tables.modal.fields.capacity') }}</label>
               <input
                 id="table-capacity"
                 :value="formData.capacity"
@@ -129,17 +129,17 @@
                 type="number"
                 min="1"
                 required
-                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-gray-800 dark:border-gray-700 dark:text-white"
               >
             </div>
             
             <div>
-              <label for="table-location" class="block text-sm font-medium text-gray-700">{{ t('app.views.tables.modal.fields.location') }}</label>
+              <label for="table-location" class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ t('app.views.tables.modal.fields.location') }}</label>
               <select
                 id="table-location"
                 v-model="formData.location"
                 required
-                class="mt-1 block w-full rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
+                class="mt-1 block w-full rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm dark:bg-gray-800 dark:border-gray-700 dark:text-white"
               >
                 <option value="Inside">{{ t('app.views.tables.modal.fields.location_inside') }}</option>
                 <option value="Patio">{{ t('app.views.tables.modal.fields.location_patio') }}</option>
@@ -151,7 +151,7 @@
               <button
                 type="button"
                 @click="closeModal"
-                class="inline-flex justify-center rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                class="inline-flex justify-center rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700 dark:hover:bg-gray-700 dark:focus:ring-offset-gray-900"
               >
                 {{ t('app.views.tables.modal.actions.cancel') }}
               </button>

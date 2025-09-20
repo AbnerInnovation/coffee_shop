@@ -2,58 +2,58 @@
   <div>
     <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
       <!-- Stats Cards -->
-      <div class="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6">
-        <dt class="truncate text-sm font-medium text-gray-500">{{ t('app.dashboard.total_orders_today') }}</dt>
-        <dd class="mt-1 text-3xl font-semibold tracking-tight text-gray-900">{{ stats.totalOrdersToday }}</dd>
+      <div class="overflow-hidden rounded-lg bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 px-4 py-5 shadow sm:p-6">
+        <dt class="truncate text-sm font-medium text-gray-500 dark:text-gray-400">{{ t('app.dashboard.total_orders_today') }}</dt>
+        <dd class="mt-1 text-3xl font-semibold tracking-tight text-gray-900 dark:text-white">{{ stats.totalOrdersToday }}</dd>
       </div>
       
-      <div class="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6">
-        <dt class="truncate text-sm font-medium text-gray-500">{{ t('app.dashboard.revenue_today') }}</dt>
-        <dd class="mt-1 text-3xl font-semibold tracking-tight text-gray-900">${{ stats.revenueToday.toFixed(2) }}</dd>
+      <div class="overflow-hidden rounded-lg bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 px-4 py-5 shadow sm:p-6">
+        <dt class="truncate text-sm font-medium text-gray-500 dark:text-gray-400">{{ t('app.dashboard.revenue_today') }}</dt>
+        <dd class="mt-1 text-3xl font-semibold tracking-tight text-gray-900 dark:text-white">${{ stats.revenueToday.toFixed(2) }}</dd>
       </div>
       
-      <div class="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6">
-        <dt class="truncate text-sm font-medium text-gray-500">{{ t('app.dashboard.active_tables') }}</dt>
-        <dd class="mt-1 text-3xl font-semibold tracking-tight text-gray-900">{{ stats.activeTables }}/{{ stats.totalTables }}</dd>
+      <div class="overflow-hidden rounded-lg bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 px-4 py-5 shadow sm:p-6">
+        <dt class="truncate text-sm font-medium text-gray-500 dark:text-gray-400">{{ t('app.dashboard.active_tables') }}</dt>
+        <dd class="mt-1 text-3xl font-semibold tracking-tight text-gray-900 dark:text-white">{{ stats.activeTables }}/{{ stats.totalTables }}</dd>
       </div>
       
-      <div class="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6">
-        <dt class="truncate text-sm font-medium text-gray-500">{{ t('app.dashboard.popular_item') }}</dt>
-        <dd class="mt-1 text-3xl font-semibold tracking-tight text-gray-900">{{ stats.popularItem || '—' }}</dd>
+      <div class="overflow-hidden rounded-lg bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 px-4 py-5 shadow sm:p-6">
+        <dt class="truncate text-sm font-medium text-gray-500 dark:text-gray-400">{{ t('app.dashboard.popular_item') }}</dt>
+        <dd class="mt-1 text-3xl font-semibold tracking-tight text-gray-900 dark:text-white">{{ stats.popularItem || '—' }}</dd>
       </div>
     </div>
     
     <div class="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
       <!-- Recent Orders -->
-      <div class="overflow-hidden rounded-lg bg-white shadow">
-        <div class="border-b border-gray-200 px-4 py-5 sm:px-6">
-          <h3 class="text-lg font-medium leading-6 text-gray-900">{{ t('app.dashboard.recent_orders') }}</h3>
+      <div class="overflow-hidden rounded-lg bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow">
+        <div class="border-b border-gray-200 dark:border-gray-800 px-4 py-5 sm:px-6">
+          <h3 class="text-lg font-medium leading-6 text-gray-900 dark:text-white">{{ t('app.dashboard.recent_orders') }}</h3>
         </div>
         <div class="px-4 py-5 sm:p-6">
           <div class="overflow-hidden">
-            <table class="min-w-full divide-y divide-gray-200">
-              <thead class="bg-gray-50">
+            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
+              <thead class="bg-gray-50 dark:bg-gray-800">
                 <tr>
-                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{{ t('app.dashboard.order_number') }}</th>
-                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{{ t('app.dashboard.table') }}</th>
-                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{{ t('app.dashboard.status') }}</th>
-                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{{ t('app.dashboard.amount') }}</th>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ t('app.dashboard.order_number') }}</th>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ t('app.dashboard.table') }}</th>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ t('app.dashboard.status') }}</th>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ t('app.dashboard.amount') }}</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-gray-200 bg-white">
-                <tr v-for="order in recentOrders" :key="order.id" class="hover:bg-gray-50">
+              <tbody class="divide-y divide-gray-200 dark:divide-gray-800 bg-white dark:bg-gray-900">
+                <tr v-for="order in recentOrders" :key="order.id" class="hover:bg-gray-50 dark:hover:bg-gray-800/60">
                   <td class="whitespace-nowrap px-6 py-4">
-                    <div class="text-sm font-medium text-gray-900">#{{ order.id }}</div>
+                    <div class="text-sm font-medium text-gray-900 dark:text-gray-100">#{{ order.id }}</div>
                   </td>
                   <td class="whitespace-nowrap px-6 py-4">
-                    <div class="text-sm text-gray-900">{{ order.table }}</div>
+                    <div class="text-sm text-gray-900 dark:text-gray-100">{{ order.table }}</div>
                   </td>
                   <td class="whitespace-nowrap px-6 py-4">
                     <span :class="getStatusBadgeClass(order.status)" class="inline-flex rounded-full px-2 text-xs font-semibold leading-5">
                       {{ t('app.status.' + String(order.status).toLowerCase()) }}
                     </span>
                   </td>
-                  <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
+                  <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
                     ${{ order.amount.toFixed(2) }}
                   </td>
                 </tr>
@@ -69,38 +69,38 @@
       </div>
       
       <!-- Low Stock Items (derived from menu availability) -->
-      <div class="overflow-hidden rounded-lg bg-white shadow">
-        <div class="border-b border-gray-200 px-4 py-5 sm:px-6">
-          <h3 class="text-lg font-medium leading-6 text-gray-900">{{ t('app.dashboard.low_stock_items') }}</h3>
+      <div class="overflow-hidden rounded-lg bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow">
+        <div class="border-b border-gray-200 dark:border-gray-800 px-4 py-5 sm:px-6">
+          <h3 class="text-lg font-medium leading-6 text-gray-900 dark:text-white">{{ t('app.dashboard.low_stock_items') }}</h3>
         </div>
         <div class="px-4 py-5 sm:p-6">
           <div class="overflow-hidden">
-            <table class="min-w-full divide-y divide-gray-200">
-              <thead class="bg-gray-50">
+            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
+              <thead class="bg-gray-50 dark:bg-gray-800">
                 <tr>
-                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{{ t('app.dashboard.item') }}</th>
-                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{{ t('app.dashboard.category') }}</th>
-                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{{ t('app.dashboard.stock') }}</th>
-                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{{ t('app.dashboard.status') }}</th>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ t('app.dashboard.item') }}</th>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ t('app.dashboard.category') }}</th>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ t('app.dashboard.stock') }}</th>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ t('app.dashboard.status') }}</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-gray-200 bg-white">
-                <tr v-for="item in lowStockItems" :key="item.id" class="hover:bg-gray-50">
+              <tbody class="divide-y divide-gray-200 dark:divide-gray-800 bg-white dark:bg-gray-900">
+                <tr v-for="item in lowStockItems" :key="item.id" class="hover:bg-gray-50 dark:hover:bg-gray-800/60">
                   <td class="whitespace-nowrap px-6 py-4">
                     <div class="flex items-center">
                       <div class="h-10 w-10 flex-shrink-0">
                         <img class="h-10 w-10 rounded-full" :src="item.image || 'https://via.placeholder.com/40'" :alt="item.name" />
                       </div>
                       <div class="ml-4">
-                        <div class="text-sm font-medium text-gray-900">{{ item.name }}</div>
+                        <div class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ item.name }}</div>
                       </div>
                     </div>
                   </td>
                   <td class="whitespace-nowrap px-6 py-4">
-                    <div class="text-sm text-gray-900">{{ item.category }}</div>
+                    <div class="text-sm text-gray-900 dark:text-gray-100">{{ item.category }}</div>
                   </td>
                   <td class="whitespace-nowrap px-6 py-4">
-                    <div class="text-sm text-gray-900">{{ item.stock }}</div>
+                    <div class="text-sm text-gray-900 dark:text-gray-100">{{ item.stock }}</div>
                   </td>
                   <td class="whitespace-nowrap px-6 py-4">
                     <span :class="getStockStatusClass(item.stock)" class="inline-flex rounded-full px-2 text-xs font-semibold leading-5">

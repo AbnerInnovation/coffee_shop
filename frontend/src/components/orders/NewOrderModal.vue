@@ -13,13 +13,13 @@
             leave-from="opacity-100 translate-y-0 sm:scale-100"
             leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
             <DialogPanel
-              class="relative transform overflow-hidden bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 w-screen max-w-screen sm:max-w-4xl sm:w-full sm:p-6 mx-0 sm:mx-0 rounded-none sm:rounded-lg">
+              class="relative transform overflow-hidden bg-white dark:bg-gray-900 px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 w-screen max-w-screen sm:max-w-4xl sm:w-full sm:p-6 mx-0 sm:mx-0 rounded-none sm:rounded-lg border border-gray-200 dark:border-gray-800">
               <div class="flex items-center justify-between">
-                <DialogTitle as="h3" class="text-lg font-medium leading-6 text-gray-900">
+                <DialogTitle as="h3" class="text-lg font-medium leading-6 text-gray-900 dark:text-gray-100">
                   {{$t('app.views.orders.modals.new_order.title')}}
                 </DialogTitle>
                 <button type="button"
-                  class="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                  class="rounded-md bg-white dark:bg-transparent text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                   @click="$emit('close')">
                   <span class="sr-only">{{$t('app.views.orders.modals.new_order.close')}}</span>
                   <XMarkIcon class="h-6 w-6" aria-hidden="true" />
@@ -30,9 +30,9 @@
                 <!-- Left Column: Order Details -->
                 <div class="space-y-3 sm:space-y-4">
                   <div>
-                    <label for="order-type" class="block text-sm font-medium text-gray-700">{{$t('app.views.orders.modals.new_order.order_type')}}</label>
+                    <label for="order-type" class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{$t('app.views.orders.modals.new_order.order_type')}}</label>
                     <select id="order-type" v-model="form.type"
-                      class="mt-1 block w-full rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm">
+                      class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm">
                       <option value="Dine-in">{{$t('app.views.orders.modals.new_order.dine_in')}}</option>
                       <option value="Takeaway">{{$t('app.views.orders.modals.new_order.takeaway')}}</option>
                       <option value="Delivery">{{$t('app.views.orders.modals.new_order.delivery')}}</option>
@@ -40,9 +40,9 @@
                   </div>
 
                   <div v-if="form.type === 'Dine-in'">
-                    <label for="table" class="block text-sm font-medium text-gray-700">{{$t('app.views.orders.modals.new_order.table')}}</label>
+                    <label for="table" class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{$t('app.views.orders.modals.new_order.table')}}</label>
                     <select id="table" v-model="form.tableId"
-                      class="mt-1 block w-full rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
+                      class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
                       :disabled="loading.tables">
                       <option v-if="loading.tables" value="" disabled>{{$t('app.views.orders.modals.new_order.loading_tables')}}</option>
                       <option v-else-if="error.tables" value="" disabled>{{$t('app.views.orders.modals.new_order.error_tables')}}</option>
@@ -54,18 +54,18 @@
                   </div>
 
                   <div v-else>
-                    <label for="customer-name" class="block text-sm font-medium text-gray-700">
+                    <label for="customer-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
                       {{ form.type === 'Delivery' ? $t('app.views.orders.modals.new_order.delivery_address') : $t('app.views.orders.modals.new_order.customer_name') }}
                     </label>
                     <input id="customer-name" v-model="form.customerName" type="text"
-                      class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                      class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                       :placeholder="form.type === 'Delivery' ? $t('app.views.orders.modals.new_order.enter_delivery_address') : $t('app.views.orders.modals.new_order.enter_customer_name')" />
                   </div>
 
                   <div>
-                    <label for="notes" class="block text-sm font-medium text-gray-700">{{$t('app.views.orders.modals.new_order.order_notes')}}</label>
+                    <label for="notes" class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{$t('app.views.orders.modals.new_order.order_notes')}}</label>
                     <textarea id="notes" v-model="form.notes" rows="3"
-                      class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                      class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                       :placeholder="$t('app.views.orders.modals.new_order.notes_placeholder')" />
                   </div>
                 </div>
@@ -73,29 +73,29 @@
                 <!-- Right Column: Menu Items -->
                 <div class="space-y-3 sm:space-y-4">
                   <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">{{$t('app.views.orders.modals.new_order.menu_items')}}</label>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{$t('app.views.orders.modals.new_order.menu_items')}}</label>
                     <div v-if="loading.menu" class="text-center py-4">
                       <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500 mx-auto"></div>
-                      <p class="mt-2 text-sm text-gray-500">{{$t('app.views.orders.modals.new_order.loading_menu')}}</p>
+                      <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">{{$t('app.views.orders.modals.new_order.loading_menu')}}</p>
                     </div>
                     <div v-else-if="error.menu" class="text-center py-4 text-red-600">
                       <p>{{$t('app.views.orders.modals.new_order.error_menu')}}</p>
                     </div>
                     <div v-else class="space-y-2 max-h-[50vh] sm:max-h-none overflow-y-auto pr-1 -mr-1 sm:mr-0">
                       <div v-for="item in menuItems" :key="item.id"
-                        class="flex items-center justify-between p-3 sm:p-2 border rounded-md hover:bg-gray-50 cursor-pointer"
+                        class="flex items-center justify-between p-3 sm:p-2 border rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer"
                         @click="() => selectItem(item)">
                         <div class="flex-1 min-w-0">
-                          <h4 class="text-sm font-medium text-gray-900 truncate">
+                          <h4 class="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
                             {{ item.name }}
                             <span v-if="item.has_variants" class="text-xs text-gray-500 ml-1">{{$t('app.views.orders.modals.new_order.select_options_hint')}}</span>
                           </h4>
-                          <p class="text-sm text-gray-500">
+                          <p class="text-sm text-gray-500 dark:text-gray-400">
                             ${{ (item.price || 0).toFixed(2) }}
                           </p>
                         </div>
                         <div class="flex items-center space-x-2">
-                          <span class="text-sm text-gray-900">
+                          <span class="text-sm text-gray-900 dark:text-gray-200">
                             {{ getItemQuantity(item.id) > 0 ? $t('app.views.orders.modals.new_order.in_order', { count: getItemQuantity(item.id) }) : $t('app.views.orders.modals.new_order.add') }}
                           </span>
                           <button type="button"
@@ -112,20 +112,20 @@
                 <!-- Selected Item Options -->
                 <div class="mt-4 border-t border-gray-200 pt-4">
                   <div v-if="selectedItem">
-                    <h4 class="text-sm font-medium text-gray-900 mb-2">
+                    <h4 class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
                       {{ selectedItem.name }}
                     </h4>
 
                     <!-- Variants -->
                     <div v-if="selectedItem.variants?.length" class="space-y-2 mb-4">
-                      <label class="block text-sm font-medium text-gray-700">{{$t('app.views.orders.modals.new_order.options')}}</label>
+                      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{$t('app.views.orders.modals.new_order.options')}}</label>
                       <div v-for="variant in selectedItem.variants" :key="variant.id"
-                        class="flex items-center p-2 border rounded-md hover:bg-gray-50 cursor-pointer"
+                        class="flex items-center p-2 border rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer"
                         :class="{ 'bg-indigo-50 border-indigo-200': selectedVariant?.id === variant.id }"
                         @click="selectedVariant = variant">
                         <div class="flex-1">
-                          <p class="text-sm font-medium text-gray-900">{{ variant.name }}</p>
-                          <p class="text-sm text-gray-500">
+                          <p class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ variant.name }}</p>
+                          <p class="text-sm text-gray-500 dark:text-gray-400">
                             <template v-if="variant.price_adjustment !== 0">
                               <span v-if="variant.price_adjustment > 0">+</span>
                               ${{ Math.abs(variant.price_adjustment).toFixed(2) }} •
@@ -135,27 +135,27 @@
                         </div>
                         <div class="ml-2 flex items-center">
                           <input type="radio" :checked="selectedVariant?.id === variant.id"
-                            class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300">
+                            class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 dark:border-gray-700">
                         </div>
                       </div>
                     </div>
 
                     <!-- Notes -->
                     <div class="mt-4">
-                      <label for="item-notes" class="block text-sm font-medium text-gray-700 mb-1">{{$t('app.views.orders.modals.new_order.special_instructions')}}</label>
+                      <label for="item-notes" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{$t('app.views.orders.modals.new_order.special_instructions')}}</label>
                       <textarea id="item-notes" v-model="itemNotes" rows="2"
-                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                        class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                         :placeholder="$t('app.views.orders.modals.new_order.special_requests_placeholder')" />
                     </div>
 
                     <!-- Add to Order Button -->
                     <div class="mt-4 flex justify-end space-x-2">
-                      <button type="button" class="px-3 py-2 text-sm font-medium text-gray-700 hover:text-gray-500"
+                      <button type="button" class="px-3 py-2 text-sm font-medium text-gray-700 hover:text-gray-500 dark:hover:text-gray-300"
                         @click="selectedItem = null">
                         {{$t('app.views.orders.modals.new_order.cancel')}}
                       </button>
                       <button type="button"
-                        class="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                        class="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                         @click="addItemWithDetails">
                         {{$t('app.views.orders.modals.new_order.add_to_order')}}
                       </button>
@@ -165,15 +165,15 @@
 
                 <!-- Order Summary -->
                 <div class="mt-6 border-t border-gray-200 pt-4">
-                  <h4 class="text-sm font-medium text-gray-900 mb-3">{{$t('app.views.orders.modals.new_order.order_summary')}}</h4>
+                  <h4 class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">{{$t('app.views.orders.modals.new_order.order_summary')}}</h4>
                   <div class="space-y-3">
                     <div v-for="item in selectedItems" :key="item.id" class="flex justify-between items-start">
                       <div class="flex-1">
-                        <p class="text-sm font-medium text-gray-900">
+                        <p class="text-sm font-medium text-gray-900 dark:text-gray-100">
                           {{ item.name }}
                           <span v-if="item.variant_name" class="text-xs text-gray-500 ml-1">({{ item.variant_name }})</span>
                         </p>
-                        <p v-if="item.notes" class="text-xs text-gray-500 mt-1">{{ item.notes }}</p>
+                        <p v-if="item.notes" class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ item.notes }}</p>
                       </div>
                       <div class="flex items-center space-x-4 ml-4">
                         <div class="flex items-center space-x-2">
@@ -181,13 +181,13 @@
                             @click.stop="decreaseQuantity(item)">
                             <MinusIcon class="h-4 w-4" />
                           </button>
-                          <span class="text-sm text-gray-700 w-6 text-center">{{ item.quantity }}</span>
+                          <span class="text-sm text-gray-700 dark:text-gray-200 w-6 text-center">{{ item.quantity }}</span>
                           <button type="button" class="p-1 text-gray-500 hover:text-indigo-600 focus:outline-none"
                             @click.stop="increaseQuantity(item)">
                             <PlusIcon class="h-4 w-4" />
                           </button>
                         </div>
-                        <span class="text-sm font-medium text-gray-900 w-16 text-right">
+                        <span class="text-sm font-medium text-gray-900 dark:text-gray-100 w-16 text-right">
                           ${{ calculateItemTotal(item) }}
                         </span>
                       </div>
@@ -195,8 +195,8 @@
                   </div>
                   <div class="mt-4 pt-4 border-t border-gray-200">
                     <div class="flex justify-between items-center">
-                      <span class="text-sm font-medium text-gray-900">{{$t('app.views.orders.modals.new_order.total')}}</span>
-                      <span class="text-lg font-bold text-gray-900">
+                      <span class="text-sm font-medium text-gray-900 dark:text-gray-100">{{$t('app.views.orders.modals.new_order.total')}}</span>
+                      <span class="text-lg font-bold text-gray-900 dark:text-white">
                         ${{(selectedItems.reduce((sum, item) => sum + (parseFloat(calculateItemTotal(item)) || 0),
                           0)).toFixed(2)}}
                       </span>
@@ -207,7 +207,7 @@
 
               <div class="mt-5 sm:mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <button type="button"
-                  class="inline-flex w-full justify-center rounded-md border border-gray-300 bg-white px-4 py-3 sm:py-2 text-base font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:text-sm"
+                  class="inline-flex w-full justify-center rounded-md border border-gray-300 bg-white px-4 py-3 sm:py-2 text-base font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:text-sm dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700 dark:hover:bg-gray-700"
                   @click="$emit('close')">
                   {{$t('app.views.orders.modals.new_order.cancel')}}
                 </button>
@@ -239,18 +239,18 @@
               leave-from="opacity-100 translate-y-0 sm:scale-100"
               leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" class="w-full">
               <DialogPanel
-                class="relative transform overflow-hidden bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 w-screen max-w-screen sm:w-full sm:max-w-md sm:p-6 rounded-none sm:rounded-lg">
+                class="relative transform overflow-hidden bg-white dark:bg-gray-900 px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 w-screen max-w-screen sm:w-full sm:max-w-md sm:p-6 rounded-none sm:rounded-lg border border-gray-200 dark:border-gray-800">
                 <div>
                   <div class="mt-3 text-center sm:mt-0 sm:text-left">
                     <DialogTitle as="h3" class="text-lg font-medium leading-6 text-gray-900">
                       {{ selectedItem?.name }}
                     </DialogTitle>
                     <div class="mt-4">
-                      <p class="text-sm text-gray-500">{{ selectedItem?.description }}</p>
+                      <p class="text-sm text-gray-500 dark:text-gray-400">{{ selectedItem?.description }}</p>
 
                       <!-- Variant Selection -->
                       <div v-if="selectedItem?.variants?.length" class="mt-4">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">{{$t('app.views.orders.modals.new_order.variants')}}</label>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{$t('app.views.orders.modals.new_order.variants')}}</label>
                         <div class="space-y-2">
                           <div v-for="variant in selectedItem.variants" :key="variant.id"
                             class="flex items-center p-2 border rounded-md hover:bg-gray-50 cursor-pointer"
