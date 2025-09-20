@@ -28,7 +28,7 @@
               <div>
                 <div class="flex items-center justify-between">
                   <DialogTitle as="h3" class="text-lg font-medium leading-6 text-gray-900">
-                    Order #{{ order.id }}
+                    {{$t('app.views.orders.modals.details.order_title', { id: order.id })}}
                   </DialogTitle>
                   <div class="flex items-center space-x-2">
                     <span 
@@ -42,7 +42,7 @@
                       class="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                       @click="$emit('close')"
                     >
-                      <span class="sr-only">Close</span>
+                      <span class="sr-only">{{$t('app.views.orders.modals.details.close')}}</span>
                       <XMarkIcon class="h-6 w-6" aria-hidden="true" />
                     </button>
                   </div>
@@ -50,29 +50,29 @@
                 
                 <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
-                    <h4 class="text-sm font-medium text-gray-500">Table</h4>
-                    <p class="mt-1 text-sm text-gray-900">{{ order.table_number || 'Takeaway' }}</p>
+                    <h4 class="text-sm font-medium text-gray-500">{{$t('app.views.orders.modals.details.table')}}</h4>
+                    <p class="mt-1 text-sm text-gray-900">{{ order.table_number || $t('app.views.orders.modals.details.takeaway') }}</p>
                   </div>
                   <div>
-                    <h4 class="text-sm font-medium text-gray-500">Order Time</h4>
+                    <h4 class="text-sm font-medium text-gray-500">{{$t('app.views.orders.modals.details.order_time')}}</h4>
                     <p class="mt-1 text-sm text-gray-900">{{ formatDateTime(order.createdAt) }}</p>
                   </div>
                   <div>
-                    <h4 class="text-sm font-medium text-gray-500">Customer</h4>
-                    <p class="mt-1 text-sm text-gray-900">{{ order.customer_name || 'No name provided' }}</p>
+                    <h4 class="text-sm font-medium text-gray-500">{{$t('app.views.orders.modals.details.customer')}}</h4>
+                    <p class="mt-1 text-sm text-gray-900">{{ order.customer_name || $t('app.views.orders.modals.details.no_name') }}</p>
                   </div>
                 </div>
                 
                 <div class="mt-6">
-                  <h4 class="text-sm font-medium text-gray-500">Order Items</h4>
+                  <h4 class="text-sm font-medium text-gray-500">{{$t('app.views.orders.modals.details.order_items')}}</h4>
                   <div class="mt-2 overflow-hidden border border-gray-200 rounded-lg">
                     <table class="min-w-full divide-y divide-gray-200">
                       <thead class="bg-gray-50">
                         <tr>
-                          <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item</th>
-                          <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Qty</th>
-                          <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
-                          <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                          <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{$t('app.views.orders.modals.details.headers.item')}}</th>
+                          <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">{{$t('app.views.orders.modals.details.headers.qty')}}</th>
+                          <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">{{$t('app.views.orders.modals.details.headers.price')}}</th>
+                          <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">{{$t('app.views.orders.modals.details.headers.total')}}</th>
                         </tr>
                       </thead>
                       <tbody class="bg-white divide-y divide-gray-200">
@@ -83,10 +83,10 @@
                               {{ item.variant.name }}
                             </div>
                             <div v-if="item.notes" class="text-xs text-gray-500 mt-1">
-                              <span class="font-medium">Note:</span> {{ item.notes }}
+                              <span class="font-medium">{{$t('app.views.orders.modals.details.note')}}</span> {{ item.notes }}
                             </div>
                             <div v-if="item.special_instructions" class="text-xs text-gray-500 mt-1">
-                              <span class="font-medium">Special Instructions:</span> {{ item.special_instructions }}
+                              <span class="font-medium">{{$t('app.views.orders.modals.details.special_instructions')}}</span> {{ item.special_instructions }}
                             </div>
                           </td>
                           <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500 text-right">
@@ -103,7 +103,7 @@
                       <tfoot>
                         <tr>
                           <td colspan="3" class="px-4 py-3 text-sm font-medium text-gray-900 text-right">
-                            Subtotal
+                            {{$t('app.views.orders.modals.details.subtotal')}}
                           </td>
                           <td class="px-4 py-3 text-sm font-medium text-gray-900 text-right">
                             ${{ (order.subtotal || 0).toFixed(2) }}
@@ -111,7 +111,7 @@
                         </tr>
                         <tr v-if="(order.tax || 0) > 0">
                           <td colspan="3" class="px-4 py-1 text-sm text-gray-500 text-right">
-                            Tax ({{ ((order.taxRate || 0) * 100).toFixed(1) }}%)
+                            {{$t('app.views.orders.modals.details.tax', { rate: ((order.taxRate || 0) * 100).toFixed(1) })}}
                           </td>
                           <td class="px-4 py-1 text-sm text-gray-500 text-right">
                             ${{ (order.tax || 0).toFixed(2) }}
@@ -119,7 +119,7 @@
                         </tr>
                         <tr>
                           <td colspan="3" class="px-4 py-3 text-base font-bold text-gray-900 text-right">
-                            Total
+                            {{$t('app.views.orders.modals.details.total')}}
                           </td>
                           <td class="px-4 py-3 text-base font-bold text-gray-900 text-right">
                             ${{ (order.total || 0).toFixed(2) }}
@@ -131,7 +131,7 @@
                 </div>
                 
                 <div v-if="order.notes" class="mt-4">
-                  <h4 class="text-sm font-medium text-gray-500">Order Notes</h4>
+                  <h4 class="text-sm font-medium text-gray-500">{{$t('app.views.orders.modals.details.order_notes')}}</h4>
                   <p class="mt-1 text-sm text-gray-900">{{ order.notes }}</p>
                 </div>
               </div>
@@ -143,7 +143,7 @@
                   class="inline-flex w-full justify-center rounded-md border border-transparent bg-green-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 sm:col-start-2 sm:text-sm"
                   @click="updateStatus('Ready')"
                 >
-                  Mark as Ready
+                  {{$t('app.views.orders.modals.details.mark_ready')}}
                 </button>
                 <button
                   v-else-if="order.status === 'ready'"
@@ -151,14 +151,14 @@
                   class="inline-flex w-full justify-center rounded-md border border-transparent bg-green-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 sm:col-start-2 sm:text-sm"
                   @click="updateStatus('Completed')"
                 >
-                  Mark as Completed
+                  {{$t('app.views.orders.modals.details.mark_completed')}}
                 </button>
                 <button
                   type="button"
                   class="mt-3 inline-flex w-full justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-base font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:col-start-1 sm:mt-0 sm:text-sm"
                   @click="printOrder"
                 >
-                  Print Receipt
+                  {{$t('app.views.orders.modals.details.print_receipt')}}
                 </button>
               </div>
             </DialogPanel>

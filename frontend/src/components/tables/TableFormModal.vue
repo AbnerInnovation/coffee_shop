@@ -30,43 +30,43 @@
               <div>
                 <div class="mt-3 text-center sm:mt-5">
                   <DialogTitle as="h3" class="text-base font-semibold leading-6 text-gray-900">
-                    {{ isEditing ? 'Edit Table' : 'Add New Table' }}
+                    {{ isEditing ? $t('app.views.tables.modal.edit_title') : $t('app.views.tables.modal.add_title') }}
                   </DialogTitle>
                   <div class="mt-4 space-y-4">
                     <div>
                       <label for="tableNumber" class="block text-sm font-medium text-gray-700 text-left">
-                        Table Number
+                        {{$t('app.views.tables.modal.fields.table_number')}}
                       </label>
                       <input
                         type="text"
                         id="tableNumber"
                         v-model="formData.number"
                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                        placeholder="e.g., 01"
+                        :placeholder="$t('app.views.tables.modal.fields.table_number_placeholder')"
                       />
                     </div>
                     <div>
                       <label for="capacity" class="block text-sm font-medium text-gray-700 text-left">
-                        Capacity
+                        {{$t('app.views.tables.modal.fields.capacity')}}
                       </label>
                       <select
                         id="capacity"
                         v-model="formData.capacity"
                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                       >
-                        <option v-for="n in 10" :key="n" :value="n">{{ n }} {{ n === 1 ? 'person' : 'people' }}</option>
+                        <option v-for="n in 10" :key="n" :value="n">{{ n }} {{ n === 1 ? $t('app.views.tables.modal.fields.person') : $t('app.views.tables.modal.fields.people') }}</option>
                       </select>
                     </div>
                     <div>
                       <label for="location" class="block text-sm font-medium text-gray-700 text-left">
-                        Location (Optional)
+                        {{$t('app.views.tables.modal.fields.location_optional')}}
                       </label>
                       <input
                         type="text"
                         id="location"
                         v-model="formData.location"
                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                        placeholder="e.g., Near window, Patio"
+                        :placeholder="$t('app.views.tables.modal.fields.location_placeholder')"
                       />
                     </div>
                   </div>
@@ -78,14 +78,14 @@
                   class="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2"
                   @click="saveTable"
                 >
-                  Save
+                  {{ isEditing ? $t('app.views.tables.modal.actions.submit_update') : $t('app.views.tables.modal.actions.submit_add') }}
                 </button>
                 <button
                   type="button"
                   class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:col-start-1 sm:mt-0"
                   @click="closeModal"
                 >
-                  Cancel
+                  {{$t('app.views.tables.modal.actions.cancel')}}
                 </button>
               </div>
             </DialogPanel>
@@ -117,7 +117,14 @@ const props = defineProps({
 
 const emit = defineEmits(['close', 'save']);
 
-const formData = ref({
+interface TableForm {
+  id: string;
+  number: string;
+  capacity: number;
+  location: string;
+}
+
+const formData = ref<TableForm>({
   id: '',
   number: '',
   capacity: 2,
@@ -125,18 +132,15 @@ const formData = ref({
 });
 
 watch(
-  () => props.table,
+  () => props.table as any,
   (newTable) => {
-    if (newTable) {
-      formData.value = { ...newTable };
-    } else {
-      formData.value = {
-        id: '',
-        number: '',
-        capacity: 2,
-        location: '',
-      };
-    }
+    const src = (newTable || {}) as Partial<TableForm> & Record<string, any>;
+    formData.value = {
+      id: typeof src.id === 'string' ? src.id : '',
+      number: typeof src.number === 'string' ? src.number : '',
+      capacity: typeof src.capacity === 'number' ? src.capacity : 2,
+      location: typeof src.location === 'string' ? src.location : '',
+    };
   },
   { immediate: true }
 );

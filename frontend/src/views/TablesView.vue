@@ -72,7 +72,6 @@
           </div>
           
           <div class="mt-4 flex space-x-2">
-            <div class="grid grid-cols-2 gap-2 mt-2">
               <button
                 type="button"
                 class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded shadow-sm text-white"
@@ -81,14 +80,6 @@
               >
                 {{ table.is_occupied ? t('app.views.tables.mark_available') : t('app.views.tables.mark_occupied') }}
               </button>
-              <button
-                type="button"
-                class="inline-flex items-center justify-center px-3 py-1.5 border border-gray-300 text-xs font-medium rounded shadow-sm text-gray-700 bg-white hover:bg-gray-50"
-                @click.stop="openOrderModal(table)"
-              >
-                {{ t('app.views.tables.new_order') }}
-              </button>
-            </div>
             <button
               type="button"
               class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-xs font-medium rounded shadow-sm text-gray-700 bg-white hover:bg-gray-50"

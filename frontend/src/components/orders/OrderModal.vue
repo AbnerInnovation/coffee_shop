@@ -4,13 +4,13 @@
       <div class="p-6">
         <div class="flex justify-between items-center mb-4">
           <h3 class="text-lg font-medium text-gray-900">
-            New Order for Table #{{ tableNumber }}
+            {{$t('app.views.orders.modals.order_modal.title_for_table', { number: tableNumber })}}
           </h3>
           <button 
             @click="$emit('close')" 
             class="text-gray-400 hover:text-gray-500"
           >
-            <span class="sr-only">Close</span>
+            <span class="sr-only">{{$t('app.views.orders.modals.order_modal.close')}}</span>
             <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -20,13 +20,13 @@
         <!-- Menu Items Selection -->
         <div class="mb-6">
           <div class="flex justify-between items-center mb-2">
-            <h4 class="text-sm font-medium text-gray-700">Menu Items</h4>
+            <h4 class="text-sm font-medium text-gray-700">{{$t('app.views.orders.modals.order_modal.menu_items')}}</h4>
             <button 
               type="button" 
               @click="addNewItem"
               class="text-sm text-indigo-600 hover:text-indigo-500"
             >
-              + Add Item
+              {{$t('app.views.orders.modals.order_modal.add_item')}}
             </button>
           </div>
           
@@ -38,7 +38,7 @@
                   class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                   required
                 >
-                  <option value="">Select an item</option>
+                  <option value="">{{$t('app.views.orders.modals.order_modal.select_item')}}</option>
                   <option v-for="menuItem in menuItems" :key="menuItem.id" :value="menuItem.id">
                     {{ menuItem.name }} - ${{ menuItem.price.toFixed(2) }}
                   </option>
@@ -58,19 +58,19 @@
                 @click="removeItem(index)"
                 class="ml-2 text-red-600 hover:text-red-500"
               >
-                <span class="sr-only">Remove</span>
+                <span class="sr-only">{{$t('app.views.orders.modals.order_modal.remove')}}</span>
                 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                 </svg>
               </button>
             </div>
             <div class="mt-2">
-              <label class="block text-sm font-medium text-gray-700 mb-1">Special Instructions</label>
+              <label class="block text-sm font-medium text-gray-700 mb-1">{{$t('app.views.orders.modals.order_modal.special_instructions')}}</label>
               <input 
                 v-model="item.special_instructions"
                 type="text" 
                 class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                placeholder="E.g. No onions, extra sauce, etc."
+                :placeholder="$t('app.views.orders.modals.order_modal.special_instructions_placeholder')"
               >
             </div>
           </div>
@@ -78,19 +78,19 @@
 
         <!-- Order Notes -->
         <div class="mb-6">
-          <label for="order-notes" class="block text-sm font-medium text-gray-700 mb-1">Order Notes</label>
+          <label for="order-notes" class="block text-sm font-medium text-gray-700 mb-1">{{$t('app.views.orders.modals.order_modal.order_notes')}}</label>
           <textarea
             id="order-notes"
             v-model="orderNotes"
             rows="2"
             class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-            placeholder="Any special instructions for the kitchen..."
+            :placeholder="$t('app.views.orders.modals.order_modal.order_notes_placeholder')"
           ></textarea>
         </div>
 
         <!-- Order Summary -->
         <div class="bg-gray-50 p-4 rounded-lg mb-6">
-          <h4 class="text-sm font-medium text-gray-700 mb-3">Order Summary</h4>
+          <h4 class="text-sm font-medium text-gray-700 mb-3">{{$t('app.views.orders.modals.order_modal.order_summary')}}</h4>
           <div v-if="orderItems.length > 0" class="space-y-2">
             <div v-for="(item, index) in orderItems" :key="index" class="flex justify-between text-sm">
               <div class="text-gray-600">
@@ -105,13 +105,13 @@
             </div>
             <div class="border-t border-gray-200 pt-2 mt-2">
               <div class="flex justify-between font-medium">
-                <div>Total</div>
+                <div>{{$t('app.views.orders.modals.order_modal.total')}}</div>
                 <div>${{ calculateTotal().toFixed(2) }}</div>
               </div>
             </div>
           </div>
           <p v-else class="text-sm text-gray-500">
-            Add items to the order
+            {{$t('app.views.orders.modals.order_modal.empty_state_add_items')}}
           </p>
         </div>
 
@@ -122,7 +122,7 @@
             @click="$emit('close')"
             class="inline-flex justify-center rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
           >
-            Cancel
+            {{$t('app.views.orders.modals.order_modal.cancel')}}
           </button>
           <button
             type="button"
@@ -140,9 +140,9 @@
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
-              Processing...
+              {{$t('app.views.orders.modals.order_modal.processing')}}
             </span>
-            <span v-else>Place Order</span>
+            <span v-else>{{$t('app.views.orders.modals.order_modal.place_order')}}</span>
           </button>
         </div>
       </div>
