@@ -489,7 +489,7 @@ const handlePaymentCompleted = async (updatedOrder: any) => {
   try {
     showSuccess(`Payment completed for order #${updatedOrder.id}`);
     // Refresh the list from backend to ensure full consistency
-    await fetchOrders();
+    await fetchOrders(true);
   } catch (e) {
     console.error('Failed to update order after payment completion:', e);
   }
