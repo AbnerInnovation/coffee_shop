@@ -103,6 +103,7 @@
       "title": "Orders",
       "try_again": "Try again",
       "new_order": "New Order",
+      "edit_order": "Edit Order",
       "tabs": {
         "all": "All",
         "pending": "Pending",
@@ -116,6 +117,10 @@
         "cancel_order": "Cancel Order",
         "mark_ready": "Mark as Ready",
         "mark_completed": "Mark as Completed"
+      },
+      "payment": {
+        "paid": "Paid",
+        "pending": "Pending Payment"
       },
       "buttons": {
         "view": "View",
@@ -193,6 +198,7 @@
           "tax": "Tax ({rate}%)",
           "total": "Total",
           "order_notes": "Order Notes",
+          "complete_payment": "Complete Payment",
           "mark_ready": "Mark as Ready",
           "mark_completed": "Mark as Completed",
           "print_receipt": "Print Receipt",

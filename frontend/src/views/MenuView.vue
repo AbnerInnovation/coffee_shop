@@ -27,7 +27,7 @@
                 </button>
               </div>
               
-              <div class="rounded-lg bg-white shadow">
+              <div class="rounded-lg bg-white dark:bg-gray-900 shadow">
                 <div class="px-4 py-5 sm:p-6">
                   <MenuItemForm
                     v-if="currentItem !== null"

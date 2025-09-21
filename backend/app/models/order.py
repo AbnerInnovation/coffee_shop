@@ -1,7 +1,7 @@
 from enum import Enum as PyEnum
 from typing import List, Optional
 from datetime import datetime
-from sqlalchemy import Integer, String, Float, ForeignKey, Enum as SQLEnum, DateTime
+from sqlalchemy import Integer, String, Float, ForeignKey, Enum as SQLEnum, DateTime, Boolean
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from .base import BaseModel
 
@@ -29,6 +29,7 @@ class Order(BaseModel):
     notes: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
     total_amount: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
     user_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("users.id"), nullable=True)
+    is_paid: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     deleted_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
 
     # Relationships

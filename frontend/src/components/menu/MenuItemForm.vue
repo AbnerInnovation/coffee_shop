@@ -332,14 +332,14 @@ defineExpose({
     <div class="space-y-4">
       <!-- Name -->
       <div>
-        <label for="name" class="block text-sm font-medium text-gray-700">
+        <label for="name" class="block text-sm font-medium text-gray-700 dark:text-white">
           {{ t('app.forms.name') }} <span class="text-red-500">*</span>
         </label>
         <input
           id="name"
           v-model="formData.name"
           type="text"
-          class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
+          class="mt-1 dark:bg-gray-900 dark:text-white block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
           :class="{ 'border-red-500': formErrors.name }"
           required
         />
@@ -350,14 +350,14 @@ defineExpose({
 
       <!-- Description -->
       <div>
-        <label for="description" class="block text-sm font-medium text-gray-700">
+        <label for="description" class="block text-sm font-medium text-gray-700 dark:text-white">
           {{ t('app.forms.description') }}
         </label>
         <textarea
           id="description"
           v-model="formData.description"
           rows="3"
-          class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
+          class="mt-1 block w-full dark:bg-gray-900 dark:text-white rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
           :class="{ 'border-red-500': formErrors.description }"
         />
         <p v-if="formErrors.description" class="mt-1 text-sm text-red-600">
@@ -368,24 +368,17 @@ defineExpose({
       <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <!-- Category -->
         <div>
-          <div class="flex items-center justify-between">
-            <label for="category" class="block text-sm font-medium text-gray-700">
+          <div class="flex items-center justify-between dark:text-white">
+            <label for="category" class="block text-sm font-medium text-gray-700 dark:text-white">
               {{ t('app.forms.category') }} <span class="text-red-500">*</span>
             </label>
-            <button 
-              type="button"
-              @click="loadCategories"
-              class="text-xs text-indigo-600 hover:text-indigo-800"
-              :disabled="loadingCategories"
-            >
-              {{ loadingCategories ? t('app.status.loading') : t('app.forms.refresh_categories') }}
-            </button>
+
           </div>
           <div class="mt-1 relative">
             <select
               id="category"
               v-model="formData.category"
-              class="block w-full rounded-md border border-gray-300 py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
+              class="block dark:bg-gray-900 dark:text-white w-full rounded-md border border-gray-300 py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
               :class="{ 
                 'border-red-500': formErrors.category,
                 'opacity-50': loadingCategories || menuStore.loading
@@ -406,15 +399,6 @@ defineExpose({
               </option>
             </select>
           </div>
-          <button 
-            type="button"
-            @click="menuStore.getCategories()"
-            class="mt-2 text-xs text-indigo-600 hover:text-indigo-500 flex items-center"
-            :disabled="menuStore.loading"
-          >
-            <ArrowPathIcon class="h-4 w-4 mr-1" :class="{ 'animate-spin': menuStore.loading }" />
-            {{ menuStore.loading ? t('app.status.loading') : t('app.forms.refresh_categories') }}
-          </button>
           <p v-if="formErrors.category" class="mt-1 text-sm text-red-600">
             {{ formErrors.category }}
           </p>
@@ -422,7 +406,7 @@ defineExpose({
 
         <!-- Price -->
         <div>
-          <label for="price" class="block text-sm font-medium text-gray-700">
+          <label for="price" class="block text-sm font-medium text-gray-700 dark:text-white">
             {{ t('app.forms.price_base') }} <span class="text-red-500">*</span>
           </label>
           <div class="relative mt-1 rounded-md shadow-sm">
@@ -435,7 +419,7 @@ defineExpose({
               type="number"
               step="0.01"
               min="0"
-              class="block w-full rounded-md border border-gray-300 pl-7 pr-12 py-2 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
+              class="block w-full dark:bg-gray-900 dark:text-white rounded-md border border-gray-300 pl-7 pr-12 py-2 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
               :class="{ 'border-red-500': formErrors.price }"
               :placeholder="t('app.forms.placeholder_price')"
               required
@@ -449,14 +433,14 @@ defineExpose({
 
       <!-- Image URL -->
       <div>
-        <label for="image_url" class="block text-sm font-medium text-gray-700">
+        <label for="image_url" class="block text-sm font-medium text-gray-700 dark:text-white">
           {{ t('app.forms.image_url') }}
         </label>
         <input
           id="image_url"
           v-model="formData.image_url"
           type="url"
-          class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
+          class="mt-1 block w-full dark:bg-gray-900 dark:text-white rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
           :class="{ 'border-red-500': formErrors.image_url }"
           placeholder="https://example.com/image.jpg"
         />
@@ -473,7 +457,7 @@ defineExpose({
           type="checkbox"
           class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
         />
-        <label for="is_available" class="ml-2 block text-sm text-gray-700">
+        <label for="is_available" class="ml-2 block text-sm text-gray-700 dark:text-white ">
           {{ t('app.forms.available_for_ordering') }}
         </label>
       </div>
@@ -576,7 +560,7 @@ defineExpose({
           leave-from="opacity-100"
           leave-to="opacity-0"
         >
-          <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
+          <div class="fixed inset-0 bg-gray-500 dark:bg-gray-900 bg-opacity-75 transition-opacity" />
         </TransitionChild>
 
         <div class="fixed inset-0 z-10 overflow-y-auto">
@@ -590,7 +574,7 @@ defineExpose({
               leave-from="opacity-100 translate-y-0 sm:scale-100"
               leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
             >
-              <DialogPanel class="relative transform overflow-hidden rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6">
+              <DialogPanel class="relative transform overflow-hidden rounded-lg bg-white dark:bg-gray-900 px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6">
                 <div class="sm:flex sm:items-start">
                   <div class="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
                     <ExclamationTriangleIcon class="h-6 w-6 text-red-600" aria-hidden="true" />
@@ -644,7 +628,7 @@ defineExpose({
         leave-from="opacity-100"
         leave-to="opacity-0"
       >
-        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
+        <div class="fixed inset-0 bg-gray-500 dark:bg-gray-900 bg-opacity-75 transition-opacity" />
       </TransitionChild>
 
       <div class="fixed inset-0 z-10 overflow-y-auto">
@@ -658,11 +642,11 @@ defineExpose({
             leave-from="opacity-100 translate-y-0 sm:scale-100"
             leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
           >
-            <DialogPanel class="relative transform overflow-hidden rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6">
+            <DialogPanel class="relative transform overflow-hidden rounded-lg bg-white dark:bg-gray-900 px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6">
               <div class="absolute right-0 top-0 hidden pr-4 pt-4 sm:block">
                 <button
                   type="button"
-                  class="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                  class="rounded-md bg-white dark:bg-gray-900 text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                   @click="resetVariantForm"
                 >
                   <span class="sr-only">Close</span>

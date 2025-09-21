@@ -121,7 +121,7 @@
                       <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{$t('app.views.orders.modals.new_order.options')}}</label>
                       <div v-for="variant in selectedItem.variants" :key="variant.id"
                         class="flex items-center p-2 border rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer"
-                        :class="{ 'bg-indigo-50 border-indigo-200': selectedVariant?.id === variant.id }"
+                        :class="{ 'bg-indigo-50 dark:bg-indigo-900 border-indigo-200 dark:border-indigo-600': selectedVariant?.id === variant.id }"
                         @click="selectedVariant = variant">
                         <div class="flex-1">
                           <p class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ variant.name }}</p>
@@ -360,6 +360,7 @@ interface OrderItemWithDetails {
 // Props and Emits
 const props = defineProps<{
   open: boolean;
+  tableId?: number | null;
 }>();
 
 const emit = defineEmits<{

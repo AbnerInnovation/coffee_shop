@@ -87,6 +87,23 @@
             >
               {{ t('app.views.tables.edit') }}
             </button>
+            <!-- Create/Edit Order buttons -->
+            <button
+              v-if="!hasOpenOrder(table.id)"
+              type="button"
+              class="inline-flex items-center px-3 py-1.5 border text-xs font-medium rounded shadow-sm text-white bg-indigo-600 hover:bg-indigo-700"
+              @click.stop="openOrderModal(table)"
+            >
+              {{ t('app.views.orders.new_order') || 'Create Order' }}
+            </button>
+            <button
+              v-else
+              type="button"
+              class="inline-flex items-center px-3 py-1.5 border text-xs font-medium rounded shadow-sm text-white bg-amber-600 hover:bg-amber-700"
+              @click.stop="goToEditOrder(table)"
+            >
+              {{ t('app.views.orders.edit_order') || 'Edit Order' }}
+            </button>
           </div>
         </div>
       </div>
@@ -116,7 +133,7 @@
                 type="number"
                 min="1"
                 required
-                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-gray-800 dark:border-gray-700 dark:text-white"
+                class="mt-1 block px-3 py-2 w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-gray-800 dark:border-gray-700 dark:text-white"
               >
             </div>
             
@@ -129,7 +146,7 @@
                 type="number"
                 min="1"
                 required
-                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-gray-800 dark:border-gray-700 dark:text-white"
+                class="mt-1 block px-3 py-2 w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-gray-800 dark:border-gray-700 dark:text-white"
               >
             </div>
             
@@ -166,15 +183,13 @@
         </form>
       </div>
     </div>
-    <!-- Order Modal -->
-    <div v-if="showOrderModal && selectedTableForOrder">
-      <OrderModal
-        :table-id="selectedTableForOrder.id"
-        :table-number="selectedTableForOrder.number"
-        @close="showOrderModal = false"
-        @order-created="handleOrderCreated"
-      />
-    </div>
+    <!-- New Order Modal (same used in Orders view) -->
+    <NewOrderModal
+      :open="showOrderModal"
+      :table-id="selectedTableForOrder ? selectedTableForOrder.id : null"
+      @close="showOrderModal = false"
+      @order-created="handleOrderCreated"
+    />
   </div>
 </template>
 
@@ -183,12 +198,15 @@ import { ref, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { PlusIcon, XMarkIcon, XCircleIcon } from '@heroicons/vue/24/outline';
 import tableService from '@/services/tableService';
-import OrderModal from '@/components/orders/OrderModal.vue';
+import NewOrderModal from '@/components/orders/NewOrderModal.vue';
 import { formatDistanceToNow } from 'date-fns';
+import orderService from '@/services/orderService';
+import { useRouter } from 'vue-router';
 
 import type { Table } from '@/services/tableService';
 
 const { t } = useI18n();
+const router = useRouter();
 const tables = ref<Table[]>([]);
 const loading = ref(false);
 const error = ref('');
@@ -223,6 +241,22 @@ const fetchTables = async () => {
     loading.value = false;
   }
 };
+
+// Track open orders by table_id
+const openOrderTableIds = ref<Set<number>>(new Set());
+
+const refreshOpenOrders = async () => {
+  try {
+    // Fetch active orders (pending, preparing, ready) and not paid
+    const all = await orderService.getActiveOrders();
+    const active = (Array.isArray(all) ? all : []).filter(o => o && o.table_id && o.status !== 'completed' && o.status !== 'cancelled' && !o.is_paid);
+    openOrderTableIds.value = new Set(active.map(o => o.table_id));
+  } catch (e) {
+    console.warn('Failed to fetch open orders for tables view:', e);
+  }
+};
+
+const hasOpenOrder = (tableId: number) => openOrderTableIds.value.has(tableId);
 
 // Format time ago
 const formatTimeAgo = (dateString) => {
@@ -303,7 +337,7 @@ const selectTable = (table) => {
 const showOrderModal = ref(false);
 const selectedTableForOrder = ref<Table | null>(null);
 
-// Open order modal for a table
+// Open order modal for a table (NewOrderModal)
 const openOrderModal = (table) => {
   selectedTableForOrder.value = table;
   showOrderModal.value = true;
@@ -314,10 +348,22 @@ const handleOrderCreated = (order) => {
   console.log('Order created:', order);
   // You might want to update the table status or show a notification
   fetchTables(); // Refresh tables to show updated status
+  refreshOpenOrders();
+};
+
+// Go to orders page filtered by this table to edit the open order
+const goToEditOrder = async (table: Table) => {
+  try {
+    // Navigate to Orders with table filter so user can edit
+    await router.push({ path: '/orders', query: { table_id: String(table.id) } });
+  } catch (e) {
+    console.error('Failed to navigate to orders view:', e);
+  }
 };
 
 // Initialize component
 onMounted(() => {
   fetchTables();
+  refreshOpenOrders();
 });
 </script>

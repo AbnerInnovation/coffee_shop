@@ -71,13 +71,19 @@
               <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
                 <div class="flex-1 min-w-0">
                   <!-- Status dropdown -->
-                  <div class="flex items-center mt-2 sm:mt-0">
+                  <div class="flex items-center mt-2 sm:mt-0 space-x-2">
                     <p class="text-sm font-medium text-indigo-600 truncate">
                       #{{ order.id }}
                     </p>
                     <span class="hidden sm:inline-flex ml-2 px-2.5 py-0.5 rounded-full text-xs font-medium"
                       :class="getStatusBadgeClass(order.status)">
                       {{ t('app.status.' + order.status) }}
+                    </span>
+                    <span
+                      class="hidden sm:inline-flex ml-1 px-2.5 py-0.5 rounded-full text-xs font-medium"
+                      :class="order.is_paid ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'"
+                    >
+                      {{ order.is_paid ? t('app.views.orders.payment.paid') : t('app.views.orders.payment.pending') }}
                     </span>
                   </div>
                   <div class="mt-2 grid grid-cols-2 gap-x-4 gap-y-2 sm:flex sm:flex-wrap sm:space-x-6">
@@ -142,7 +148,7 @@
 
       <!-- Order Details Modal -->
       <OrderDetails v-if="isOrderDetailsOpen && selectedOrder" :open="isOrderDetailsOpen" :order="selectedOrder"
-        @close="closeOrderDetails" @status-update="handleStatusUpdate" />
+        @close="closeOrderDetails" @status-update="handleStatusUpdate" @paymentCompleted="handlePaymentCompleted" />
 
       <!-- New Order Modal -->
       <NewOrderModal :open="isNewOrderModalOpen" @close="closeNewOrderModal" @order-created="handleNewOrder" />
@@ -152,6 +158,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import orderService from '@/services/orderService';
 import type { Order } from '@/services/orderService';
@@ -172,6 +179,8 @@ import NewOrderModal from '@/components/orders/NewOrderModal.vue';
 
 // i18n
 const { t } = useI18n();
+const route = useRoute();
+const router = useRouter();
 
 // Simple toast functions since we're not using PrimeVue
 const showSuccess = (message: string) => {
@@ -244,6 +253,7 @@ interface OrderWithLocalFields {
   created_at?: string; // For compatibility
   customer_name?: string | null;
   table_number?: number | null;
+  is_paid?: boolean;
 }
 
 // Define order status type that matches the backend
@@ -258,6 +268,7 @@ const statusDropdownOpen = ref<number | null>(null);
 const selectedStatus = ref<OrderStatus>('all');
 const isNewOrderModalOpen = ref(false);
 const isOrderDetailsOpen = ref(false);
+const hasAutoOpenedFromTable = ref(false);
 const selectedOrder = ref<OrderWithLocalFields | null>(null);
 const orders = ref<OrderWithLocalFields[]>([]);
 
@@ -452,6 +463,7 @@ const handleNewOrder = async (newOrder: Order) => {
     orders.value = [localOrder, ...orders.value];
     showSuccess('Order created successfully');
     closeNewOrderModal();
+    await fetchOrders();
   } catch (err) {
     console.error('Error processing new order:', err);
     // Only show error if we don't have an order ID
@@ -469,6 +481,17 @@ const handleStatusUpdate = ({ orderId, status }: { orderId: number; status: Orde
   if (status !== 'all') {
     updateOrderStatus(orderId, status as BackendOrderStatus);
     closeOrderDetails();
+  }
+};
+
+const handlePaymentCompleted = async (updatedOrder: any) => {
+  console.log('Payment completed for order:', updatedOrder);
+  try {
+    showSuccess(`Payment completed for order #${updatedOrder.id}`);
+    // Refresh the list from backend to ensure full consistency
+    await fetchOrders();
+  } catch (e) {
+    console.error('Failed to update order after payment completion:', e);
   }
 };
 
@@ -505,8 +528,8 @@ const fetchOrders = async () => {
 
     // Fetch orders with the selected status filter
     const statusToFetch = selectedStatus.value === 'all' ? undefined : selectedStatus.value;
-    console.log('Fetching orders with status:', statusToFetch);
-    const response = await orderService.getActiveOrders(statusToFetch);
+    const tableIdParam = route.query.table_id ? Number(route.query.table_id) : undefined;
+    const response = await orderService.getActiveOrders(statusToFetch, tableIdParam);
     console.log('API Response:', JSON.stringify(response, null, 2));
 
     // The service should return an array, but we'll double-check here
@@ -575,12 +598,19 @@ const fetchOrders = async () => {
           table_number: order.table_number,
           customer_name: order.customer_name,
           notes: order.notes,
-          updated_at: order.updated_at
+          updated_at: order.updated_at,
+          is_paid: (order as any).is_paid ?? false
         };
       })
       .filter((order): order is OrderWithLocalFields => order !== null);
 
     orders.value = processedOrders;
+
+    // If filtered by table_id and there is at least one order, auto-open it for quick edit/view
+    if (tableIdParam && orders.value.length > 0 && !hasAutoOpenedFromTable.value) {
+      hasAutoOpenedFromTable.value = true;
+      viewOrderDetails(orders.value[0]);
+    }
   } catch (err) {
     console.error('Error fetching orders:', err);
     error.value = 'Failed to fetch orders. Please try again.';

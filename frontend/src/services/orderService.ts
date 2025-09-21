@@ -77,6 +77,7 @@ export interface Order {
   customer_name: string | null;
   user_id: string | null;
   notes: string | null;
+  is_paid?: boolean;
   items: OrderItem[];
 }
 
@@ -132,19 +133,17 @@ const orderService = {
     return data;
   },
 
-  async getActiveOrders(status?: OrderStatus): Promise<Order[]> {
+  async getActiveOrders(status?: OrderStatus, tableId?: number): Promise<Order[]> {
     try {
-      const params: { limit: number; status?: OrderStatus } = { limit: 200 };
+      const params: { limit: number; status?: OrderStatus; table_id?: number } = { limit: 200 };
       if (status) {
         params.status = status;
       }
-      console.log('Fetching orders with params:', params);
+      if (tableId) {
+        params.table_id = tableId;
+      }
       const response = await api.get<Order[]>('/orders', { params });
-      console.log('Orders API response:', response);
-
-      const orders = response;
-
-      return orders;
+      return Array.isArray(response) ? response : [];
     } catch (error: any) {
       console.error('Error fetching active orders:', error);
       if (error?.response) {
@@ -153,6 +152,16 @@ const orderService = {
       }
       throw error;
     }
+  },
+
+  async getOrdersByTable(tableId: number): Promise<Order[]> {
+    const response = await api.get<Order[]>('/orders', { params: { table_id: tableId, limit: 50 } });
+    return Array.isArray(response) ? response : [];
+  },
+
+  async markOrderPaid(orderId: number): Promise<Order> {
+    const { data } = await api.put<Order>(`/orders/${orderId}`, { is_paid: true });
+    return data;
   },
 
   async getMenuItems(): Promise<MenuItem[]> {

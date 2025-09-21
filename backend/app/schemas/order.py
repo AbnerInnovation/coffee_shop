@@ -67,6 +67,7 @@ class OrderBase(BaseModel):
     table_id: int
     notes: Optional[str] = None
     status: OrderStatus = OrderStatus.PENDING
+    is_paid: bool = False
 
 class OrderCreate(OrderBase):
     items: List[OrderItemCreate]
@@ -75,6 +76,7 @@ class OrderUpdate(BaseModel):
     table_id: Optional[int] = None
     notes: Optional[str] = None
     status: Optional[OrderStatus] = None
+    is_paid: Optional[bool] = None
 
 class OrderInDBBase(OrderBase):
     id: int

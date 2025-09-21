@@ -37,6 +37,12 @@
                     >
                       {{ order.status }}
                     </span>
+                    <span
+                      class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium"
+                      :class="order.is_paid ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'"
+                    >
+                      {{ order.is_paid ? $t('app.views.orders.payment.paid') : $t('app.views.orders.payment.pending') }}
+                    </span>
                     <button
                       type="button"
                       class="rounded-md bg-white dark:bg-transparent text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
@@ -137,6 +143,14 @@
                 
                 <div class="mt-5 sm:mt-6 sm:grid sm:grid-flow-row-dense sm:grid-cols-2 sm:gap-3">
                   <button
+                    v-if="!order.is_paid && order.status !== 'cancelled'"
+                    type="button"
+                    class="inline-flex w-full justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:col-start-2 sm:text-sm"
+                    @click="completePayment"
+                  >
+                    {{$t('app.views.orders.modals.details.complete_payment') || 'Complete Payment'}}
+                  </button>
+                  <button
                     v-if="order.status === 'Preparing'"
                     type="button"
                     class="inline-flex w-full justify-center rounded-md border border-transparent bg-green-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 sm:col-start-2 sm:text-sm"
@@ -171,6 +185,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
+import orderService from '@/services/orderService';
 import { 
   Dialog, 
   DialogPanel, 
@@ -207,7 +222,7 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(['close', 'status-update']);
+const emit = defineEmits(['close', 'status-update', 'paymentCompleted']);
 
 const { confirm } = useConfirm();
 const { showSuccess, showError } = useToast();
@@ -293,5 +308,15 @@ async function cancelOrder() {
 function printOrder() {
   // In a real app, this would open a print dialog with a formatted receipt
   window.print();
+}
+
+async function completePayment() {
+  try {
+    await orderService.markOrderPaid(props.order.id);
+    emit('paymentCompleted', props.order);
+    emit('close');
+  } catch (e) {
+    console.error('Failed to complete payment:', e);
+  }
 }
 </script>

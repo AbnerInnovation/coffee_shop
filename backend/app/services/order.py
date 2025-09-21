@@ -68,6 +68,7 @@ def serialize_order(order: OrderModel) -> dict:
         "table_number": order.table.number if order.table else None,
         "customer_name": getattr(order, "customer_name", None),
         "user_id": getattr(order, "user_id", None),
+        "is_paid": getattr(order, "is_paid", False),
         "items": [serialize_order_item(item) for item in getattr(order, "items", [])],
     }
 

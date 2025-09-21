@@ -103,6 +103,7 @@
       "title": "Órdenes",
       "try_again": "Intentar de nuevo",
       "new_order": "Nueva orden",
+      "edit_order": "Editar orden",
       "tabs": {
         "all": "Todas",
         "pending": "Pendiente",
@@ -116,6 +117,10 @@
         "cancel_order": "Cancelar orden",
         "mark_ready": "Marcar como listo",
         "mark_completed": "Marcar como completado"
+      },
+      "payment": {
+        "paid": "Pagado",
+        "pending": "Pendiente de pago"
       },
       "buttons": {
         "view": "Ver",
@@ -192,6 +197,7 @@
           "tax": "Impuesto ({rate}%)",
           "total": "Total",
           "order_notes": "Notas de la orden",
+          "complete_payment": "Completar pago",
           "mark_ready": "Marcar como listo",
           "mark_completed": "Marcar como completado",
           "print_receipt": "Imprimir recibo",
