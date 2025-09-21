@@ -521,13 +521,13 @@ onUnmounted(() => {
 });
 
 // Fetch orders from API
-const fetchOrders = async () => {
+const fetchOrders = async (fetchAll = false) => {
   try {
     loading.value = true;
     error.value = null;
 
     // Fetch orders with the selected status filter
-    const statusToFetch = selectedStatus.value === 'all' ? undefined : selectedStatus.value;
+    const statusToFetch = selectedStatus.value === 'all' || fetchAll ? undefined : selectedStatus.value;
     const tableIdParam = route.query.table_id ? Number(route.query.table_id) : undefined;
     const response = await orderService.getActiveOrders(statusToFetch, tableIdParam);
     console.log('API Response:', JSON.stringify(response, null, 2));
