@@ -80,13 +80,13 @@
               >
                 {{ table.is_occupied ? t('app.views.tables.mark_available') : t('app.views.tables.mark_occupied') }}
               </button>
-            <button
+            <!-- <button
               type="button"
               class="inline-flex items-center px-3 py-1.5 border text-xs font-medium rounded shadow-sm text-gray-700 bg-white hover:bg-gray-50 border-gray-300 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700 dark:hover:bg-gray-700"
               @click.stop="editTable(table)"
             >
               {{ t('app.views.tables.edit') }}
-            </button>
+            </button> -->
             <!-- Create/Edit Order buttons -->
             <button
               v-if="!hasOpenOrder(table.id)"

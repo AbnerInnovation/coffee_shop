@@ -497,11 +497,16 @@ const fetchAvailableTables = async () => {
     loading.value.tables = true;
     const tables = await tableService.getTables({ occupied: false });
     availableTables.value = tables.map(table => ({
-      id: table.id.toString(),
+      id: table.id,
       number: table.number.toString().padStart(2, '0'),
       capacity: table.capacity,
       status: table.is_occupied ? 'Occupied' : 'Available'
     }));
+    // After fetching the list, if opened from a table card, select that table by default
+    if (props.tableId) {
+      form.value.type = 'Dine-in';
+      form.value.tableId = props.tableId;
+    }
   } catch (err) {
     console.error('Error fetching tables:', err);
     error.value.tables = t('app.views.orders.modals.new_order.error_tables');
@@ -784,6 +789,11 @@ watch(() => props.open, (isOpen, wasOpen) => {
         special_instructions: '',
         unit_price: item.price
       }));
+    }
+    // After tables list is already loaded, select the matching table id from the card
+    if (props.tableId) {
+      form.value.type = 'Dine-in';
+      form.value.tableId = props.tableId;
     }
   }
 });
