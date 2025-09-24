@@ -357,6 +357,8 @@
         "edit": "Editar",
         "enable": "Habilitar",
         "disable": "Deshabilitar",
+        "enabled_success": "Artículo habilitado correctamente",
+        "disabled_success": "Artículo deshabilitado correctamente",
         "delete": "Eliminar",
         "empty": "No se encontraron artículos. Agrega tu primer artículo para comenzar."
       },

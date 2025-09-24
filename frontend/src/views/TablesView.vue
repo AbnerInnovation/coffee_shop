@@ -91,7 +91,7 @@
             <button
               v-if="!hasOpenOrder(table.id)"
               type="button"
-              class="inline-flex items-center px-3 py-1.5 border text-xs font-medium rounded shadow-sm text-white bg-indigo-600 hover:bg-indigo-700"
+              class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded shadow-sm text-white bg-indigo-600 hover:bg-indigo-700"
               @click.stop="openOrderModal(table)"
             >
               {{ t('app.views.orders.new_order') || 'Create Order' }}
@@ -99,7 +99,7 @@
             <button
               v-else
               type="button"
-              class="inline-flex items-center px-3 py-1.5 border text-xs font-medium rounded shadow-sm text-white bg-amber-600 hover:bg-amber-700"
+              class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded shadow-sm text-white bg-amber-600 hover:bg-amber-700"
               @click.stop="goToEditOrder(table)"
             >
               {{ t('app.views.orders.edit_order') || 'Edit Order' }}

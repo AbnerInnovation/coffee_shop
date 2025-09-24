@@ -148,7 +148,9 @@ async function handleToggleAvailability(item) {
     }
     
     showSuccess(
-      `Menu item ${updatedItem.is_available ? 'enabled' : 'disabled'} successfully`
+      (updatedItem.is_available
+        ? t('app.views.menu.list.enabled_success')
+        : t('app.views.menu.list.disabled_success')) as string
     );
   } catch (err: any) {
     showError(err.message || 'Failed to update menu item availability');

@@ -340,6 +340,8 @@
         "edit": "Edit",
         "enable": "Enable",
         "disable": "Disable",
+        "enabled_success": "Menu item enabled successfully",
+        "disabled_success": "Menu item disabled successfully",
         "delete": "Delete",
         "empty": "No menu items found. Add your first menu item to get started."
       },
