@@ -119,8 +119,9 @@ const orderService = {
   },
 
   async getOrder(orderId: number): Promise<Order> {
-    const { data } = await api.get<Order>(`/orders/${orderId}`);
-    return data;
+    const response = await api.get<Order>(`/orders/${orderId}`);
+    
+    return response;
   },
 
   async updateOrder(orderId: number, data: { status?: OrderStatus; [key: string]: any }): Promise<Order> {
@@ -162,6 +163,20 @@ const orderService = {
   async markOrderPaid(orderId: number): Promise<Order> {
     const { data } = await api.put<Order>(`/orders/${orderId}`, { is_paid: true });
     return data;
+  },
+
+  async addOrderItem(orderId: number, item: { menu_item_id: number; variant_id?: number | null; quantity: number; special_instructions?: string | null; unit_price?: number }): Promise<any> {
+    const { data } = await api.post(`/orders/${orderId}/items`, item);
+    return data;
+  },
+
+  async updateOrderItem(orderId: number, itemId: number, item: { quantity?: number; unit_price?: number; special_instructions?: string | null; variant_id?: number | null }): Promise<any> {
+    const { data } = await api.put(`/orders/${orderId}/items/${itemId}`, item);
+    return data;
+  },
+
+  async deleteOrderItem(orderId: number, itemId: number): Promise<void> {
+    await api.delete(`/orders/${orderId}/items/${itemId}`);
   },
 
   async getMenuItems(): Promise<MenuItem[]> {

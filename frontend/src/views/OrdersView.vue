@@ -148,10 +148,16 @@
 
       <!-- Order Details Modal -->
       <OrderDetails v-if="isOrderDetailsOpen && selectedOrder" :open="isOrderDetailsOpen" :order="selectedOrder"
-        @close="closeOrderDetails" @status-update="handleStatusUpdate" @paymentCompleted="handlePaymentCompleted" />
+        @close="closeOrderDetails" @status-update="handleStatusUpdate" @paymentCompleted="handlePaymentCompleted" @edit-order="openEditOrder" />
 
       <!-- New Order Modal -->
-      <NewOrderModal :open="isNewOrderModalOpen" @close="closeNewOrderModal" @order-created="handleNewOrder" />
+      <NewOrderModal :open="isNewOrderModalOpen"
+        :mode="newOrderMode"
+        :orderToEdit="newOrderMode === 'edit' ? selectedOrderForEdit : null"
+        :tableId="newOrderMode === 'create' ? undefined : (selectedOrderForEdit?.table_id ?? undefined)"
+        @close="closeNewOrderModal"
+        @order-created="handleNewOrder"
+        @order-updated="handleOrderUpdated" />
     </div>
   </div>
 </template>
@@ -188,6 +194,52 @@ const showSuccess = (message: string) => {
   // You can replace this with your preferred toast implementation
   alert(`Success: ${message}`);
 };
+
+// Open edit order flow from OrderDetails
+async function openEditOrder(order: OrderWithLocalFields) {
+  try {
+    // Close details first
+    isOrderDetailsOpen.value = false;
+    newOrderMode.value = 'edit';
+    // Fetch full order from API to provide complete data to the modal
+    const fullOrder = await orderService.getOrder(order.id);
+    selectedOrderForEdit.value = fullOrder;
+    console.log(selectedOrderForEdit.value);
+    isNewOrderModalOpen.value = true;
+  } catch (e) {
+    console.error('Failed to open edit order modal:', e);
+  }
+}
+
+// After an order is updated in the modal
+function handleOrderUpdated(updated: any) {
+  try {
+    const idx = orders.value.findIndex(o => o.id === updated.id);
+    if (idx !== -1) {
+      // Merge fields; keep local computed fields where possible
+      const existing = orders.value[idx];
+      orders.value.splice(idx, 1, {
+        ...existing,
+        status: updated.status as BackendOrderStatus,
+        table: updated.table_number ? `Table ${updated.table_number}` : 'Takeaway',
+        total: updated.total_amount || 0,
+        updated_at: updated.updated_at || existing.updated_at,
+        items: (updated.items || existing.items),
+        table_id: updated.table_id ?? existing.table_id,
+        notes: updated.notes ?? existing.notes,
+        is_paid: (updated as any).is_paid ?? existing.is_paid
+      });
+    }
+    showSuccess(`Order #${updated.id} updated`);
+    // Ensure full consistency by refetching
+    fetchOrders(true);
+    // Reset edit state
+    selectedOrderForEdit.value = null;
+    newOrderMode.value = 'create';
+  } catch (e) {
+    console.error('Failed updating local order after edit:', e);
+  }
+}
 
 const showError = (message: string) => {
   console.error('Error:', message);
@@ -267,6 +319,8 @@ const error = ref<string | null>(null);
 const statusDropdownOpen = ref<number | null>(null);
 const selectedStatus = ref<OrderStatus>('all');
 const isNewOrderModalOpen = ref(false);
+const newOrderMode = ref<'create' | 'edit'>('create');
+const selectedOrderForEdit = ref<Order | null>(null);
 const isOrderDetailsOpen = ref(false);
 const hasAutoOpenedFromTable = ref(false);
 const selectedOrder = ref<OrderWithLocalFields | null>(null);
@@ -405,6 +459,8 @@ function closeNewOrderModal() {
   console.log('Closing new order modal');
   isNewOrderModalOpen.value = false;
   console.log('isNewOrderModalOpen after close:', isNewOrderModalOpen.value);
+  // Reset mode back to create when closing
+  newOrderMode.value = 'create';
 }
 
 const handleNewOrder = async (newOrder: Order) => {

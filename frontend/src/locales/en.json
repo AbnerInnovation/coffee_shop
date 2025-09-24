@@ -140,6 +140,7 @@
       "modals": {
         "new_order": {
           "title": "New Order",
+          "title_edit_order": "Edit Order {id}",
           "order_type": "Order Type",
           "dine_in": "Dine-in",
           "takeaway": "Takeaway",
@@ -167,6 +168,7 @@
           "order_summary": "Order Summary",
           "total": "Total",
           "create_order": "Create Order",
+          "update_order": "Update Order",
           "add_to_order": "Add to Order",
           "close": "Close",
           "cancel": "Cancel",

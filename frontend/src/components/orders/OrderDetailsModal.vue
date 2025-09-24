@@ -111,7 +111,7 @@
                           <td colspan="3" class="px-4 py-3 text-sm font-medium text-gray-900 dark:text-gray-100 text-right">
                             {{$t('app.views.orders.modals.details.subtotal')}}
                           </td>
-                          <td class="px-4 py-3 text-sm font-medium text-gray-900 text-right">
+                          <td class="px-4 py-3 text-sm font-medium text-gray-900 dark:text-gray-100 text-right">
                             ${{ (order.subtotal || 0).toFixed(2) }}
                           </td>
                         </tr>
@@ -119,7 +119,7 @@
                           <td colspan="3" class="px-4 py-1 text-sm text-gray-500 dark:text-gray-400 text-right">
                             {{$t('app.views.orders.modals.details.tax', { rate: ((order.taxRate || 0) * 100).toFixed(1) })}}
                           </td>
-                          <td class="px-4 py-1 text-sm text-gray-500 text-right">
+                          <td class="px-4 py-1 text-sm text-gray-500 dark:text-gray-400 text-right">
                             ${{ (order.tax || 0).toFixed(2) }}
                           </td>
                         </tr>
@@ -127,7 +127,7 @@
                           <td colspan="3" class="px-4 py-3 text-base font-bold text-gray-900 dark:text-white text-right">
                             {{$t('app.views.orders.modals.details.total')}}
                           </td>
-                          <td class="px-4 py-3 text-base font-bold text-gray-900 text-right">
+                          <td class="px-4 py-3 text-base font-bold text-gray-900 dark:text-white text-right">
                             ${{ (order.total || 0).toFixed(2) }}
                           </td>
                         </tr>
@@ -141,7 +141,14 @@
                   <p class="mt-1 text-sm text-gray-900 dark:text-gray-100">{{ order.notes }}</p>
                 </div>
                 
-                <div class="mt-5 sm:mt-6 sm:grid sm:grid-flow-row-dense sm:grid-cols-2 sm:gap-3">
+                <div class="mt-5 sm:mt-6 sm:grid sm:grid-flow-row-dense sm:grid-cols-3 sm:gap-3">
+                  <button
+                    type="button"
+                    class="inline-flex w-full justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-base font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:col-start-1 sm:text-sm dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700 dark:hover:bg-gray-700"
+                    @click="emit('edit-order', order)"
+                  >
+                    {{$t('app.forms.edit')}}
+                  </button>
                   <button
                     v-if="!order.is_paid && order.status !== 'cancelled'"
                     type="button"

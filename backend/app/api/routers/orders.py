@@ -113,7 +113,8 @@ async def add_order_item(order_id: int, item: OrderItemCreate, db: Session = Dep
     """
     Add an item to an existing order.
     """
-    db_order = order_service.get_order(db, order_id=order_id)
+    # Fetch the ORM model, not the serialized dict
+    db_order = db.query(OrderModel).filter(OrderModel.id == order_id, OrderModel.deleted_at.is_(None)).first()
     if not db_order:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found")
     

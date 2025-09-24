@@ -140,6 +140,7 @@
       "modals": {
         "new_order": {
           "title": "Nueva orden",
+          "title_edit_order": "Editar orden {id}",
           "order_type": "Tipo de orden",
           "dine_in": "Para comer aquí",
           "takeaway": "Para llevar",
@@ -167,6 +168,7 @@
           "order_summary": "Resumen de la orden",
           "total": "Total",
           "create_order": "Crear orden",
+          "update_order": "Actualizar orden",
           "add_to_order": "Agregar a la orden",
           "close": "Cerrar",
           "cancel": "Cancelar",

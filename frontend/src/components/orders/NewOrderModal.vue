@@ -16,7 +16,7 @@
               class="relative transform overflow-hidden bg-white dark:bg-gray-900 px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 w-screen max-w-screen sm:max-w-4xl sm:w-full sm:p-6 mx-0 sm:mx-0 rounded-none sm:rounded-lg border border-gray-200 dark:border-gray-800">
               <div class="flex items-center justify-between">
                 <DialogTitle as="h3" class="text-lg font-medium leading-6 text-gray-900 dark:text-gray-100">
-                  {{$t('app.views.orders.modals.new_order.title')}}
+                  {{ isEditMode ? $t('app.views.orders.modals.new_order.title_edit_order', { id: orderToEdit?.id }) : $t('app.views.orders.modals.new_order.title') }}
                 </DialogTitle>
                 <button type="button"
                   class="rounded-md bg-white dark:bg-transparent text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
@@ -215,7 +215,7 @@
                   class="inline-flex w-full justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-3 sm:py-2 text-base font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                   :disabled="selectedItems.length === 0 || (form.type === 'Dine-in' && !form.tableId) || (form.type !== 'Dine-in' && !form.customerName)"
                   @click="createOrder">
-                  {{$t('app.views.orders.modals.new_order.create_order')}}
+                  {{isEditMode ? $t('app.views.orders.modals.new_order.update_order') : $t('app.views.orders.modals.new_order.create_order')}}
                 </button>
               </div>
             </DialogPanel>
@@ -305,7 +305,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, defineExpose, nextTick, watch } from 'vue';
-import orderService, { type CreateOrderData, type OrderItem, type OrderStatus } from '@/services/orderService';
+import orderService, { type CreateOrderData, type OrderItem, type OrderStatus, type Order as OrderType } from '@/services/orderService';
 import menuService from '@/services/menuService';
 import tableService from '@/services/tableService';
 import { useToast } from '@/composables/useToast';
@@ -361,17 +361,20 @@ interface OrderItemWithDetails {
 const props = defineProps<{
   open: boolean;
   tableId?: number | null;
+  mode?: 'create' | 'edit';
+  orderToEdit?: OrderType | null;
 }>();
 
 const emit = defineEmits<{
   (e: 'close'): void;
   (e: 'order-created', order: any): void;
+  (e: 'order-updated', order: any): void;
 }>();
 
 // Form data
 const form = ref({
   type: 'Dine-in',
-  tableId: null as number | null,
+  tableId: null as number | string | null,
   customerName: '',
   notes: '',
   items: [] as Array<{
@@ -388,6 +391,10 @@ const selectedItem = ref<ExtendedMenuItem | null>(null);
 const selectedVariant = ref<MenuItemVariant | null>(null);
 const itemNotes = ref('');
 const showItemModal = ref(false);
+const isEditMode = computed(() => { 
+  console.log(props.mode);
+  console.log(props.orderToEdit);
+  return (props.mode || 'create') === 'edit' && !!props.orderToEdit});
 
 const { showError, showSuccess } = useToast();
 const { showToast } = useToast();
@@ -408,7 +415,7 @@ const error = ref({
 function getInitialForm() {
   return {
     type: 'Dine-in',
-    tableId: null as number | null,
+    tableId: null as number | string | null,
     customerName: '',
     notes: '',
     items: [] as Array<{
@@ -495,7 +502,7 @@ const fetchMenuItems = async () => {
 const fetchAvailableTables = async () => {
   try {
     loading.value.tables = true;
-    const tables = await tableService.getTables({ occupied: false });
+    const tables = await tableService.getTables();
     availableTables.value = tables.map(table => ({
       id: table.id,
       number: table.number.toString().padStart(2, '0'),
@@ -515,6 +522,24 @@ const fetchAvailableTables = async () => {
     loading.value.tables = false;
   }
 };
+
+// Hydrate form from existing order in edit mode
+function loadOrderIntoForm(order: OrderType) {
+  // Set order type
+  form.value.type = order.table_id ? 'Dine-in' : 'Takeaway';
+  form.value.tableId = order.table_id ?? null;
+  form.value.customerName = order.customer_name || '';
+  form.value.notes = order.notes || '';
+  // Build items list
+  form.value.items = (order.items || []).map((it) => ({
+    menu_item_id: it.menu_item_id,
+    variant_id: it.variant_id ?? null,
+    quantity: it.quantity,
+    notes: it.special_instructions || undefined,
+    special_instructions: it.special_instructions || undefined,
+    unit_price: it.unit_price || it.menu_item?.price || 0,
+  }));
+}
 
 // Computed properties
 const selectedItems = computed<OrderItemWithDetails[]>(() => {
@@ -646,65 +671,74 @@ async function createOrder() {
     // Filter out items with zero quantity before creating the order
     const validItems = form.value.items.filter(item => item.quantity > 0);
 
-    // If no valid items, show error and return
     if (validItems.length === 0) {
       showError(t('app.views.orders.modals.new_order.errors.add_one_item'));
       return;
     }
 
-    const orderData: CreateOrderData = {
-      table_id: form.value.type === 'Dine-in' ? form.value.tableId : null,
-      customer_name: form.value.type !== 'Dine-in' ? form.value.customerName : null,
-      items: validItems.map(item => ({
-        menu_item_id: item.menu_item_id,
-        variant_id: item.variant_id ?? null, // Ensure this is either number or null, not undefined
-        quantity: item.quantity,
-        special_instructions: item.notes || null,
-        unit_price: item.unit_price || 0
-      })),
-      notes: form.value.notes || null
-    };
+    if (isEditMode.value && props.orderToEdit) {
+      const orderId = props.orderToEdit.id;
 
-    console.log('Creating order with data:', orderData);
-    const response = await orderService.createOrder(orderData);
-    console.log('Order creation response:', response);
+      // 1) Update order-level fields (notes, table_id) if changed
+      const updates: any = {};
+      const newTableId = form.value.type === 'Dine-in' ? (form.value.tableId as number | null) : null;
+      if (newTableId !== props.orderToEdit.table_id) updates.table_id = newTableId;
+      if (form.value.notes !== (props.orderToEdit.notes || '')) updates.notes = form.value.notes || null;
+      if (Object.keys(updates).length > 0) {
+        await orderService.updateOrder(orderId, updates);
+      }
 
-    if (!response) {
-      console.warn('No response data received, but request might have been successful');
-      // Still proceed with success flow since we got a 201
+      // Build a lookup for existing items by composite key menu_item_id|variant_id
+      const existingMap = new Map<string, OrderItem>();
+      for (const it of props.orderToEdit.items) {
+        const key = `${it.menu_item_id}|${it.variant_id ?? ''}`;
+        existingMap.set(key, it);
+      }
+
+      // Track which existing items remain to detect deletions
+      const seenExistingKeys = new Set<string>();
+
+      // Upserts: update existing items or add new ones
+      for (const item of validItems) {
+        const key = `${item.menu_item_id}|${item.variant_id ?? ''}`;
+        const existing = existingMap.get(key);
+        if (existing) {
+          const patch: any = {};
+          if (existing.quantity !== item.quantity) patch.quantity = item.quantity;
+          const desiredUnitPrice = item.unit_price ?? existing.unit_price ?? 0;
+          if ((existing.unit_price ?? 0) !== desiredUnitPrice) patch.unit_price = desiredUnitPrice;
+          const si = item.notes ?? null;
+          if ((existing.special_instructions ?? null) !== si) patch.special_instructions = si;
+          const desiredVariantId = item.variant_id ?? null;
+          if ((existing.variant_id ?? null) !== desiredVariantId) patch.variant_id = desiredVariantId;
+          if (Object.keys(patch).length > 0) {
+            await orderService.updateOrderItem(orderId, existing.id, patch);
+          }
+          seenExistingKeys.add(key);
+        } else {
+          await orderService.addOrderItem(orderId, {
+            menu_item_id: item.menu_item_id,
+            variant_id: item.variant_id ?? null,
+            quantity: item.quantity,
+            special_instructions: item.notes ?? null,
+            unit_price: item.unit_price ?? 0,
+          });
+        }
+      }
+
+      // Deletions: remove items no longer present in the form
+      for (const [key, ex] of existingMap.entries()) {
+        if (!validItems.some(it => `${it.menu_item_id}|${(it.variant_id ?? '')}` === key)) {
+          await orderService.deleteOrderItem(orderId, ex.id);
+        }
+      }
+
+      // Emit updated order and close
+      const updated = await orderService.getOrder(orderId);
+      emit('order-updated', updated);
+      emit('close');
+      showSuccess(t('app.forms.update'));
     }
-
-    // Create a properly typed order object with fallbacks
-    const emittedOrder = {
-      id: response?.id || Date.now(),
-      status: (response?.status as OrderStatus) || 'pending',
-      customer_name: response?.customer_name || (response?.table_id ? 'Dine-in' : orderData.customer_name || 'Takeaway'),
-      table_id: response?.table_id || orderData.table_id || null,
-      total_amount: response?.total_amount || orderData.items.reduce((sum, item) => sum + ((item.unit_price || 0) * (item.quantity || 0)), 0),
-      notes: response?.notes || orderData.notes || null,
-      created_at: response?.created_at || new Date().toISOString(),
-      updated_at: response?.updated_at || new Date().toISOString(),
-      items: (response?.items || orderData.items).map((item: any) => ({
-        id: item.id,
-        menu_item_id: item.menu_item_id,
-        variant_id: item.variant_id ?? null,
-        quantity: item.quantity,
-        unit_price: item.unit_price || 0,
-        special_instructions: item.special_instructions || null,
-        // Add display properties that might be used in the UI
-        name: 'name' in item ? item.name : 'Unknown Item',
-        price: 'price' in item ? item.price : item.unit_price || 0,
-        variant_name: 'variant_name' in item ? item.variant_name : null
-      }))
-    };
-
-    console.log('Emitting order:', emittedOrder);
-
-    // Emit the order-created event and close the modal
-    emit('order-created', emittedOrder);
-    // Reset internal state so the modal is fresh next time
-    resetForm();
-    emit('close');
   } catch (error) {
     console.error('Error creating order:', error);
     showError(t('app.views.orders.modals.new_order.errors.create_failed'));
@@ -771,6 +805,18 @@ onMounted(async () => {
       unit_price: item.price
     }));
   }
+
+  // If opened directly in edit mode with an order, hydrate immediately so items/totals render
+  if (isEditMode.value && props.orderToEdit) {
+    loadOrderIntoForm(props.orderToEdit);
+  }
+});
+
+// If the full order data arrives after the modal is already open, hydrate then
+watch(() => props.orderToEdit, (newOrder) => {
+  if (isEditMode.value && newOrder && props.open) {
+    loadOrderIntoForm(newOrder);
+  }
 });
 
 // Keep modal state clean when toggling open prop
@@ -794,6 +840,9 @@ watch(() => props.open, (isOpen, wasOpen) => {
     if (props.tableId) {
       form.value.type = 'Dine-in';
       form.value.tableId = props.tableId;
+    }
+    if (isEditMode.value && props.orderToEdit) {
+      loadOrderIntoForm(props.orderToEdit);
     }
   }
 });
