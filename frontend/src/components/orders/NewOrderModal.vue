@@ -738,6 +738,35 @@ async function createOrder() {
       emit('order-updated', updated);
       emit('close');
       showSuccess(t('app.forms.update'));
+    } else {
+      // Create mode
+      // Validate required fields depending on order type
+      if (form.value.type === 'Dine-in' && !form.value.tableId) {
+        showError(t('app.views.orders.modals.new_order.error_tables'));
+        return;
+      }
+      if (form.value.type !== 'Dine-in' && !form.value.customerName) {
+        showError(t('app.views.orders.modals.new_order.errors.add_one_item'));
+        return;
+      }
+
+      const orderPayload: CreateOrderData = {
+        table_id: form.value.type === 'Dine-in' ? (form.value.tableId as number | null) : null,
+        customer_name: form.value.type !== 'Dine-in' ? (form.value.customerName || null) : null,
+        notes: form.value.notes || null,
+        items: validItems.map(it => ({
+          menu_item_id: Number(it.menu_item_id),
+          variant_id: it.variant_id ? Number(it.variant_id) : null,
+          quantity: it.quantity,
+          special_instructions: it.notes ?? null,
+          unit_price: it.unit_price ?? 0,
+        })),
+      };
+
+      const created = await orderService.createOrder(orderPayload);
+      emit('order-created', created);
+      emit('close');
+      showSuccess(t('app.views.orders.messages.order_created_success') as string);
     }
   } catch (error) {
     console.error('Error creating order:', error);

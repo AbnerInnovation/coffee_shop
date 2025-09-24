@@ -152,6 +152,8 @@
 
 <script setup lang="ts">
 import { ref, defineProps, defineEmits, onMounted, computed } from 'vue';
+import { useI18n } from 'vue-i18n';
+import { useToast } from '@/composables/useToast';
 import orderService, { 
   type OrderItem, 
   type Order, 
@@ -184,6 +186,10 @@ const orderItems = ref<OrderItemFormData[]>([]);
 
 const orderNotes = ref('');
 const isSubmitting = ref(false);
+
+// i18n and toast
+const { t } = useI18n();
+const { showError } = useToast();
 
 // Fetch menu items when component mounts
 onMounted(async () => {
@@ -264,7 +270,7 @@ const submitOrder = async () => {
   // Validate all items have a menu item selected
   const invalidItems = orderItems.value.some(item => !item.menu_item_id);
   if (invalidItems) {
-    alert('Please select a menu item for all order items');
+    showError(t('app.views.orders.order_modal.errors.select_menu_item_for_all') as string);
     return;
   }
 
@@ -292,7 +298,7 @@ const submitOrder = async () => {
     emit('close');
   } catch (error) {
     console.error('Error creating order:', error);
-    alert('Failed to create order. Please try again.');
+    showError(t('app.views.orders.order_modal.errors.create_failed') as string);
   } finally {
     isSubmitting.value = false;
   }

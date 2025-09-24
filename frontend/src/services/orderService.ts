@@ -105,8 +105,9 @@ export interface MenuItem {
 const orderService = {
   async createOrder(orderData: CreateOrderData): Promise<Order> {
     try {
-      const { data } = await api.post<Order>('/orders', orderData);
-      return data;
+      const res = await api.post<Order>('/orders', orderData);
+      
+      return res;
     } catch (error: any) {
       if (error.response) {
         throw new Error(error.response.data?.detail || 'Failed to create order');

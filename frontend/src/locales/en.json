@@ -92,7 +92,7 @@
       "takeaway": "Takeaway",
       "dine_in": "Dine-in"
     }
-  ,
+  },
   "validation": {
     "name_required": "Name is required",
     "category_required": "Category is required",
@@ -117,6 +117,15 @@
         "cancel_order": "Cancel Order",
         "mark_ready": "Mark as Ready",
         "mark_completed": "Mark as Completed"
+      },
+      "messages": {
+        "order_created_success": "Order created successfully",
+        "order_cancelled_success": "Order has been cancelled",
+        "status_updated_success": "Order #{id} status updated to {status}",
+        "payment_completed_success": "Payment completed for order #{id}",
+        "fetch_failed": "Failed to fetch orders. Please try again.",
+        "status_update_failed": "Failed to update order status. Please try again.",
+        "cancel_failed": "Failed to cancel order. Please try again."
       },
       "payment": {
         "paid": "Paid",
@@ -179,6 +188,12 @@
             "create_failed": "Failed to create order"
           }
         },
+        "confirm": {
+          "cancel_title": "Cancel order",
+          "cancel_message": "Are you sure you want to cancel this order?",
+          "confirm": "Yes, cancel order",
+          "cancel": "No, keep it"
+        },
         "details": {
           "order_title": "Order #{id}",
           "order_number": "Order #",
@@ -205,24 +220,6 @@
           "mark_completed": "Mark as Completed",
           "print_receipt": "Print Receipt",
           "close": "Close"
-        },
-        "order_modal": {
-          "title_for_table": "New Order for Table #{number}",
-          "menu_items": "Menu Items",
-          "add_item": "+ Add Item",
-          "select_item": "Select an item",
-          "special_instructions": "Special Instructions",
-          "special_instructions_placeholder": "E.g. No onions, extra sauce, etc.",
-          "order_notes": "Order Notes",
-          "order_notes_placeholder": "Any special instructions for the kitchen...",
-          "order_summary": "Order Summary",
-          "total": "Total",
-          "empty_state_add_items": "Add items to the order",
-          "processing": "Processing...",
-          "place_order": "Place Order",
-          "remove": "Remove",
-          "close": "Close",
-          "cancel": "Cancel"
         }
       }
     },
@@ -350,6 +347,5 @@
         "back": "Back to menu items"
       }
     }
-  }
   }
 }

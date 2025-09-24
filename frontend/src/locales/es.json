@@ -118,6 +118,15 @@
         "mark_ready": "Marcar como listo",
         "mark_completed": "Marcar como completado"
       },
+      "messages": {
+        "order_created_success": "Orden creada correctamente",
+        "order_cancelled_success": "La orden ha sido cancelada",
+        "status_updated_success": "Estado de la orden #{id} actualizado a {status}",
+        "payment_completed_success": "Pago completado para la orden #{id}",
+        "fetch_failed": "Error al obtener las órdenes. Inténtalo de nuevo.",
+        "status_update_failed": "Error al actualizar el estado de la orden. Inténtalo de nuevo.",
+        "cancel_failed": "Error al cancelar la orden. Inténtalo de nuevo."
+      },
       "payment": {
         "paid": "Pagado",
         "pending": "Pendiente de pago"
@@ -222,6 +231,12 @@
           "remove": "Eliminar",
           "close": "Cerrar",
           "cancel": "Cancelar"
+        },
+        "confirm": {
+          "cancel_title": "Cancelar orden",
+          "cancel_message": "¿Seguro que deseas cancelar esta orden?",
+          "confirm": "Sí, cancelar orden",
+          "cancel": "No, mantener"
         }
       }
     },

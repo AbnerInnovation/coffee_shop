@@ -161,8 +161,7 @@
       </div>
     </main>
 
-    <!-- Toast notifications -->
-    <ToastContainer />
+    <!-- Toast notifications are handled globally by vue-toastification -->
     
     <!-- Confirmation dialog -->
     <ConfirmDialog />
@@ -174,7 +173,7 @@ import { ref, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { Bars3Icon, XMarkIcon, MoonIcon, SunIcon } from '@heroicons/vue/24/outline';
 import { useAuthStore } from '@/stores/auth';
-import { useToast, ToastContainer } from '@/composables/useToast';
+import { useToast } from '@/composables/useToast';
 import ConfirmDialog from '@/components/ui/ConfirmationDialog.vue'
 import { useI18n } from 'vue-i18n';
 import { useTheme } from '@/composables/useTheme';

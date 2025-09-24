@@ -182,18 +182,17 @@ import {
 import OrderDetails from '@/components/orders/OrderDetailsModal.vue';
 import NewOrderModal from '@/components/orders/NewOrderModal.vue';
 // Removed unused imports
+import { useToast } from '@/composables/useToast';
+import { useConfirm } from '@/composables/useConfirm';
 
 // i18n
 const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
 
-// Simple toast functions since we're not using PrimeVue
-const showSuccess = (message: string) => {
-  console.log('Success:', message);
-  // You can replace this with your preferred toast implementation
-  alert(`Success: ${message}`);
-};
+// Toasts
+const { showSuccess, showError } = useToast();
+const { confirm } = useConfirm();
 
 // Open edit order flow from OrderDetails
 async function openEditOrder(order: OrderWithLocalFields) {
@@ -241,16 +240,17 @@ function handleOrderUpdated(updated: any) {
   }
 }
 
-const showError = (message: string) => {
-  console.error('Error:', message);
-  // You can replace this with your preferred error toast implementation
-  alert(`Error: ${message}`);
-};
+// showError now provided by toast composable
 
-// Simple confirm function
-const confirm = async (options: { title?: string; message: string; confirmText?: string; cancelText?: string }) => {
-  // You can replace this with your preferred confirm dialog implementation
-  return window.confirm(options.message);
+// Confirm helper using the global ConfirmationDialog
+const confirmCancelOrder = async () => {
+  return await confirm(
+    t('app.views.orders.modals.confirm.cancel_title') as string,
+    t('app.views.orders.modals.confirm.cancel_message') as string,
+    t('app.views.orders.modals.confirm.confirm') as string,
+    t('app.views.orders.modals.confirm.cancel') as string,
+    'bg-red-600 hover:bg-red-700 focus:ring-red-500'
+  );
 };
 
 // Local type for the view
@@ -517,17 +517,15 @@ const handleNewOrder = async (newOrder: Order) => {
 
     // Add the new order to the beginning of the list
     orders.value = [localOrder, ...orders.value];
-    showSuccess('Order created successfully');
     closeNewOrderModal();
     await fetchOrders();
   } catch (err) {
     console.error('Error processing new order:', err);
     // Only show error if we don't have an order ID
     if (!newOrder?.id) {
-      showError('Failed to create new order. Please try again.');
+      showError(t('app.views.orders.messages.fetch_failed') as string);
     } else {
       // If we have an order ID, it was created successfully
-      showSuccess('Order created successfully');
       closeNewOrderModal();
     }
   }
@@ -543,7 +541,7 @@ const handleStatusUpdate = ({ orderId, status }: { orderId: number; status: Orde
 const handlePaymentCompleted = async (updatedOrder: any) => {
   console.log('Payment completed for order:', updatedOrder);
   try {
-    showSuccess(`Payment completed for order #${updatedOrder.id}`);
+    showSuccess(t('app.views.orders.messages.payment_completed_success', { id: updatedOrder.id }) as string);
     // Refresh the list from backend to ensure full consistency
     await fetchOrders(true);
   } catch (e) {
@@ -669,7 +667,7 @@ const fetchOrders = async (fetchAll = false) => {
     }
   } catch (err) {
     console.error('Error fetching orders:', err);
-    error.value = 'Failed to fetch orders. Please try again.';
+    error.value = t('app.views.orders.messages.fetch_failed') as string;
   } finally {
     loading.value = false;
   }
@@ -688,20 +686,16 @@ const updateOrderStatus = async (orderId: number, newStatus: BackendOrderStatus)
       orders.value.splice(orderIndex, 1, updatedOrder);
     }
 
-    showSuccess(`Order #${orderId} status updated to ${formatStatus(newStatus)}`);
+    showSuccess(t('app.views.orders.messages.status_updated_success', { id: orderId, status: formatStatus(newStatus) }) as string);
   } catch (err) {
     console.error('Error updating order status:', err);
-    showError('Failed to update order status. Please try again.');
+    showError(t('app.views.orders.messages.status_update_failed') as string);
   }
 };
 
 // Cancel order
 const cancelOrder = async (orderId: number) => {
-  const confirmed = await confirm({
-    message: 'Are you sure you want to cancel this order?',
-    confirmText: 'Yes, cancel order',
-    cancelText: 'No, keep it'
-  });
+  const confirmed = await confirmCancelOrder();
 
   if (!confirmed) return;
 
@@ -718,10 +712,10 @@ const cancelOrder = async (orderId: number) => {
       orders.value.splice(orderIndex, 1, updatedOrder);
     }
 
-    showSuccess('Order has been cancelled');
+    showSuccess(t('app.views.orders.messages.order_cancelled_success') as string);
   } catch (err) {
     console.error('Error cancelling order:', err);
-    showError('Failed to cancel order. Please try again.');
+    showError(t('app.views.orders.messages.cancel_failed') as string);
   }
 };
 
