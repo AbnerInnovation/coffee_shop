@@ -41,8 +41,11 @@
       "init_form_failed": "Error al inicializar los datos del formulario",
       "delete_item_confirm_title": "Eliminar artículo del menú",
       "delete_item_confirm_text": "¿Seguro que deseas eliminar este artículo del menú? Esta acción no se puede deshacer.",
+      "delete_item_confirm_text_named": "¿Seguro que deseas eliminar \"{name}\"? Esta acción no se puede deshacer.",
       "delete_item_success": "Artículo eliminado correctamente",
       "delete_item_failed": "Error al eliminar el artículo del menú",
+      "create_item_success": "Artículo del menú creado correctamente",
+      "update_item_success": "Artículo del menú actualizado correctamente",
       "form_fill_required": "Por favor completa los campos requeridos",
       "variant_required": "El nombre y precio de la variante son obligatorios",
       "submit_failed": "Error al enviar el formulario: {message}"

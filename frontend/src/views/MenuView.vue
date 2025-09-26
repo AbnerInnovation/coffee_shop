@@ -116,10 +116,10 @@ function handleEditItem(item) {
 
 async function handleDeleteItem(item) {
   const confirmed = await confirm(
-    'Delete Menu Item',
-    `Are you sure you want to delete "${item.name}"? This action cannot be undone.`,
-    'Delete',
-    'Cancel',
+    t('app.messages.delete_item_confirm_title') as string,
+    t('app.messages.delete_item_confirm_text_named', { name: item.name }) as string,
+    t('app.actions.delete') as string,
+    t('app.actions.cancel') as string,
     'bg-red-600 hover:bg-red-700 focus:ring-red-500'
   )
 
@@ -128,9 +128,9 @@ async function handleDeleteItem(item) {
   try {
     await menuStore.deleteMenuItem(item.id)
     menuItems.value = menuItems.value.filter(i => i.id !== item.id)
-    showSuccess('Menu item deleted successfully')
+    showSuccess(t('app.messages.delete_item_success') as string)
   } catch (err: any) {
-    showError(err.message || 'Failed to delete menu item')
+    showError(err.message || (t('app.messages.delete_item_failed') as string))
   }
 }
 
@@ -165,11 +165,11 @@ async function handleSubmit(formData: Omit<MenuItem, 'id'>) {
     if (currentItem.value) {
       // Update existing item
       await menuStore.updateMenuItem(currentItem.value.id, formData);
-      showSuccess('Menu item updated successfully');
+      showSuccess(t('app.messages.update_item_success') as string);
     } else {
       // Create new item
       await menuStore.createMenuItem(formData);
-      showSuccess('Menu item created successfully');
+      showSuccess(t('app.messages.create_item_success') as string);
     }
     
     // Refresh the menu items list

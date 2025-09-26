@@ -41,8 +41,11 @@
       "init_form_failed": "Failed to initialize form data",
       "delete_item_confirm_title": "Delete menu item",
       "delete_item_confirm_text": "Are you sure you want to delete this menu item? This action cannot be undone.",
+      "delete_item_confirm_text_named": "Are you sure you want to delete \"{name}\"? This action cannot be undone.",
       "delete_item_success": "Menu item deleted successfully",
       "delete_item_failed": "Failed to delete menu item",
+      "create_item_success": "Menu item created successfully",
+      "update_item_success": "Menu item updated successfully",
       "form_fill_required": "Please fill in all required fields",
       "variant_required": "Variant name and price are required",
       "submit_failed": "Failed to submit form: {message}"
