@@ -7,9 +7,9 @@ from sqlalchemy.orm import Session
 
 from ...db.base import get_db
 from ...models.user import User as UserModel, UserRole
-from ...schemas.token import Token
+from ...schemas.token import Token, TokenRefreshRequest
 from ...schemas.user import UserCreate, User as UserSchema
-from ...core.security import create_access_token, get_password_hash, verify_password
+from ...core.security import create_access_token, create_refresh_token, decode_token
 from ...core.config import settings
 from ...services import user as user_service
 
@@ -84,24 +84,37 @@ async def login_for_access_token(
         expires_delta=access_token_expires,
         scopes=scopes
     )
+    refresh_token = create_refresh_token(subject=user.id)
     
     return {
-        "access_token": access_token, 
+        "access_token": access_token,
         "token_type": "bearer",
-        "scopes": scopes
+        "scopes": scopes,
+        "refresh_token": refresh_token,
     }
 
 @router.post("/refresh-token", response_model=Token)
-async def refresh_token(
-    current_user: UserModel = Depends(user_service.get_current_active_user)
-) -> dict[str, str]:
+async def refresh_token(body: TokenRefreshRequest, db: Session = Depends(get_db)) -> dict[str, str]:
     """
-    Refresh an access token.
+    Exchange a refresh token for a new access token.
     """
-    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = create_access_token(
-        subject=current_user.id,
-        expires_delta=access_token_expires
-    )
-    
-    return {"access_token": access_token, "token_type": "bearer"}
+    try:
+        payload = decode_token(body.refresh_token)
+        token_type = payload.get("type")
+        sub = payload.get("sub")
+        if token_type != "refresh" or not sub:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")
+        # Find the user
+        user = user_service.get_user(db, int(sub)) if str(sub).isdigit() else user_service.get_user_by_email(db, str(sub))
+        if not user or not user.is_active:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid user")
+        # Issue new tokens
+        access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+        access_token = create_access_token(subject=user.id, expires_delta=access_token_expires)
+        # Optionally rotate refresh token
+        new_refresh_token = create_refresh_token(subject=user.id)
+        return {"access_token": access_token, "token_type": "bearer", "refresh_token": new_refresh_token}
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not refresh token")

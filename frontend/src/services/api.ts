@@ -15,13 +15,12 @@ const api: AxiosInstance = axios.create({
     'Content-Type': 'application/json',
     'Accept': 'application/json',
   },
-  withCredentials: true
 });
 
 // Request interceptor to add auth token to requests
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    const token = localStorage.getItem('access_token');
+    const token = authService.getToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -47,7 +46,7 @@ api.interceptors.response.use(
         const newTokens = await authService.refreshToken();
         
         if (newTokens) {
-          // Store the new token
+          // Store the new token (preserve existing persistence automatically)
           authService.storeAuthData(newTokens);
           
           // Update the Authorization header
@@ -67,13 +66,12 @@ api.interceptors.response.use(
       }
     }
     
-    // If we've already tried to refresh or it's not a 401 error
+    // If we've already tried to refresh or it's not a 401/403 error
     if (error.response?.status === 401 || error.response?.status === 403) {
       // Clear auth and redirect to login
       authService.logout();
       window.location.href = '/login';
     }
-    
     return Promise.reject(error);
   }
 );

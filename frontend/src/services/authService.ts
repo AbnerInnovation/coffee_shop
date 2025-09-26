@@ -24,6 +24,18 @@ export interface AuthResponse {
 }
 
 export const authService = {
+  // Decide which storage to use. If explicit persistence provided, use it; otherwise detect existing.
+  getPersistence(): 'local' | 'session' {
+    // Prefer session if tokens exist there
+    if (sessionStorage.getItem('access_token') || sessionStorage.getItem('refresh_token')) return 'session';
+    return 'local';
+  },
+
+  getStorage(persistence?: 'local' | 'session'): Storage {
+    const mode = persistence || authService.getPersistence();
+    return mode === 'session' ? sessionStorage : localStorage;
+  },
+
   // Login user
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
     const formData = new URLSearchParams();
@@ -59,34 +71,40 @@ export const authService = {
 
   // Logout (client-side only)
   logout(): void {
+    // Clear both storages to be safe
     localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
     localStorage.removeItem('user');
+    sessionStorage.removeItem('access_token');
+    sessionStorage.removeItem('refresh_token');
+    sessionStorage.removeItem('user');
   },
 
   // Check if user is authenticated
   isAuthenticated(): boolean {
-    return !!localStorage.getItem('access_token');
+    return !!(sessionStorage.getItem('access_token') || localStorage.getItem('access_token'));
   },
 
   // Get stored auth token
   getToken(): string | null {
-    return localStorage.getItem('access_token');
+    return sessionStorage.getItem('access_token') || localStorage.getItem('access_token');
   },
 
   // Store auth data
-  storeAuthData(data: AuthResponse): void {
-    localStorage.setItem('access_token', data.access_token);
+  storeAuthData(data: AuthResponse, persistence?: 'local' | 'session'): void {
+    const storage = authService.getStorage(persistence);
+    storage.setItem('access_token', data.access_token);
     if (data.refresh_token) {
-      localStorage.setItem('refresh_token', data.refresh_token);
+      storage.setItem('refresh_token', data.refresh_token);
     }
     if (data.user) {
-      localStorage.setItem('user', JSON.stringify(data.user));
+      storage.setItem('user', JSON.stringify(data.user));
     }
   },
 
   // Refresh access token
   async refreshToken(): Promise<AuthResponse | null> {
-    const refreshToken = localStorage.getItem('refresh_token');
+    const refreshToken = sessionStorage.getItem('refresh_token') || localStorage.getItem('refresh_token');
     if (!refreshToken) return null;
 
     try {
@@ -109,7 +127,7 @@ export const authService = {
 
   // Get stored user data
   getStoredUser() {
-    const user = localStorage.getItem('user');
+    const user = sessionStorage.getItem('user') || localStorage.getItem('user');
     return user ? JSON.parse(user) : null;
   },
 };

@@ -42,7 +42,7 @@ export const useAuthStore = defineStore('auth', () => {
   const isAdmin = computed<boolean>(() => user.value?.role === 'admin');
   
   // Actions
-  async function login(credentials: LoginCredentials) {
+  async function login(credentials: LoginCredentials, remember: boolean = true) {
     try {
       loading.value = true;
       error.value = null;
@@ -60,14 +60,19 @@ export const useAuthStore = defineStore('auth', () => {
         },
       });
 
-      const { access_token } = response.data;
+      const { access_token, refresh_token } = response.data;
       
       if (!access_token) {
         throw new Error('No access token received');
       }
       
-      // Store token
-      localStorage.setItem('access_token', access_token);
+      // Choose storage based on remember flag
+      const storage = remember ? localStorage : sessionStorage;
+      // Store tokens
+      storage.setItem('access_token', access_token);
+      if (refresh_token) {
+        storage.setItem('refresh_token', refresh_token);
+      }
       
       try {
         // Fetch user data
@@ -78,7 +83,7 @@ export const useAuthStore = defineStore('auth', () => {
         if (userResponse.data) {
           // Update store state
           user.value = userResponse.data;
-          localStorage.setItem('user', JSON.stringify(user.value));
+          storage.setItem('user', JSON.stringify(user.value));
           
           // Navigate to menu if router is available
           if (router) {
@@ -128,8 +133,13 @@ export const useAuthStore = defineStore('auth', () => {
   async function logout() {
     try {
       loading.value = true;
+      // Clear from both storages
       localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
       localStorage.removeItem('user');
+      sessionStorage.removeItem('access_token');
+      sessionStorage.removeItem('refresh_token');
+      sessionStorage.removeItem('user');
       user.value = null;
       
       // Navigate to login page
@@ -145,12 +155,13 @@ export const useAuthStore = defineStore('auth', () => {
   async function checkAuth() {
     try {
       loading.value = true;
-      const token = localStorage.getItem('access_token');
+      const token = sessionStorage.getItem('access_token') || localStorage.getItem('access_token');
       
       if (!token) {
         // No token means not authenticated
         user.value = null;
         localStorage.removeItem('user');
+        sessionStorage.removeItem('user');
         return false;
       }
       
@@ -162,14 +173,21 @@ export const useAuthStore = defineStore('auth', () => {
       if (response.data) {
         // Update store state with fresh user data
         user.value = response.data;
-        localStorage.setItem('user', JSON.stringify(user.value));
+        // Persist user to the same storage as token
+        if (sessionStorage.getItem('access_token')) {
+          sessionStorage.setItem('user', JSON.stringify(user.value));
+        } else {
+          localStorage.setItem('user', JSON.stringify(user.value));
+        }
         return true;
       }
       
       // If no user data, clear auth state
       user.value = null;
       localStorage.removeItem('user');
+      sessionStorage.removeItem('user');
       localStorage.removeItem('access_token');
+      sessionStorage.removeItem('access_token');
       return false;
     } catch (err) {
       console.error('Auth check failed:', err);
@@ -182,8 +200,10 @@ export const useAuthStore = defineStore('auth', () => {
   
   // Initialize the store
   function init() {
-    const token = localStorage.getItem('access_token');
-    const storedUser = localStorage.getItem('user');
+    // Prefer sessionStorage
+    const token = sessionStorage.getItem('access_token') || localStorage.getItem('access_token');
+    const refreshToken = sessionStorage.getItem('refresh_token') || localStorage.getItem('refresh_token');
+    const storedUser = sessionStorage.getItem('user') || localStorage.getItem('user');
     
     if (token && storedUser) {
       try {
@@ -194,6 +214,51 @@ export const useAuthStore = defineStore('auth', () => {
         console.error('Failed to parse stored user data:', err);
         logout();
       }
+    } else if (!token && refreshToken) {
+      // Attempt silent refresh to keep session
+      axios.post(`${API_BASE_URL}/auth/refresh-token`, { refresh_token: refreshToken })
+        .then((resp) => {
+          const { access_token: newAccess, refresh_token: newRefresh } = resp.data || {};
+          if (newAccess) {
+            // Persist new token where refresh token was found
+            if (sessionStorage.getItem('refresh_token')) {
+              sessionStorage.setItem('access_token', newAccess);
+            } else {
+              localStorage.setItem('access_token', newAccess);
+            }
+          }
+          if (newRefresh) {
+            if (sessionStorage.getItem('refresh_token')) {
+              sessionStorage.setItem('refresh_token', newRefresh);
+            } else {
+              localStorage.setItem('refresh_token', newRefresh);
+            }
+          }
+          // After obtaining new token, try loading user
+          return axios.get(`${API_BASE_URL}/users/me`, {
+            headers: { Authorization: `Bearer ${newAccess}` },
+          });
+        })
+        .then((userResp) => {
+          if (userResp && userResp.data) {
+            user.value = userResp.data;
+            if (sessionStorage.getItem('access_token')) {
+              sessionStorage.setItem('user', JSON.stringify(user.value));
+            } else {
+              localStorage.setItem('user', JSON.stringify(user.value));
+            }
+          }
+        })
+        .catch(() => {
+          // If refresh fails, clear stored tokens
+          localStorage.removeItem('access_token');
+          localStorage.removeItem('refresh_token');
+          localStorage.removeItem('user');
+          sessionStorage.removeItem('access_token');
+          sessionStorage.removeItem('refresh_token');
+          sessionStorage.removeItem('user');
+          user.value = null;
+        });
     }
   }
   

@@ -68,7 +68,8 @@ def create_access_token(
     to_encode = {
         "exp": expire,
         "sub": str(subject),
-        "scopes": scopes or []
+        "scopes": scopes or [],
+        "type": "access",
     }
     
     encoded_jwt = jwt.encode(
@@ -100,3 +101,24 @@ def decode_token(token: str) -> dict:
         return payload
     except JWTError as e:
         raise e
+
+def create_refresh_token(
+    subject: Union[str, Any], 
+    expires_delta: Optional[timedelta] = None
+) -> str:
+    """
+    Create a long-lived refresh JWT used to obtain new access tokens.
+    """
+    # Default to 7 days if not specified
+    expire = datetime.utcnow() + (expires_delta or timedelta(days=7))
+    to_encode = {
+        "exp": expire,
+        "sub": str(subject),
+        "type": "refresh",
+    }
+    encoded_jwt = jwt.encode(
+        to_encode,
+        settings.SECRET_KEY,
+        algorithm=settings.ALGORITHM,
+    )
+    return encoded_jwt

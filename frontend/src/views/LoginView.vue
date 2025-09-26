@@ -37,6 +37,10 @@
         </div>
 
         <div class="flex items-center justify-between">
+          <label class="flex items-center space-x-2 select-none">
+            <input type="checkbox" v-model="rememberMe" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" />
+            <span class="text-sm text-gray-700 dark:text-gray-200">Remember me</span>
+          </label>
           <div class="text-sm">
             <router-link
               to="/register"
@@ -74,6 +78,7 @@ import { useI18n } from 'vue-i18n';
 
 const email = ref('');
 const password = ref('');
+const rememberMe = ref(true);
 const error = ref('');
 const loading = ref(false);
 const router = useRouter();
@@ -88,7 +93,7 @@ const handleLogin = async () => {
     const success = await authStore.login({
       email: email.value,
       password: password.value
-    });
+    }, rememberMe.value);
     
     if (success) {
       router.push('/menu');
