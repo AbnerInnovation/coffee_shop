@@ -182,6 +182,7 @@
           "close": "Cerrar",
           "cancel": "Cancelar",
           "variants": "Variantes",
+          "base_item": "Artículo base",
           "item_description_placeholder": "Ej.: sin cebolla, salsa extra, etc.",
           "errors": {
             "add_one_item": "Agrega al menos un artículo a la orden",

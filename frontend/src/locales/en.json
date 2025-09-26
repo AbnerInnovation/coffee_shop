@@ -181,6 +181,7 @@
           "add_to_order": "Add to Order",
           "close": "Close",
           "cancel": "Cancel",
+          "base_item": "Base item",
           "variants": "Variants",
           "item_description_placeholder": "E.g., no onions, extra sauce, etc.",
           "errors": {

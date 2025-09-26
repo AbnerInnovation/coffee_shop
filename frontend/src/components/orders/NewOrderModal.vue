@@ -116,9 +116,24 @@
                       {{ selectedItem.name }}
                     </h4>
 
-                    <!-- Variants -->
+                    <!-- Variants / Options -->
                     <div v-if="selectedItem.variants?.length" class="space-y-2 mb-4">
                       <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{$t('app.views.orders.modals.new_order.options')}}</label>
+                      <!-- Base item option when base price > 0 -->
+                      <div v-if="(selectedItem.price || 0) > 0"
+                        class="flex items-center p-2 border rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer"
+                        :class="{ 'bg-indigo-50 dark:bg-indigo-900 border-indigo-200 dark:border-indigo-600': !selectedVariant }"
+                        @click="selectedVariant = null">
+                        <div class="flex-1">
+                          <p class="text-sm font-medium text-gray-900 dark:text-gray-100">{{$t('app.views.orders.modals.new_order.base_item') || 'Base item'}}</p>
+                          <p class="text-sm text-gray-500 dark:text-gray-400">${{ (selectedItem.price || 0).toFixed(2) }}</p>
+                        </div>
+                        <div class="ml-2 flex items-center">
+                          <input type="radio" :checked="!selectedVariant"
+                            class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 dark:border-gray-700">
+                        </div>
+                      </div>
+                      <!-- Variant options -->
                       <div v-for="variant in selectedItem.variants" :key="variant.id"
                         class="flex items-center p-2 border rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer"
                         :class="{ 'bg-indigo-50 dark:bg-indigo-900 border-indigo-200 dark:border-indigo-600': selectedVariant?.id === variant.id }"
@@ -252,6 +267,19 @@
                       <div v-if="selectedItem?.variants?.length" class="mt-4">
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{$t('app.views.orders.modals.new_order.variants')}}</label>
                         <div class="space-y-2">
+                          <!-- Base item option when base price > 0 -->
+                          <div v-if="(selectedItem?.price || 0) > 0"
+                            class="flex items-center p-2 border rounded-md hover:bg-gray-50 cursor-pointer"
+                            :class="{ 'bg-indigo-50 border-indigo-500': !selectedVariant }"
+                            @click="selectedVariant = null">
+                            <div class="flex-1">
+                              <div class="flex justify-between">
+                                <span class="font-medium">{{$t('app.views.orders.modals.new_order.base_item') || 'Base item'}}</span>
+                                <span class="text-gray-600">${{ (selectedItem?.price || 0).toFixed(2) }}</span>
+                              </div>
+                            </div>
+                          </div>
+                          <!-- Variant options -->
                           <div v-for="variant in selectedItem.variants" :key="variant.id"
                             class="flex items-center p-2 border rounded-md hover:bg-gray-50 cursor-pointer"
                             :class="{ 'bg-indigo-50 border-indigo-500': selectedVariant?.id === variant.id }"
@@ -776,8 +804,18 @@ async function createOrder() {
 
 async function selectItem(menuItem: ExtendedMenuItem) {
   selectedItem.value = { ...menuItem };
-  selectedVariant.value = menuItem.variants?.[0] || null;
+  // If the base item has a price > 0, allow selecting the base without a variant by default.
+  if ((menuItem.price || 0) > 0) {
+    selectedVariant.value = null;
+  } else if (Array.isArray(menuItem.variants) && menuItem.variants.length > 0) {
+    // For items with no base price (e.g., only variant-priced items), preselect the first variant.
+    selectedVariant.value = menuItem.variants[0] || null;
+  } else {
+    // If the item has no variants and no base price, do not preselect anything.
+    selectedVariant.value = null;
+  }
   itemNotes.value = '';
+
   // Scroll to the bottom to show the options after the next DOM update
   await nextTick();
   const modal = document.querySelector('.fixed.inset-0.overflow-y-auto');
