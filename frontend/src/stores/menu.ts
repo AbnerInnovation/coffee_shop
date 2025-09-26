@@ -2,10 +2,13 @@ import { defineStore } from 'pinia';
 import type { Ref } from 'vue';
 import { ref } from 'vue';
 import menuService from '@/services/menuService';
-import type { MenuItem } from '@/types/menu';
+import type { MenuItem, MenuCategory } from '@/types/menu';
 
 export const useMenuStore = defineStore('menu', () => {
   const menuItems: Ref<MenuItem[]> = ref<MenuItem[]>([]);
+  // Detailed categories with IDs
+  const categoriesDetailed: Ref<MenuCategory[]> = ref<MenuCategory[]>([]);
+  // Backwards compatible list of category names used by existing forms/components
   const categories: Ref<string[]> = ref<string[]>([]);
   const loading = ref(false);
   const error = ref<string | null>(null);
@@ -188,37 +191,33 @@ export const useMenuStore = defineStore('menu', () => {
     error.value = null;
     try {
       console.log('Fetching categories from API...');
-      let categoryData;
+      let categoryData: MenuCategory[] = [];
       try {
-        categoryData = await menuService.getCategories();
+        categoryData = await (menuService as any).getCategories();
         console.log('Raw categories from API:', categoryData);
       } catch (err) {
         console.error('Error fetching categories from API:', err);
         categoryData = []; // Fallback to empty array on error
       }
-      
-      // Ensure we have valid data
+
       if (Array.isArray(categoryData) && categoryData.length > 0) {
-        // If items are objects with name property, extract names
-        if (typeof categoryData[0] === 'object' && categoryData[0] !== null) {
-          categories.value = categoryData.map(cat => cat.name || String(cat));
-        } else {
-          // If it's an array of strings or numbers
-          categories.value = categoryData.map(String);
-        }
+        categoriesDetailed.value = categoryData;
+        categories.value = categoryData.map(c => c.name);
       } else {
         console.warn('No valid categories received from API, using defaults');
-        categories.value = [
-          'Coffee',
-          'Tea',
-          'Pastries',
-          'Breakfast',
-          'Lunch',
-          'Drinks',
-          'Specials'
+        const defaults: MenuCategory[] = [
+          { id: 1, name: 'Coffee', description: '' },
+          { id: 2, name: 'Tea', description: '' },
+          { id: 3, name: 'Pastries', description: '' },
+          { id: 4, name: 'Breakfast', description: '' },
+          { id: 5, name: 'Lunch', description: '' },
+          { id: 6, name: 'Drinks', description: '' },
+          { id: 7, name: 'Specials', description: '' },
         ];
+        categoriesDetailed.value = defaults;
+        categories.value = defaults.map(c => c.name);
       }
-      
+
       return categories.value;
     } catch (err: any) {
       const message = err.response?.data?.message || err.message || 'Failed to fetch categories';
@@ -244,6 +243,7 @@ export const useMenuStore = defineStore('menu', () => {
 
   return {
     menuItems,
+    categoriesDetailed,
     categories,
     loading,
     error,
@@ -254,5 +254,52 @@ export const useMenuStore = defineStore('menu', () => {
     deleteMenuItem,
     toggleMenuItemAvailability,
     getCategories,
+    // Category CRUD
+    // Note: Backend currently exposes only GET /categories (no POST/PUT/DELETE).
+    // These actions perform optimistic local updates so the UI works.
+    // Categories are actually persisted when creating/updating menu items
+    // (backend auto-creates categories on item creation if missing).
+    async createCategory(name: string, description?: string) {
+      loading.value = true;
+      try {
+        // Generate a temporary client-side id
+        const tempId = Date.now();
+        const created = { id: tempId, name, description: description || '' } as MenuCategory;
+        categoriesDetailed.value = [...categoriesDetailed.value, created];
+        categories.value = categoriesDetailed.value.map(c => c.name);
+      } catch (err: any) {
+        error.value = err.message || 'Failed to create category';
+        throw err;
+      } finally {
+        loading.value = false;
+      }
+    },
+    async updateCategory(id: string | number, data: { name?: string; description?: string }) {
+      loading.value = true;
+      try {
+        const idx = categoriesDetailed.value.findIndex(c => c.id === id);
+        if (idx !== -1) {
+          categoriesDetailed.value[idx] = { ...categoriesDetailed.value[idx], ...data } as MenuCategory;
+        }
+        categories.value = categoriesDetailed.value.map(c => c.name);
+      } catch (err: any) {
+        error.value = err.message || 'Failed to update category';
+        throw err;
+      } finally {
+        loading.value = false;
+      }
+    },
+    async deleteCategory(id: string | number) {
+      loading.value = true;
+      try {
+        categoriesDetailed.value = categoriesDetailed.value.filter(c => c.id !== id);
+        categories.value = categoriesDetailed.value.map(c => c.name);
+      } catch (err: any) {
+        error.value = err.message || 'Failed to delete category';
+        throw err;
+      } finally {
+        loading.value = false;
+      }
+    },
   };
 });

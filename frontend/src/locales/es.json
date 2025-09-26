@@ -6,7 +6,8 @@
       "menu": "Menú",
       "orders": "Órdenes",
       "kitchen": "Cocina",
-      "tables": "Mesas"
+      "tables": "Mesas",
+      "categories": "Categorías"
     },
     "actions": {
       "sign_out": "Cerrar sesión",
@@ -16,6 +17,8 @@
       "view_all_orders": "Ver todas las órdenes",
       "view_inventory": "Ver inventario",
       "refresh": "Actualizar",
+      "add": "Agregar",
+      "edit": "Editar",
       "cancel": "Cancelar",
       "save": "Guardar",
       "delete": "Eliminar",
@@ -39,6 +42,9 @@
       "dashboard_load_failed": "Error al cargar los datos del tablero",
       "load_categories_failed": "Error al cargar categorías. Inténtalo de nuevo.",
       "init_form_failed": "Error al inicializar los datos del formulario",
+      "create_success": "Creado correctamente",
+      "update_success": "Actualizado correctamente",
+      "delete_success": "Eliminado correctamente",
       "delete_item_confirm_title": "Eliminar artículo del menú",
       "delete_item_confirm_text": "¿Seguro que deseas eliminar este artículo del menú? Esta acción no se puede deshacer.",
       "delete_item_confirm_text_named": "¿Seguro que deseas eliminar \"{name}\"? Esta acción no se puede deshacer.",
@@ -369,6 +375,14 @@
       },
       "view": {
         "back": "Volver a los artículos"
+      },
+      "categories": {
+        "title": "Categorías",
+        "subtitle": "Gestiona las categorías del menú",
+        "add": "Agregar categoría",
+        "empty": "Sin categorías por ahora",
+        "confirm_delete_title": "Eliminar categoría",
+        "confirm_delete_message_named": "¿Seguro que deseas eliminar la categoría \"{name}\"? Esta acción no se puede deshacer."
       }
     }
   }

@@ -1,7 +1,7 @@
 import api from './api';
 import API_CONFIG from '@/config/api';
 import type { AxiosResponse } from 'axios';
-import type { MenuItem, MenuItemVariant } from '@/types/menu';
+import type { MenuItem, MenuItemVariant, MenuCategory } from '@/types/menu';
 
 export interface ApiResponse<T = any> {
   data: T;
@@ -34,6 +34,7 @@ const apiInstance = api;
 
 // Get menu base path from config
 const MENU_BASE_PATH = API_CONFIG.ENDPOINTS.MENU || '/api/menu';
+const CATEGORIES_BASE_PATH = '/categories';
 
 // Add request interceptor to include auth token
 apiInstance.interceptors.request.use(
@@ -168,10 +169,42 @@ export const updateMenuItemAvailability = async (
   return normalizeMenuItem(response);
 };
 
-export const getCategories = async (): Promise<string[]> => {
-  const response = await apiInstance.get<string[]>('/categories/');
+export const getCategories = async (): Promise<MenuCategory[]> => {
+  const response = await apiInstance.get<any[]>(`${CATEGORIES_BASE_PATH}/`);
   console.log('categories response:', response);
-  return Array.isArray(response) ? response : [];
+  const arr = Array.isArray(response) ? response : [];
+  // Normalize: accept either array of strings or array of objects
+  return arr.map((c: any, idx: number) => {
+    if (typeof c === 'string') {
+      return { id: idx + 1, name: c, description: '' } as MenuCategory;
+    }
+    return {
+      id: c.id ?? idx + 1,
+      name: c.name ?? String(c?.title ?? ''),
+      description: c.description ?? ''
+    } as MenuCategory;
+  });
+};
+
+// Category CRUD Operations
+
+export const createCategory = async (data: { name: string; description?: string }): Promise<MenuCategory> => {
+  const payload = { name: data.name, description: data.description ?? '' };
+  const response = await apiInstance.post<MenuCategory>(`${CATEGORIES_BASE_PATH}/`, payload);
+  return response as unknown as MenuCategory;
+};
+
+export const updateCategory = async (
+  id: string | number,
+  data: Partial<{ name: string; description?: string }>
+): Promise<MenuCategory> => {
+  const response = await apiInstance.put<MenuCategory>(`${CATEGORIES_BASE_PATH}/${id}`, data);
+  return response as unknown as MenuCategory;
+};
+
+export const deleteCategory = async (id: string | number): Promise<boolean> => {
+  await apiInstance.delete(`${CATEGORIES_BASE_PATH}/${id}`);
+  return true;
 };
 
 // Variant Operations
@@ -239,6 +272,9 @@ export default {
   deleteMenuItem,
   updateMenuItemAvailability,
   getCategories,
+  createCategory,
+  updateCategory,
+  deleteCategory,
   
   // Variant operations
   addMenuItemVariant,

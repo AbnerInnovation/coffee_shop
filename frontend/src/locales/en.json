@@ -6,7 +6,8 @@
       "menu": "Menu",
       "orders": "Orders",
       "kitchen": "Kitchen",
-      "tables": "Tables"
+      "tables": "Tables",
+      "categories": "Categories"
     },
     "actions": {
       "sign_out": "Sign out",
@@ -16,6 +17,8 @@
       "view_all_orders": "View all orders",
       "view_inventory": "View inventory",
       "refresh": "Refresh",
+      "add": "Add",
+      "edit": "Edit",
       "cancel": "Cancel",
       "save": "Save",
       "delete": "Delete",
@@ -39,6 +42,9 @@
       "dashboard_load_failed": "Failed to load dashboard data",
       "load_categories_failed": "Failed to load categories. Please try again.",
       "init_form_failed": "Failed to initialize form data",
+      "create_success": "Created successfully",
+      "update_success": "Updated successfully",
+      "delete_success": "Deleted successfully",
       "delete_item_confirm_title": "Delete menu item",
       "delete_item_confirm_text": "Are you sure you want to delete this menu item? This action cannot be undone.",
       "delete_item_confirm_text_named": "Are you sure you want to delete \"{name}\"? This action cannot be undone.",
@@ -352,6 +358,14 @@
       },
       "view": {
         "back": "Back to menu items"
+      },
+      "categories": {
+        "title": "Categories",
+        "subtitle": "Manage your menu categories",
+        "add": "Add Category",
+        "empty": "No categories yet",
+        "confirm_delete_title": "Delete category",
+        "confirm_delete_message_named": "Are you sure you want to delete the category \"{name}\"? This action cannot be undone."
       }
     }
   }

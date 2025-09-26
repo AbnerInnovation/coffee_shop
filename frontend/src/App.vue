@@ -188,6 +188,7 @@ const { isDark, toggleTheme } = useTheme();
 const navigation = ref([
   { name: 'dashboard', labelKey: 'app.nav.dashboard', to: '/', current: false },
   { name: 'menu', labelKey: 'app.nav.menu', to: '/menu', current: false },
+  { name: 'categories', labelKey: 'app.nav.categories', to: '/categories', current: false },
   { name: 'orders', labelKey: 'app.nav.orders', to: '/orders', current: false },
   { name: 'kitchen', labelKey: 'app.nav.kitchen', to: '/kitchen', current: false },
   { name: 'tables', labelKey: 'app.nav.tables', to: '/tables', current: false },
