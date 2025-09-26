@@ -765,7 +765,6 @@ async function createOrder() {
       const updated = await orderService.getOrder(orderId);
       emit('order-updated', updated);
       emit('close');
-      showSuccess(t('app.forms.update'));
     } else {
       // Create mode
       // Validate required fields depending on order type

@@ -120,6 +120,7 @@
       },
       "messages": {
         "order_created_success": "Order created successfully",
+        "order_updated_success": "Order #{id} updated",
         "order_cancelled_success": "Order has been cancelled",
         "status_updated_success": "Order #{id} status updated to {status}",
         "payment_completed_success": "Payment completed for order #{id}",

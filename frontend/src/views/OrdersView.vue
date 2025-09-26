@@ -229,7 +229,7 @@ function handleOrderUpdated(updated: any) {
         is_paid: (updated as any).is_paid ?? existing.is_paid
       });
     }
-    showSuccess(`Order #${updated.id} updated`);
+    showSuccess(t('app.views.orders.messages.order_updated_success', { id: updated.id }) as string);
     // Ensure full consistency by refetching
     fetchOrders(true);
     // Reset edit state
