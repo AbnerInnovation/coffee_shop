@@ -62,9 +62,12 @@ def serialize_order(order: OrderModel) -> dict:
         "created_at": order.created_at,
         "updated_at": order.updated_at,
         "table_number": order.table.number if order.table else None,
-        "customer_name": getattr(order, "customer_name", None),
-        "user_id": getattr(order, "user_id", None),
-        "is_paid": getattr(order, "is_paid", False),
+        "customer_name": order.customer_name,
+        "user_id": order.user_id,
+        "order_type": order.order_type,
+        "is_paid": order.is_paid,
+        "payment_method": order.payment_method,
+        "deleted_at": order.deleted_at,
         "items": [serialize_order_item(item) for item in getattr(order, "items", [])],
     }
 
@@ -196,6 +199,18 @@ def create_order_with_items(db: Session, order: OrderCreate) -> dict:
 
 def update_order(db: Session, db_order: OrderModel, order: OrderUpdate) -> dict:
     update_data = order.dict(exclude_unset=True)
+    # Remove fields that should not be updated directly
+    update_data.pop('is_paid', None)  # Handled separately in the router
+    update_data.pop('payment_method', None)  # Handled separately in the router
+
+    # Validate and convert status if provided
+    if 'status' in update_data:
+        try:
+            from ..models.order import OrderStatus
+            update_data['status'] = OrderStatus(update_data['status'])
+        except ValueError:
+            raise ValueError(f"Invalid status. Must be one of: {', '.join([s.value for s in OrderStatus])}")
+
     for field, value in update_data.items():
         setattr(db_order, field, value)
 
@@ -272,6 +287,14 @@ def update_order_item(db: Session, db_item: OrderItemModel, item: OrderItemUpdat
             menu_item = db.query(MenuItem).filter(MenuItem.id == db_item.menu_item_id).first()
             if menu_item:
                 update_data["unit_price"] = menu_item.price
+
+    # Validate and convert status if provided
+    if 'status' in update_data:
+        try:
+            from ..models.order import OrderStatus
+            update_data['status'] = OrderStatus(update_data['status'])
+        except ValueError:
+            raise ValueError(f"Invalid status. Must be one of: {', '.join([s.value for s in OrderStatus])}")
 
     for field, value in update_data.items():
         setattr(db_item, field, value)

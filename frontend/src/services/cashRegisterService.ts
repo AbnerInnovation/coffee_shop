@@ -27,28 +27,31 @@ export const cashRegisterService = {
       opened_by_user_id: currentUser.id,
       cashier_id: currentUser.id  // Make sure to include cashier_id
     });
-    return response.data;
+    return response;
   },
 
-  async closeSession(sessionId: number, finalBalance: number) {
+  async closeSession(sessionId: number, finalBalance: number, notes?: string) {
     const currentUser = authService.getStoredUser();
     if (!currentUser) {
       throw new Error('User not authenticated');
     }
 
-    const response = await api.put(`${CASH_REGISTER_ENDPOINT}/sessions/${sessionId}/close`, {
+    const response = await api.patch(`${CASH_REGISTER_ENDPOINT}/sessions/${sessionId}/close`, {
       final_balance: finalBalance,
-      actual_balance: finalBalance,  // Assuming actual_balance is the same as final_balance
-      status: 'CLOSED',  // Use uppercase to match the database enum
-      closed_by_user_id: currentUser.id,
-      cashier_id: currentUser.id  // Include cashier_id
+      notes: notes || `Session closed by ${currentUser.full_name || currentUser.email}`
     });
-    return response.data;
+    return response;
   },
 
-  async cutSession(sessionId: number) {
-    const response = await api.post(`${CASH_REGISTER_ENDPOINT}/sessions/${sessionId}/cut`);
-    return response.data;
+  async cutSession(sessionId: number, paymentBreakdown: { cash: number; card: number; digital: number; other: number }) {
+    const response = await api.post(`${CASH_REGISTER_ENDPOINT}/sessions/${sessionId}/cut`, {
+      session_id: sessionId,
+      cash_payments: paymentBreakdown.cash,
+      card_payments: paymentBreakdown.card,
+      digital_payments: paymentBreakdown.digital,
+      other_payments: paymentBreakdown.other
+    });
+    return response;
   },
 
   // Transaction endpoints
@@ -56,25 +59,33 @@ export const cashRegisterService = {
     const response = await api.get(`${CASH_REGISTER_ENDPOINT}/transactions`, {
       params: { session_id: sessionId }
     });
-    return response.data;
+    return response;
   },
 
   async createTransaction(transactionData: any) {
     const response = await api.post(`${CASH_REGISTER_ENDPOINT}/transactions`, transactionData);
-    return response.data;
+    return response;
   },
 
   // Report endpoints
   async getSessionReport(sessionId: number) {
     const response = await api.get(`${CASH_REGISTER_ENDPOINT}/reports/session/${sessionId}`);
-    return response.data;
+    return response;
   },
 
   async getDailyReport(date: string) {
     const response = await api.get(`${CASH_REGISTER_ENDPOINT}/reports/daily`, {
       params: { date }
     });
-    return response.data;
+    return response;
+  },
+
+  // Order payment integration
+  async markOrderAsPaid(orderId: number, paymentMethod: 'cash' | 'card' | 'digital' | 'other') {
+    const response = await api.patch(`${API_CONFIG.ENDPOINTS.ORDERS}/${orderId}/pay`, null, {
+      params: { payment_method: paymentMethod }
+    });
+    return response;
   }
 };
 

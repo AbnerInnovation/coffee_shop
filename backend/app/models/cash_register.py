@@ -1,6 +1,6 @@
 from enum import Enum as PyEnum
-from sqlalchemy import String, Column, DateTime, Enum as SQLEnum, ForeignKey, Text, DECIMAL, Integer
-from sqlalchemy.orm import relationship
+from sqlalchemy import Column, DateTime, Enum as SQLEnum, ForeignKey, Text, DECIMAL, Integer, event
+from sqlalchemy.orm import relationship, validates
 from typing import TYPE_CHECKING, Optional
 from .base import BaseModel
 
@@ -53,7 +53,7 @@ class CashTransaction(BaseModel):
     __tablename__ = "cash_transactions"
 
     session_id = Column(Integer, ForeignKey("cash_register_sessions.id"), nullable=False)
-    transaction_type = Column(SQLEnum(TransactionType, name='transaction_type'), nullable=False)
+    transaction_type = Column(SQLEnum(TransactionType, name='transaction_type', values_callable=lambda x: [e.value for e in x]), nullable=False)
     amount = Column(DECIMAL(10, 2), nullable=False)
     description = Column(Text, nullable=True)
     order_id = Column(Integer, ForeignKey("orders.id"), nullable=True)
@@ -67,11 +67,12 @@ class CashTransaction(BaseModel):
     def __repr__(self) -> str:
         return f"<CashTransaction(id={self.id}, type='{self.transaction_type}', amount={self.amount})>"
 
+
 class CashRegisterReport(BaseModel):
     __tablename__ = "cash_register_reports"
 
     session_id = Column(Integer, ForeignKey("cash_register_sessions.id"), nullable=False)
-    report_type = Column(SQLEnum(ReportType, name='report_type'), nullable=False)
+    report_type = Column(SQLEnum(ReportType, name='report_type', values_callable=lambda x: [e.value for e in x]), nullable=False)
     data = Column(Text, nullable=False)  # JSON string for report data
     generated_at = Column(DateTime, nullable=False)
 

@@ -120,9 +120,9 @@ const orderService = {
   },
 
   async getOrder(orderId: number): Promise<Order> {
-    const response = await api.get<Order>(`/orders/${orderId}`);
-    
-    return response;
+    const { data } = await api.get<Order>(`/orders/${orderId}`);
+
+    return data;
   },
 
   async updateOrder(orderId: number, data: { status?: OrderStatus; [key: string]: any }): Promise<Order> {
@@ -161,8 +161,10 @@ const orderService = {
     return Array.isArray(response) ? response : [];
   },
 
-  async markOrderPaid(orderId: number): Promise<Order> {
-    const { data } = await api.put<Order>(`/orders/${orderId}`, { is_paid: true });
+  async markOrderPaid(orderId: number, paymentMethod: 'cash' | 'card' | 'digital' | 'other' = 'cash'): Promise<Order> {
+    const { data } = await api.patch<Order>(`/orders/${orderId}/pay`, null, {
+      params: { payment_method: paymentMethod }
+    });
     return data;
   },
 

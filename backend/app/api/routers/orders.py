@@ -9,13 +9,16 @@ from ...models.table import Table as TableModel
 from ...models.menu import MenuItem as MenuItemModel
 from ...schemas.order import Order, OrderCreate, OrderUpdate, OrderItemCreate, OrderItemUpdate, OrderItem
 from ...services import order as order_service
+from ...services.order import serialize_order_item
+from ...services.cash_register import create_transaction_from_order
 from ...services.user import get_current_active_user
 
 router = APIRouter(
     prefix="/orders",
     tags=["orders"],
     dependencies=[Depends(get_current_active_user)],
-    responses={404: {"description": "Not found"}},
+    responses={404: {"description": "Not found"},
+}
 )
 
 
@@ -79,7 +82,7 @@ async def read_order(order_id: int, db: Session = Depends(get_db)) -> Order:
 
 
 @router.put("/{order_id}", response_model=Order)
-async def update_order(order_id: int, order: OrderUpdate, db: Session = Depends(get_db)) -> Order:
+async def update_order(order_id: int, order: OrderUpdate, db: Session = Depends(get_db), current_user = Depends(get_current_active_user)) -> Order:
     """
     Update an order.
     """
@@ -87,12 +90,50 @@ async def update_order(order_id: int, order: OrderUpdate, db: Session = Depends(
     db_order = db.query(OrderModel).filter(OrderModel.id == order_id).first()
     if db_order is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found")
-    
-    # Update the order in the database
-    updated_order = order_service.update_order(db=db, db_order=db_order, order=order)
-    
-    # Return the updated order
-    return updated_order
+
+    # Check if order is being marked as paid
+    if order.is_paid and not db_order.is_paid:
+        # Validate payment method if provided
+        if order.payment_method is not None:
+            from ...schemas.order import PaymentMethod
+            try:
+                payment_method_enum = PaymentMethod(order.payment_method.value)
+            except (ValueError, AttributeError):
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Invalid payment method"
+                )
+            db_order.payment_method = payment_method_enum
+        # If no payment method provided, default to CASH
+        else:
+            from ...schemas.order import PaymentMethod
+            db_order.payment_method = PaymentMethod.CASH
+
+        # Mark order as paid and completed
+        db_order.is_paid = True
+        db_order.status = OrderStatus.COMPLETED
+
+        # Create cash register transaction
+        try:
+            create_transaction_from_order(
+                db=db,
+                order_id=order_id,
+                created_by_user_id=current_user.id
+            )
+        except ValueError as e:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+        # Commit the payment changes first
+        db.commit()
+        db.refresh(db_order)
+
+    # Update any other fields from the request
+    if order.dict(exclude_unset=True):
+        updated_order = order_service.update_order(db=db, db_order=db_order, order=order)
+        return updated_order
+    else:
+        # If no other updates, just return the current order
+        return order_service.get_order(db, order_id)
 
 
 
@@ -151,16 +192,26 @@ async def update_order_item_status(
     """
     Update the status of an order item.
     """
+    # Validate status parameter
+    from ...models.order import OrderStatus
+    try:
+        status_enum = OrderStatus(status.lower())
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid status. Must be one of: {', '.join([s.value for s in OrderStatus])}"
+        )
+    
     db_order_item = order_service.get_order_item(db, item_id=item_id)
     if not db_order_item or db_order_item.order_id != order_id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order item not found")
     
     # Update the status
-    db_order_item.status = status
+    db_order_item.status = status_enum
     db.commit()
     db.refresh(db_order_item)
     
-    return db_order_item
+    return order_service.serialize_order_item(db_order_item)
 
 
 @router.delete("/{order_id}/items/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -173,3 +224,56 @@ async def delete_order_item(order_id: int, item_id: int, db: Session = Depends(g
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order item not found")
     
     order_service.delete_order_item(db=db, db_item=db_order_item)
+
+
+@router.patch("/{order_id}/pay", response_model=Order)
+async def mark_order_as_paid(
+    order_id: int,
+    payment_method: str,
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_active_user)
+) -> Order:
+    """
+    Mark an order as paid and create a cash register transaction.
+    """
+    # Get the order
+    db_order = db.query(OrderModel).filter(OrderModel.id == order_id).first()
+    if not db_order:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found")
+
+    if db_order.is_paid:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Order is already paid")
+
+    # Validate payment method
+    from ...schemas.order import PaymentMethod
+    try:
+        payment_method_enum = PaymentMethod(payment_method.lower())
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid payment method. Must be one of: {', '.join([pm.value for pm in PaymentMethod])}"
+        )
+
+    try:
+        # Create cash register transaction
+        create_transaction_from_order(
+            db=db,
+            order_id=order_id,
+            created_by_user_id=current_user.id
+        )
+
+        # Mark order as paid
+        db_order.is_paid = True
+        db_order.payment_method = payment_method_enum
+        db_order.status = OrderStatus.COMPLETED
+
+        db.commit()
+        db.refresh(db_order)
+
+        return order_service.get_order(db, order_id)
+
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error processing payment: {str(e)}")

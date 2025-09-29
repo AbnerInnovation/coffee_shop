@@ -11,6 +11,7 @@ const API_CONFIG = {
     AUTH: '/auth',
     MENU: '/menu',
     TABLES: '/tables',
+    ORDERS: '/orders',
     CASH_REGISTER: '/cash-register',
     // Add other endpoints here as needed
   },

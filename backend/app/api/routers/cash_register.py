@@ -110,11 +110,12 @@ def close_session(
 @router.post("/sessions/{session_id}/cut", response_model=DailySummaryReport)
 def cut_session(
     session_id: int,
+    payment_breakdown: PaymentBreakdownReport,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ) -> DailySummaryReport:
     try:
-        return cash_register_service.cut_session(db, session_id)
+        return cash_register_service.cut_session(db, session_id, payment_breakdown)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
@@ -124,16 +125,25 @@ def cut_session(
 # Transactions
 # -----------------------------
 
-@router.post("/transactions", response_model=CashTransaction, status_code=status.HTTP_201_CREATED)
-def create_transaction(
-    transaction: CashTransactionCreate,
+@router.get("/transactions", response_model=List[CashTransaction])
+def get_transactions(
+    session_id: Optional[int] = None,
+    skip: int = 0,
+    limit: int = 100,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
-) -> CashTransaction:
+) -> List[CashTransaction]:
+    """Get transactions with optional session filtering."""
     try:
-        return cash_register_service.create_transaction(db, transaction, current_user.id)
+        query = db.query(CashTransactionModel)
+
+        if session_id is not None:
+            query = query.filter(CashTransactionModel.session_id == session_id)
+
+        transactions = query.offset(skip).limit(limit).all()
+        return transactions
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error creating transaction: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error retrieving transactions: {str(e)}")
 
 # -----------------------------
 # Reports
@@ -154,6 +164,18 @@ def get_reports(
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error retrieving reports: {str(e)}")
+
+@router.get("/reports/session/{session_id}", response_model=List[CashRegisterReport])
+def get_session_reports(
+    session_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+) -> List[CashRegisterReport]:
+    """Get all reports for a specific session."""
+    try:
+        return cash_register_service.get_reports(db, session_id=session_id)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error retrieving session reports: {str(e)}")
 
 @router.get("/sessions/{session_id}/difference-report", response_model=CashDifferenceReport)
 def get_cash_difference_report(

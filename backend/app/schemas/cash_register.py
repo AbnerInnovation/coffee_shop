@@ -1,7 +1,8 @@
-from pydantic import BaseModel, Field
 from datetime import datetime
-from typing import List, Optional, Dict, Any
+from typing import Dict, Any, List, Optional
+from pydantic import BaseModel, Field, validator
 from enum import Enum
+import json
 
 class SessionStatus(str, Enum):
     OPEN = "OPEN"
@@ -44,6 +45,7 @@ class CashRegisterSessionInDBBase(CashRegisterSessionBase):
     status: SessionStatus
     created_at: datetime
     updated_at: datetime
+    cashier_id: Optional[int] = None
 
     class Config:
         orm_mode = True
@@ -70,6 +72,7 @@ class CashTransactionInDBBase(CashTransactionBase):
 
     class Config:
         orm_mode = True
+        use_enum_values = True
 
 class CashRegisterReportBase(BaseModel):
     report_type: ReportType
@@ -87,6 +90,18 @@ class CashRegisterReportInDBBase(CashRegisterReportBase):
 
     class Config:
         orm_mode = True
+        # Handle enum conversion for responses
+        use_enum_values = True
+
+    @validator('data', pre=True)
+    def parse_report_data(cls, v):
+        """Parse JSON string to dictionary for API responses."""
+        if isinstance(v, str):
+            try:
+                return json.loads(v)
+            except json.JSONDecodeError:
+                return {}
+        return v
 
 # Response models
 class CashRegisterSession(CashRegisterSessionInDBBase):

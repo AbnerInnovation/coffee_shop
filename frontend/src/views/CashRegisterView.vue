@@ -19,6 +19,14 @@
           </h2>
           <div class="flex space-x-2">
             <button
+              @click="loadCurrentSession"
+              :disabled="isRefreshing"
+              class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <span v-if="isRefreshing" class="inline-block animate-spin mr-2">⟳</span>
+              {{ t('app.views.cashRegister.refresh') || 'Refresh' }}
+            </button>
+            <button
               @click="openCutModal"
               class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
             >
@@ -223,6 +231,58 @@
                 </div>
               </div>
             </div>
+
+            <div>
+              <h4 class="font-medium text-gray-900 dark:text-gray-100">
+                {{ t('app.views.cashRegister.paymentBreakdown') || 'Payment Breakdown' }}
+              </h4>
+              <div class="mt-2 space-y-3">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                    {{ t('app.views.cashRegister.cashPayments') || 'Cash Payments' }}
+                  </label>
+                  <input
+                    v-model="cashPayments"
+                    type="number"
+                    step="0.01"
+                    class="w-full rounded-md border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                    {{ t('app.views.cashRegister.cardPayments') || 'Card Payments' }}
+                  </label>
+                  <input
+                    v-model="cardPayments"
+                    type="number"
+                    step="0.01"
+                    class="w-full rounded-md border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                    {{ t('app.views.cashRegister.digitalPayments') || 'Digital Payments' }}
+                  </label>
+                  <input
+                    v-model="digitalPayments"
+                    type="number"
+                    step="0.01"
+                    class="w-full rounded-md border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                    {{ t('app.views.cashRegister.otherPayments') || 'Other Payments' }}
+                  </label>
+                  <input
+                    v-model="otherPayments"
+                    type="number"
+                    step="0.01"
+                    class="w-full rounded-md border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+              </div>
+            </div>
           </div>
           <div class="mt-6 flex justify-end space-x-3">
             <button
@@ -255,19 +315,25 @@ import { useToast } from '@/composables/useToast'
 const { t } = useI18n()
 const toast = useToast()
 
-const currentSession = ref<any>(null)
-const transactions = ref<any[]>([])
-const currentBalance = ref(0)
+const isRefreshing = ref(false)
 const openModalOpen = ref(false)
 const closeModalOpen = ref(false)
 const cutModalOpen = ref(false)
+const currentSession = ref<any>(null)
+const transactions = ref<any[]>([])
+const currentBalance = ref(0)
 const initialBalance = ref(0)
 const actualBalance = ref(0)
 const closeNotes = ref('')
+const cashPayments = ref(0)
+const cardPayments = ref(0)
+const digitalPayments = ref(0)
+const otherPayments = ref(0)
 const cutReport = ref({
   total_sales: 0,
   total_refunds: 0,
   total_tips: 0,
+  total_transactions: 0,
   net_cash_flow: 0
 })
 
@@ -279,8 +345,45 @@ const openCloseModal = () => {
   closeModalOpen.value = true
 }
 
-const openCutModal = () => {
+const openCutModal = async () => {
   cutModalOpen.value = true
+
+  // Pre-populate cut report with current session data
+  if (currentSession.value) {
+    try {
+      // Get current transactions to calculate initial values
+      const transactionsResponse = await cashRegisterService.getTransactions(currentSession.value.id)
+      const transactions = Array.isArray(transactionsResponse) ? transactionsResponse : transactionsResponse.data || []
+
+      // Calculate totals from transactions
+      const totalSales = transactions
+        .filter(t => t.transaction_type === 'sale')
+        .reduce((sum, t) => sum + (t.amount || 0), 0)
+
+      const totalRefunds = transactions
+        .filter(t => t.transaction_type === 'refund' || t.transaction_type === 'cancellation')
+        .reduce((sum, t) => sum + (t.amount || 0), 0)
+
+      const totalTips = transactions
+        .filter(t => t.transaction_type === 'tip')
+        .reduce((sum, t) => sum + (t.amount || 0), 0)
+
+      const netCashFlow = totalSales - totalRefunds + totalTips
+
+      // Update cut report with real data
+      cutReport.value = {
+        total_sales: totalSales,
+        total_refunds: totalRefunds,
+        total_tips: totalTips,
+        total_transactions: transactions.length,
+        net_cash_flow: netCashFlow
+      }
+
+      console.log('Pre-populated cut report:', cutReport.value)
+    } catch (error) {
+      console.error('Error loading cut report data:', error)
+    }
+  }
 }
 
 const closeModals = () => {
@@ -290,6 +393,10 @@ const closeModals = () => {
   initialBalance.value = 0
   actualBalance.value = 0
   closeNotes.value = ''
+  cashPayments.value = 0
+  cardPayments.value = 0
+  digitalPayments.value = 0
+  otherPayments.value = 0
 }
 
 const openSession = async () => {
@@ -304,6 +411,7 @@ const openSession = async () => {
     closeModals()
     loadTransactions()
     toast.showToast(t('app.views.cashRegister.sessionOpened') || 'Session opened successfully', 'success')
+    loadCurrentSession()
   } catch (error: any) {
     console.error('Error opening session:', error)
     toast.showToast(error.response?.data?.detail || 'Failed to open session', 'error')
@@ -319,7 +427,8 @@ const closeSession = async () => {
   try {
     const session = await cashRegisterService.closeSession(
       currentSession.value.id,
-      Number(actualBalance.value)
+      Number(actualBalance.value),
+      closeNotes.value || undefined
     )
     currentSession.value = session
     closeModals()
@@ -327,6 +436,7 @@ const closeSession = async () => {
     currentSession.value = null
     transactions.value = []
     currentBalance.value = 0
+    loadCurrentSession()
   } catch (error: any) {
     console.error('Error closing session:', error)
     toast.showToast(error.response?.data?.detail || 'Failed to close session', 'error')
@@ -337,7 +447,24 @@ const performCut = async () => {
   if (!currentSession.value) return
 
   try {
-    const result = await cashRegisterService.cutSession(currentSession.value.id)
+    const paymentBreakdown = {
+      cash: Number(cashPayments.value),
+      card: Number(cardPayments.value),
+      digital: Number(digitalPayments.value),
+      other: Number(otherPayments.value)
+    }
+
+    const result = await cashRegisterService.cutSession(currentSession.value.id, paymentBreakdown)
+
+    // Update cut report with real data from backend
+    cutReport.value = {
+      total_sales: result.total_sales || 0,
+      total_refunds: result.total_refunds || 0,
+      total_tips: result.total_tips || 0,
+      total_transactions: result.total_transactions || 0,
+      net_cash_flow: result.net_cash_flow || 0
+    }
+
     toast.showToast(t('app.views.cashRegister.cutSuccessful') || 'Cut performed successfully', 'success')
     loadCurrentSession()
     closeModals()
@@ -349,6 +476,7 @@ const performCut = async () => {
 
 const loadCurrentSession = async () => {
   try {
+    isRefreshing.value = true
     console.log('Loading current session...')
     const session = await cashRegisterService.getCurrentSession()
     console.log('Current session response:', session)
@@ -362,6 +490,8 @@ const loadCurrentSession = async () => {
     }
   } catch (error) {
     console.error('Error loading current session:', error)
+  } finally {
+    isRefreshing.value = false
   }
 }
 
@@ -370,13 +500,20 @@ const loadTransactions = async () => {
 
   try {
     // Get transactions for current session
-    const sessionData = await cashRegisterService.getSessionReport(currentSession.value.id)
-    if (sessionData) {
-      transactions.value = sessionData.transactions || []
-      currentBalance.value = (currentSession.value.initial_balance || 0) + transactions.value.reduce((sum, t) => sum + (t.amount || 0), 0)
-    }
+    const transactionsResponse = await cashRegisterService.getTransactions(currentSession.value.id)
+    const transactionsData = Array.isArray(transactionsResponse) ? transactionsResponse : transactionsResponse.data || []
+    transactions.value = transactionsData
+
+    // Calculate current balance
+    const totalTransactions = transactions.value.reduce((sum, t) => sum + (t.amount || 0), 0)
+    currentBalance.value = (currentSession.value.initial_balance || 0) + totalTransactions
+
+    console.log('Loaded transactions:', transactions.value.length)
+    console.log('Current balance:', currentBalance.value)
   } catch (error) {
     console.error('Error loading transactions:', error)
+    transactions.value = []
+    currentBalance.value = currentSession.value.initial_balance || 0
   }
 }
 
@@ -386,21 +523,18 @@ const formatDate = (dateString: string) => {
 
 onMounted(() => {
   loadCurrentSession()
-  // Refresh session state every 30 seconds to catch sessions opened in other tabs
-  const refreshInterval = setInterval(() => {
-    loadCurrentSession()
-  }, 30000)
 
-  // Refresh session state when tab gets focus (in case session was opened in another tab)
-  const handleFocus = () => {
+  // Listen for order payment completion events
+  const handlePaymentCompleted = () => {
+    console.log('Payment completed event received, refreshing cash register...')
     loadCurrentSession()
   }
-  window.addEventListener('focus', handleFocus)
 
-  // Store interval and event listener for cleanup
+  window.addEventListener('orderPaymentCompleted', handlePaymentCompleted)
+
+  // Store the event listener for cleanup
   onUnmounted(() => {
-    clearInterval(refreshInterval)
-    window.removeEventListener('focus', handleFocus)
+    window.removeEventListener('orderPaymentCompleted', handlePaymentCompleted)
   })
 })
 </script>

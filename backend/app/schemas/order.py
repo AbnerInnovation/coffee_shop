@@ -94,6 +94,8 @@ class OrderInDBBase(OrderBase):
     table_number: Optional[int] = None
     customer_name: Optional[str] = None
     user_id: Optional[int] = None
+    order_type: Optional[str] = None
+    deleted_at: Optional[datetime] = None
     items: List[OrderItem] = []
 
     class Config:

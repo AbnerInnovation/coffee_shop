@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from typing import List, Optional
 import json
 import logging
@@ -17,7 +17,8 @@ from ..schemas.cash_register import (
     CashTransactionCreate,
     CashDifferenceReport,
     DailySummaryReport,
-    PaymentBreakdownReport
+    PaymentBreakdownReport,
+    ReportType
 )
 
 logger = logging.getLogger(__name__)
@@ -48,13 +49,17 @@ def create_session(db: Session, session_data: CashRegisterSessionCreate) -> Cash
 
 def get_session(db: Session, session_id: int) -> Optional[CashRegisterSessionModel]:
     """Get a cash register session by ID."""
-    return db.query(CashRegisterSessionModel).filter(
-        CashRegisterSessionModel.id == session_id
-    ).first()
+    return db.query(CashRegisterSessionModel)\
+        .options(joinedload(CashRegisterSessionModel.transactions))\
+        .options(joinedload(CashRegisterSessionModel.reports))\
+        .filter(CashRegisterSessionModel.id == session_id)\
+        .first()
 
 def get_current_session(db: Session, user_id: int) -> Optional[CashRegisterSessionModel]:
     """Get the current open session for a user."""
     return db.query(CashRegisterSessionModel)\
+        .options(joinedload(CashRegisterSessionModel.transactions))\
+        .options(joinedload(CashRegisterSessionModel.reports))\
         .filter(
             CashRegisterSessionModel.opened_by_user_id == user_id,
             CashRegisterSessionModel.status == SessionStatus.OPEN
@@ -68,14 +73,14 @@ def get_sessions(db: Session,
                 skip: int = 0,
                 limit: int = 100) -> List[CashRegisterSessionModel]:
     """Get cash register sessions with optional filtering."""
-    query = db.query(CashRegisterSessionModel)
-    
-    if status is not None:
-        query = query.filter(CashRegisterSessionModel.status == status)
-    if cashier_id is not None:
-        query = query.filter(CashRegisterSessionModel.cashier_id == cashier_id)
-    
-    return query.offset(skip).limit(limit).all()
+    return db.query(CashRegisterSessionModel)\
+        .options(joinedload(CashRegisterSessionModel.transactions))\
+        .options(joinedload(CashRegisterSessionModel.reports))\
+        .filter(CashRegisterSessionModel.status == status if status is not None else True)\
+        .filter(CashRegisterSessionModel.cashier_id == cashier_id if cashier_id is not None else True)\
+        .offset(skip)\
+        .limit(limit)\
+        .all()
 
 def close_session(
     db: Session,
@@ -83,12 +88,12 @@ def close_session(
     session_update: CashRegisterSessionUpdate
 ) -> CashRegisterSessionModel:
     """Close a cash register session.
-    
+
     Args:
         db: Database session
         session_id: ID of the session to close
-        session_update: Update data including final_balance, actual_balance, and notes
-        
+        session_update: Update data including final_balance and notes
+
     Returns:
         The closed session
     """
@@ -102,10 +107,15 @@ def close_session(
         transactions = get_transactions_by_session(db, session_id)
         expected_balance = db_session.initial_balance + sum(t.amount for t in transactions)
 
+        # The user provides the final balance they counted physically
+        # This is the "actual_balance" in the database
+        actual_balance = session_update.final_balance
+
+        # Set all the required fields for closing
         db_session.closed_at = datetime.utcnow()
-        db_session.final_balance = session_update.final_balance
-        db_session.actual_balance = session_update.actual_balance
-        db_session.expected_balance = expected_balance
+        db_session.final_balance = actual_balance  # What user counted
+        db_session.actual_balance = actual_balance  # Same as final balance
+        db_session.expected_balance = expected_balance  # Calculated from transactions
         db_session.status = SessionStatus.CLOSED
         db_session.notes = session_update.notes
 
@@ -118,7 +128,7 @@ def close_session(
         logger.error(f"Error closing session {session_id}: {e}")
         raise
 
-def cut_session(db: Session, session_id: int) -> DailySummaryReport:
+def cut_session(db: Session, session_id: int, payment_breakdown: PaymentBreakdownReport) -> DailySummaryReport:
     """Perform a partial cut (end-of-shift report) without closing the session."""
     try:
         db_session = get_session(db, session_id)
@@ -133,13 +143,7 @@ def cut_session(db: Session, session_id: int) -> DailySummaryReport:
         total_tips = sum(t.amount for t in transactions if t.transaction_type == TransactionType.TIP)
         net_cash_flow = total_sales - total_refunds + total_tips  # refunds subtracted
 
-        payment_breakdown = PaymentBreakdownReport(
-            cash=net_cash_flow,
-            card=0,
-            digital=0,
-            other=0
-        )
-
+        # Use the provided payment breakdown data
         report_data = DailySummaryReport(
             session_id=session_id,
             total_sales=total_sales,
@@ -147,13 +151,18 @@ def cut_session(db: Session, session_id: int) -> DailySummaryReport:
             total_tips=total_tips,
             total_transactions=len(transactions),
             net_cash_flow=net_cash_flow,
-            payment_breakdown=payment_breakdown
+            payment_breakdown={
+                "cash": payment_breakdown.cash_payments,
+                "card": payment_breakdown.card_payments,
+                "digital": payment_breakdown.digital_payments,
+                "other": payment_breakdown.other_payments
+            }
         )
 
         # Create report record
         db_report = CashRegisterReportModel(
             session_id=session_id,
-            report_type="daily_summary",
+            report_type=ReportType.DAILY_SUMMARY,
             data=json.dumps(report_data.dict()),
             generated_at=datetime.utcnow()
         )
@@ -212,32 +221,63 @@ def get_reports(
     if session_id:
         query = query.filter(CashRegisterReportModel.session_id == session_id)
     if report_type:
-        query = query.filter(CashRegisterReportModel.report_type == report_type)
+        # Convert string to enum value for proper comparison
+        try:
+            report_type_enum = ReportType(report_type)
+            query = query.filter(CashRegisterReportModel.report_type == report_type_enum)
+        except ValueError:
+            # If the string doesn't match any enum value, return empty result
+            return []
     return query.offset(skip).limit(limit).all()
 
-def generate_cash_difference_report(db: Session, session_id: int) -> CashDifferenceReport:
-    """Generate a cash difference report for a session."""
-    try:
-        db_session = get_session(db, session_id)
-        if not db_session:
-            raise ValueError("Session not found")
+def create_transaction_from_order(
+    db: Session,
+    order_id: int,
+    created_by_user_id: int,
+    transaction_type: TransactionType = TransactionType.SALE,
+    session_id: Optional[int] = None
+) -> CashTransactionModel:
+    """Create a cash register transaction from an order payment."""
+    from ..models.order import Order as OrderModel
 
-        transactions = get_transactions_by_session(db, session_id)
-        expected_balance = db_session.initial_balance + sum(t.amount for t in transactions)
-        actual_balance = db_session.actual_balance or 0  # guard against None
+    # Get the order
+    db_order = db.query(OrderModel).filter(OrderModel.id == order_id).first()
+    if not db_order:
+        raise ValueError("Order not found")
 
-        difference = actual_balance - expected_balance
+    if db_order.is_paid:
+        raise ValueError("Order is already paid")
 
-        report_data = CashDifferenceReport(
-            session_id=session_id,
-            expected_balance=expected_balance,
-            actual_balance=actual_balance,
-            difference=difference,
-            notes=db_session.notes
-        )
+    # Get or create cash register session for the user
+    if not session_id:
+        # Find current open session for the user
+        current_session = get_current_session(db, created_by_user_id)
+        if not current_session:
+            raise ValueError("No open cash register session found. Please open a session first.")
+        session_id = current_session.id
 
-        logger.info(f"Generated cash difference report for session {session_id}")
-        return report_data
-    except Exception as e:
-        logger.error(f"Error generating difference report for session {session_id}: {e}")
-        raise
+    # Check if transaction already exists for this order
+    existing_transaction = db.query(CashTransactionModel).filter(
+        CashTransactionModel.order_id == order_id,
+        CashTransactionModel.session_id == session_id
+    ).first()
+
+    if existing_transaction:
+        raise ValueError("Transaction already exists for this order in the current session")
+
+    # Create the transaction
+    transaction = CashTransactionModel(
+        session_id=session_id,
+        transaction_type=transaction_type,
+        amount=db_order.total_amount,
+        description=f"Payment for order #{order_id}",
+        order_id=order_id,
+        created_by_user_id=created_by_user_id
+    )
+
+    db.add(transaction)
+    db.commit()
+    db.refresh(transaction)
+
+    logger.info(f"Created cash register transaction {transaction.id} for order {order_id}")
+    return transaction

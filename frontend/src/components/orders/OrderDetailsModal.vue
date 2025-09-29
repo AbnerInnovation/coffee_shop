@@ -10,7 +10,7 @@
         leave-from="opacity-100"
         leave-to="opacity-0"
       >
-        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
+        <div :class="backdropClasses" />
       </TransitionChild>
 
       <div class="fixed inset-0 z-10 overflow-y-auto">
@@ -193,16 +193,17 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import orderService from '@/services/orderService';
-import { 
-  Dialog, 
-  DialogPanel, 
-  DialogTitle, 
-  TransitionChild, 
-  TransitionRoot 
+import {
+  Dialog,
+  DialogPanel,
+  DialogTitle,
+  TransitionChild,
+  TransitionRoot
 } from '@headlessui/vue';
 import { XMarkIcon } from '@heroicons/vue/24/outline';
 import { useConfirm } from '@/composables/useConfirm';
 import { useToast } from '@/composables/useToast';
+import { useI18n } from 'vue-i18n';
 
 const props = defineProps({
   open: {
@@ -229,11 +230,21 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(['close', 'status-update', 'paymentCompleted']);
+const emit = defineEmits(['close', 'status-update', 'paymentCompleted', 'openCashRegister']);
 
 const { confirm } = useConfirm();
 const { showSuccess, showError } = useToast();
+const { t } = useI18n();
 const isMounted = ref(false);
+
+// Watch for confirmation dialog state
+const { isOpen: isConfirmOpen } = useConfirm();
+
+// Computed property for backdrop classes
+const backdropClasses = computed(() => [
+  'fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity',
+  isConfirmOpen.value ? 'pointer-events-none' : ''
+]);
 
 onMounted(() => {
   isMounted.value = true;
@@ -249,16 +260,16 @@ const handleClose = () => {
 const orderWithTotals = computed(() => {
   // If total_amount is already calculated, use it
   if (props.order.total_amount > 0) return props.order;
-  
+
   // Otherwise calculate from items
   const subtotal = props.order.items.reduce((sum, item) => {
     return sum + (item.quantity * item.unit_price);
   }, 0);
-  
+
   // Assuming 10% tax for example
   const tax = subtotal * 0.1;
   const total = subtotal + tax;
-  
+
   return {
     ...props.order,
     subtotal,
@@ -291,9 +302,9 @@ function formatDateTime(date) {
 }
 
 function updateStatus(newStatus) {
-  emit('status-update', { 
-    orderId: props.order.id, 
-    status: newStatus 
+  emit('status-update', {
+    orderId: props.order.id,
+    status: newStatus
   });
   emit('close');
 }
@@ -306,7 +317,7 @@ async function cancelOrder() {
     cancelText: 'No, keep it',
     confirmClass: 'bg-red-600 hover:bg-red-700 focus:ring-red-500'
   });
-  
+
   if (confirmed) {
     updateStatus('Cancelled');
   }
@@ -319,11 +330,35 @@ function printOrder() {
 
 async function completePayment() {
   try {
-    await orderService.markOrderPaid(props.order.id);
+    await orderService.markOrderPaid(props.order.id, 'cash'); // Default to cash payment
     emit('paymentCompleted', props.order);
     emit('close');
   } catch (e) {
     console.error('Failed to complete payment:', e);
+    console.log('Full error object:', e);
+    console.log('Error response:', e.response);
+    console.log('Error response data:', e.response?.data);
+
+    // Handle specific cash register session error
+    const errorDetail = e.response?.data?.detail || '';
+    console.log('Error detail:', errorDetail);
+
+    if (errorDetail.includes('No open cash register session found') || errorDetail.includes('cash register session')) {
+      const openSession = await confirm(
+        t('app.views.cashRegister.cashRegisterSessionRequiredTitle'),
+        t('app.views.cashRegister.cashRegisterSessionRequiredMessage'),
+        t('app.views.cashRegister.openCashRegisterButton'),
+        t('app.views.cashRegister.cancelPaymentButton'),
+        'bg-blue-600 hover:bg-blue-700 focus:ring-blue-500'
+      );
+
+      if (openSession) {
+        emit('openCashRegister');
+      }
+    } else {
+      // Show generic error for other payment failures
+      showError(errorDetail || t('app.views.cashRegister.paymentFailedGeneric'));
+    }
   }
 }
 </script>

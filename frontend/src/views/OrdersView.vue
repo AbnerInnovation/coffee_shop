@@ -148,7 +148,7 @@
 
       <!-- Order Details Modal -->
       <OrderDetails v-if="isOrderDetailsOpen && selectedOrder" :open="isOrderDetailsOpen" :order="selectedOrder"
-        @close="closeOrderDetails" @status-update="handleStatusUpdate" @paymentCompleted="handlePaymentCompleted" @edit-order="openEditOrder" />
+        @close="closeOrderDetails" @status-update="handleStatusUpdate" @paymentCompleted="handlePaymentCompleted" @edit-order="openEditOrder" @openCashRegister="handleOpenCashRegister" />
 
       <!-- New Order Modal -->
       <NewOrderModal :open="isNewOrderModalOpen"
@@ -542,11 +542,22 @@ const handlePaymentCompleted = async (updatedOrder: any) => {
   console.log('Payment completed for order:', updatedOrder);
   try {
     showSuccess(t('app.views.orders.messages.payment_completed_success', { id: updatedOrder.id }) as string);
-    // Refresh the list from backend to ensure full consistency
+
+    // Refresh the orders list
     await fetchOrders(true);
+
+    // Emit event to refresh cash register if it's open
+    window.dispatchEvent(new CustomEvent('orderPaymentCompleted', {
+      detail: { orderId: updatedOrder.id }
+    }));
   } catch (e) {
     console.error('Failed to update order after payment completion:', e);
   }
+};
+
+const handleOpenCashRegister = () => {
+  // Navigate to cash register view
+  router.push('/cash-register');
 };
 
 
