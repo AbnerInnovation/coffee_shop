@@ -110,34 +110,6 @@
     "price_non_negative": "Price cannot be negative"
   },
   "views": {
-    "cashRegister": {
-      "title": "Cash Register",
-      "subtitle": "Manage cash register sessions and transactions",
-      "currentSession": "Current Session",
-      "initialBalance": "Initial Balance",
-      "currentBalance": "Current Balance",
-      "transactions": "Transactions",
-      "noSession": "No cash register session is currently open.",
-      "openSession": "Open Session",
-      "closeSession": "Close Session",
-      "cutSession": "Cut Session",
-      "cut": "Cut",
-      "close": "Close",
-      "actualBalance": "Actual Balance",
-      "notes": "Notes",
-      "summary": "Summary",
-      "totalSales": "Total Sales",
-      "totalRefunds": "Total Refunds",
-      "totalTips": "Total Tips",
-      "netCashFlow": "Net Cash Flow",
-      "noTransactions": "No transactions yet.",
-      "sessionOpened": "Session opened successfully",
-      "sessionClosed": "Session closed successfully",
-      "cutPerformed": "Cut performed successfully",
-      "sessionOpenFailed": "Failed to open session",
-      "sessionCloseFailed": "Failed to close session",
-      "cutFailed": "Failed to perform cut"
-    },
     "orders": {
       "title": "Orders",
       "try_again": "Try again",
@@ -452,36 +424,6 @@
       "sessionDetailsNotImplemented": "Session details view not yet implemented",
       "sessionReportGenerated": "Session report generated",
       "errorGeneratingReport": "Error generating session report"
-    },
-    "orders": {
-      "title": "Orders",
-      "subtitle": "Manage orders and their status",
-      "loading": "Loading orders...",
-      "order_title": "Order #{id}",
-      "order_number": "Order #",
-      "table": "Table",
-      "order_time": "Order Time",
-      "customer": "Customer",
-      "no_name": "No name provided",
-      "takeaway": "Takeaway",
-      "order_items": "Order Items",
-      "headers": {
-        "item": "Item",
-        "qty": "Qty",
-        "price": "Price",
-        "total": "Total"
-      },
-      "note": "Note:",
-      "special_instructions": "Special Instructions:",
-      "subtotal": "Subtotal",
-      "tax": "Tax ({rate}%)",
-      "total": "Total",
-      "order_notes": "Order Notes",
-      "complete_payment": "Complete Payment",
-      "mark_ready": "Mark as Ready",
-      "mark_completed": "Mark as Completed",
-      "print_receipt": "Print Receipt",
-      "close": "Close"
     }
   }
 }
