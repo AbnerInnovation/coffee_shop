@@ -10,6 +10,12 @@ class OrderStatus(str, Enum):
     COMPLETED = "completed"  # Final state (served/delivered + paid)
     CANCELLED = "cancelled"
 
+class PaymentMethod(str, Enum):
+    CASH = "cash"
+    CARD = "card"
+    DIGITAL = "digital"
+    OTHER = "other"
+
 class OrderItemBase(BaseModel):
     menu_item_id: int
     variant_id: Optional[int] = None
@@ -68,6 +74,7 @@ class OrderBase(BaseModel):
     notes: Optional[str] = None
     status: OrderStatus = OrderStatus.PENDING
     is_paid: bool = False
+    payment_method: Optional[PaymentMethod] = None
 
 class OrderCreate(OrderBase):
     items: List[OrderItemCreate]
@@ -77,6 +84,7 @@ class OrderUpdate(BaseModel):
     notes: Optional[str] = None
     status: Optional[OrderStatus] = None
     is_paid: Optional[bool] = None
+    payment_method: Optional[PaymentMethod] = None
 
 class OrderInDBBase(OrderBase):
     id: int

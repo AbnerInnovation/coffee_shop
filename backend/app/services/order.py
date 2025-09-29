@@ -1,14 +1,13 @@
 from datetime import datetime
-from sqlalchemy import or_
-from typing import List, Optional
+from sqlalchemy import or_, and_
+from typing import List, Optional, Dict, Any
 import logging
-from sqlalchemy.orm import Session, selectinload, joinedload
+from sqlalchemy.orm import Session, joinedload
 
 from ..models.order import Order as OrderModel, OrderStatus
 from ..models.order_item import OrderItem as OrderItemModel
 from ..models.menu import MenuItem, MenuItemVariant
 from ..schemas.order import OrderCreate, OrderUpdate, OrderItemCreate, OrderItemUpdate
-
 
 # -----------------------------
 # Serialization helpers
@@ -27,7 +26,6 @@ def serialize_menu_item(menu_item: Optional[MenuItem]) -> Optional[dict]:
         "is_available": menu_item.is_available,
     }
 
-
 def serialize_variant(variant: Optional[MenuItemVariant]) -> Optional[dict]:
     if not variant:
         return None
@@ -37,7 +35,6 @@ def serialize_variant(variant: Optional[MenuItemVariant]) -> Optional[dict]:
         "price": float(variant.price) if variant.price is not None else 0.0,
         "description": getattr(variant, "description", None),
     }
-
 
 def serialize_order_item(item: OrderItemModel) -> dict:
     return {
@@ -55,7 +52,6 @@ def serialize_order_item(item: OrderItemModel) -> dict:
         "menu_item": serialize_menu_item(item.menu_item),
     }
 
-
 def serialize_order(order: OrderModel) -> dict:
     return {
         "id": order.id,
@@ -72,6 +68,34 @@ def serialize_order(order: OrderModel) -> dict:
         "items": [serialize_order_item(item) for item in getattr(order, "items", [])],
     }
 
+# -----------------------------
+# Query helpers
+# -----------------------------
+
+def apply_filters(query, filters: Dict[str, Any]):
+    if not filters:
+        return query
+
+    if filters.get("status") is not None:
+        query = query.filter(OrderModel.status == filters["status"])
+
+    if filters.get("table_id") is not None:
+        query = query.filter(OrderModel.table_id == filters["table_id"])
+
+    if not filters.get("include_deleted", False):
+        query = query.filter(OrderModel.deleted_at.is_(None))
+
+    if filters.get("start_date"):
+        query = query.filter(OrderModel.created_at >= filters["start_date"])
+
+    if filters.get("end_date"):
+        query = query.filter(OrderModel.created_at <= filters["end_date"])
+
+    if filters.get("search"):
+        search_term = f"%{filters['search']}%"
+        query = query.filter(or_(OrderModel.notes.ilike(search_term), OrderModel.customer_name.ilike(search_term)))
+
+    return query
 
 # -----------------------------
 # Queries
@@ -81,9 +105,7 @@ def get_orders(
     db: Session,
     skip: int = 0,
     limit: int = 100,
-    status: Optional[OrderStatus] = None,
-    table_id: Optional[int] = None,
-    include_deleted: bool = False,
+    **filters,
 ) -> List[dict]:
     try:
         query = db.query(OrderModel).options(
@@ -92,23 +114,14 @@ def get_orders(
             joinedload(OrderModel.table),
             joinedload(OrderModel.user),
         )
-        
-        # Filter out deleted orders unless explicitly requested
-        if not include_deleted:
-            query = query.filter(OrderModel.deleted_at.is_(None))
-        
-        if status is not None:
-            query = query.filter(OrderModel.status == status)
-        if table_id is not None:
-            query = query.filter(OrderModel.table_id == table_id)
 
+        query = apply_filters(query, filters or {})
         orders = query.order_by(OrderModel.created_at.desc()).offset(skip).limit(limit).all()
-        return [serialize_order(order) for order in orders]
 
+        return [serialize_order(order) for order in orders]
     except Exception as e:
         logging.error(f"Error in get_orders: {str(e)}", exc_info=True)
         raise
-
 
 def get_order(db: Session, order_id: int, include_deleted: bool = False) -> Optional[dict]:
     try:
@@ -118,17 +131,15 @@ def get_order(db: Session, order_id: int, include_deleted: bool = False) -> Opti
             joinedload(OrderModel.table),
             joinedload(OrderModel.user),
         ).filter(OrderModel.id == order_id)
-        
+
         if not include_deleted:
             query = query.filter(OrderModel.deleted_at.is_(None))
-            
+
         db_order = query.first()
         return serialize_order(db_order) if db_order else None
-
     except Exception as e:
         logging.error(f"Error in get_order: {str(e)}", exc_info=True)
         raise
-
 
 # -----------------------------
 # CRUD
@@ -143,7 +154,7 @@ def create_order_with_items(db: Session, order: OrderCreate) -> dict:
         updated_at=datetime.utcnow(),
     )
     db.add(db_order)
-    db.flush()  # get order ID
+    db.flush()
 
     total_amount = 0.0
 
@@ -155,14 +166,10 @@ def create_order_with_items(db: Session, order: OrderCreate) -> dict:
         variant = None
         unit_price = menu_item.price
         if item.variant_id:
-            variant = (
-                db.query(MenuItemVariant)
-                .filter(
-                    MenuItemVariant.id == item.variant_id,
-                    MenuItemVariant.menu_item_id == item.menu_item_id,
-                )
-                .first()
-            )
+            variant = db.query(MenuItemVariant).filter(
+                MenuItemVariant.id == item.variant_id,
+                MenuItemVariant.menu_item_id == item.menu_item_id,
+            ).first()
             if not variant:
                 raise ValueError(f"Variant {item.variant_id} not found for menu item {item.menu_item_id}")
             unit_price = variant.price
@@ -184,8 +191,8 @@ def create_order_with_items(db: Session, order: OrderCreate) -> dict:
     db_order.total_amount = total_amount
     db_order.updated_at = datetime.utcnow()
     db.commit()
-    return get_order(db, db_order.id)
 
+    return get_order(db, db_order.id)
 
 def update_order(db: Session, db_order: OrderModel, order: OrderUpdate) -> dict:
     update_data = order.dict(exclude_unset=True)
@@ -196,23 +203,15 @@ def update_order(db: Session, db_order: OrderModel, order: OrderUpdate) -> dict:
     db.add(db_order)
     db.commit()
     db.refresh(db_order)
-    
-    # Return the serialized order
     return serialize_order(db_order)
 
-
 def delete_order(db: Session, db_order: OrderModel) -> None:
-    # Soft delete the order
     db_order.deleted_at = datetime.utcnow()
     db.add(db_order)
-    
-    # Also soft delete all order items
     for item in db_order.items:
         item.deleted_at = datetime.utcnow()
         db.add(item)
-    
     db.commit()
-
 
 # -----------------------------
 # Order items
@@ -224,7 +223,6 @@ def get_order_item(db: Session, item_id: int, include_deleted: bool = False) -> 
         query = query.filter(OrderItemModel.deleted_at.is_(None))
     return query.first()
 
-
 def add_order_item(db: Session, db_order: OrderModel, item: OrderItemCreate, unit_price: float) -> dict:
     menu_item = db.query(MenuItem).filter(MenuItem.id == item.menu_item_id).first()
     if not menu_item:
@@ -233,14 +231,10 @@ def add_order_item(db: Session, db_order: OrderModel, item: OrderItemCreate, uni
     variant = None
     unit_price = menu_item.price
     if item.variant_id:
-        variant = (
-            db.query(MenuItemVariant)
-            .filter(
-                MenuItemVariant.id == item.variant_id,
-                MenuItemVariant.menu_item_id == item.menu_item_id,
-            )
-            .first()
-        )
+        variant = db.query(MenuItemVariant).filter(
+            MenuItemVariant.id == item.variant_id,
+            MenuItemVariant.menu_item_id == item.menu_item_id,
+        ).first()
         if not variant:
             raise ValueError(f"Variant {item.variant_id} not found for menu item {item.menu_item_id}")
         unit_price = variant.price
@@ -257,29 +251,20 @@ def add_order_item(db: Session, db_order: OrderModel, item: OrderItemCreate, uni
         updated_at=datetime.utcnow(),
     )
     db.add(db_item)
-
     db_order.total_amount = (db_order.total_amount or 0) + (unit_price * item.quantity)
     db_order.updated_at = datetime.utcnow()
-
     db.commit()
     db.refresh(db_item)
-
     return serialize_order_item(db_item)
-
 
 def update_order_item(db: Session, db_item: OrderItemModel, item: OrderItemUpdate) -> dict:
     update_data = item.dict(exclude_unset=True)
-
     if "variant_id" in update_data and update_data["variant_id"] != db_item.variant_id:
         if update_data["variant_id"]:
-            variant = (
-                db.query(MenuItemVariant)
-                .filter(
-                    MenuItemVariant.id == update_data["variant_id"],
-                    MenuItemVariant.menu_item_id == db_item.menu_item_id,
-                )
-                .first()
-            )
+            variant = db.query(MenuItemVariant).filter(
+                MenuItemVariant.id == update_data["variant_id"],
+                MenuItemVariant.menu_item_id == db_item.menu_item_id,
+            ).first()
             if not variant:
                 raise ValueError(f"Variant {update_data['variant_id']} not found")
             update_data["unit_price"] = variant.price
@@ -292,7 +277,6 @@ def update_order_item(db: Session, db_item: OrderItemModel, item: OrderItemUpdat
         setattr(db_item, field, value)
 
     db_item.updated_at = datetime.utcnow()
-
     order = db.query(OrderModel).filter(OrderModel.id == db_item.order_id).first()
     if order:
         order.total_amount = sum(i.quantity * (i.unit_price or 0) for i in order.items)
@@ -300,25 +284,16 @@ def update_order_item(db: Session, db_item: OrderItemModel, item: OrderItemUpdat
 
     db.commit()
     db.refresh(db_item)
-
     return serialize_order_item(db_item)
 
-
 def delete_order_item(db: Session, db_item: OrderItemModel) -> None:
-    # Soft delete the order item
     db_item.deleted_at = datetime.utcnow()
     db.add(db_item)
-    
-    # Update the order total
     order = db.query(OrderModel).filter(OrderModel.id == db_item.order_id).first()
     if order:
-        # Recalculate the total based on non-deleted items
         order.total_amount = sum(
-            item.quantity * item.unit_price 
-            for item in order.items 
-            if item.deleted_at is None and item.id != db_item.id
+            item.quantity * item.unit_price for item in order.items if item.deleted_at is None and item.id != db_item.id
         )
         order.updated_at = datetime.utcnow()
         db.add(order)
-    
     db.commit()

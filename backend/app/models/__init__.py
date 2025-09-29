@@ -5,12 +5,26 @@ from .user import User, UserRole
 from .menu import MenuItem, MenuItemVariant, Category
 from .table import Table
 from .order import Order, OrderItem, OrderStatus
+from .cash_register import (
+    CashRegisterSession,
+    CashTransaction,
+    CashRegisterReport,
+    SessionStatus,
+    TransactionType,
+    ReportType
+)
 
 # Make models available for import from app.models
 __all__ = [
-    "Base", "BaseModel", 
+    "Base", "BaseModel",
     "User", "UserRole",
     "MenuItem", "MenuItemVariant", "Category",
     "Table",
-    "Order", "OrderItem", "OrderStatus"
+    "Order", "OrderItem", "OrderStatus",
+    "CashRegisterSession",
+    "CashTransaction",
+    "CashRegisterReport",
+    "SessionStatus",
+    "TransactionType",
+    "ReportType"
 ]

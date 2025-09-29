@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from sqlalchemy.orm import Session, selectinload
-from typing import List
+from typing import List, Optional
 
 from ...db.base import get_db
 from ...models.order import Order as OrderModel, OrderStatus
@@ -21,25 +21,26 @@ router = APIRouter(
 
 @router.get("/", response_model=List[Order])
 async def read_orders(
-    skip: int = 0, 
+    skip: int = 0,
     limit: int = 100,
-    status: OrderStatus = None,
-    table_id: int = None,
-    db: Session = Depends(get_db)
+    status: Optional[OrderStatus] = None,
+    table_id: Optional[int] = None,
+    db: Session = Depends(get_db),
 ) -> List[Order]:
     """
     Retrieve orders with optional filtering.
     """
     try:
         return order_service.get_orders(
-            db, 
-            skip=skip, 
-            limit=limit, 
+            db,
+            skip=skip,
+            limit=limit,
             status=status,
             table_id=table_id
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error retrieving orders: {str(e)}")
+
 
 
 @router.post("/", response_model=Order, status_code=status.HTTP_201_CREATED)

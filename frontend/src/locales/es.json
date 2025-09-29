@@ -2,12 +2,13 @@
   "app": {
     "title": "Coffee Shop Admin",
     "nav": {
-      "dashboard": "Tablero",
+      "dashboard": "Inicio",
       "menu": "Menú",
-      "orders": "Órdenes",
+      "orders": "Pedidos",
       "kitchen": "Cocina",
       "tables": "Mesas",
-      "categories": "Categorías"
+      "categories": "Categorías",
+      "cash_register": "Caja Registradora"
     },
     "actions": {
       "sign_out": "Cerrar sesión",
@@ -108,6 +109,34 @@
     "price_non_negative": "El precio no puede ser negativo"
   },
   "views": {
+    "cashRegister": {
+      "title": "Caja Registradora",
+      "subtitle": "Gestionar sesiones de caja registradora y transacciones",
+      "currentSession": "Sesión Actual",
+      "initialBalance": "Saldo Inicial",
+      "currentBalance": "Saldo Actual",
+      "transactions": "Transacciones",
+      "noSession": "No hay una sesión de caja registradora abierta actualmente.",
+      "openSession": "Abrir Sesión",
+      "closeSession": "Cerrar Sesión",
+      "cutSession": "Cortar Sesión",
+      "cut": "Cortar",
+      "close": "Cerrar",
+      "actualBalance": "Saldo Real",
+      "notes": "Notas",
+      "summary": "Resumen",
+      "totalSales": "Ventas Totales",
+      "totalRefunds": "Reembolsos Totales",
+      "totalTips": "Propinas Totales",
+      "netCashFlow": "Flujo de Efectivo Neto",
+      "noTransactions": "Aún no hay transacciones.",
+      "sessionOpened": "Sesión abierta exitosamente",
+      "sessionClosed": "Sesión cerrada exitosamente",
+      "cutPerformed": "Corte realizado exitosamente",
+      "sessionOpenFailed": "Error al abrir sesión",
+      "sessionCloseFailed": "Error al cerrar sesión",
+      "cutFailed": "Error al realizar corte"
+    },
     "orders": {
       "title": "Órdenes",
       "try_again": "Intentar de nuevo",

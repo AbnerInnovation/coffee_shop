@@ -27,6 +27,12 @@ export const routes: RouteRecordRaw[] = [
     meta: { requiresAuth: true }
   },
   {
+    path: '/cash-register',
+    name: 'CashRegister',
+    component: () => import('./views/CashRegisterView.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
     path: '/orders',
     name: 'Orders',
     component: () => import('./views/OrdersView.vue'),

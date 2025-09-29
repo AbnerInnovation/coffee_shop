@@ -7,7 +7,8 @@
       "orders": "Orders",
       "kitchen": "Kitchen",
       "tables": "Tables",
-      "categories": "Categories"
+      "categories": "Categories",
+      "cash_register": "Cash Register"
     },
     "actions": {
       "sign_out": "Sign out",
@@ -108,6 +109,34 @@
     "price_non_negative": "Price cannot be negative"
   },
   "views": {
+    "cashRegister": {
+      "title": "Cash Register",
+      "subtitle": "Manage cash register sessions and transactions",
+      "currentSession": "Current Session",
+      "initialBalance": "Initial Balance",
+      "currentBalance": "Current Balance",
+      "transactions": "Transactions",
+      "noSession": "No cash register session is currently open.",
+      "openSession": "Open Session",
+      "closeSession": "Close Session",
+      "cutSession": "Cut Session",
+      "cut": "Cut",
+      "close": "Close",
+      "actualBalance": "Actual Balance",
+      "notes": "Notes",
+      "summary": "Summary",
+      "totalSales": "Total Sales",
+      "totalRefunds": "Total Refunds",
+      "totalTips": "Total Tips",
+      "netCashFlow": "Net Cash Flow",
+      "noTransactions": "No transactions yet.",
+      "sessionOpened": "Session opened successfully",
+      "sessionClosed": "Session closed successfully",
+      "cutPerformed": "Cut performed successfully",
+      "sessionOpenFailed": "Failed to open session",
+      "sessionCloseFailed": "Failed to close session",
+      "cutFailed": "Failed to perform cut"
+    },
     "orders": {
       "title": "Orders",
       "try_again": "Try again",

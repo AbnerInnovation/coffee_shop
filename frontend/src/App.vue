@@ -192,6 +192,7 @@ const navigation = ref([
   { name: 'orders', labelKey: 'app.nav.orders', to: '/orders', current: false },
   { name: 'kitchen', labelKey: 'app.nav.kitchen', to: '/kitchen', current: false },
   { name: 'tables', labelKey: 'app.nav.tables', to: '/tables', current: false },
+  { name: 'cash-register', labelKey: 'app.nav.cash_register', to: '/cash-register', current: false },
 ]);
 
 const isMobileMenuOpen = ref(false);
