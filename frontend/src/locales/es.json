@@ -24,7 +24,9 @@
       "save": "Guardar",
       "delete": "Eliminar",
       "create": "Crear",
-      "update": "Actualizar"
+      "view": "Ver",
+      "update": "Actualizar",
+      "search": "Buscar"
     },
     "status": {
       "loading": "Cargando...",
@@ -140,8 +142,27 @@
       "netCashFlow": "Flujo de Efectivo Neto",
       "cashPayments": "Pagos en Efectivo",
       "cardPayments": "Pagos con Tarjeta",
-      "digitalPayments": "Pagos Digitales",
-      "otherPayments": "Otros Pagos"
+      "pastSessions": "Sesiones Pasadas",
+      "loading": "Cargando sesiones pasadas...",
+      "noPastSessions": "No se encontraron sesiones pasadas.",
+      "searchSessions": "Buscar sesiones...",
+      "allStatuses": "Todos los Estados",
+      "statusOpen": "Abierta",
+      "statusClosed": "Cerrada",
+      "openedBy": "Abierta por",
+      "finalBalance": "Final",
+      "sessions": "sesiones",
+      "showing": "Mostrando",
+      "to": "a",
+      "of": "de",
+      "previous": "Anterior",
+      "next": "Siguiente",
+      "view": "Ver",
+      "report": "Reporte",
+      "errorLoadingPastSessions": "Error al cargar sesiones pasadas",
+      "sessionDetailsNotImplemented": "Vista de detalles de sesión aún no implementada",
+      "sessionReportGenerated": "Reporte de sesión generado",
+      "errorGeneratingReport": "Error al generar reporte de sesión"
     },
     "orders": {
       "title": "Órdenes",

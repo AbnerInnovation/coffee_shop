@@ -24,7 +24,8 @@
       "save": "Save",
       "delete": "Delete",
       "create": "Create",
-      "update": "Update"
+      "update": "Update",
+      "search": "Search"
     },
     "status": {
       "loading": "Loading...",
@@ -429,7 +430,28 @@
       "cashPayments": "Cash Payments",
       "cardPayments": "Card Payments",
       "digitalPayments": "Digital Payments",
-      "otherPayments": "Other Payments"
+      "otherPayments": "Other Payments",
+      "pastSessions": "Past Sessions",
+      "loading": "Loading past sessions...",
+      "noPastSessions": "No past sessions found.",
+      "searchSessions": "Search sessions...",
+      "allStatuses": "All Statuses",
+      "statusOpen": "Open",
+      "statusClosed": "Closed",
+      "openedBy": "Opened by",
+      "finalBalance": "Final",
+      "sessions": "sessions",
+      "showing": "Showing",
+      "to": "to",
+      "of": "of",
+      "previous": "Previous",
+      "next": "Next",
+      "view": "View",
+      "report": "Report",
+      "errorLoadingPastSessions": "Error loading past sessions",
+      "sessionDetailsNotImplemented": "Session details view not yet implemented",
+      "sessionReportGenerated": "Session report generated",
+      "errorGeneratingReport": "Error generating session report"
     },
     "orders": {
       "title": "Orders",

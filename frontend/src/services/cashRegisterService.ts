@@ -5,6 +5,28 @@ import { authService } from './authService';
 const CASH_REGISTER_ENDPOINT = API_CONFIG.ENDPOINTS.CASH_REGISTER;
 
 export const cashRegisterService = {
+  // Past sessions endpoints
+  async getPastSessions(filters?: {
+    page?: number;
+    limit?: number;
+    start_date?: string;
+    end_date?: string;
+    status?: string;
+  }) {
+    const params = new URLSearchParams();
+    if (filters?.page) params.append('page', filters.page.toString());
+    if (filters?.limit) params.append('limit', filters.limit.toString());
+    if (filters?.start_date) params.append('start_date', filters.start_date);
+    if (filters?.end_date) params.append('end_date', filters.end_date);
+    if (filters?.status) params.append('status', filters.status);
+
+    const queryString = params.toString();
+    const url = `${CASH_REGISTER_ENDPOINT}/sessions${queryString ? `?${queryString}` : ''}`;
+
+    const response = await api.get(url);
+    return response;
+  },
+
   // Session endpoints
   async getCurrentSession() {
     console.log('Fetching current session from:', `${CASH_REGISTER_ENDPOINT}/sessions/current`)

@@ -1,122 +1,141 @@
 <template>
   <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <!-- Header -->
+      <!-- Tabs -->
       <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100">
-          {{ t('app.views.cashRegister.title') || 'Cash Register' }}
-        </h1>
-        <p class="mt-2 text-gray-600 dark:text-gray-400">
-          {{ t('app.views.cashRegister.subtitle') || 'Manage cash register sessions and transactions' }}
-        </p>
-      </div>
-
-      <!-- Current Session Status -->
-      <div v-if="currentSession" class="mb-8 bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-        <div class="flex justify-between items-center mb-4">
-          <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100">
+        <nav class="flex space-x-8">
+          <button
+            @click="activeTab = 'current'"
+            :class="activeTab === 'current' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+            class="whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm"
+          >
             {{ t('app.views.cashRegister.currentSession') || 'Current Session' }}
-          </h2>
-          <div class="flex space-x-2">
-            <button
-              @click="loadCurrentSession"
-              :disabled="isRefreshing"
-              class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <span v-if="isRefreshing" class="inline-block animate-spin mr-2">⟳</span>
-              {{ t('app.views.cashRegister.refresh') || 'Refresh' }}
-            </button>
-            <button
-              @click="openCutModal"
-              class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-            >
-              {{ t('app.views.cashRegister.cut') || 'Cut' }}
-            </button>
-            <button
-              @click="openCloseModal"
-              class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
-            >
-              {{ t('app.views.cashRegister.close') || 'Close' }}
-            </button>
-          </div>
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div class="bg-green-50 dark:bg-green-900 p-4 rounded-md">
-            <h3 class="text-lg font-medium text-green-800 dark:text-green-200">
-              {{ t('app.views.cashRegister.initialBalance') || 'Initial Balance' }}
-            </h3>
-            <p class="text-2xl font-bold text-green-600 dark:text-green-400">
-              ${{ currentSession.initial_balance?.toFixed(2) || '0.00' }}
-            </p>
-          </div>
-          <div class="bg-blue-50 dark:bg-blue-900 p-4 rounded-md">
-            <h3 class="text-lg font-medium text-blue-800 dark:text-blue-200">
-              {{ t('app.views.cashRegister.currentBalance') || 'Current Balance' }}
-            </h3>
-            <p class="text-2xl font-bold text-blue-600 dark:text-blue-400">
-              ${{ currentBalance.toFixed(2) }}
-            </p>
-          </div>
-          <div class="bg-purple-50 dark:bg-purple-900 p-4 rounded-md">
-            <h3 class="text-lg font-medium text-purple-800 dark:text-purple-200">
-              {{ t('app.views.cashRegister.transactions') || 'Transactions' }}
-            </h3>
-            <p class="text-2xl font-bold text-purple-600 dark:text-purple-400">
-              {{ transactions.length }}
-            </p>
-          </div>
-        </div>
+          </button>
+          <button
+            @click="activeTab = 'past'"
+            :class="activeTab === 'past' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+            class="whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm"
+          >
+            {{ t('app.views.cashRegister.pastSessions') || 'Past Sessions' }}
+          </button>
+        </nav>
       </div>
 
-      <!-- No Session Message -->
-      <div v-else class="mb-8 text-center">
-        <p class="text-gray-600 dark:text-gray-400 mb-4">
-          {{ t('app.views.cashRegister.noSession') || 'No cash register session is currently open.' }}
-        </p>
-        <button
-          @click="openOpenModal"
-          class="px-6 py-3 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
-        >
-          {{ t('app.views.cashRegister.openSession') || 'Open Session' }}
-        </button>
-      </div>
-
-      <!-- Transactions List -->
-      <div class="bg-white dark:bg-gray-800 rounded-lg shadow">
-        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-          <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">
-            {{ t('app.views.cashRegister.transactions') || 'Transactions' }}
-          </h2>
+      <!-- Current Session Tab -->
+      <div v-if="activeTab === 'current'">
+        <div v-if="currentSession" class="mb-8 bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+          <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100">
+              {{ t('app.views.cashRegister.currentSession') || 'Current Session' }}
+            </h2>
+            <div class="flex space-x-2">
+              <button
+                @click="loadCurrentSession"
+                :disabled="isRefreshing"
+                class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <span v-if="isRefreshing" class="inline-block animate-spin mr-2">⟳</span>
+                {{ t('app.views.cashRegister.refresh') || 'Refresh' }}
+              </button>
+              <button
+                @click="openCutModal"
+                class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              >
+                {{ t('app.views.cashRegister.cut') || 'Cut' }}
+              </button>
+              <button
+                @click="openCloseModal"
+                class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+              >
+                {{ t('app.views.cashRegister.close') || 'Close' }}
+              </button>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="bg-green-50 dark:bg-green-900 p-4 rounded-md">
+              <h3 class="text-lg font-medium text-green-800 dark:text-green-200">
+                {{ t('app.views.cashRegister.initialBalance') || 'Initial Balance' }}
+              </h3>
+              <p class="text-2xl font-bold text-green-600 dark:text-green-400">
+                ${{ currentSession.initial_balance?.toFixed(2) || '0.00' }}
+              </p>
+            </div>
+            <div class="bg-blue-50 dark:bg-blue-900 p-4 rounded-md">
+              <h3 class="text-lg font-medium text-blue-800 dark:text-blue-200">
+                {{ t('app.views.cashRegister.currentBalance') || 'Current Balance' }}
+              </h3>
+              <p class="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                ${{ currentBalance.toFixed(2) }}
+              </p>
+            </div>
+            <div class="bg-purple-50 dark:bg-purple-900 p-4 rounded-md">
+              <h3 class="text-lg font-medium text-purple-800 dark:text-purple-200">
+                {{ t('app.views.cashRegister.transactions') || 'Transactions' }}
+              </h3>
+              <p class="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                {{ transactions.length }}
+              </p>
+            </div>
+          </div>
         </div>
-        <div v-if="transactions.length === 0" class="p-6 text-center">
-          <p class="text-gray-500 dark:text-gray-400">
-            {{ t('app.views.cashRegister.noTransactions') || 'No transactions yet.' }}
+
+        <!-- No Session Message -->
+        <div v-else class="mb-8 text-center">
+          <p class="text-gray-600 dark:text-gray-400 mb-4">
+            {{ t('app.views.cashRegister.noSession') || 'No cash register session is currently open.' }}
           </p>
+          <button
+            @click="openOpenModal"
+            class="px-6 py-3 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+          >
+            {{ t('app.views.cashRegister.openSession') || 'Open Session' }}
+          </button>
         </div>
-        <div v-else class="divide-y divide-gray-200 dark:divide-gray-700">
-          <div v-for="transaction in transactions" :key="transaction.id" class="px-6 py-4">
-            <div class="flex justify-between items-center">
-              <div>
-                <p class="text-sm font-medium text-gray-900 dark:text-gray-100">
-                  {{ transaction.description }}
-                </p>
-                <p class="text-sm text-gray-500 dark:text-gray-400">
-                  {{ formatDate(transaction.created_at) }}
-                </p>
-              </div>
-              <div class="text-right">
-                <p class="text-lg font-semibold" :class="transaction.amount >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'">
-                  {{ transaction.amount >= 0 ? '+' : '' }}${{ transaction.amount?.toFixed(2) || '0.00' }}
-                </p>
-                <p class="text-sm text-gray-500 dark:text-gray-400">
-                  {{ transaction.transaction_type }}
-                </p>
+
+        <!-- Transactions List -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow">
+          <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+            <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">
+              {{ t('app.views.cashRegister.transactions') || 'Transactions' }}
+            </h2>
+          </div>
+          <div v-if="transactions.length === 0" class="p-6 text-center">
+            <p class="text-gray-500 dark:text-gray-400">
+              {{ t('app.views.cashRegister.noTransactions') || 'No transactions yet.' }}
+            </p>
+          </div>
+          <div v-else class="divide-y divide-gray-200 dark:divide-gray-700">
+            <div v-for="transaction in transactions" :key="transaction.id" class="px-6 py-4">
+              <div class="flex justify-between items-center">
+                <div>
+                  <p class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                    {{ transaction.description }}
+                  </p>
+                  <p class="text-sm text-gray-500 dark:text-gray-400">
+                    {{ formatDate(transaction.created_at) }}
+                  </p>
+                </div>
+                <div class="text-right">
+                  <p class="text-lg font-semibold" :class="transaction.amount >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'">
+                    {{ transaction.amount >= 0 ? '+' : '' }}${{ transaction.amount?.toFixed(2) || '0.00' }}
+                  </p>
+                  <p class="text-sm text-gray-500 dark:text-gray-400">
+                    {{ transaction.transaction_type }}
+                  </p>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
 
+      <!-- Past Sessions Tab -->
+      <div v-if="activeTab === 'past'">
+        <PastSessionsView />
+      </div>
+
+      </div>
+  </div>
       <!-- Open Session Modal -->
       <div v-if="openModalOpen" class="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4">
         <div class="w-full max-w-md rounded-lg bg-white dark:bg-gray-900 p-6 shadow-lg">
@@ -301,20 +320,19 @@
             </button>
           </div>
         </div>
-      </div>
     </div>
-  </div>
 </template>
-
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { cashRegisterService } from '@/services/cashRegisterService'
 import { useToast } from '@/composables/useToast'
+import PastSessionsView from '@/components/PastSessionsView.vue'
 
 const { t } = useI18n()
 const toast = useToast()
 
+const activeTab = ref('current')
 const isRefreshing = ref(false)
 const openModalOpen = ref(false)
 const closeModalOpen = ref(false)
