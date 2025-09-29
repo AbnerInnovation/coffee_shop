@@ -25,7 +25,8 @@
       "delete": "Delete",
       "create": "Create",
       "update": "Update",
-      "search": "Search"
+      "search": "Search",
+      "close": "Close"
     },
     "status": {
       "loading": "Loading...",
@@ -423,7 +424,23 @@
       "errorLoadingPastSessions": "Error loading past sessions",
       "sessionDetailsNotImplemented": "Session details view not yet implemented",
       "sessionReportGenerated": "Session report generated",
-      "errorGeneratingReport": "Error generating session report"
+      "errorGeneratingReport": "Error generating session report",
+      "sessionDetails": "Session Details",
+      "sessionOverview": "Session Overview",
+      "startDate": "Start Date",
+      "endDate": "End Date",
+      "status": "Status",
+      "sessionSummary": "Session Summary",
+      "generateReport": "Generate Report",
+      "allTypes": "All Types",
+      "typeSale": "Sale",
+      "typeRefund": "Refund",
+      "typeTip": "Tip",
+      "typeAdjustment": "Adjustment",
+      "searchTransactions": "Search transactions...",
+      "noTransactionsFound": "No transactions found",
+      "sessionNotFound": "Session not found",
+      "errorLoadingSessionDetails": "Error loading session details"
     }
   }
 }

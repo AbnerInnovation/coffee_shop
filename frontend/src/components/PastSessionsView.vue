@@ -148,6 +148,13 @@
       </div>
     </div>
   </div>
+
+  <!-- Session Details Modal -->
+  <SessionDetailsModal
+    :is-visible="sessionDetailsModalOpen"
+    :session-id="selectedSessionId || undefined"
+    @close="closeSessionDetailsModal"
+  />
 </template>
 
 <script setup lang="ts">
@@ -155,6 +162,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { cashRegisterService } from '@/services/cashRegisterService'
 import { useToast } from '@/composables/useToast'
+import SessionDetailsModal from '@/components/SessionDetailsModal.vue'
 
 const { t } = useI18n()
 const toast = useToast()
@@ -172,6 +180,10 @@ const pagination = ref({
   totalPages: 0,
   offset: 0
 })
+
+// Modal state
+const sessionDetailsModalOpen = ref(false)
+const selectedSessionId = ref<number | null>(null)
 
 const loadPastSessions = async () => {
   try {
@@ -227,10 +239,13 @@ const loadPastSessions = async () => {
 }
 
 const viewSessionDetails = (sessionId: number) => {
-  // Emit event to parent component to handle session details view
-  // This could be implemented to show session details in a modal or navigate to a details page
-  console.log('View session details for session:', sessionId)
-  toast.showToast(t('app.views.cashRegister.sessionDetailsNotImplemented') || 'Session details view not yet implemented', 'info')
+  selectedSessionId.value = sessionId
+  sessionDetailsModalOpen.value = true
+}
+
+const closeSessionDetailsModal = () => {
+  sessionDetailsModalOpen.value = false
+  selectedSessionId.value = null
 }
 
 const viewSessionReport = async (sessionId: number) => {

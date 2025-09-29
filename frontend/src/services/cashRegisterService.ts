@@ -37,6 +37,13 @@ export const cashRegisterService = {
     return session;
   },
 
+  async getSessionById(sessionId: number) {
+    console.log('Fetching session details for ID:', sessionId)
+    const response = await api.get(`${CASH_REGISTER_ENDPOINT}/sessions/${sessionId}`);
+    console.log('Session details API response:', response)
+    return response;
+  },
+
   async openSession(initialBalance: number) {
     const currentUser = authService.getStoredUser();
     if (!currentUser) {
