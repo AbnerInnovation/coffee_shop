@@ -35,7 +35,6 @@
 
           <!-- Session details content -->
           <div v-else-if="session" class="space-y-6">
-            <!-- Session Overview -->
             <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
               <h4 class="text-md font-medium text-gray-900 dark:text-gray-100 mb-3">
                 {{ t('app.views.cashRegister.sessionOverview') || 'Session Overview' }}
@@ -137,6 +136,9 @@
                 </div>
               </div>
             </div>
+
+            <!-- Last Cut Information -->
+            <LastCutDisplay :lastCut="lastCut" :isLoading="lastCutLoading" />
 
             <!-- Transactions -->
             <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
@@ -263,9 +265,14 @@
               </div>
             </div>
           </div>
-        </div>
 
-        <!-- Modal footer -->
+          <!-- No session state -->
+          <div v-else class="flex justify-center items-center py-8">
+            <p class="text-gray-600 dark:text-gray-400">
+              {{ t('app.views.cashRegister.sessionNotFound') || 'Session not found' }}
+            </p>
+          </div>
+        </div>
         <div class="bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
           <button
             @click="closeModal"
@@ -289,10 +296,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { cashRegisterService } from '@/services/cashRegisterService'
 import { useToast } from '@/composables/useToast'
+import LastCutDisplay from '@/components/LastCutDisplay.vue'
 
 interface Props {
   isVisible: boolean
@@ -312,6 +320,8 @@ const session = ref<any>(null)
 const transactions = ref<any[]>([])
 const sessionSummary = ref<any>(null)
 const paymentBreakdown = ref<any>(null)
+const lastCut = ref<any>(null)
+const lastCutLoading = ref(false)
 
 // Transaction filtering and pagination
 const transactionSearchTerm = ref('')
@@ -325,7 +335,6 @@ const transactionPagination = ref({
 const filteredTransactions = computed(() => {
   let filtered = transactions.value
 
-  // Filter by search term
   if (transactionSearchTerm.value.trim()) {
     const searchTerm = transactionSearchTerm.value.toLowerCase()
     filtered = filtered.filter(transaction =>
@@ -333,7 +342,6 @@ const filteredTransactions = computed(() => {
     )
   }
 
-  // Filter by transaction type
   if (transactionTypeFilter.value) {
     filtered = filtered.filter(transaction =>
       transaction.transaction_type === transactionTypeFilter.value
@@ -358,8 +366,6 @@ const loadSessionDetails = async () => {
 
   try {
     isLoading.value = true
-
-    // Load session details directly by ID
     const sessionResponse = await cashRegisterService.getSessionById(props.sessionId)
     session.value = sessionResponse || null
 
@@ -368,11 +374,11 @@ const loadSessionDetails = async () => {
       return
     }
 
-    // Load transactions
     const transactionsResponse = await cashRegisterService.getTransactions(props.sessionId)
-    transactions.value = Array.isArray(transactionsResponse) ? transactionsResponse : transactionsResponse.data || []
+    transactions.value = Array.isArray(transactionsResponse)
+      ? transactionsResponse
+      : transactionsResponse.data || []
 
-    // Load session report for summary and payment breakdown
     try {
       const reportResponse = await cashRegisterService.getSessionReport(props.sessionId)
       const reportData = reportResponse.data || reportResponse
@@ -380,14 +386,30 @@ const loadSessionDetails = async () => {
       paymentBreakdown.value = reportData?.payment_breakdown || null
     } catch (reportError) {
       console.warn('Could not load session report:', reportError)
-      // Continue without report data
     }
 
+    loadLastCutForSession(props.sessionId)
   } catch (error: any) {
     console.error('Error loading session details:', error)
-    toast.showToast(t('app.views.cashRegister.errorLoadingSessionDetails') || 'Error loading session details', 'error')
+    toast.showToast(
+      t('app.views.cashRegister.errorLoadingSessionDetails') || 'Error loading session details',
+      'error'
+    )
   } finally {
     isLoading.value = false
+  }
+}
+
+const loadLastCutForSession = async (sessionId: number) => {
+  try {
+    lastCutLoading.value = true
+    const cutData = await cashRegisterService.getLastCut(sessionId)
+    lastCut.value = cutData || null
+  } catch (error) {
+    console.error('Error loading last cut for session:', error)
+    lastCut.value = null
+  } finally {
+    lastCutLoading.value = false
   }
 }
 
@@ -402,25 +424,32 @@ const generateReport = async () => {
     const report = await cashRegisterService.getSessionReport(props.sessionId)
     const reportData = report.data || report
     console.log('Generated session report:', reportData)
-    toast.showToast(t('app.views.cashRegister.sessionReportGenerated') || 'Session report generated', 'success')
-    // Here you could display the report in a new modal or download it
+    toast.showToast(
+      t('app.views.cashRegister.sessionReportGenerated') || 'Session report generated',
+      'success'
+    )
   } catch (error: any) {
     console.error('Error generating session report:', error)
-    toast.showToast(t('app.views.cashRegister.errorGeneratingReport') || 'Error generating session report', 'error')
+    toast.showToast(
+      t('app.views.cashRegister.errorGeneratingReport') || 'Error generating session report',
+      'error'
+    )
   }
 }
 
 const previousTransactionPage = () => {
   if (transactionPagination.value.page > 1) {
     transactionPagination.value.page--
-    transactionPagination.value.offset = (transactionPagination.value.page - 1) * transactionPagination.value.limit
+    transactionPagination.value.offset =
+      (transactionPagination.value.page - 1) * transactionPagination.value.limit
   }
 }
 
 const nextTransactionPage = () => {
   if (transactionPagination.value.page < totalTransactionPages.value) {
     transactionPagination.value.page++
-    transactionPagination.value.offset = (transactionPagination.value.page - 1) * transactionPagination.value.limit
+    transactionPagination.value.offset =
+      (transactionPagination.value.page - 1) * transactionPagination.value.limit
   }
 }
 
@@ -455,22 +484,27 @@ const formatDate = (dateString: string) => {
   return new Date(dateString).toLocaleString()
 }
 
-// Reset state when modal opens/closes
-watch([() => props.isVisible, () => props.sessionId], () => {
-  if (props.isVisible && props.sessionId) {
-    transactionSearchTerm.value = ''
-    transactionTypeFilter.value = ''
-    transactionPagination.value = {
-      page: 1,
-      limit: 10,
-      offset: 0
+watch(
+  [() => props.isVisible, () => props.sessionId],
+  () => {
+    if (props.isVisible && props.sessionId) {
+      transactionSearchTerm.value = ''
+      transactionTypeFilter.value = ''
+      transactionPagination.value = {
+        page: 1,
+        limit: 10,
+        offset: 0
+      }
+      loadSessionDetails()
+    } else {
+      session.value = null
+      transactions.value = []
+      sessionSummary.value = null
+      paymentBreakdown.value = null
+      lastCut.value = null
     }
-    loadSessionDetails()
-  } else {
-    session.value = null
-    transactions.value = []
-    sessionSummary.value = null
-    paymentBreakdown.value = null
-  }
-}, { immediate: true })
+  },
+  { immediate: true }
+)
 </script>
+
