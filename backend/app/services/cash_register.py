@@ -279,5 +279,49 @@ def create_transaction_from_order(
     db.commit()
     db.refresh(transaction)
 
-    logger.info(f"Created cash register transaction {transaction.id} for order {order_id}")
-    return transaction
+def get_last_cut(db: Session, session_id: int) -> Optional[DailySummaryReport]:
+    """Get the last cut (daily summary report) for a session."""
+    try:
+        # Find the most recent daily summary report for this session
+        last_report = db.query(CashRegisterReportModel)\
+            .filter(
+                CashRegisterReportModel.session_id == session_id,
+                CashRegisterReportModel.report_type == ReportType.DAILY_SUMMARY
+            )\
+            .order_by(CashRegisterReportModel.generated_at.desc())\
+            .first()
+
+        if not last_report:
+            return None
+
+        # Parse the JSON data back into a DailySummaryReport object
+        report_data = json.loads(last_report.data)
+        return DailySummaryReport(**report_data)
+    except Exception as e:
+        logger.error(f"Error getting last cut for session {session_id}: {e}")
+        raise
+
+def generate_cash_difference_report(db: Session, session_id: int) -> CashDifferenceReport:
+    """Generate a cash difference report for a session."""
+    try:
+        db_session = get_session(db, session_id)
+        if not db_session:
+            raise ValueError("Session not found")
+
+        transactions = get_transactions_by_session(db, session_id)
+        expected_balance = db_session.initial_balance + sum(t.amount for t in transactions)
+
+        # Use actual_balance if available, otherwise use final_balance
+        actual_balance = db_session.actual_balance or db_session.final_balance or 0
+        difference = actual_balance - expected_balance
+
+        return CashDifferenceReport(
+            session_id=session_id,
+            expected_balance=expected_balance,
+            actual_balance=actual_balance,
+            difference=difference,
+            notes=db_session.notes
+        )
+    except Exception as e:
+        logger.error(f"Error generating cash difference report for session {session_id}: {e}")
+        raise

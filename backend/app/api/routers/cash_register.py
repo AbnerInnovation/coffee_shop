@@ -177,15 +177,14 @@ def get_session_reports(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error retrieving session reports: {str(e)}")
 
-@router.get("/sessions/{session_id}/difference-report", response_model=CashDifferenceReport)
-def get_cash_difference_report(
+@router.get("/sessions/{session_id}/last-cut", response_model=Optional[DailySummaryReport])
+def get_last_cut(
     session_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
-) -> CashDifferenceReport:
+) -> Optional[DailySummaryReport]:
+    """Get the last cut (most recent daily summary report) for a session."""
     try:
-        return cash_register_service.generate_cash_difference_report(db, session_id)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        return cash_register_service.get_last_cut(db, session_id)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error generating difference report: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error retrieving last cut: {str(e)}")

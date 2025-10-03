@@ -4,18 +4,14 @@
       <!-- Tabs -->
       <div class="mb-8">
         <nav class="flex space-x-8">
-          <button
-            @click="activeTab = 'current'"
+          <button @click="activeTab = 'current'"
             :class="activeTab === 'current' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
-            class="whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm"
-          >
+            class="whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
             {{ t('app.views.cashRegister.currentSession') || 'Current Session' }}
           </button>
-          <button
-            @click="activeTab = 'past'"
+          <button @click="activeTab = 'past'"
             :class="activeTab === 'past' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
-            class="whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm"
-          >
+            class="whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
             {{ t('app.views.cashRegister.pastSessions') || 'Past Sessions' }}
           </button>
         </nav>
@@ -25,33 +21,21 @@
       <div v-if="activeTab === 'current'">
         <div v-if="currentSession" class="mb-8 bg-white dark:bg-gray-800 rounded-lg shadow p-6">
           <div class="flex justify-between items-center mb-4">
-            <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100">
-              {{ t('app.views.cashRegister.currentSession') || 'Current Session' }}
-            </h2>
             <div class="flex space-x-2">
-              <button
-                @click="loadCurrentSession"
-                :disabled="isRefreshing"
-                class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
+              <button @click="loadCurrentSession" :disabled="isRefreshing"
+                class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed">
                 <span v-if="isRefreshing" class="inline-block animate-spin mr-2">⟳</span>
                 {{ t('app.views.cashRegister.refresh') || 'Refresh' }}
               </button>
-              <button
-                @click="openCutModal"
-                class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-              >
+              <button @click="openCutModal" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
                 {{ t('app.views.cashRegister.cut') || 'Cut' }}
               </button>
-              <button
-                @click="openCloseModal"
-                class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
-              >
+              <button @click="openCloseModal" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">
                 {{ t('app.views.cashRegister.close') || 'Close' }}
               </button>
             </div>
           </div>
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
             <div class="bg-green-50 dark:bg-green-900 p-4 rounded-md">
               <h3 class="text-lg font-medium text-green-800 dark:text-green-200">
                 {{ t('app.views.cashRegister.initialBalance') || 'Initial Balance' }}
@@ -76,7 +60,99 @@
                 {{ transactions.length }}
               </p>
             </div>
+
+
           </div>
+          <div class="bg-orange-50 dark:bg-orange-900 p-4 rounded-md">
+              <h3 class="text-lg font-medium text-orange-800 dark:text-orange-200">
+                {{ t('app.views.cashRegister.lastCut') || 'Last Cut' }}
+              </h3>
+              <div v-if="lastCutLoading" class="flex items-center justify-center py-2">
+                <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-orange-600"></div>
+                <span class="ml-2 text-orange-600 dark:text-orange-400">{{ t('app.views.cashRegister.loading') ||
+                  'Loading...' }}</span>
+              </div>
+              <div v-else-if="lastCut" class="space-y-3">
+                <div class="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <p class="text-lg font-bold text-orange-600 dark:text-orange-400">
+                      ${{ lastCut.net_cash_flow?.toFixed(2) || '0.00' }}
+                    </p>
+                    <p class="text-xs text-orange-500 dark:text-orange-300">
+                      {{ formatDate(lastCut.created_at) }}
+                    </p>
+                  </div>
+                  <div class="text-right">
+                    <p class="text-sm text-orange-600 dark:text-orange-400">
+                      Session #{{ lastCut.session_id }}
+                    </p>
+                    <p class="text-sm text-orange-600 dark:text-orange-400">
+                      {{ lastCut.total_transactions || 0 }} transactions
+                    </p>
+                  </div>
+                </div>
+
+                <!-- Payment Breakdown -->
+                <div class="border-t border-orange-200 dark:border-orange-800 pt-2">
+                  <h4 class="text-sm font-medium text-orange-800 dark:text-orange-200 mb-2">
+                    {{ t('app.views.cashRegister.paymentBreakdown') || 'Payment Breakdown' }}
+                  </h4>
+                  <div class="flex flex-col text-xs">
+                    <div v-if="lastCut.payment_breakdown?.cash !== undefined || lastCut.cash_payments !== undefined"
+                      class="flex justify-between">
+                      <span class="text-orange-600 dark:text-orange-300">{{ t('app.views.cashRegister.cash') || 'Cash'
+                        }}:</span>
+                      <span class="font-medium">${{ (lastCut.payment_breakdown?.cash || lastCut.cash_payments ||
+                        0).toFixed(2) }}</span>
+                    </div>
+                    <div v-if="lastCut.payment_breakdown?.card !== undefined || lastCut.card_payments !== undefined"
+                      class="flex justify-between">
+                      <span class="text-orange-600 dark:text-orange-300">{{ t('app.views.cashRegister.card') || 'Card'
+                        }}:</span>
+                      <span class="font-medium">${{ (lastCut.payment_breakdown?.card || lastCut.card_payments ||
+                        0).toFixed(2) }}</span>
+                    </div>
+                    <div v-if="lastCut.payment_breakdown?.digital !== undefined" class="flex justify-between">
+                      <span class="text-orange-600 dark:text-orange-300">{{ t('app.views.cashRegister.digital') ||
+                        'Digital' }}:</span>
+                      <span class="font-medium">${{ (lastCut.payment_breakdown?.digital || 0).toFixed(2) }}</span>
+                    </div>
+                    <div v-if="lastCut.payment_breakdown?.other !== undefined" class="flex justify-between">
+                      <span class="text-orange-600 dark:text-orange-300">{{ t('app.views.cashRegister.other') || 'Other'
+                        }}:</span>
+                      <span class="font-medium">${{ (lastCut.payment_breakdown?.other || 0).toFixed(2) }}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Transaction Summary -->
+                <div class="border-t border-orange-200 dark:border-orange-800 pt-2">
+                  <h4 class="text-sm font-medium text-orange-800 dark:text-orange-200 mb-2">
+                    {{ t('app.views.cashRegister.transactionSummary') || 'Transaction Summary' }}
+                  </h4>
+                  <div class="grid grid-cols-2 gap-2 text-xs">
+                    <div class="flex justify-between">
+                      <span class="text-orange-600 dark:text-orange-300">{{ t('app.views.cashRegister.totalSales') ||
+                        'Sales' }}:</span>
+                      <span class="font-medium">${{ (lastCut.total_sales || 0).toFixed(2) }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                      <span class="text-orange-600 dark:text-orange-300">{{ t('app.views.cashRegister.totalRefunds') ||
+                        'Refunds' }}:</span>
+                      <span class="font-medium">${{ (lastCut.total_refunds || 0).toFixed(2) }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                      <span class="text-orange-600 dark:text-orange-300">{{ t('app.views.cashRegister.totalTips') ||
+                        'Tips' }}:</span>
+                      <span class="font-medium">${{ (lastCut.total_tips || 0).toFixed(2) }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <p v-else class="text-orange-600 dark:text-orange-400">
+                {{ t('app.views.cashRegister.noLastCut') || 'No cuts yet' }}
+              </p>
+            </div>
         </div>
 
         <!-- No Session Message -->
@@ -84,10 +160,7 @@
           <p class="text-gray-600 dark:text-gray-400 mb-4">
             {{ t('app.views.cashRegister.noSession') || 'No cash register session is currently open.' }}
           </p>
-          <button
-            @click="openOpenModal"
-            class="px-6 py-3 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
-          >
+          <button @click="openOpenModal" class="px-6 py-3 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">
             {{ t('app.views.cashRegister.openSession') || 'Open Session' }}
           </button>
         </div>
@@ -116,7 +189,8 @@
                   </p>
                 </div>
                 <div class="text-right">
-                  <p class="text-lg font-semibold" :class="transaction.amount >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'">
+                  <p class="text-lg font-semibold"
+                    :class="transaction.amount >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'">
                     {{ transaction.amount >= 0 ? '+' : '' }}${{ transaction.amount?.toFixed(2) || '0.00' }}
                   </p>
                   <p class="text-sm text-gray-500 dark:text-gray-400">
@@ -134,193 +208,145 @@
         <PastSessionsView />
       </div>
 
-      </div>
-  </div>
-      <!-- Open Session Modal -->
-      <div v-if="openModalOpen" class="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4">
-        <div class="w-full max-w-md rounded-lg bg-white dark:bg-gray-900 p-6 shadow-lg">
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-            {{ t('app.views.cashRegister.openSession') || 'Open Session' }}
-          </h3>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
-            {{ t('app.views.cashRegister.initialBalance') || 'Initial Balance' }}
-          </label>
-          <input
-            v-model="initialBalance"
-            type="number"
-            step="0.01"
-            class="w-full rounded-md border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          />
-          <div class="mt-6 flex justify-end space-x-3">
-            <button
-              type="button"
-              class="px-4 py-2 rounded-md border border-gray-300 dark:border-gray-700 text-sm"
-              @click="closeModals"
-            >
-              {{ t('app.actions.cancel') || 'Cancel' }}
-            </button>
-            <button
-              type="button"
-              class="px-4 py-2 rounded-md bg-indigo-600 text-white text-sm"
-              @click="openSession"
-            >
-              {{ t('app.actions.save') || 'Save' }}
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Close Session Modal -->
-      <div v-if="closeModalOpen" class="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4">
-        <div class="w-full max-w-md rounded-lg bg-white dark:bg-gray-900 p-6 shadow-lg">
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-            {{ t('app.views.cashRegister.closeSession') || 'Close Session' }}
-          </h3>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
-            {{ t('app.views.cashRegister.actualBalance') || 'Actual Balance' }}
-          </label>
-          <input
-            v-model="actualBalance"
-            type="number"
-            step="0.01"
-            class="w-full rounded-md border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          />
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mt-4 mb-1">
-            {{ t('app.views.cashRegister.notes') || 'Notes' }}
-          </label>
-          <textarea
-            v-model="closeNotes"
-            rows="3"
-            class="w-full rounded-md border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          ></textarea>
-          <div class="mt-6 flex justify-end space-x-3">
-            <button
-              type="button"
-              class="px-4 py-2 rounded-md border border-gray-300 dark:border-gray-700 text-sm"
-              @click="closeModals"
-            >
-              {{ t('app.actions.cancel') || 'Cancel' }}
-            </button>
-            <button
-              type="button"
-              class="px-4 py-2 rounded-md bg-red-600 text-white text-sm"
-              @click="closeSession"
-            >
-              {{ t('app.actions.save') || 'Save' }}
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Cut Modal -->
-      <div v-if="cutModalOpen" class="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4">
-        <div class="w-full max-w-lg rounded-lg bg-white dark:bg-gray-900 p-6 shadow-lg">
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-            {{ t('app.views.cashRegister.cutSession') || 'Cut Session' }}
-          </h3>
-          <div class="space-y-4">
-            <div>
-              <h4 class="font-medium text-gray-900 dark:text-gray-100">
-                {{ t('app.views.cashRegister.summary') || 'Summary' }}
-              </h4>
-              <div class="mt-2 space-y-2">
-                <div class="flex justify-between">
-                  <span class="text-gray-600 dark:text-gray-400">
-                    {{ t('app.views.cashRegister.totalSales') || 'Total Sales' }}
-                  </span>
-                  <span class="font-medium">${{ cutReport.total_sales?.toFixed(2) || '0.00' }}</span>
-                </div>
-                <div class="flex justify-between">
-                  <span class="text-gray-600 dark:text-gray-400">
-                    {{ t('app.views.cashRegister.totalRefunds') || 'Total Refunds' }}
-                  </span>
-                  <span class="font-medium">${{ cutReport.total_refunds?.toFixed(2) || '0.00' }}</span>
-                </div>
-                <div class="flex justify-between">
-                  <span class="text-gray-600 dark:text-gray-400">
-                    {{ t('app.views.cashRegister.totalTips') || 'Total Tips' }}
-                  </span>
-                  <span class="font-medium">${{ cutReport.total_tips?.toFixed(2) || '0.00' }}</span>
-                </div>
-                <div class="flex justify-between font-bold">
-                  <span class="text-gray-900 dark:text-gray-100">
-                    {{ t('app.views.cashRegister.netCashFlow') || 'Net Cash Flow' }}
-                  </span>
-                  <span>${{ cutReport.net_cash_flow?.toFixed(2) || '0.00' }}</span>
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <h4 class="font-medium text-gray-900 dark:text-gray-100">
-                {{ t('app.views.cashRegister.paymentBreakdown') || 'Payment Breakdown' }}
-              </h4>
-              <div class="mt-2 space-y-3">
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
-                    {{ t('app.views.cashRegister.cashPayments') || 'Cash Payments' }}
-                  </label>
-                  <input
-                    v-model="cashPayments"
-                    type="number"
-                    step="0.01"
-                    class="w-full rounded-md border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
-                </div>
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
-                    {{ t('app.views.cashRegister.cardPayments') || 'Card Payments' }}
-                  </label>
-                  <input
-                    v-model="cardPayments"
-                    type="number"
-                    step="0.01"
-                    class="w-full rounded-md border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
-                </div>
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
-                    {{ t('app.views.cashRegister.digitalPayments') || 'Digital Payments' }}
-                  </label>
-                  <input
-                    v-model="digitalPayments"
-                    type="number"
-                    step="0.01"
-                    class="w-full rounded-md border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
-                </div>
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
-                    {{ t('app.views.cashRegister.otherPayments') || 'Other Payments' }}
-                  </label>
-                  <input
-                    v-model="otherPayments"
-                    type="number"
-                    step="0.01"
-                    class="w-full rounded-md border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="mt-6 flex justify-end space-x-3">
-            <button
-              type="button"
-              class="px-4 py-2 rounded-md border border-gray-300 dark:border-gray-700 text-sm"
-              @click="closeModals"
-            >
-              {{ t('app.actions.cancel') || 'Cancel' }}
-            </button>
-            <button
-              type="button"
-              class="px-4 py-2 rounded-md bg-blue-600 text-white text-sm"
-              @click="performCut"
-            >
-              {{ t('app.actions.save') || 'Save' }}
-            </button>
-          </div>
-        </div>
     </div>
+  </div>
+  <!-- Open Session Modal -->
+  <div v-if="openModalOpen" class="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4">
+    <div class="w-full max-w-md rounded-lg bg-white dark:bg-gray-900 p-6 shadow-lg">
+      <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+        {{ t('app.views.cashRegister.openSession') || 'Open Session' }}
+      </h3>
+      <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+        {{ t('app.views.cashRegister.initialBalance') || 'Initial Balance' }}
+      </label>
+      <input v-model="initialBalance" type="number" step="0.01"
+        class="w-full rounded-md border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+      <div class="mt-6 flex justify-end space-x-3">
+        <button type="button" class="px-4 py-2 rounded-md border border-gray-300 dark:border-gray-700 text-sm"
+          @click="closeModals">
+          {{ t('app.actions.cancel') || 'Cancel' }}
+        </button>
+        <button type="button" class="px-4 py-2 rounded-md bg-indigo-600 text-white text-sm" @click="openSession">
+          {{ t('app.actions.save') || 'Save' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Close Session Modal -->
+  <div v-if="closeModalOpen" class="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4">
+    <div class="w-full max-w-md rounded-lg bg-white dark:bg-gray-900 p-6 shadow-lg">
+      <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+        {{ t('app.views.cashRegister.closeSession') || 'Close Session' }}
+      </h3>
+      <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+        {{ t('app.views.cashRegister.actualBalance') || 'Actual Balance' }}
+      </label>
+      <input v-model="actualBalance" type="number" step="0.01"
+        class="w-full rounded-md border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+      <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mt-4 mb-1">
+        {{ t('app.views.cashRegister.notes') || 'Notes' }}
+      </label>
+      <textarea v-model="closeNotes" rows="3"
+        class="w-full rounded-md border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+      <div class="mt-6 flex justify-end space-x-3">
+        <button type="button" class="px-4 py-2 rounded-md border border-gray-300 dark:border-gray-700 text-sm"
+          @click="closeModals">
+          {{ t('app.actions.cancel') || 'Cancel' }}
+        </button>
+        <button type="button" class="px-4 py-2 rounded-md bg-red-600 text-white text-sm" @click="closeSession">
+          {{ t('app.actions.save') || 'Save' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cut Modal -->
+  <div v-if="cutModalOpen" class="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4">
+    <div class="w-full max-w-lg rounded-lg bg-white dark:bg-gray-900 p-6 shadow-lg">
+      <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+        {{ t('app.views.cashRegister.cutSession') || 'Cut Session' }}
+      </h3>
+      <div class="space-y-4">
+        <div>
+          <h4 class="font-medium text-gray-900 dark:text-gray-100">
+            {{ t('app.views.cashRegister.summary') || 'Summary' }}
+          </h4>
+          <div class="mt-2 space-y-2">
+            <div class="flex justify-between">
+              <span class="text-gray-600 dark:text-gray-400">
+                {{ t('app.views.cashRegister.totalSales') || 'Total Sales' }}
+              </span>
+              <span class="font-medium">${{ cutReport.total_sales?.toFixed(2) || '0.00' }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-600 dark:text-gray-400">
+                {{ t('app.views.cashRegister.totalRefunds') || 'Total Refunds' }}
+              </span>
+              <span class="font-medium">${{ cutReport.total_refunds?.toFixed(2) || '0.00' }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-600 dark:text-gray-400">
+                {{ t('app.views.cashRegister.totalTips') || 'Total Tips' }}
+              </span>
+              <span class="font-medium">${{ cutReport.total_tips?.toFixed(2) || '0.00' }}</span>
+            </div>
+            <div class="flex justify-between font-bold">
+              <span class="text-gray-900 dark:text-gray-100">
+                {{ t('app.views.cashRegister.netCashFlow') || 'Net Cash Flow' }}
+              </span>
+              <span>${{ cutReport.net_cash_flow?.toFixed(2) || '0.00' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <h4 class="font-medium text-gray-900 dark:text-gray-100">
+            {{ t('app.views.cashRegister.paymentBreakdown') || 'Payment Breakdown' }}
+          </h4>
+          <div class="mt-2 space-y-3">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                {{ t('app.views.cashRegister.cashPayments') || 'Cash Payments' }}
+              </label>
+              <input v-model="cashPayments" type="number" step="0.01"
+                class="w-full rounded-md border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                {{ t('app.views.cashRegister.cardPayments') || 'Card Payments' }}
+              </label>
+              <input v-model="cardPayments" type="number" step="0.01"
+                class="w-full rounded-md border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                {{ t('app.views.cashRegister.digitalPayments') || 'Digital Payments' }}
+              </label>
+              <input v-model="digitalPayments" type="number" step="0.01"
+                class="w-full rounded-md border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                {{ t('app.views.cashRegister.otherPayments') || 'Other Payments' }}
+              </label>
+              <input v-model="otherPayments" type="number" step="0.01"
+                class="w-full rounded-md border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="mt-6 flex justify-end space-x-3">
+        <button type="button" class="px-4 py-2 rounded-md border border-gray-300 dark:border-gray-700 text-sm"
+          @click="closeModals">
+          {{ t('app.actions.cancel') || 'Cancel' }}
+        </button>
+        <button type="button" class="px-4 py-2 rounded-md bg-blue-600 text-white text-sm" @click="performCut">
+          {{ t('app.actions.save') || 'Save' }}
+        </button>
+      </div>
+    </div>
+  </div>
 </template>
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
@@ -354,6 +380,9 @@ const cutReport = ref({
   total_transactions: 0,
   net_cash_flow: 0
 })
+
+const lastCut = ref<any>(null)
+const lastCutLoading = ref(false)
 
 const openOpenModal = () => {
   openModalOpen.value = true
@@ -473,14 +502,15 @@ const performCut = async () => {
     }
 
     const result = await cashRegisterService.cutSession(currentSession.value.id, paymentBreakdown)
+    const resultData = result.data || result
 
     // Update cut report with real data from backend
     cutReport.value = {
-      total_sales: result.total_sales || 0,
-      total_refunds: result.total_refunds || 0,
-      total_tips: result.total_tips || 0,
-      total_transactions: result.total_transactions || 0,
-      net_cash_flow: result.net_cash_flow || 0
+      total_sales: resultData.total_sales || 0,
+      total_refunds: resultData.total_refunds || 0,
+      total_tips: resultData.total_tips || 0,
+      total_transactions: resultData.total_transactions || 0,
+      net_cash_flow: resultData.net_cash_flow || 0
     }
 
     toast.showToast(t('app.views.cashRegister.cutSuccessful') || 'Cut performed successfully', 'success')
@@ -489,6 +519,16 @@ const performCut = async () => {
   } catch (error: any) {
     console.error('Error performing cut:', error)
     toast.showToast(error.response?.data?.detail || t('app.views.cashRegister.cutFailed') || 'Failed to perform cut', 'error')
+  }
+}
+
+const formatDate = (dateString: string) => {
+  if (!dateString) return 'No date'
+  try {
+    return new Date(dateString).toLocaleString()
+  } catch (error) {
+    console.error('Error formatting date:', dateString, error)
+    return 'Invalid date'
   }
 }
 
@@ -503,6 +543,7 @@ const loadCurrentSession = async () => {
     if (currentSession.value) {
       console.log('Loading transactions for session:', currentSession.value.id)
       loadTransactions()
+      loadLastCut() // Load last cut information
     } else {
       console.log('No current session found')
     }
@@ -535,8 +576,25 @@ const loadTransactions = async () => {
   }
 }
 
-const formatDate = (dateString: string) => {
-  return new Date(dateString).toLocaleString()
+const loadLastCut = async () => {
+  if (!currentSession.value) {
+    lastCut.value = null
+    return
+  }
+
+  try {
+    lastCutLoading.value = true
+    const cutData = await cashRegisterService.getLastCut(currentSession.value.id)
+    lastCut.value = cutData || null
+    console.log('Last cut data:', lastCut.value)
+    console.log('Last cut data structure:', Object.keys(lastCut.value || {}))
+    console.log('Last cut created_at value:', lastCut.value?.created_at)
+  } catch (error) {
+    console.error('Error loading last cut:', error)
+    lastCut.value = null
+  } finally {
+    lastCutLoading.value = false
+  }
 }
 
 onMounted(() => {
