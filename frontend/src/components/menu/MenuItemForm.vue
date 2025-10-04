@@ -681,7 +681,7 @@ defineExpose({
                         type="text"
                         id="variant-name"
                         v-model="variantForm.name"
-                        class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-gray-800 dark:text-gray-100"
+                        class="mt-1 p-1 block w-full rounded-md border-gray-300 dark:border-gray-700 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-gray-800 dark:text-gray-100"
                         placeholder="e.g., Small, Large, Iced"
                       />
                     </div>
@@ -706,7 +706,7 @@ defineExpose({
                           v-model.number="variantForm.price"
                           step="0.01"
                           min="0"
-                          class="block w-full pl-7 pr-12 rounded-md border-gray-300 dark:border-gray-700 focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-800 dark:text-gray-100 sm:text-sm"
+                          class="block w-full pl-7 pr-12 py-1 rounded-md border-gray-300 dark:border-gray-700 focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-800 dark:text-gray-100 sm:text-sm"
                           :placeholder="t('app.forms.placeholder_price')"
                         />
                       </div>
