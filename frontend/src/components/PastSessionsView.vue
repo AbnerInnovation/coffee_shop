@@ -5,12 +5,12 @@
         <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">
           {{ t('app.views.cashRegister.pastSessions') || 'Past Sessions' }}
         </h2>
-        <div class="flex space-x-2">
+        <div class="flex flex-col sm:flex-row sm:space-x-2 space-y-2 sm:space-y-0">
           <input
             v-model="searchTerm"
             type="text"
             :placeholder="t('app.views.cashRegister.searchSessions') || 'Search sessions...'"
-            class="px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md text-sm dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md text-sm dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
           <select
             v-model="statusFilter"
@@ -33,7 +33,7 @@
           <button
             @click="loadPastSessions"
             :disabled="isLoading"
-            class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
           >
             <span v-if="isLoading" class="inline-block animate-spin mr-2">⟳</span>
             {{ t('app.actions.search') || 'Search' }}
@@ -55,11 +55,12 @@
     </div>
 
     <div v-else class="divide-y divide-gray-200 dark:divide-gray-700">
-      <div v-for="session in pastSessions" :key="session.id" class="px-6 py-4">
-        <div class="flex justify-between items-center">
+      <div v-for="session in pastSessions" :key="session.id" class="px-4 sm:px-6 py-4">
+        <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center space-y-4 lg:space-y-0">
+          <!-- Session Info -->
           <div class="flex-1">
-            <div class="flex items-center space-x-4">
-              <div>
+            <div class="flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-2 sm:space-y-0">
+              <div class="flex-1">
                 <p class="text-sm font-medium text-gray-900 dark:text-gray-100">
                   {{ formatDate(session.created_at) }} - {{ formatDate(session.closed_at || session.created_at) }}
                 </p>
@@ -67,7 +68,7 @@
                   {{ t('app.views.cashRegister.openedBy') || 'Opened by' }}: {{ session.opened_by_user?.full_name || session.opened_by_user?.email || 'Unknown' }}
                 </p>
               </div>
-              <div class="text-right">
+              <div class="flex-shrink-0">
                 <span
                   class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
                   :class="getStatusBadgeClass(session.status)"
@@ -77,41 +78,48 @@
               </div>
             </div>
           </div>
-          <div class="flex items-center space-x-4">
-            <div class="text-right">
-              <p class="text-sm text-gray-500 dark:text-gray-400">
-                {{ t('app.views.cashRegister.initialBalance') || 'Initial' }}
-              </p>
-              <p class="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                ${{ session.initial_balance?.toFixed(2) || '0.00' }}
-              </p>
+
+          <!-- Session Data and Actions -->
+          <div class="flex flex-col sm:flex-row sm:items-center sm:space-x-6 space-y-4 sm:space-y-0">
+            <!-- Financial Data -->
+            <div class="flex flex-wrap gap-4 sm:gap-6">
+              <div class="text-center sm:text-right">
+                <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+                  {{ t('app.views.cashRegister.initialBalance') || 'Initial' }}
+                </p>
+                <p class="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100">
+                  ${{ session.initial_balance?.toFixed(2) || '0.00' }}
+                </p>
+              </div>
+              <div v-if="session.final_balance" class="text-center sm:text-right">
+                <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+                  {{ t('app.views.cashRegister.finalBalance') || 'Final' }}
+                </p>
+                <p class="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100">
+                  ${{ session.final_balance?.toFixed(2) || '0.00' }}
+                </p>
+              </div>
+              <div class="text-center sm:text-right">
+                <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+                  {{ t('app.views.cashRegister.transactions') || 'Transactions' }}
+                </p>
+                <p class="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100">
+                  {{ session.transaction_count || 0 }}
+                </p>
+              </div>
             </div>
-            <div v-if="session.final_balance" class="text-right">
-              <p class="text-sm text-gray-500 dark:text-gray-400">
-                {{ t('app.views.cashRegister.finalBalance') || 'Final' }}
-              </p>
-              <p class="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                ${{ session.final_balance?.toFixed(2) || '0.00' }}
-              </p>
-            </div>
-            <div class="text-right">
-              <p class="text-sm text-gray-500 dark:text-gray-400">
-                {{ t('app.views.cashRegister.transactions') || 'Transactions' }}
-              </p>
-              <p class="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                {{ session.transaction_count || 0 }}
-              </p>
-            </div>
-            <div class="flex space-x-2">
+
+            <!-- Action Buttons -->
+            <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
               <button
                 @click="viewSessionDetails(session.id)"
-                class="px-3 py-1 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                class="w-full sm:w-auto px-3 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
               >
                 {{ t('app.actions.view') || 'View' }}
               </button>
               <button
                 @click="viewSessionReport(session.id)"
-                class="px-3 py-1 text-sm bg-green-600 text-white rounded-md hover:bg-green-700"
+                class="w-full sm:w-auto px-3 py-2 text-sm bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
               >
                 {{ t('app.views.cashRegister.report') || 'Report' }}
               </button>
@@ -122,25 +130,25 @@
     </div>
 
     <!-- Pagination -->
-    <div v-if="pagination.total > pagination.limit" class="px-6 py-4 border-t border-gray-200 dark:border-gray-700">
-      <div class="flex justify-between items-center">
-        <div class="text-sm text-gray-500 dark:text-gray-400">
+    <div v-if="pagination.total > pagination.limit" class="px-4 sm:px-6 py-4 border-t border-gray-200 dark:border-gray-700">
+      <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-3 sm:space-y-0">
+        <div class="text-sm text-gray-500 dark:text-gray-400 text-center sm:text-left">
           {{ t('app.views.cashRegister.showing') || 'Showing' }} {{ pagination.offset + 1 }} {{ t('app.views.cashRegister.to') || 'to' }}
           {{ Math.min(pagination.offset + pagination.limit, pagination.total) }}
           {{ t('app.views.cashRegister.of') || 'of' }} {{ pagination.total }} {{ t('app.views.cashRegister.sessions') || 'sessions' }}
         </div>
-        <div class="flex space-x-2">
+        <div class="flex justify-center sm:justify-end space-x-2">
           <button
             @click="previousPage"
             :disabled="pagination.page <= 1"
-            class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded-md disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-700 dark:text-white"
+            class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded-md disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-700 dark:text-white transition-colors"
           >
             {{ t('app.actions.previous') || 'Previous' }}
           </button>
           <button
             @click="nextPage"
             :disabled="pagination.page >= pagination.totalPages"
-            class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded-md disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-700 dark:text-white"
+            class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded-md disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-700 dark:text-white transition-colors"
           >
             {{ t('app.actions.next') || 'Next' }}
           </button>
