@@ -6,7 +6,7 @@ from app.db.database import get_db
 from app.models.user import User
 from app.services.user import get_current_active_user
 from app.services.menu import get_categories, get_category, create_category, update_category, delete_category
-from app.schemas.menu import CategoryCreate, CategoryUpdate, CategoryInDB, Category
+from app.schemas.menu import CategoryCreate, CategoryUpdate, CategoryInDB
 
 router = APIRouter(
     prefix="/categories",
@@ -32,7 +32,13 @@ async def create_menu_category(
     """
     Create a new menu category.
     """
-    return create_category(db, category)
+    try:
+        return create_category(db, category)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
 
 @router.get("/{category_id}", response_model=CategoryInDB)
 async def get_menu_category(
@@ -61,13 +67,19 @@ async def update_menu_category(
     """
     Update a menu category.
     """
-    db_category = update_category(db, category_id, category_update)
-    if db_category is None:
+    try:
+        db_category = update_category(db, category_id, category_update)
+        if db_category is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Category not found"
+            )
+        return db_category
+    except ValueError as e:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Category not found"
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
         )
-    return db_category
 
 @router.delete("/{category_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_menu_category(
@@ -78,9 +90,15 @@ async def delete_menu_category(
     """
     Delete a menu category.
     """
-    deleted = delete_category(db, category_id)
-    if not deleted:
+    try:
+        deleted = delete_category(db, category_id)
+        if not deleted:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Category not found"
+            )
+    except ValueError as e:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Category not found"
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
         )

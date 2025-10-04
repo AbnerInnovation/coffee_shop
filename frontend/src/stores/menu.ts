@@ -255,48 +255,56 @@ export const useMenuStore = defineStore('menu', () => {
     toggleMenuItemAvailability,
     getCategories,
     // Category CRUD
-    // Note: Backend currently exposes only GET /categories (no POST/PUT/DELETE).
-    // These actions perform optimistic local updates so the UI works.
-    // Categories are actually persisted when creating/updating menu items
-    // (backend auto-creates categories on item creation if missing).
+    // Now using real backend endpoints
     async createCategory(name: string, description?: string) {
       loading.value = true;
+      error.value = null;
       try {
-        // Generate a temporary client-side id
-        const tempId = Date.now();
-        const created = { id: tempId, name, description: description || '' } as MenuCategory;
-        categoriesDetailed.value = [...categoriesDetailed.value, created];
+        const created = await menuService.createCategory({ name, description });
+        // Add to local state
+        categoriesDetailed.value.push(created);
         categories.value = categoriesDetailed.value.map(c => c.name);
+        return created;
       } catch (err: any) {
-        error.value = err.message || 'Failed to create category';
-        throw err;
+        error.value = err.response?.data?.detail || err.message || 'Failed to create category';
+        throw new Error(error.value || 'Failed to create category');
       } finally {
         loading.value = false;
       }
     },
     async updateCategory(id: string | number, data: { name?: string; description?: string }) {
       loading.value = true;
+      error.value = null;
       try {
+        const updated = await menuService.updateCategory(id, data);
+        // Update in local state
         const idx = categoriesDetailed.value.findIndex(c => c.id === id);
         if (idx !== -1) {
-          categoriesDetailed.value[idx] = { ...categoriesDetailed.value[idx], ...data } as MenuCategory;
+          categoriesDetailed.value[idx] = updated;
         }
         categories.value = categoriesDetailed.value.map(c => c.name);
+        return updated;
       } catch (err: any) {
-        error.value = err.message || 'Failed to update category';
-        throw err;
+        const errorMessage = err.response?.data?.detail || err.message || 'Failed to update category';
+        error.value = errorMessage;
+        throw new Error(errorMessage);
       } finally {
         loading.value = false;
       }
     },
     async deleteCategory(id: string | number) {
       loading.value = true;
+      error.value = null;
       try {
+        await menuService.deleteCategory(id);
+        // Remove from local state
         categoriesDetailed.value = categoriesDetailed.value.filter(c => c.id !== id);
         categories.value = categoriesDetailed.value.map(c => c.name);
+        return true;
       } catch (err: any) {
-        error.value = err.message || 'Failed to delete category';
-        throw err;
+        const errorMessage = err.response?.data?.detail || err.message || 'Failed to delete category';
+        error.value = errorMessage;
+        throw new Error(errorMessage);
       } finally {
         loading.value = false;
       }

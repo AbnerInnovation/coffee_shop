@@ -170,20 +170,15 @@ export const updateMenuItemAvailability = async (
 };
 
 export const getCategories = async (): Promise<MenuCategory[]> => {
-  const response = await apiInstance.get<any[]>(`${CATEGORIES_BASE_PATH}/`);
+  const response = await apiInstance.get<MenuCategory[]>(`${CATEGORIES_BASE_PATH}/`);
   console.log('categories response:', response);
   const arr = Array.isArray(response) ? response : [];
-  // Normalize: accept either array of strings or array of objects
-  return arr.map((c: any, idx: number) => {
-    if (typeof c === 'string') {
-      return { id: idx + 1, name: c, description: '' } as MenuCategory;
-    }
-    return {
-      id: c.id ?? idx + 1,
-      name: c.name ?? String(c?.title ?? ''),
-      description: c.description ?? ''
-    } as MenuCategory;
-  });
+  // The response is already normalized category objects from the backend
+  return arr.map((c: any) => ({
+    id: c.id,
+    name: c.name,
+    description: c.description || ''
+  } as MenuCategory));
 };
 
 // Category CRUD Operations

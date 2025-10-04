@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session, joinedload
 import logging
 
 from ..models.menu import MenuItem as MenuItemModel, Category as CategoryModel
-from ..schemas.menu import MenuItemCreate, MenuItemUpdate, Category
+from ..schemas.menu import MenuItemCreate, MenuItemUpdate, CategoryCreate, CategoryUpdate, Category
 
 logger = logging.getLogger(__name__)
 
@@ -229,27 +229,158 @@ def delete_menu_item(db: Session, db_item: MenuItemModel) -> None:
     db.add(db_item)
 
 
-def get_categories(db: Session) -> List[str]:
+def get_categories(db: Session) -> List[CategoryModel]:
     """
     Get a list of all available menu categories from the database.
 
     Returns:
-        List[str]: List of unique category names
+        List[CategoryModel]: List of category objects (excluding soft deleted ones)
     """
-    # Get all categories from the database
-    categories = db.query(CategoryModel).all()
-
-    # Extract unique category names
-    category_names = list({category.name for category in categories})
+    # Get all categories from the database (excluding soft deleted ones)
+    categories = db.query(CategoryModel).filter(CategoryModel.deleted_at.is_(None)).all()
 
     # If no categories exist, return some defaults
-    if not category_names:
+    if not categories:
         category_names = ["COFFEE", "TEA", "BREAKFAST", "LUNCH", "DESSERTS", "DRINKS"]
 
         # Create the default categories in the database
         for name in category_names:
-            if not db.query(CategoryModel).filter_by(name=name).first():
+            if not db.query(CategoryModel).filter_by(name=name, deleted_at=None).first():
                 db.add(CategoryModel(name=name))
         db.commit()
 
-    return category_names
+        # Fetch the newly created categories
+        categories = db.query(CategoryModel).filter(CategoryModel.deleted_at.is_(None)).all()
+
+    return categories
+
+
+def get_category(db: Session, category_id: int) -> Optional[CategoryModel]:
+    """
+    Get a specific category by ID.
+
+    Args:
+        db: Database session
+        category_id: Category ID
+
+    Returns:
+        CategoryModel or None if not found
+    """
+    return db.query(CategoryModel).filter(
+        CategoryModel.id == category_id,
+        CategoryModel.deleted_at.is_(None)
+    ).first()
+
+
+def create_category(db: Session, category_data: CategoryCreate) -> CategoryModel:
+    """
+    Create a new category.
+
+    Args:
+        db: Database session
+        category_data: Category creation data
+
+    Returns:
+        CategoryModel: The created category
+    """
+    # Check if category with this name already exists
+    existing_category = db.query(CategoryModel).filter(
+        CategoryModel.name == category_data.name.upper(),
+        CategoryModel.deleted_at.is_(None)
+    ).first()
+
+    if existing_category:
+        raise ValueError(f"Category with name '{category_data.name}' already exists")
+
+    # Create new category
+    db_category = CategoryModel(
+        name=category_data.name.upper(),
+        description=category_data.description
+    )
+    db.add(db_category)
+    db.commit()
+    db.refresh(db_category)
+
+    return db_category
+
+
+def update_category(
+    db: Session,
+    category_id: int,
+    category_data: CategoryUpdate
+) -> Optional[CategoryModel]:
+    """
+    Update a category.
+
+    Args:
+        db: Database session
+        category_id: Category ID
+        category_data: Category update data
+
+    Returns:
+        CategoryModel or None if not found
+    """
+    db_category = db.query(CategoryModel).filter(
+        CategoryModel.id == category_id,
+        CategoryModel.deleted_at.is_(None)
+    ).first()
+
+    if not db_category:
+        return None
+
+    # Check if new name conflicts with existing category (if name is being updated)
+    if category_data.name and category_data.name != db_category.name:
+        existing_category = db.query(CategoryModel).filter(
+            CategoryModel.name == category_data.name.upper(),
+            CategoryModel.id != category_id,
+            CategoryModel.deleted_at.is_(None)
+        ).first()
+
+        if existing_category:
+            raise ValueError(f"Category with name '{category_data.name}' already exists")
+
+        db_category.name = category_data.name.upper()
+
+    if category_data.description is not None:
+        db_category.description = category_data.description
+
+    db.commit()
+    db.refresh(db_category)
+
+    return db_category
+
+
+def delete_category(db: Session, category_id: int) -> bool:
+    """
+    Delete a category. Only allow deletion if no menu items are using it.
+
+    Args:
+        db: Database session
+        category_id: Category ID
+
+    Returns:
+        bool: True if deleted, False if not found or has dependencies
+    """
+    db_category = db.query(CategoryModel).filter(
+        CategoryModel.id == category_id,
+        CategoryModel.deleted_at.is_(None)
+    ).first()
+
+    if not db_category:
+        return False
+
+    # Check if any menu items are using this category
+    menu_items_count = db.query(MenuItemModel).filter(
+        MenuItemModel.category_id == category_id,
+        MenuItemModel.deleted_at.is_(None)
+    ).count()
+
+    if menu_items_count > 0:
+        raise ValueError(f"Cannot delete category '{db_category.name}' because it has {menu_items_count} menu items")
+
+    # Soft delete by setting deleted_at timestamp
+    db_category.deleted_at = datetime.utcnow()
+    db.add(db_category)
+    db.commit()
+
+    return True
