@@ -444,7 +444,9 @@
       "searchTransactions": "Search transactions...",
       "noTransactionsFound": "No transactions found",
       "sessionNotFound": "Session not found",
-      "errorLoadingSessionDetails": "Error loading session details"
+      "errorLoadingSessionDetails": "Error loading session details",
+      "takeaway": "Takeaway",
+      "table_number": "Table {number}"
     }
   }
 }

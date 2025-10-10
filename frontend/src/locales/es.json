@@ -189,7 +189,9 @@
       "searchTransactions": "Buscar transacciones...",
       "noTransactionsFound": "No se encontraron transacciones",
       "sessionNotFound": "Sesión no encontrada",
-      "errorLoadingSessionDetails": "Error al cargar detalles de sesión"
+      "errorLoadingSessionDetails": "Error al cargar detalles de sesión",
+      "takeaway": "Para llevar",
+      "table_number": "Mesa {number}"
     },
     "orders": {
       "title": "Órdenes",

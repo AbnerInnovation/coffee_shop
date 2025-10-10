@@ -13,7 +13,7 @@
         </div>
         <div class="ml-3">
           <p class="text-sm text-red-700">{{ error }}</p>
-          <button @click="fetchOrders"
+          <button @click="() => fetchOrders()"
             class="mt-2 text-sm font-medium text-red-700 hover:text-red-600 focus:outline-none">
             {{ t('app.views.orders.try_again') }} <span aria-hidden="true">&rarr;</span>
           </button>
@@ -220,7 +220,7 @@ function handleOrderUpdated(updated: any) {
       orders.value.splice(idx, 1, {
         ...existing,
         status: updated.status as BackendOrderStatus,
-        table: updated.table_number ? `Table ${updated.table_number}` : 'Takeaway',
+        table: updated.table_number ? t('app.views.cashRegister.table_number', { number: updated.table_number }) : t('app.views.cashRegister.takeaway'),
         total: updated.total_amount || 0,
         updated_at: updated.updated_at || existing.updated_at,
         items: (updated.items || existing.items),
@@ -602,7 +602,7 @@ const fetchOrders = async (fetchAll = false) => {
         return {
           ...order,
           customerName: order.customer_name || 'Walk-in',
-          table: order.table_number ? `Table ${order.table_number}` : 'Takeaway',
+          table: order.table_number ? t('app.views.cashRegister.table_number', { number: order.table_number }) : t('app.views.cashRegister.takeaway'),
           total: order.total_amount || 0,
           createdAt: new Date(order.created_at || new Date()),
           items: mappedItems,
