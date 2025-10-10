@@ -41,9 +41,8 @@ export interface CreateOrderItemData {
 export interface CreateOrderData {
   table_id?: number | null;  // Optional for takeaway/delivery orders
   customer_name?: string | null;  // For takeaway/delivery orders
-  items: CreateOrderItemData[];
   notes?: string | null;
-  user_id?: string | null;
+  items: CreateOrderItemData[];
 }
 
 export interface Variant {
@@ -72,8 +71,8 @@ export interface Order {
   created_at: string;
   updated_at: string;
   total_amount: number;
-  table_number: number;
-  table_id: number;
+  table_number: number | null;
+  table_id: number | null;
   customer_name: string | null;
   user_id: string | null;
   notes: string | null;
@@ -107,7 +106,7 @@ const orderService = {
     try {
       const res = await api.post<Order>('/orders', orderData);
       
-      return res;
+      return res.data;
     } catch (error: any) {
       if (error.response) {
         throw new Error(error.response.data?.detail || 'Failed to create order');

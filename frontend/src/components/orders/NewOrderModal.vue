@@ -58,7 +58,7 @@
                       {{ form.type === 'Delivery' ? $t('app.views.orders.modals.new_order.delivery_address') : $t('app.views.orders.modals.new_order.customer_name') }}
                     </label>
                     <input id="customer-name" v-model="form.customerName" type="text"
-                      class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                      class="mt-1 p-3 block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                       :placeholder="form.type === 'Delivery' ? $t('app.views.orders.modals.new_order.enter_delivery_address') : $t('app.views.orders.modals.new_order.enter_customer_name')" />
                   </div>
 

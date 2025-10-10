@@ -149,8 +149,13 @@ def get_order(db: Session, order_id: int, include_deleted: bool = False) -> Opti
 # -----------------------------
 
 def create_order_with_items(db: Session, order: OrderCreate) -> dict:
+    # Set order_type based on whether table_id is provided
+    order_type = "dine_in" if order.table_id is not None else "delivery"
+
     db_order = OrderModel(
         table_id=order.table_id,
+        customer_name=getattr(order, 'customer_name', None),  # Add customer_name if provided
+        order_type=order_type,
         notes=order.notes,
         status=OrderStatus.PENDING,
         created_at=datetime.utcnow(),

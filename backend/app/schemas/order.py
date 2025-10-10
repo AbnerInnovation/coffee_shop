@@ -70,13 +70,14 @@ class OrderItem(OrderItemInDBBase):
         orm_mode = True
 
 class OrderBase(BaseModel):
-    table_id: int
+    table_id: Optional[int] = None
     notes: Optional[str] = None
     status: OrderStatus = OrderStatus.PENDING
     is_paid: bool = False
     payment_method: Optional[PaymentMethod] = None
 
 class OrderCreate(OrderBase):
+    customer_name: Optional[str] = None
     items: List[OrderItemCreate]
 
 class OrderUpdate(BaseModel):

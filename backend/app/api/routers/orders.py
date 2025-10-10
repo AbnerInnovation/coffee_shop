@@ -55,9 +55,11 @@ async def create_order(
     """
     Create a new order.
     """
-    db_table = db.query(TableModel).filter(TableModel.id == order.table_id).first()
-    if not db_table:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Table not found")
+    # Only validate table exists if table_id is provided (for dine-in orders)
+    if order.table_id is not None:
+        db_table = db.query(TableModel).filter(TableModel.id == order.table_id).first()
+        if not db_table:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Table not found")
     
     for item in order.items:
         db_item = db.query(MenuItemModel).filter(MenuItemModel.id == item.menu_item_id).first()

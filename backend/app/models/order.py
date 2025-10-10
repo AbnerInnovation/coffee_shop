@@ -27,7 +27,7 @@ class Order(BaseModel):
     __tablename__ = "orders"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    table_id: Mapped[int] = mapped_column(Integer, ForeignKey("tables.id"), nullable=False)
+    table_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("tables.id"), nullable=True)
     customer_name: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     order_type: Mapped[str] = mapped_column(String(50), default="dine_in", nullable=False)
     status: Mapped[OrderStatus] = mapped_column(
