@@ -584,7 +584,7 @@ const fetchMenuItems = async () => {
     });
 
     // Auto-expand all categories after loading menu items
-    expandAllCategories();
+    collapseAllCategories();
   } catch (err) {
     console.error('Error fetching menu items:', err);
     error.value.menu = t('app.views.orders.modals.new_order.error_menu');
