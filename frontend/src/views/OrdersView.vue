@@ -465,60 +465,8 @@ function closeNewOrderModal() {
 
 const handleNewOrder = async (newOrder: Order) => {
   try {
-    console.log('New order received:', newOrder);
-
-    // Create a properly typed order object
-    const localOrder: OrderWithLocalFields = {
-      id: newOrder.id,
-      status: newOrder.status as BackendOrderStatus,
-      customerName: newOrder.customer_name || (newOrder.table_number ? 'Table ' + newOrder.table_number : 'Takeaway'),
-      table: newOrder.table_number ? `Table ${newOrder.table_number}` : (newOrder.customer_name ? 'Takeaway' : 'Dine-in'),
-      total: newOrder.total_amount || 0,
-      createdAt: newOrder.created_at ? new Date(newOrder.created_at) : new Date(),
-      updated_at: newOrder.updated_at || new Date().toISOString(),
-      items: (newOrder.items || []).map(item => {
-        // Safely find the variant if it exists
-        let variant: Variant | undefined;
-        if (item.variant_id && Array.isArray(item.menu_item?.variants)) {
-          variant = item.menu_item?.variants.find((v: Variant) => v.id === item.variant_id);
-        }
-
-        const unitPrice = item.unit_price || item.menu_item?.price || 0;
-        const quantity = item.quantity || 0;
-
-        const orderItem: OrderItemLocal = {
-          id: item.id || 0,
-          menu_item_id: item.menu_item_id,
-          name: item.menu_item?.name || 'Unknown Item',
-          quantity: quantity,
-          unit_price: unitPrice,
-          total_price: unitPrice * quantity,
-          variant_id: item.variant_id || undefined,
-          variant_price_adjustment: variant?.price_adjustment
-        };
-
-        console.log('Processed order item:', orderItem);
-
-        // Only add notes if they exist
-        if (item.special_instructions) {
-          orderItem.notes = item.special_instructions;
-        }
-
-        return orderItem;
-      }),
-      // Copy over any additional fields from the new order
-      ...(newOrder.table_id !== undefined && { table_id: newOrder.table_id }),
-      ...(newOrder.customer_name !== undefined && { customer_name: newOrder.customer_name }),
-      ...(newOrder.notes !== undefined && { notes: newOrder.notes }),
-      ...(newOrder.table_number !== undefined && { table_number: newOrder.table_number })
-    };
-
-    console.log('Processed order for display:', localOrder);
-
-    // Add the new order to the beginning of the list
-    orders.value = [localOrder, ...orders.value];
-    closeNewOrderModal();
     await fetchOrders();
+    closeNewOrderModal();
   } catch (err) {
     console.error('Error processing new order:', err);
     // Only show error if we don't have an order ID
