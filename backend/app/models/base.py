@@ -2,6 +2,7 @@ from sqlalchemy.orm import declared_attr
 from sqlalchemy import Column, Integer, DateTime, inspect
 from datetime import datetime
 from typing import Any, Dict, Type, TypeVar, Optional
+import pytz  # For timezone support
 from ..db.base import Base  # Import the Base from db.base
 
 T = TypeVar('T', bound='BaseModel')
@@ -16,8 +17,8 @@ class BaseModel(Base):
     
     # Ensure these columns are properly typed for SQLAlchemy 2.0
     id = Column(Integer, primary_key=True, index=True)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(pytz.timezone('America/Los_Angeles')), nullable=False)
+    updated_at = Column(DateTime, default=lambda: datetime.now(pytz.timezone('America/Los_Angeles')), onupdate=lambda: datetime.now(pytz.timezone('America/Los_Angeles')), nullable=False)
     deleted_at = Column(DateTime, nullable=True)
 
     # Columns are now defined in the class body above
