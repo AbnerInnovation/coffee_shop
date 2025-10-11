@@ -28,7 +28,8 @@ export default defineConfig(({ mode }) => {
       port: 3000,
       host: '0.0.0.0',
       strictPort: true,
-      open: true,
+      open: 'http://default.shopacoffee.local:3000',
+      allowedHosts: ['default.shopacoffee.local', '*.shopacoffee.local'],
       proxy: {
         '/api': {
           target: 'http://localhost:8000',

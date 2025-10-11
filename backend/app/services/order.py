@@ -79,6 +79,10 @@ def apply_filters(query, filters: Dict[str, Any]):
     if not filters:
         return query
 
+    # Filter by restaurant_id (required for multi-tenant)
+    if filters.get("restaurant_id") is not None:
+        query = query.filter(OrderModel.restaurant_id == filters["restaurant_id"])
+
     if filters.get("status") is not None:
         query = query.filter(OrderModel.status == filters["status"])
 
@@ -126,14 +130,17 @@ def get_orders(
         logging.error(f"Error in get_orders: {str(e)}", exc_info=True)
         raise
 
-def get_order(db: Session, order_id: int, include_deleted: bool = False) -> Optional[dict]:
+def get_order(db: Session, order_id: int, restaurant_id: int, include_deleted: bool = False) -> Optional[dict]:
     try:
         query = db.query(OrderModel).options(
             joinedload(OrderModel.items).joinedload(OrderItemModel.menu_item),
             joinedload(OrderModel.items).joinedload(OrderItemModel.variant),
             joinedload(OrderModel.table),
             joinedload(OrderModel.user),
-        ).filter(OrderModel.id == order_id)
+        ).filter(
+            OrderModel.id == order_id,
+            OrderModel.restaurant_id == restaurant_id
+        )
 
         if not include_deleted:
             query = query.filter(OrderModel.deleted_at.is_(None))
@@ -148,7 +155,7 @@ def get_order(db: Session, order_id: int, include_deleted: bool = False) -> Opti
 # CRUD
 # -----------------------------
 
-def create_order_with_items(db: Session, order: OrderCreate) -> dict:
+def create_order_with_items(db: Session, order: OrderCreate, restaurant_id: int) -> dict:
     # Set order_type based on whether table_id is provided
     order_type = "dine_in" if order.table_id is not None else "delivery"
 
@@ -158,6 +165,7 @@ def create_order_with_items(db: Session, order: OrderCreate) -> dict:
         order_type=order_type,
         notes=order.notes,
         status=OrderStatus.PENDING,
+        restaurant_id=restaurant_id,
         created_at=datetime.utcnow(),
         updated_at=datetime.utcnow(),
     )

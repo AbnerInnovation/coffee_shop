@@ -9,6 +9,7 @@ logger = logging.getLogger(__name__)
 
 def get_tables(
     db: Session, 
+    restaurant_id: int,
     skip: int = 0, 
     limit: int = 100,
     occupied: Optional[bool] = None,
@@ -17,7 +18,7 @@ def get_tables(
     """
     Get a list of tables with optional filtering.
     """
-    query = db.query(TableModel)
+    query = db.query(TableModel).filter(TableModel.restaurant_id == restaurant_id)
     
     if occupied is not None:
         query = query.filter(TableModel.is_occupied == occupied)
@@ -27,26 +28,33 @@ def get_tables(
     
     return query.offset(skip).limit(limit).all()
 
-def get_table(db: Session, table_id: int) -> Optional[TableModel]:
+def get_table(db: Session, table_id: int, restaurant_id: Optional[int] = None) -> Optional[TableModel]:
     """
     Get a table by ID.
     """
-    return db.query(TableModel).filter(TableModel.id == table_id).first()
+    query = db.query(TableModel).filter(TableModel.id == table_id)
+    if restaurant_id is not None:
+        query = query.filter(TableModel.restaurant_id == restaurant_id)
+    return query.first()
 
-def get_table_by_number(db: Session, number: int) -> Optional[TableModel]:
+def get_table_by_number(db: Session, number: int, restaurant_id: int) -> Optional[TableModel]:
     """
     Get a table by its number.
     """
-    return db.query(TableModel).filter(TableModel.number == number).first()
+    return db.query(TableModel).filter(
+        TableModel.number == number,
+        TableModel.restaurant_id == restaurant_id
+    ).first()
 
 def create_table(
     db: Session, 
-    table: TableCreate
+    table: TableCreate,
+    restaurant_id: int
 ) -> TableModel:
     """
     Create a new table.
     """
-    db_table = TableModel(**table.dict())
+    db_table = TableModel(**table.dict(), restaurant_id=restaurant_id)
     db.add(db_table)
     db.commit()
     db.refresh(db_table)

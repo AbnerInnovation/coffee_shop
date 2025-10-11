@@ -8,6 +8,8 @@ from ...models.table import Table as TableModel
 from ...schemas.table import Table, TableCreate, TableUpdate
 from ...services import table as table_service
 from ...models.user import User
+from ...models.restaurant import Restaurant
+from ...core.dependencies import get_current_restaurant
 from ...services.user import get_current_active_user, UserRole
 
 router = APIRouter(
@@ -23,13 +25,15 @@ async def read_tables(
     limit: int = 100,
     occupied: bool = None,
     capacity: int = None,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    restaurant: Restaurant = Depends(get_current_restaurant)
 ) -> List[Table]:
     """
     Retrieve tables with optional filtering.
     """
     return table_service.get_tables(
-        db, 
+        db,
+        restaurant_id=restaurant.id,
         skip=skip, 
         limit=limit, 
         occupied=occupied,
@@ -44,29 +48,31 @@ async def read_tables(
 )
 async def create_table(
     table: TableCreate, 
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    restaurant: Restaurant = Depends(get_current_restaurant)
 ) -> Table:
     """
     Create a new table.
     Requires admin privileges.
     """
-    db_table = table_service.get_table_by_number(db, number=table.number)
+    db_table = table_service.get_table_by_number(db, number=table.number, restaurant_id=restaurant.id)
     if db_table:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Table with this number already exists"
         )
-    return table_service.create_table(db=db, table=table)
+    return table_service.create_table(db=db, table=table, restaurant_id=restaurant.id)
 
 @router.get("/{table_id}", response_model=Table)
 async def read_table(
     table_id: int, 
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    restaurant: Restaurant = Depends(get_current_restaurant)
 ) -> Table:
     """
     Get a specific table by ID.
     """
-    db_table = table_service.get_table(db, table_id=table_id)
+    db_table = table_service.get_table(db, table_id=table_id, restaurant_id=restaurant.id)
     if db_table is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -81,13 +87,14 @@ class TableOccupancyUpdate(BaseModel):
 async def update_table_occupancy(
     table_id: int,
     occupancy_data: TableOccupancyUpdate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    restaurant: Restaurant = Depends(get_current_restaurant)
 ) -> Table:
     """
     Update a table's occupancy status.
     """
     is_occupied = occupancy_data.is_occupied
-    db_table = table_service.get_table(db, table_id=table_id)
+    db_table = table_service.get_table(db, table_id=table_id, restaurant_id=restaurant.id)
     if db_table is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -105,13 +112,14 @@ async def update_table(
     table_id: int, 
     table: TableUpdate, 
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
+    restaurant: Restaurant = Depends(get_current_restaurant)
 ) -> Table:
     """
     Update a table.
     Requires admin privileges.
     """
-    db_table = table_service.get_table(db, table_id=table_id)
+    db_table = table_service.get_table(db, table_id=table_id, restaurant_id=restaurant.id)
     if db_table is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -119,7 +127,7 @@ async def update_table(
         )
     
     if table.number and table.number != db_table.number:
-        existing_table = table_service.get_table_by_number(db, number=table.number)
+        existing_table = table_service.get_table_by_number(db, number=table.number, restaurant_id=restaurant.id)
         if existing_table and existing_table.id != table_id:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -139,7 +147,8 @@ async def update_table(
 )
 async def delete_table(
     table_id: int, 
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    restaurant: Restaurant = Depends(get_current_restaurant)
 ) -> None:
     """
     Delete a table.

@@ -1,7 +1,12 @@
+import { getApiBaseUrl } from '@/utils/subdomain';
+
 // API Configuration
 const API_CONFIG = {
-  // Base URL for all API requests
-  BASE_URL: import.meta.env.VITE_API_URL || 'http://localhost:8000',
+  // Base URL for all API requests (subdomain-aware)
+  get BASE_URL() {
+    // Use environment variable if set, otherwise use subdomain-aware URL
+    return import.meta.env.VITE_API_URL || getApiBaseUrl();
+  },
   
   // API version
   VERSION: 'v1',
@@ -13,6 +18,7 @@ const API_CONFIG = {
     TABLES: '/tables',
     ORDERS: '/orders',
     CASH_REGISTER: '/cash-register',
+    RESTAURANTS: '/restaurants',
     // Add other endpoints here as needed
   },
   

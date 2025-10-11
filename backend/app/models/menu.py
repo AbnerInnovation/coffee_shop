@@ -5,15 +5,20 @@ from .base import BaseModel
 
 if TYPE_CHECKING:
     from .order_item import OrderItem
+    from .restaurant import Restaurant
 
 class Category(BaseModel):
     __tablename__ = "categories"
     
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    name: Mapped[str] = mapped_column(String(50), unique=True, nullable=False, index=True)
+    name: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
     description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     
-    # Relationship to menu items
+    # Multi-tenant support
+    restaurant_id: Mapped[int] = mapped_column(Integer, ForeignKey("restaurants.id"), nullable=False, index=True)
+    
+    # Relationships
+    restaurant: Mapped["Restaurant"] = relationship("Restaurant", back_populates="categories")
     menu_items: Mapped[List["MenuItem"]] = relationship(
         "MenuItem", 
         back_populates="category",
@@ -37,7 +42,11 @@ class MenuItem(BaseModel):
     is_available: Mapped[bool] = mapped_column(default=True, nullable=False)
     image_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
     
+    # Multi-tenant support
+    restaurant_id: Mapped[int] = mapped_column(Integer, ForeignKey("restaurants.id"), nullable=False, index=True)
+    
     # Relationships
+    restaurant: Mapped["Restaurant"] = relationship("Restaurant", back_populates="menu_items")
     category: Mapped["Category"] = relationship("Category", back_populates="menu_items")
     variants: Mapped[List["MenuItemVariant"]] = relationship(
         "MenuItemVariant", 

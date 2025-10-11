@@ -1,5 +1,5 @@
 from enum import Enum as PyEnum
-from typing import List, Optional
+from typing import List, Optional, TYPE_CHECKING
 from datetime import datetime
 from sqlalchemy import Integer, String, Float, ForeignKey, Enum as SQLEnum, DateTime, Boolean
 from sqlalchemy.orm import relationship, Mapped, mapped_column
@@ -7,6 +7,9 @@ from .base import BaseModel
 
 # Import the single source of OrderItem
 from .order_item import OrderItem
+
+if TYPE_CHECKING:
+    from .restaurant import Restaurant
 
 # Enum for order status
 class OrderStatus(str, PyEnum):
@@ -44,8 +47,12 @@ class Order(BaseModel):
         nullable=True
     )
     deleted_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    
+    # Multi-tenant support
+    restaurant_id: Mapped[int] = mapped_column(Integer, ForeignKey("restaurants.id"), nullable=False, index=True)
 
     # Relationships
+    restaurant: Mapped["Restaurant"] = relationship("Restaurant", back_populates="orders")
     table: Mapped["Table"] = relationship("Table", back_populates="orders")
     items: Mapped[List[OrderItem]] = relationship(
         "app.models.order_item.OrderItem",  # fully-qualified to avoid registry conflicts

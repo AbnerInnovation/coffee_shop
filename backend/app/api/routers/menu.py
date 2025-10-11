@@ -1,5 +1,5 @@
 import logging
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Request
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from typing import List, Optional
@@ -29,7 +29,9 @@ from app.schemas.menu import (
     MenuItemVariant, MenuItemVariantCreate, MenuItemVariantUpdate
 )
 from app.models.user import User, UserRole
+from app.models.restaurant import Restaurant
 from app.services.user import get_current_active_user
+from app.core.dependencies import get_current_restaurant
 
 # Create a router for menu endpoints
 router = APIRouter(
@@ -49,18 +51,21 @@ def check_admin(user: User):
 
 @items_router.get("/", response_model=List[MenuItem])
 async def read_menu_items(
+    request: Request,
     skip: int = Query(0, ge=0, description="Number of items to skip"),
     limit: int = Query(100, le=100, description="Max items to return"),
     category: Optional[Category] = None,
     available: Optional[bool] = None,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
+    restaurant: Restaurant = Depends(get_current_restaurant)
 ) -> List[MenuItem]:
     """
-    Retrieve menu items with optional filtering.
+    Retrieve menu items with optional filtering (filtered by restaurant).
     """
     items = get_menu_items(
         db=db,
+        restaurant_id=restaurant.id,
         skip=skip,
         limit=limit,
         category=category.value if category else None,
@@ -77,6 +82,7 @@ async def read_menu_items(
 
 @items_router.post("/", response_model=MenuItem, status_code=status.HTTP_201_CREATED)
 async def create_menu_item(
+    request: Request,
     menu_item: MenuItemCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
@@ -95,7 +101,7 @@ async def create_menu_item(
 
     try:
         with db.begin():
-            db_item = create_menu_item(db=db, menu_item=menu_item)
+            db_item = create_menu_item(db=db, menu_item=menu_item, restaurant_id=restaurant.id)
             db.refresh(db_item, ['category', 'variants'])
             return db_item
     except Exception as e:

@@ -1,11 +1,12 @@
 from enum import Enum as PyEnum
-from sqlalchemy import String, Boolean, Column, Enum as SQLEnum
-from sqlalchemy.orm import relationship
-from typing import TYPE_CHECKING
+from sqlalchemy import String, Boolean, Column, Enum as SQLEnum, Integer, ForeignKey
+from sqlalchemy.orm import relationship, Mapped, mapped_column
+from typing import TYPE_CHECKING, Optional
 from .base import BaseModel
 
 if TYPE_CHECKING:
     from .order import Order
+    from .restaurant import Restaurant
 
 # Define UserRole enum
 class UserRole(str, PyEnum):
@@ -26,7 +27,11 @@ class User(BaseModel):
     )
     is_active = Column(Boolean, default=True, nullable=False)
     
+    # Multi-tenant support
+    restaurant_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("restaurants.id"), nullable=True, index=True)
+    
     # Relationships
+    restaurant: Mapped[Optional["Restaurant"]] = relationship("Restaurant", back_populates="users")
     orders = relationship("Order", back_populates="user")
     
     def __repr__(self) -> str:

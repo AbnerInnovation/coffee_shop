@@ -11,6 +11,7 @@ logger = logging.getLogger(__name__)
 
 def get_menu_items(
     db: Session,
+    restaurant_id: int,
     skip: int = 0,
     limit: int = 100,
     category: Optional[str] = None,
@@ -26,7 +27,10 @@ def get_menu_items(
     query = db.query(MenuItemModel).options(
         joinedload(MenuItemModel.category), 
         joinedload(MenuItemModel.variants)
-    ).filter(MenuItemModel.deleted_at.is_(None))
+    ).filter(
+        MenuItemModel.deleted_at.is_(None),
+        MenuItemModel.restaurant_id == restaurant_id
+    )
 
     if category is not None:
         # Look up the category by name
@@ -56,19 +60,23 @@ def get_menu_items(
     return unique_items
 
 
-def get_menu_item(db: Session, item_id: int) -> Optional[MenuItemModel]:
+def get_menu_item(db: Session, item_id: int, restaurant_id: int) -> Optional[MenuItemModel]:
     """
     Get a non-deleted menu item by ID with its category and variants loaded.
     """
     return (
         db.query(MenuItemModel)
         .options(joinedload(MenuItemModel.category), joinedload(MenuItemModel.variants))
-        .filter(MenuItemModel.id == item_id, MenuItemModel.deleted_at.is_(None))
+        .filter(
+            MenuItemModel.id == item_id,
+            MenuItemModel.restaurant_id == restaurant_id,
+            MenuItemModel.deleted_at.is_(None)
+        )
         .first()
     )
 
 
-def create_menu_item(db: Session, menu_item: MenuItemCreate) -> MenuItemModel:
+def create_menu_item(db: Session, menu_item: MenuItemCreate, restaurant_id: int) -> MenuItemModel:
     """
     Create a new menu item with its variants.
     Note: This function expects to be called within an existing transaction context.
@@ -82,15 +90,19 @@ def create_menu_item(db: Session, menu_item: MenuItemCreate) -> MenuItemModel:
     item_data = menu_item.dict(exclude={"variants"}, exclude_unset=True)
     logger.info(f"Item data (excluding variants): {item_data}")
 
-    # Look up the category by name
+    # Look up the category by name within the same restaurant
     category_name = menu_item.category.upper()
     logger.info(f"Looking up category: {category_name}")
     
-    category = db.query(CategoryModel).filter(CategoryModel.name == category_name).first()
+    category = db.query(CategoryModel).filter(
+        CategoryModel.name == category_name,
+        CategoryModel.restaurant_id == restaurant_id,
+        CategoryModel.deleted_at.is_(None)
+    ).first()
 
     if not category:
         logger.info(f"Creating new category: {category_name}")
-        category = CategoryModel(name=category_name)
+        category = CategoryModel(name=category_name, restaurant_id=restaurant_id)
         db.add(category)
         db.flush()
 
@@ -100,7 +112,7 @@ def create_menu_item(db: Session, menu_item: MenuItemCreate) -> MenuItemModel:
 
     try:
         # Create the menu item
-        db_item = MenuItemModel(**item_data)
+        db_item = MenuItemModel(**item_data, restaurant_id=restaurant_id)
         db.add(db_item)
         db.flush()
         logger.info(f"Created menu item with ID: {db_item.id}")
@@ -140,7 +152,8 @@ def create_menu_item(db: Session, menu_item: MenuItemCreate) -> MenuItemModel:
 def update_menu_item(
     db: Session,
     item_id: int,
-    menu_item: MenuItemUpdate
+    menu_item: MenuItemUpdate,
+    restaurant_id: int
 ) -> MenuItemModel:
     """
     Update a menu item and its variants.
@@ -153,7 +166,10 @@ def update_menu_item(
     db_item = (
         db.query(MenuItemModel)
         .options(joinedload(MenuItemModel.category), joinedload(MenuItemModel.variants))
-        .filter(MenuItemModel.id == item_id)
+        .filter(
+            MenuItemModel.id == item_id,
+            MenuItemModel.restaurant_id == restaurant_id
+        )
         .first()
     )
     if db_item is None:
@@ -229,7 +245,7 @@ def delete_menu_item(db: Session, db_item: MenuItemModel) -> None:
     db.add(db_item)
 
 
-def get_categories(db: Session) -> List[CategoryModel]:
+def get_categories(db: Session, restaurant_id: int) -> List[CategoryModel]:
     """
     Get a list of all available menu categories from the database.
 
@@ -237,7 +253,10 @@ def get_categories(db: Session) -> List[CategoryModel]:
         List[CategoryModel]: List of category objects (excluding soft deleted ones)
     """
     # Get all categories from the database (excluding soft deleted ones)
-    categories = db.query(CategoryModel).filter(CategoryModel.deleted_at.is_(None)).all()
+    categories = db.query(CategoryModel).filter(
+        CategoryModel.deleted_at.is_(None),
+        CategoryModel.restaurant_id == restaurant_id
+    ).all()
 
     # If no categories exist, return some defaults
     if not categories:
@@ -245,17 +264,20 @@ def get_categories(db: Session) -> List[CategoryModel]:
 
         # Create the default categories in the database
         for name in category_names:
-            if not db.query(CategoryModel).filter_by(name=name, deleted_at=None).first():
-                db.add(CategoryModel(name=name))
+            if not db.query(CategoryModel).filter_by(name=name, restaurant_id=restaurant_id, deleted_at=None).first():
+                db.add(CategoryModel(name=name, restaurant_id=restaurant_id))
         db.commit()
 
         # Fetch the newly created categories
-        categories = db.query(CategoryModel).filter(CategoryModel.deleted_at.is_(None)).all()
+        categories = db.query(CategoryModel).filter(
+            CategoryModel.deleted_at.is_(None),
+            CategoryModel.restaurant_id == restaurant_id
+        ).all()
 
     return categories
 
 
-def get_category(db: Session, category_id: int) -> Optional[CategoryModel]:
+def get_category(db: Session, category_id: int, restaurant_id: int) -> Optional[CategoryModel]:
     """
     Get a specific category by ID.
 
@@ -268,11 +290,12 @@ def get_category(db: Session, category_id: int) -> Optional[CategoryModel]:
     """
     return db.query(CategoryModel).filter(
         CategoryModel.id == category_id,
+        CategoryModel.restaurant_id == restaurant_id,
         CategoryModel.deleted_at.is_(None)
     ).first()
 
 
-def create_category(db: Session, category_data: CategoryCreate) -> CategoryModel:
+def create_category(db: Session, category_data: CategoryCreate, restaurant_id: int) -> CategoryModel:
     """
     Create a new category.
 
@@ -286,6 +309,7 @@ def create_category(db: Session, category_data: CategoryCreate) -> CategoryModel
     # Check if category with this name already exists
     existing_category = db.query(CategoryModel).filter(
         CategoryModel.name == category_data.name.upper(),
+        CategoryModel.restaurant_id == restaurant_id,
         CategoryModel.deleted_at.is_(None)
     ).first()
 
@@ -295,7 +319,8 @@ def create_category(db: Session, category_data: CategoryCreate) -> CategoryModel
     # Create new category
     db_category = CategoryModel(
         name=category_data.name.upper(),
-        description=category_data.description
+        description=category_data.description,
+        restaurant_id=restaurant_id
     )
     db.add(db_category)
     db.commit()
@@ -307,7 +332,8 @@ def create_category(db: Session, category_data: CategoryCreate) -> CategoryModel
 def update_category(
     db: Session,
     category_id: int,
-    category_data: CategoryUpdate
+    category_data: CategoryUpdate,
+    restaurant_id: int
 ) -> Optional[CategoryModel]:
     """
     Update a category.
@@ -322,6 +348,7 @@ def update_category(
     """
     db_category = db.query(CategoryModel).filter(
         CategoryModel.id == category_id,
+        CategoryModel.restaurant_id == restaurant_id,
         CategoryModel.deleted_at.is_(None)
     ).first()
 
@@ -333,6 +360,7 @@ def update_category(
         existing_category = db.query(CategoryModel).filter(
             CategoryModel.name == category_data.name.upper(),
             CategoryModel.id != category_id,
+            CategoryModel.restaurant_id == restaurant_id,
             CategoryModel.deleted_at.is_(None)
         ).first()
 
@@ -350,7 +378,7 @@ def update_category(
     return db_category
 
 
-def delete_category(db: Session, category_id: int) -> bool:
+def delete_category(db: Session, category_id: int, restaurant_id: int) -> bool:
     """
     Delete a category. Only allow deletion if no menu items are using it.
 

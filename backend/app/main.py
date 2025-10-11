@@ -17,6 +17,7 @@ _ = pytz.timezone('America/Los_Angeles')
 from .core.config import settings
 from .db.base import Base, engine, get_db
 from .core.security import oauth2_scheme
+from .middleware.restaurant import RestaurantMiddleware
 
 # Configure logging
 logging.basicConfig(
@@ -31,8 +32,9 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 # Import models to ensure they are registered with SQLAlchemy
+from .models.restaurant import Restaurant
 from .models.user import User
-from .models.menu import MenuItem, MenuItemVariant
+from .models.menu import MenuItem, MenuItemVariant, Category
 from .models.order import Order, OrderItem
 from .models.table import Table
 
@@ -106,13 +108,22 @@ app.openapi = custom_openapi
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000",'https://www.shopacoffee.com'],  # Frontend URL
+    allow_origins=[
+        "http://localhost:3000",
+        "http://*.shopacoffee.local:3000",
+        "https://www.shopacoffee.com",
+        "https://*.shopacoffee.com",
+    ],  # explicit safe origins
+    allow_origin_regex=r"^https?://([a-z0-9-]+\.)?localhost(:\d+)?$|^https?://([a-z0-9-]+\.)?shopacoffee\.com$|^https?://([a-z0-9-]+\.)?shopacoffee\.local(:\d+)?$",
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["*"],
     expose_headers=["*"],
     max_age=600,  # Cache preflight response for 10 minutes
 )
+
+# Tenant context middleware (subdomain -> restaurant)
+app.add_middleware(RestaurantMiddleware)
 
 # Include API router
 app.include_router(api_router, prefix="/api/v1")

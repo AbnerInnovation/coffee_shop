@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks, Request
 from sqlalchemy.orm import Session, selectinload
 from typing import List, Optional
 
@@ -7,11 +7,13 @@ from ...models.order import Order as OrderModel, OrderStatus
 from ...models.order_item import OrderItem as OrderItemModel
 from ...models.table import Table as TableModel
 from ...models.menu import MenuItem as MenuItemModel
+from ...models.restaurant import Restaurant
 from ...schemas.order import Order, OrderCreate, OrderUpdate, OrderItemCreate, OrderItemUpdate, OrderItem
 from ...services import order as order_service
 from ...services.order import serialize_order_item
 from ...services.cash_register import create_transaction_from_order
 from ...services.user import get_current_active_user
+from ...core.dependencies import get_current_restaurant
 
 router = APIRouter(
     prefix="/orders",
@@ -24,18 +26,21 @@ router = APIRouter(
 
 @router.get("/", response_model=List[Order])
 async def read_orders(
+    request: Request,
     skip: int = 0,
     limit: int = 100,
     status: Optional[OrderStatus] = None,
     table_id: Optional[int] = None,
     db: Session = Depends(get_db),
+    restaurant: Restaurant = Depends(get_current_restaurant)
 ) -> List[Order]:
     """
-    Retrieve orders with optional filtering.
+    Retrieve orders with optional filtering (filtered by restaurant).
     """
     try:
         return order_service.get_orders(
             db,
+            restaurant_id=restaurant.id,
             skip=skip,
             limit=limit,
             status=status,
@@ -48,9 +53,11 @@ async def read_orders(
 
 @router.post("/", response_model=Order, status_code=status.HTTP_201_CREATED)
 async def create_order(
+    request: Request,
     order: OrderCreate, 
     background_tasks: BackgroundTasks,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    restaurant: Restaurant = Depends(get_current_restaurant)
 ) -> Order:
     """
     Create a new order.
@@ -69,15 +76,15 @@ async def create_order(
                 detail=f"Menu item with ID {item.menu_item_id} not found"
             )
     
-    return order_service.create_order_with_items(db=db, order=order)
+    return order_service.create_order_with_items(db=db, order=order, restaurant_id=restaurant.id)
 
 
 @router.get("/{order_id}", response_model=Order)
-async def read_order(order_id: int, db: Session = Depends(get_db)) -> Order:
+async def read_order(order_id: int, db: Session = Depends(get_db), restaurant: Restaurant = Depends(get_current_restaurant)) -> Order:
     """
     Get a specific order by ID.
     """
-    db_order = order_service.get_order(db, order_id=order_id)
+    db_order = order_service.get_order(db, order_id=order_id, restaurant_id=restaurant.id)
     if db_order is None:
         raise HTTPException(status_code=404, detail="Order not found")
     return db_order
