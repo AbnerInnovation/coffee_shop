@@ -10,6 +10,8 @@ from ..db.base import SessionLocal
 
 logger = logging.getLogger(__name__)
 
+RESERVED_SUBDOMAINS = {"www", "localhost", "api"}
+
 
 def extract_subdomain(host: str) -> Optional[str]:
     """
@@ -29,9 +31,10 @@ def extract_subdomain(host: str) -> Optional[str]:
     
     # If we have at least 2 parts (subdomain.domain) or 3 parts (subdomain.domain.tld)
     if len(parts) >= 2:
-        # Check if it's not just domain.tld or localhost
-        if parts[0] not in ['www', 'localhost'] and len(parts[0]) > 0:
-            return parts[0]
+        # Check if it's not just domain.tld or a reserved subdomain
+        first = parts[0].lower()
+        if first not in RESERVED_SUBDOMAINS and len(first) > 0:
+            return first
     
     return None
 
@@ -46,6 +49,10 @@ async def get_restaurant_from_request(request: Request) -> Optional[Restaurant]:
     
     # Extract subdomain from Host
     subdomain = extract_subdomain(host)
+
+    # Treat reserved subdomains as non-tenant so we can resolve via Origin/Referer/header
+    if subdomain in RESERVED_SUBDOMAINS:
+        subdomain = None
     
     # If no subdomain on Host, try Origin then Referer headers
     if not subdomain:
@@ -63,6 +70,12 @@ async def get_restaurant_from_request(request: Request) -> Optional[Restaurant]:
                 except Exception:
                     # ignore parse errors
                     pass
+    
+    # Final fallback: allow explicit override via header for server-to-server calls
+    if not subdomain:
+        hdr_sub = request.headers.get('x-restaurant-subdomain')
+        if hdr_sub:
+            subdomain = hdr_sub.strip().lower()
     
     if not subdomain:
         logger.debug(f"No subdomain found in host: {host}")
