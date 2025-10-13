@@ -8,18 +8,18 @@
       <span class="ml-2 text-blue-600 dark:text-blue-400">{{ t('app.views.cashRegister.loading') ||
         'Loading...' }}</span>
     </div>
-    <div v-else-if="lastCut" class="space-y-3">
-      <div class="grid grid-cols-2 gap-4 text-sm">
+    <div v-else-if="lastCut" class="space-y-4">
+      <div class="grid grid-cols-2 gap-4">
         <div>
-          <p class="text-lg font-bold text-blue-700 dark:text-blue-300">
+          <p class="text-2xl font-bold text-blue-700 dark:text-blue-300">
             ${{ lastCut.net_cash_flow?.toFixed(2) || '0.00' }}
           </p>
-          <p class="text-xs text-gray-600 dark:text-gray-400">
+          <p class="text-sm text-gray-600 dark:text-gray-400">
             {{ formatDate(lastCut.created_at) }}
           </p>
         </div>
         <div class="text-right">
-          <p class="text-sm text-gray-700 dark:text-gray-300">
+          <p class="text-base text-gray-700 dark:text-gray-300">
             Session #{{ lastCut.session_id }}
           </p>
           <p class="text-sm text-gray-600 dark:text-gray-400">
@@ -29,11 +29,11 @@
       </div>
 
       <!-- Payment Breakdown -->
-      <div class="border-t border-blue-200 dark:border-blue-800 pt-2">
-        <h4 class="text-sm font-medium text-blue-900 dark:text-blue-100 mb-2">
+      <div class="border-t border-blue-200 dark:border-blue-800 pt-3">
+        <h4 class="text-base font-medium text-blue-900 dark:text-blue-100 mb-2">
           {{ t('app.views.cashRegister.paymentBreakdown') || 'Payment Breakdown' }}
         </h4>
-        <div class="flex flex-col text-xs">
+        <div class="flex flex-col text-sm space-y-1">
           <div v-if="lastCut.payment_breakdown?.cash !== undefined || lastCut.cash_payments !== undefined"
             class="flex justify-between">
             <span class="text-gray-600 dark:text-gray-400">{{ t('app.views.cashRegister.cash') || 'Cash'
@@ -62,11 +62,11 @@
       </div>
 
       <!-- Transaction Summary -->
-      <div class="border-t border-blue-200 dark:border-blue-800 pt-2">
-        <h4 class="text-sm font-medium text-blue-900 dark:text-blue-100 mb-2">
+      <div class="border-t border-blue-200 dark:border-blue-800 pt-3">
+        <h4 class="text-base font-medium text-blue-900 dark:text-blue-100 mb-2">
           {{ t('app.views.cashRegister.transactionSummary') || 'Transaction Summary' }}
         </h4>
-        <div class="grid grid-cols-2 gap-2 text-xs">
+        <div class="grid grid-cols-2 gap-2 text-sm">
           <div class="flex justify-between">
             <span class="text-gray-600 dark:text-gray-400">{{ t('app.views.cashRegister.totalSales') ||
               'Sales' }}:</span>

@@ -20,45 +20,90 @@
     <div v-if="activeTab === 'current'">
       <div v-if="currentSession" class="mb-8 bg-white dark:bg-gray-800 rounded-lg shadow p-6">
         <div class="flex justify-between items-center mb-4">
+          <div class="flex items-center gap-3">
+            <div class="text-sm text-gray-600 dark:text-gray-400">
+              <span class="font-medium">Session opened:</span>
+              <span class="ml-2">{{ sessionDuration }}</span>
+            </div>
+          </div>
           <div class="flex space-x-2">
-            <button @click="openExpenseModal" class="px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700">
+            <button @click="openExpenseModal" class="px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 flex items-center gap-2 transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z" />
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z" clip-rule="evenodd" />
+              </svg>
               {{ t('app.views.cashRegister.addExpense') || 'Add Expense' }}
             </button>
-            <button @click="openCutModal" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+            <button @click="openCutModal" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center gap-2 transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
+                <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd" />
+              </svg>
               {{ t('app.views.cashRegister.cut') || 'Cut' }}
             </button>
-            <button @click="openCloseModal" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">
+            <button @click="openCloseModal" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 flex items-center gap-2 transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+              </svg>
               {{ t('app.views.cashRegister.close') || 'Close' }}
             </button>
           </div>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-          <div class="bg-green-50 dark:bg-green-900 p-4 rounded-md">
-            <h3 class="text-lg font-medium text-green-800 dark:text-green-200">
-              {{ t('app.views.cashRegister.initialBalance') || 'Initial Balance' }}
-            </h3>
+          <div class="bg-green-50 dark:bg-green-900/30 p-4 rounded-lg border border-green-200 dark:border-green-800">
+            <div class="flex items-center justify-between mb-2">
+              <h3 class="text-sm font-medium text-green-800 dark:text-green-200">
+                {{ t('app.views.cashRegister.initialBalance') || 'Initial Balance' }}
+              </h3>
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-600 dark:text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z" />
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z" clip-rule="evenodd" />
+              </svg>
+            </div>
             <p class="text-2xl font-bold text-green-600 dark:text-green-400">
               ${{ currentSession.initial_balance?.toFixed(2) || '0.00' }}
             </p>
           </div>
-          <div class="bg-blue-50 dark:bg-blue-900 p-4 rounded-md">
-            <h3 class="text-lg font-medium text-blue-800 dark:text-blue-200">
-              {{ t('app.views.cashRegister.currentBalance') || 'Current Balance' }}
-            </h3>
+          <div class="bg-blue-50 dark:bg-blue-900/30 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
+            <div class="flex items-center justify-between mb-2">
+              <h3 class="text-sm font-medium text-blue-800 dark:text-blue-200">
+                {{ t('app.views.cashRegister.currentBalance') || 'Current Balance' }}
+              </h3>
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600 dark:text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" />
+              </svg>
+            </div>
             <p class="text-2xl font-bold text-blue-600 dark:text-blue-400">
               ${{ currentBalance.toFixed(2) }}
             </p>
           </div>
-          <div class="bg-purple-50 dark:bg-purple-900 p-4 rounded-md">
-            <h3 class="text-lg font-medium text-purple-800 dark:text-purple-200">
-              {{ t('app.views.cashRegister.transactions') || 'Transactions' }}
-            </h3>
+          <div class="bg-purple-50 dark:bg-purple-900/30 p-4 rounded-lg border border-purple-200 dark:border-purple-800">
+            <div class="flex items-center justify-between mb-2">
+              <h3 class="text-sm font-medium text-purple-800 dark:text-purple-200">
+                {{ t('app.views.cashRegister.transactions') || 'Transactions' }}
+              </h3>
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-purple-600 dark:text-purple-400" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
+                <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd" />
+              </svg>
+            </div>
             <p class="text-2xl font-bold text-purple-600 dark:text-purple-400">
               {{ transactions.length }}
             </p>
           </div>
-
-
+          <div class="bg-amber-50 dark:bg-amber-900/30 p-4 rounded-lg border border-amber-200 dark:border-amber-800">
+            <div class="flex items-center justify-between mb-2">
+              <h3 class="text-sm font-medium text-amber-800 dark:text-amber-200">
+                {{ t('app.views.cashRegister.totalExpenses') || 'Total Expenses' }}
+              </h3>
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-amber-600 dark:text-amber-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v3.586L7.707 9.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 10.586V7z" clip-rule="evenodd" />
+              </svg>
+            </div>
+            <p class="text-2xl font-bold text-amber-600 dark:text-amber-400">
+              ${{ sessionExpenses.toFixed(2) }}
+            </p>
+          </div>
         </div>
         <LastCutDisplay :lastCut="lastCut" :isLoading="lastCutLoading" />
       </div>
@@ -372,6 +417,27 @@ const currentSession = ref<any>(null)
 const transactions = ref<any[]>([])
 const currentBalance = ref(0)
 const initialBalance = ref(0)
+const currentTime = ref(new Date())
+
+// Computed properties
+const sessionDuration = computed(() => {
+  if (!currentSession.value?.opened_at) return '0h 0m'
+  
+  const openedAt = new Date(currentSession.value.opened_at)
+  const now = currentTime.value
+  const diffMs = now.getTime() - openedAt.getTime()
+  
+  const hours = Math.floor(diffMs / (1000 * 60 * 60))
+  const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60))
+  
+  return `${hours}h ${minutes}m`
+})
+
+const sessionExpenses = computed(() => {
+  return transactions.value
+    .filter(t => t.transaction_type === 'expense')
+    .reduce((sum, t) => sum + Math.abs(t.amount || 0), 0)
+})
 const actualBalance = ref(0)
 const closeNotes = ref('')
 const cashPayments = ref(0)
@@ -683,6 +749,11 @@ const loadLastCut = async () => {
 onMounted(() => {
   loadCurrentSession()
 
+  // Update timer every minute
+  const timerInterval = setInterval(() => {
+    currentTime.value = new Date()
+  }, 60000) // Update every minute
+
   // Listen for order payment completion events
   const handlePaymentCompleted = () => {
     console.log('Payment completed event received, refreshing cash register...')
@@ -693,6 +764,7 @@ onMounted(() => {
 
   // Store the event listener for cleanup
   onUnmounted(() => {
+    clearInterval(timerInterval)
     window.removeEventListener('orderPaymentCompleted', handlePaymentCompleted)
   })
 })
