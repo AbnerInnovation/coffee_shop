@@ -20,6 +20,7 @@ class TransactionType(str, PyEnum):
     TIP = "tip"
     MANUAL_ADD = "manual_add"
     MANUAL_WITHDRAW = "manual_withdraw"
+    EXPENSE = "expense"
 
 class ReportType(str, PyEnum):
     DAILY_SUMMARY = "daily_summary"

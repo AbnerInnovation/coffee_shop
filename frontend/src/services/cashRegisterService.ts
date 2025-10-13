@@ -120,6 +120,26 @@ export const cashRegisterService = {
       params: { payment_method: paymentMethod }
     });
     return response;
+  },
+
+  // Expense endpoints
+  async addExpense(sessionId: number, expenseData: {
+    amount: number;
+    description: string;
+    category?: string;
+  }) {
+    const response = await api.post(`${CASH_REGISTER_ENDPOINT}/sessions/${sessionId}/expenses`, {
+      amount: expenseData.amount,
+      description: expenseData.description,
+      category: expenseData.category
+    });
+    return response;
+  },
+
+  // Transaction management
+  async deleteTransaction(transactionId: number) {
+    const response = await api.delete(`${CASH_REGISTER_ENDPOINT}/transactions/${transactionId}`);
+    return response;
   }
 };
 

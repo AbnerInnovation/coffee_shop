@@ -16,6 +16,7 @@ class TransactionType(str, Enum):
     TIP = "tip"
     MANUAL_ADD = "manual_add"
     MANUAL_WITHDRAW = "manual_withdraw"
+    EXPENSE = "expense"
 
 class ReportType(str, Enum):
     DAILY_SUMMARY = "daily_summary"
@@ -128,6 +129,7 @@ class DailySummaryReport(BaseModel):
     total_sales: float
     total_refunds: float
     total_tips: float
+    total_expenses: float
     total_transactions: int
     net_cash_flow: float
     payment_breakdown: Dict[str, float]
@@ -138,3 +140,8 @@ class PaymentBreakdownReport(BaseModel):
     card_payments: float
     digital_payments: float
     other_payments: float
+
+class ExpenseCreate(BaseModel):
+    amount: float = Field(..., gt=0, description="Expense amount (always positive)")
+    description: str = Field(..., min_length=1, description="Description of the expense")
+    category: Optional[str] = Field(None, description="Expense category (e.g., supplies, utilities, maintenance)")

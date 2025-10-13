@@ -22,7 +22,8 @@ from ...schemas.cash_register import (
     CashRegisterReportCreate,
     CashDifferenceReport,
     DailySummaryReport,
-    PaymentBreakdownReport
+    PaymentBreakdownReport,
+    ExpenseCreate
 )
 from ...services.user import get_current_active_user
 from ...services import cash_register as cash_register_service
@@ -188,3 +189,45 @@ def get_last_cut(
         return cash_register_service.get_last_cut(db, session_id)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error retrieving last cut: {str(e)}")
+
+# -----------------------------
+# Expenses
+# -----------------------------
+
+@router.post("/sessions/{session_id}/expenses", response_model=CashTransaction, status_code=status.HTTP_201_CREATED)
+def add_expense(
+    session_id: int,
+    expense: ExpenseCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+) -> CashTransaction:
+    """Add an expense to a cash register session."""
+    try:
+        transaction = cash_register_service.add_expense_to_session(
+            db=db,
+            session_id=session_id,
+            amount=expense.amount,
+            description=expense.description,
+            created_by_user_id=current_user.id,
+            category=expense.category
+        )
+        return transaction
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error adding expense: {str(e)}")
+
+@router.delete("/transactions/{transaction_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_transaction(
+    transaction_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Delete a transaction from an open cash register session."""
+    try:
+        cash_register_service.delete_transaction(db, transaction_id, current_user.id)
+        return None
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error deleting transaction: {str(e)}")

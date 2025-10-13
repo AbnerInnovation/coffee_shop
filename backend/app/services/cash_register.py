@@ -141,7 +141,8 @@ def cut_session(db: Session, session_id: int, payment_breakdown: PaymentBreakdow
         total_sales = sum(t.amount for t in transactions if t.transaction_type == TransactionType.SALE)
         total_refunds = sum(t.amount for t in transactions if t.transaction_type in [TransactionType.REFUND, TransactionType.CANCELLATION])
         total_tips = sum(t.amount for t in transactions if t.transaction_type == TransactionType.TIP)
-        net_cash_flow = total_sales - total_refunds + total_tips  # refunds subtracted
+        total_expenses = sum(abs(t.amount) for t in transactions if t.transaction_type == TransactionType.EXPENSE)
+        net_cash_flow = total_sales - total_refunds + total_tips - total_expenses  # refunds and expenses subtracted
 
         # Use the provided payment breakdown data
         report_data = DailySummaryReport(
@@ -149,6 +150,7 @@ def cut_session(db: Session, session_id: int, payment_breakdown: PaymentBreakdow
             total_sales=total_sales,
             total_refunds=total_refunds,
             total_tips=total_tips,
+            total_expenses=total_expenses,
             total_transactions=len(transactions),
             net_cash_flow=net_cash_flow,
             payment_breakdown={
@@ -204,6 +206,46 @@ def get_transactions_by_session(db: Session, session_id: int) -> List[CashTransa
     return db.query(CashTransactionModel).filter(
         CashTransactionModel.session_id == session_id
     ).all()
+
+def delete_transaction(db: Session, transaction_id: int, user_id: int) -> bool:
+    """Delete a transaction from a cash register session.
+    
+    Args:
+        db: Database session
+        transaction_id: ID of the transaction to delete
+        user_id: ID of the user requesting deletion (for authorization)
+    
+    Returns:
+        True if deleted successfully
+    
+    Raises:
+        ValueError: If transaction not found or session is closed
+    """
+    try:
+        transaction = db.query(CashTransactionModel).filter(
+            CashTransactionModel.id == transaction_id
+        ).first()
+        
+        if not transaction:
+            raise ValueError("Transaction not found")
+        
+        # Check if the session is still open
+        session = get_session(db, transaction.session_id)
+        if not session:
+            raise ValueError("Session not found")
+        if session.status != SessionStatus.OPEN:
+            raise ValueError("Cannot delete transactions from a closed session")
+        
+        # Delete the transaction
+        db.delete(transaction)
+        db.commit()
+        
+        logger.info(f"Deleted transaction {transaction_id} by user {user_id}")
+        return True
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Error deleting transaction {transaction_id}: {e}")
+        raise
 
 # -----------------------------
 # Report Services
@@ -324,4 +366,58 @@ def generate_cash_difference_report(db: Session, session_id: int) -> CashDiffere
         )
     except Exception as e:
         logger.error(f"Error generating cash difference report for session {session_id}: {e}")
+        raise
+
+def add_expense_to_session(
+    db: Session,
+    session_id: int,
+    amount: float,
+    description: str,
+    created_by_user_id: int,
+    category: Optional[str] = None
+) -> CashTransactionModel:
+    """Add an expense transaction to a cash register session.
+    
+    Args:
+        db: Database session
+        session_id: ID of the cash register session
+        amount: Expense amount (positive value)
+        description: Description of the expense
+        created_by_user_id: ID of the user creating the expense
+        category: Optional category for the expense
+    
+    Returns:
+        The created expense transaction
+    """
+    try:
+        # Verify session exists and is open
+        db_session = get_session(db, session_id)
+        if not db_session:
+            raise ValueError("Session not found")
+        if db_session.status != SessionStatus.OPEN:
+            raise ValueError("Cannot add expenses to a closed session")
+        
+        # Create expense description with category if provided
+        full_description = f"{description}"
+        if category:
+            full_description = f"[{category}] {description}"
+        
+        # Create the expense transaction (negative amount to reduce cash)
+        transaction = CashTransactionModel(
+            session_id=session_id,
+            transaction_type=TransactionType.EXPENSE,
+            amount=-abs(amount),  # Ensure negative value for expense
+            description=full_description,
+            created_by_user_id=created_by_user_id
+        )
+        
+        db.add(transaction)
+        db.commit()
+        db.refresh(transaction)
+        
+        logger.info(f"Added expense transaction {transaction.id} to session {session_id}")
+        return transaction
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Error adding expense to session {session_id}: {e}")
         raise

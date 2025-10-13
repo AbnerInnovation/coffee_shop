@@ -21,10 +21,8 @@
       <div v-if="currentSession" class="mb-8 bg-white dark:bg-gray-800 rounded-lg shadow p-6">
         <div class="flex justify-between items-center mb-4">
           <div class="flex space-x-2">
-            <button @click="loadCurrentSession" :disabled="isRefreshing"
-              class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed">
-              <span v-if="isRefreshing" class="inline-block animate-spin mr-2">⟳</span>
-              {{ t('app.views.cashRegister.refresh') || 'Refresh' }}
+            <button @click="openExpenseModal" class="px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700">
+              {{ t('app.views.cashRegister.addExpense') || 'Add Expense' }}
             </button>
             <button @click="openCutModal" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
               {{ t('app.views.cashRegister.cut') || 'Cut' }}
@@ -88,9 +86,9 @@
           </p>
         </div>
         <div v-else class="divide-y divide-gray-200 dark:divide-gray-700">
-          <div v-for="transaction in transactions" :key="transaction.id" class="px-6 py-4">
-            <div class="flex justify-between items-center">
-              <div>
+          <div v-for="transaction in transactions" :key="transaction.id" class="px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+            <div class="flex justify-between items-center gap-4">
+              <div class="flex-1">
                 <p class="text-sm font-medium text-gray-900 dark:text-gray-100">
                   {{ transaction.description }}
                 </p>
@@ -98,14 +96,24 @@
                   {{ formatDate(transaction.created_at) }}
                 </p>
               </div>
-              <div class="text-right">
-                <p class="text-lg font-semibold"
-                  :class="transaction.amount >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'">
-                  {{ transaction.amount >= 0 ? '+' : '' }}${{ transaction.amount?.toFixed(2) || '0.00' }}
-                </p>
-                <p class="text-sm text-gray-500 dark:text-gray-400">
-                  {{ transaction.transaction_type }}
-                </p>
+              <div class="text-right flex items-center gap-3">
+                <div>
+                  <p class="text-lg font-semibold"
+                    :class="transaction.amount >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'">
+                    {{ transaction.amount >= 0 ? '+' : '-' }}${{ Math.abs(transaction.amount)?.toFixed(2) || '0.00' }}
+                  </p>
+                  <p class="text-sm text-gray-500 dark:text-gray-400">
+                    {{ transaction.transaction_type }}
+                  </p>
+                </div>
+                <button 
+                  @click="confirmDeleteTransaction(transaction)"
+                  class="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors"
+                  :title="t('app.actions.delete') || 'Delete'">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                  </svg>
+                </button>
               </div>
             </div>
           </div>
@@ -170,6 +178,54 @@
     </div>
   </div>
 
+  <!-- Expense Modal -->
+  <div v-if="expenseModalOpen" class="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4">
+    <div class="w-full max-w-md rounded-lg bg-white dark:bg-gray-900 p-6 shadow-lg">
+      <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+        {{ t('app.views.cashRegister.addExpense') || 'Add Expense' }}
+      </h3>
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+            {{ t('app.views.cashRegister.expenseAmount') || 'Amount' }}
+          </label>
+          <input v-model="expenseAmount" type="number" step="0.01" min="0"
+            class="w-full rounded-md border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+            {{ t('app.views.cashRegister.expenseDescription') || 'Description' }}
+          </label>
+          <input v-model="expenseDescription" type="text"
+            class="w-full rounded-md border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+            {{ t('app.views.cashRegister.expenseCategory') || 'Category (Optional)' }}
+          </label>
+          <select v-model="expenseCategory"
+            class="w-full rounded-md border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500">
+            <option value="">{{ t('app.views.cashRegister.selectCategory') || 'Select a category' }}</option>
+            <option value="supplies">{{ t('app.views.cashRegister.categorySupplies') || 'Supplies' }}</option>
+            <option value="utilities">{{ t('app.views.cashRegister.categoryUtilities') || 'Utilities' }}</option>
+            <option value="maintenance">{{ t('app.views.cashRegister.categoryMaintenance') || 'Maintenance' }}</option>
+            <option value="inventory">{{ t('app.views.cashRegister.categoryInventory') || 'Inventory' }}</option>
+            <option value="other">{{ t('app.views.cashRegister.categoryOther') || 'Other' }}</option>
+          </select>
+        </div>
+      </div>
+      <div class="mt-6 flex justify-end space-x-3">
+        <button type="button" class="px-4 py-2 rounded-md border border-gray-300 dark:border-gray-700 text-sm"
+          @click="closeModals">
+          {{ t('app.actions.cancel') || 'Cancel' }}
+        </button>
+        <button type="button" class="px-4 py-2 rounded-md bg-orange-600 text-white text-sm" @click="addExpense">
+          {{ t('app.actions.save') || 'Save' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Cut Modal -->
   <div v-if="cutModalOpen" class="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4">
     <div class="w-full max-w-lg rounded-lg bg-white dark:bg-gray-900 p-6 shadow-lg">
@@ -199,6 +255,12 @@
                 {{ t('app.views.cashRegister.totalTips') || 'Total Tips' }}
               </span>
               <span class="font-medium">${{ cutReport.total_tips?.toFixed(2) || '0.00' }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-600 dark:text-gray-400">
+                {{ t('app.views.cashRegister.totalExpenses') || 'Total Expenses' }}
+              </span>
+              <span class="font-medium text-red-600 dark:text-red-400">${{ cutReport.total_expenses?.toFixed(2) || '0.00' }}</span>
             </div>
             <div class="flex justify-between font-bold">
               <span class="text-gray-900 dark:text-gray-100">
@@ -256,6 +318,38 @@
       </div>
     </div>
   </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div v-if="deleteConfirmModalOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+    <div class="w-full max-w-md rounded-lg bg-white dark:bg-gray-900 p-6 shadow-lg">
+      <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+        {{ t('app.views.cashRegister.deleteTransaction') || 'Delete Transaction' }}
+      </h3>
+      <p class="text-gray-600 dark:text-gray-400 mb-2">
+        {{ t('app.views.cashRegister.confirmDeleteTransaction') || 'Are you sure you want to delete this transaction?' }}
+      </p>
+      <div v-if="transactionToDelete" class="bg-gray-50 dark:bg-gray-800 p-3 rounded-md mb-6">
+        <p class="text-sm font-medium text-gray-900 dark:text-gray-100">
+          {{ transactionToDelete.description }}
+        </p>
+        <p class="text-sm text-gray-500 dark:text-gray-400">
+          {{ transactionToDelete.amount >= 0 ? '+' : '-' }}${{ Math.abs(transactionToDelete.amount)?.toFixed(2) || '0.00' }}
+        </p>
+      </div>
+      <div class="flex justify-end space-x-3">
+        <button type="button" 
+          class="px-4 py-2 rounded-md border border-gray-300 dark:border-gray-700 text-sm hover:bg-gray-50 dark:hover:bg-gray-800"
+          @click="cancelDelete">
+          {{ t('app.actions.cancel') || 'Cancel' }}
+        </button>
+        <button type="button" 
+          class="px-4 py-2 rounded-md bg-red-600 text-white text-sm hover:bg-red-700"
+          @click="deleteTransaction">
+          {{ t('app.actions.delete') || 'Delete' }}
+        </button>
+      </div>
+    </div>
+  </div>
 </template>
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
@@ -273,6 +367,7 @@ const isRefreshing = ref(false)
 const openModalOpen = ref(false)
 const closeModalOpen = ref(false)
 const cutModalOpen = ref(false)
+const expenseModalOpen = ref(false)
 const currentSession = ref<any>(null)
 const transactions = ref<any[]>([])
 const currentBalance = ref(0)
@@ -287,12 +382,16 @@ const cutReport = ref({
   total_sales: 0,
   total_refunds: 0,
   total_tips: 0,
+  total_expenses: 0,
   total_transactions: 0,
   net_cash_flow: 0
 })
 
 const lastCut = ref<any>(null)
 const lastCutLoading = ref(false)
+const expenseAmount = ref(0)
+const expenseDescription = ref('')
+const expenseCategory = ref('')
 
 const openOpenModal = () => {
   openModalOpen.value = true
@@ -300,6 +399,10 @@ const openOpenModal = () => {
 
 const openCloseModal = () => {
   closeModalOpen.value = true
+}
+
+const openExpenseModal = () => {
+  expenseModalOpen.value = true
 }
 
 const openCutModal = async () => {
@@ -325,13 +428,18 @@ const openCutModal = async () => {
         .filter(t => t.transaction_type === 'tip')
         .reduce((sum, t) => sum + (t.amount || 0), 0)
 
-      const netCashFlow = totalSales - totalRefunds + totalTips
+      const totalExpenses = transactions
+        .filter(t => t.transaction_type === 'expense')
+        .reduce((sum, t) => sum + Math.abs(t.amount || 0), 0)
+
+      const netCashFlow = totalSales - totalRefunds + totalTips - totalExpenses
 
       // Update cut report with real data
       cutReport.value = {
         total_sales: totalSales,
         total_refunds: totalRefunds,
         total_tips: totalTips,
+        total_expenses: totalExpenses,
         total_transactions: transactions.length,
         net_cash_flow: netCashFlow
       }
@@ -347,6 +455,7 @@ const closeModals = () => {
   openModalOpen.value = false
   closeModalOpen.value = false
   cutModalOpen.value = false
+  expenseModalOpen.value = false
   initialBalance.value = 0
   actualBalance.value = 0
   closeNotes.value = ''
@@ -354,6 +463,9 @@ const closeModals = () => {
   cardPayments.value = 0
   digitalPayments.value = 0
   otherPayments.value = 0
+  expenseAmount.value = 0
+  expenseDescription.value = ''
+  expenseCategory.value = ''
 }
 
 const openSession = async () => {
@@ -400,6 +512,66 @@ const closeSession = async () => {
   }
 }
 
+const addExpense = async () => {
+  if (!expenseAmount.value || expenseAmount.value <= 0) {
+    toast.showToast(t('app.views.cashRegister.expenseAmountRequired') || 'Expense amount is required', 'error')
+    return
+  }
+
+  if (!expenseDescription.value || expenseDescription.value.trim() === '') {
+    toast.showToast(t('app.views.cashRegister.expenseDescriptionRequired') || 'Expense description is required', 'error')
+    return
+  }
+
+  if (!currentSession.value) {
+    toast.showToast(t('app.views.cashRegister.noActiveSession') || 'No active session', 'error')
+    return
+  }
+
+  try {
+    await cashRegisterService.addExpense(currentSession.value.id, {
+      amount: Number(expenseAmount.value),
+      description: expenseDescription.value,
+      category: expenseCategory.value || undefined
+    })
+
+    toast.showToast(t('app.views.cashRegister.expenseAdded') || 'Expense added successfully', 'success')
+    closeModals()
+    loadCurrentSession()
+  } catch (error: any) {
+    console.error('Error adding expense:', error)
+    toast.showToast(error.response?.data?.detail || t('app.views.cashRegister.expenseFailed') || 'Failed to add expense', 'error')
+  }
+}
+
+const transactionToDelete = ref<any>(null)
+const deleteConfirmModalOpen = ref(false)
+
+const confirmDeleteTransaction = (transaction: any) => {
+  transactionToDelete.value = transaction
+  deleteConfirmModalOpen.value = true
+}
+
+const deleteTransaction = async () => {
+  if (!transactionToDelete.value) return
+
+  try {
+    await cashRegisterService.deleteTransaction(transactionToDelete.value.id)
+    toast.showToast(t('app.views.cashRegister.transactionDeleted') || 'Transaction deleted successfully', 'success')
+    deleteConfirmModalOpen.value = false
+    transactionToDelete.value = null
+    loadCurrentSession()
+  } catch (error: any) {
+    console.error('Error deleting transaction:', error)
+    toast.showToast(error.response?.data?.detail || t('app.views.cashRegister.transactionDeleteFailed') || 'Failed to delete transaction', 'error')
+  }
+}
+
+const cancelDelete = () => {
+  deleteConfirmModalOpen.value = false
+  transactionToDelete.value = null
+}
+
 const performCut = async () => {
   if (!currentSession.value) return
 
@@ -419,6 +591,7 @@ const performCut = async () => {
       total_sales: resultData.total_sales || 0,
       total_refunds: resultData.total_refunds || 0,
       total_tips: resultData.total_tips || 0,
+      total_expenses: resultData.total_expenses || 0,
       total_transactions: resultData.total_transactions || 0,
       net_cash_flow: resultData.net_cash_flow || 0
     }
