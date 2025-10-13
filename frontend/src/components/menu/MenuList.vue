@@ -105,14 +105,14 @@ function isItemAvailable(item: MenuItem): boolean {
                       {{ typeof item.category === 'string' ? item.category : item.category.name }}
                     </span>
                   </td>
-                  <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-300">
+                  <td class="whitespace-nowrap px-3 py-4 text-sm dark:text-gray-300 text-gray-700">
                     <template v-if="item.variants && item.variants.length > 0">
                       <div v-if="item.price" class="flex justify-between">
-                        <span class="text-gray-400">Base:</span>
+                        <span class="dark:text-gray-400 text-gray-700">Base:</span>
                         <span class="font-medium">${{ item.price.toFixed(2) }}</span>
                       </div>
                       <div v-for="variant in item.variants" :key="variant.id" class="flex justify-between">
-                        <span class="text-gray-400">{{ variant.name }}:</span>
+                        <span class="dark:text-gray-400 text-gray-700">{{ variant.name }}:</span>
                         <span class="font-medium">${{ variant.price.toFixed(2) }}</span>
                       </div>
                     </template>
