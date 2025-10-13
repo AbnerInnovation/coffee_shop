@@ -59,6 +59,14 @@ export const routes: RouteRecordRaw[] = [
     meta: { requiresAuth: false }
   },
 
+  // Marketing landing
+  {
+    path: '/plans',
+    name: 'Plans',
+    component: () => import('./views/LandingView.vue'),
+    meta: { requiresAuth: false }
+  },
+
   // Catch-all
   {
     path: '/:pathMatch(.*)*',
