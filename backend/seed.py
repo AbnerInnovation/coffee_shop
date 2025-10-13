@@ -6,7 +6,7 @@ from app.models.menu import Category, MenuItem, MenuItemVariant
 from app.models.table import Table
 from app.models.order import Order, OrderStatus
 from app.models.order_item import OrderItem
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import bcrypt
 
 # Password hashing function
@@ -161,14 +161,14 @@ def seed_data() -> None:
                     notes="Extra napkins please",
                     total_amount=8.50,
                     user_id=staff.id,
-                    created_at=datetime.utcnow() - timedelta(days=1),
+                    created_at=datetime.now(timezone.utc) - timedelta(days=1),
                 ),
                 Order(
                     table_id=tables[1].id,
                     status=OrderStatus.PREPARING,
                     total_amount=12.50,
                     user_id=staff.id,
-                    created_at=datetime.utcnow(),
+                    created_at=datetime.now(timezone.utc),
                 ),
             ]
 

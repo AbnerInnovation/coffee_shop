@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy.orm import Session, joinedload
 from typing import List, Optional
 import json
@@ -34,7 +34,7 @@ def create_session(db: Session, session_data: CashRegisterSessionCreate) -> Cash
             opened_by_user_id=session_data.opened_by_user_id,
             cashier_id=session_data.cashier_id,
             initial_balance=session_data.initial_balance,
-            opened_at=datetime.utcnow(),
+            opened_at=datetime.now(timezone.utc),
             status=SessionStatus.OPEN
         )
         db.add(db_session)
@@ -112,7 +112,7 @@ def close_session(
         actual_balance = session_update.final_balance
 
         # Set all the required fields for closing
-        db_session.closed_at = datetime.utcnow()
+        db_session.closed_at = datetime.now(timezone.utc)
         db_session.final_balance = actual_balance  # What user counted
         db_session.actual_balance = actual_balance  # Same as final balance
         db_session.expected_balance = expected_balance  # Calculated from transactions
@@ -164,7 +164,7 @@ def cut_session(db: Session, session_id: int, payment_breakdown: PaymentBreakdow
             session_id=session_id,
             report_type=ReportType.DAILY_SUMMARY,
             data=json.dumps(report_data.dict()),
-            generated_at=datetime.utcnow()
+            generated_at=datetime.now(timezone.utc)
         )
         db.add(db_report)
         db.commit()

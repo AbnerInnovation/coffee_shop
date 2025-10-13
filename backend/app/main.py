@@ -6,13 +6,6 @@ from fastapi.openapi.models import OAuthFlowPassword
 from fastapi.openapi.utils import get_openapi
 from sqlalchemy.orm import Session
 import logging
-import os
-import pytz  # For timezone support
-
-# Set global timezone to UTC-7 (America/Los_Angeles)
-os.environ['TZ'] = 'America/Los_Angeles'
-# Ensure timezone is applied
-_ = pytz.timezone('America/Los_Angeles')
 
 from .core.config import settings
 from .db.base import Base, engine, get_db

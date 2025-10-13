@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy import or_, and_
 from typing import List, Optional, Dict, Any
 import logging
@@ -166,8 +166,8 @@ def create_order_with_items(db: Session, order: OrderCreate, restaurant_id: int)
         notes=order.notes,
         status=OrderStatus.PENDING,
         restaurant_id=restaurant_id,
-        created_at=datetime.utcnow(),
-        updated_at=datetime.utcnow(),
+        created_at=datetime.now(timezone.utc),
+        updated_at=datetime.now(timezone.utc),
     )
     db.add(db_order)
     db.flush()
@@ -198,17 +198,17 @@ def create_order_with_items(db: Session, order: OrderCreate, restaurant_id: int)
             unit_price=unit_price,
             special_instructions=item.special_instructions,
             status=OrderStatus.PENDING,
-            created_at=datetime.utcnow(),
-            updated_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
+            updated_at=datetime.now(timezone.utc),
         )
         db.add(db_item)
         total_amount += unit_price * item.quantity
 
     db_order.total_amount = total_amount
-    db_order.updated_at = datetime.utcnow()
+    db_order.updated_at = datetime.now(timezone.utc)
     db.commit()
 
-    return get_order(db, db_order.id)
+    return get_order(db, db_order.id, restaurant_id)
 
 def update_order(db: Session, db_order: OrderModel, order: OrderUpdate) -> dict:
     update_data = order.dict(exclude_unset=True)
@@ -227,17 +227,17 @@ def update_order(db: Session, db_order: OrderModel, order: OrderUpdate) -> dict:
     for field, value in update_data.items():
         setattr(db_order, field, value)
 
-    db_order.updated_at = datetime.utcnow()
+    db_order.updated_at = datetime.now(timezone.utc)
     db.add(db_order)
     db.commit()
     db.refresh(db_order)
     return serialize_order(db_order)
 
 def delete_order(db: Session, db_order: OrderModel) -> None:
-    db_order.deleted_at = datetime.utcnow()
+    db_order.deleted_at = datetime.now(timezone.utc)
     db.add(db_order)
     for item in db_order.items:
-        item.deleted_at = datetime.utcnow()
+        item.deleted_at = datetime.now(timezone.utc)
         db.add(item)
     db.commit()
 
@@ -275,12 +275,12 @@ def add_order_item(db: Session, db_order: OrderModel, item: OrderItemCreate, uni
         unit_price=unit_price,
         special_instructions=item.special_instructions,
         status=OrderStatus.PENDING,
-        created_at=datetime.utcnow(),
-        updated_at=datetime.utcnow(),
+        created_at=datetime.now(timezone.utc),
+        updated_at=datetime.now(timezone.utc),
     )
     db.add(db_item)
     db_order.total_amount = (db_order.total_amount or 0) + (unit_price * item.quantity)
-    db_order.updated_at = datetime.utcnow()
+    db_order.updated_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(db_item)
     return serialize_order_item(db_item)
@@ -312,24 +312,24 @@ def update_order_item(db: Session, db_item: OrderItemModel, item: OrderItemUpdat
     for field, value in update_data.items():
         setattr(db_item, field, value)
 
-    db_item.updated_at = datetime.utcnow()
+    db_item.updated_at = datetime.now(timezone.utc)
     order = db.query(OrderModel).filter(OrderModel.id == db_item.order_id).first()
     if order:
         order.total_amount = sum(i.quantity * (i.unit_price or 0) for i in order.items)
-        order.updated_at = datetime.utcnow()
+        order.updated_at = datetime.now(timezone.utc)
 
     db.commit()
     db.refresh(db_item)
     return serialize_order_item(db_item)
 
 def delete_order_item(db: Session, db_item: OrderItemModel) -> None:
-    db_item.deleted_at = datetime.utcnow()
+    db_item.deleted_at = datetime.now(timezone.utc)
     db.add(db_item)
     order = db.query(OrderModel).filter(OrderModel.id == db_item.order_id).first()
     if order:
         order.total_amount = sum(
             item.quantity * item.unit_price for item in order.items if item.deleted_at is None and item.id != db_item.id
         )
-        order.updated_at = datetime.utcnow()
+        order.updated_at = datetime.now(timezone.utc)
         db.add(order)
     db.commit()

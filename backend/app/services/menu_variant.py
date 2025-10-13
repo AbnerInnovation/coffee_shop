@@ -1,5 +1,5 @@
 from typing import List, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 import logging
@@ -99,7 +99,7 @@ def delete_variant(
     Soft delete a variant by setting the deleted_at timestamp.
     Note: This function expects to be called within an existing transaction context.
     """
-    db_variant.deleted_at = datetime.utcnow()
+    db_variant.deleted_at = datetime.now(timezone.utc)
     db.add(db_variant)
     db.flush()  # Flush the changes without committing
     return True

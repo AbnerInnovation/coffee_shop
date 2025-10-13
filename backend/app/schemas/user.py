@@ -1,4 +1,5 @@
-from pydantic import BaseModel, EmailStr, Field
+from .base import PhoenixBaseModel as BaseModel
+from pydantic import EmailStr, Field
 from datetime import datetime
 from typing import Optional
 from enum import Enum

@@ -1,4 +1,5 @@
-from pydantic import BaseModel, Field, validator
+from .base import PhoenixBaseModel as BaseModel
+from pydantic import Field, validator
 from typing import Optional
 from datetime import datetime
 import re
@@ -12,7 +13,7 @@ class RestaurantBase(BaseModel):
     phone: Optional[str] = None
     email: Optional[str] = None
     logo_url: Optional[str] = None
-    timezone: str = Field(default="America/Los_Angeles")
+    timezone: str = Field(default="America/Phoenix")
     currency: str = Field(default="USD", max_length=3)
     tax_rate: Optional[float] = Field(default=0.0, ge=0, le=1)
     is_active: bool = True

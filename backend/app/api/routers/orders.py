@@ -142,7 +142,7 @@ async def update_order(order_id: int, order: OrderUpdate, db: Session = Depends(
         return updated_order
     else:
         # If no other updates, just return the current order
-        return order_service.get_order(db, order_id)
+        return order_service.get_order(db, order_id, db_order.restaurant_id)
 
 
 
@@ -279,7 +279,7 @@ async def mark_order_as_paid(
         db.commit()
         db.refresh(db_order)
 
-        return order_service.get_order(db, order_id)
+        return order_service.get_order(db, order_id, db_order.restaurant_id)
 
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))

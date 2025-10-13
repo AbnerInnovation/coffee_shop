@@ -46,7 +46,7 @@ class Order(BaseModel):
         SQLEnum(PaymentMethod, name='payment_method'),
         nullable=True
     )
-    deleted_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    deleted_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     
     # Multi-tenant support
     restaurant_id: Mapped[int] = mapped_column(Integer, ForeignKey("restaurants.id"), nullable=False, index=True)

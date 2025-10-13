@@ -1,5 +1,5 @@
 from typing import List, Optional, Dict, Any
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy.orm import Session, joinedload
 import logging
 
@@ -228,7 +228,7 @@ def update_menu_item(
         # Soft delete variants that were not included
         for variant in db_item.variants:
             if variant.id not in sent_variant_ids:
-                variant.deleted_at = datetime.utcnow()
+                variant.deleted_at = datetime.now(timezone.utc)
                 db.add(variant)
 
     db.commit()
@@ -241,7 +241,7 @@ def delete_menu_item(db: Session, db_item: MenuItemModel) -> None:
     Soft delete a menu item by setting the deleted_at timestamp.
     Note: This function expects to be called within an existing transaction context.
     """
-    db_item.deleted_at = datetime.utcnow()
+    db_item.deleted_at = datetime.now(timezone.utc)
     db.add(db_item)
 
 
@@ -407,7 +407,7 @@ def delete_category(db: Session, category_id: int, restaurant_id: int) -> bool:
         raise ValueError(f"Cannot delete category '{db_category.name}' because it has {menu_items_count} menu items")
 
     # Soft delete by setting deleted_at timestamp
-    db_category.deleted_at = datetime.utcnow()
+    db_category.deleted_at = datetime.now(timezone.utc)
     db.add(db_category)
     db.commit()
 

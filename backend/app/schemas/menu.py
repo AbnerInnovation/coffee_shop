@@ -1,4 +1,5 @@
-from pydantic import BaseModel, Field, ConfigDict
+from .base import PhoenixBaseModel as BaseModel
+from pydantic import Field, ConfigDict
 from enum import Enum
 from typing import Optional, List, Union, Any
 from datetime import datetime

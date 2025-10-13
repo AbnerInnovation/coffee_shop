@@ -29,8 +29,8 @@ class ReportType(str, PyEnum):
 class CashRegisterSession(BaseModel):
     __tablename__ = "cash_register_sessions"
 
-    opened_at = Column(DateTime, nullable=False)
-    closed_at = Column(DateTime, nullable=True)
+    opened_at = Column(DateTime(timezone=True), nullable=False)
+    closed_at = Column(DateTime(timezone=True), nullable=True)
     opened_by_user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     cashier_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     initial_balance = Column(DECIMAL(10, 2), nullable=False, default=0.00)
@@ -74,7 +74,7 @@ class CashRegisterReport(BaseModel):
     session_id = Column(Integer, ForeignKey("cash_register_sessions.id"), nullable=False)
     report_type = Column(SQLEnum(ReportType, name='report_type', values_callable=lambda x: [e.value for e in x]), nullable=False)
     data = Column(Text, nullable=False)  # JSON string for report data
-    generated_at = Column(DateTime, nullable=False)
+    generated_at = Column(DateTime(timezone=True), nullable=False)
 
     # Relationships
     session = relationship("CashRegisterSession", back_populates="reports")

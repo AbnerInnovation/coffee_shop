@@ -39,7 +39,7 @@ class OrderItem(BaseModel):
         default=OrderItemStatus.PENDING,
         nullable=False,
     )
-    deleted_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    deleted_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
 
     # Relationships
     order: Mapped["Order"] = relationship("Order", back_populates="items")

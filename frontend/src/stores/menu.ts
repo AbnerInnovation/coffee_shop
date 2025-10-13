@@ -226,12 +226,7 @@ export const useMenuStore = defineStore('menu', () => {
       
       // Return default categories on error
       return [
-        'Coffee',
-        'Tea',
-        'Breakfast',
-        'Lunch',
-        'Drinks',
-        'Specials'
+
       ];
     } finally {
       loading.value = false;
