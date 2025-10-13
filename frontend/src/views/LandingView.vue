@@ -53,7 +53,7 @@
       </div>
     </div>
 
-    <div class="mb-12">
+    <div v-if="false" class="mb-12">
       <h3 class="text-lg font-semibold mb-3">Paquetes recomendados</h3>
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div v-for="pack in packs" :key="pack.name" class="p-5 border rounded-2xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 hover:shadow-md transition">
@@ -64,7 +64,7 @@
       </div>
     </div>
 
-    <div class="bg-gray-50 dark:bg-slate-900 p-6 rounded-2xl border border-gray-200 dark:border-slate-700 ring-1 ring-inset ring-gray-100 dark:ring-slate-800">
+    <div v-if="false" class="bg-gray-50 dark:bg-slate-900 p-6 rounded-2xl border border-gray-200 dark:border-slate-700 ring-1 ring-inset ring-gray-100 dark:ring-slate-800">
       <h3 class="font-semibold text-slate-900 dark:text-slate-100">Sucursales y descuentos</h3>
       <p class="text-sm text-gray-600 dark:text-slate-400 mt-2">
         Cada sucursal se toma como un negocio aparte. Ofrecemos descuento por volumen a partir de 3 sucursales — ejemplo: 20% de descuento en la tarifa mensual de cada sucursal.

@@ -13,7 +13,7 @@ from app.schemas.menu import MenuItem, MenuItemCreate, MenuItemUpdate, Category
 from app.services.menu import (
     get_menu_items,
     get_menu_item,
-    create_menu_item,
+    create_menu_item as create_menu_item_service,
     update_menu_item as update_menu_item_service,
     delete_menu_item as delete_menu_item_service,
     get_categories
@@ -85,7 +85,8 @@ async def create_menu_item(
     request: Request,
     menu_item: MenuItemCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
+    restaurant: Restaurant = Depends(get_current_restaurant)
 ) -> MenuItem:
     """
     Create a new menu item with variants.
@@ -101,7 +102,7 @@ async def create_menu_item(
 
     try:
         with db.begin():
-            db_item = create_menu_item(db=db, menu_item=menu_item, restaurant_id=restaurant.id)
+            db_item = create_menu_item_service(db=db, menu_item=menu_item, restaurant_id=restaurant.id)
             db.refresh(db_item, ['category', 'variants'])
             return db_item
     except Exception as e:
@@ -116,12 +117,13 @@ async def create_menu_item(
 async def read_menu_item(
     item_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
+    restaurant: Restaurant = Depends(get_current_restaurant)
 ) -> MenuItem:
     """
     Get a specific menu item by ID.
     """
-    db_item = get_menu_item(db, item_id=item_id)
+    db_item = get_menu_item(db, item_id=item_id, restaurant_id=restaurant.id)
     if db_item is None:
         raise HTTPException(status_code=404, detail="Menu item not found")
 
@@ -140,14 +142,15 @@ async def update_menu_item_availability(
     item_id: int,
     availability: AvailabilityUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
+    restaurant: Restaurant = Depends(get_current_restaurant)
 ) -> MenuItem:
     """
     Update only the availability flag of a menu item.
     Requires admin privileges.
     """
     check_admin(current_user)
-    db_item = get_menu_item(db, item_id=item_id)
+    db_item = get_menu_item(db, item_id=item_id, restaurant_id=restaurant.id)
     if db_item is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -172,14 +175,15 @@ async def update_menu_item(
     item_id: int,
     menu_item: MenuItemUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
+    restaurant: Restaurant = Depends(get_current_restaurant)
 ) -> MenuItem:
     """
     Update a menu item and its variants.
     Requires admin privileges.
     """
     check_admin(current_user)
-    db_item = get_menu_item(db, item_id=item_id)
+    db_item = get_menu_item(db, item_id=item_id, restaurant_id=restaurant.id)
     if db_item is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -188,7 +192,7 @@ async def update_menu_item(
 
     try:
         # Get the existing item first to ensure it exists
-        db_item = get_menu_item(db, item_id=item_id)
+        db_item = get_menu_item(db, item_id=item_id, restaurant_id=restaurant.id)
         if db_item is None:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -196,7 +200,7 @@ async def update_menu_item(
             )
             
         # Update the item in a transaction
-        updated_item = update_menu_item_service(db=db, item_id=item_id, menu_item=menu_item)
+        updated_item = update_menu_item_service(db=db, item_id=item_id, menu_item=menu_item, restaurant_id=restaurant.id)
         # No need to refresh since we're using the same session and relationships are loaded
         return updated_item
             
@@ -214,14 +218,15 @@ async def update_menu_item(
 async def delete_menu_item(
     item_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
+    restaurant: Restaurant = Depends(get_current_restaurant)
 ):
     """
     Delete a menu item.
     Requires admin privileges.
     """
     check_admin(current_user)
-    db_item = get_menu_item(db, item_id=item_id)
+    db_item = get_menu_item(db, item_id=item_id, restaurant_id=restaurant.id)
     if db_item is None:
         raise HTTPException(status_code=404, detail="Menu item not found")
 
@@ -247,12 +252,13 @@ async def read_variants(
     limit: int = Query(100, le=100, description="Max items to return"),
     available: Optional[bool] = None,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
+    restaurant: Restaurant = Depends(get_current_restaurant)
 ) -> List[MenuItemVariant]:
     """
     Get all variants for a menu item.
     """
-    menu_item = get_menu_item(db, item_id)
+    menu_item = get_menu_item(db, item_id, restaurant_id=restaurant.id)
     if not menu_item:
         raise HTTPException(status_code=404, detail="Menu item not found")
 
@@ -269,7 +275,8 @@ async def create_variant(
     item_id: int,
     variant: MenuItemVariantCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
+    restaurant: Restaurant = Depends(get_current_restaurant)
 ) -> MenuItemVariant:
     """
     Create a new variant for a menu item.
@@ -298,7 +305,8 @@ async def read_variant(
     item_id: int,
     variant_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
+    restaurant: Restaurant = Depends(get_current_restaurant)
 ) -> MenuItemVariant:
     """
     Get a specific variant by ID.
@@ -314,7 +322,8 @@ async def update_variant(
     variant_id: int,
     variant: MenuItemVariantUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
+    restaurant: Restaurant = Depends(get_current_restaurant)
 ) -> MenuItemVariant:
     """
     Update a variant.
@@ -344,7 +353,8 @@ async def delete_variant(
     item_id: int,
     variant_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
+    restaurant: Restaurant = Depends(get_current_restaurant)
 ) -> None:
     """
     Delete a variant.
