@@ -30,6 +30,24 @@
             </header>
         </div>
 
+        <div class="mb-16">
+            <h2 class="text-center text-2xl md:text-3xl font-bold text-slate-900 dark:text-slate-100 mb-8">
+                ¿Por qué elegir {{ brand }}?
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div v-for="highlight in highlights" :key="highlight.title"
+                    class="flex items-start gap-4 p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:shadow-lg hover:border-indigo-200 dark:hover:border-indigo-800 transition-all duration-200">
+                    <div class="flex-shrink-0 w-12 h-12 rounded-xl bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center">
+                        <span class="text-2xl">{{ highlight.icon }}</span>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-slate-900 dark:text-slate-100 mb-1">{{ highlight.title }}</h3>
+                        <p class="text-sm text-slate-600 dark:text-slate-400">{{ highlight.description }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="mb-12">
             <h2 class="sr-only">Vistas previas</h2>
             <div class="space-y-16">
@@ -120,6 +138,39 @@ import { RouterLink } from 'vue-router'
 import PricingCard from '@/components/marketing/PricingCard.vue'
 
 const brand = 'Cloud Restaurant'
+
+const highlights = [
+        {
+        icon: '⚡',
+        title: 'Rápido, sencillo y moderno',
+        description: 'Interfaz intuitiva y ágil diseñada para que tu equipo la domine en minutos.'
+    },
+    {
+        icon: '☁️',
+        title: 'Información almacenada en la nube',
+        description: 'Tus datos seguros y accesibles en cualquier momento sin preocuparte por respaldos manuales.'
+    },
+    {
+        icon: '📱',
+        title: 'Compatible con móvil, tablet, PC',
+        description: 'Accede desde cualquier dispositivo con total flexibilidad y comodidad.'
+    },
+    {
+        icon: '🌐',
+        title: 'Información disponible 24/7',
+        description: 'Consulta tu negocio desde cualquier lugar del mundo, en cualquier momento.'
+    },
+    {
+        icon: '🤝',
+        title: 'Atención personalizada',
+        description: 'Soporte dedicado para resolver tus dudas y ayudarte a crecer.'
+    },
+    {
+        icon: '🛠️',
+        title: 'Desarrollo de funciones extra',
+        description: 'Solicita funcionalidades personalizadas adaptadas a las necesidades de tu negocio.'
+    }
+]
 
 const plans = [
     {
