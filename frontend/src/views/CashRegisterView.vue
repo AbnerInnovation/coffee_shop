@@ -141,7 +141,7 @@
                   <span v-if="transaction.payment_method" 
                     class="px-2 py-0.5 text-xs font-medium rounded-full"
                     :class="getPaymentMethodBadgeClass(transaction.payment_method)">
-                    {{ transaction.payment_method }}
+                    {{ translatePaymentMethod(transaction.payment_method) }}
                   </span>
                   <span v-if="transaction.category"
                     class="px-2 py-0.5 text-xs font-medium rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
@@ -521,7 +521,36 @@ const openCutModal = async () => {
         net_cash_flow: netCashFlow
       }
 
+      // Auto-fill payment methods based on transaction payment methods
+      const cashTotal = transactions
+        .filter(t => t.payment_method?.toUpperCase() === 'CASH' && t.amount > 0)
+        .reduce((sum, t) => sum + (t.amount || 0), 0)
+
+      const cardTotal = transactions
+        .filter(t => t.payment_method?.toUpperCase() === 'CARD' && t.amount > 0)
+        .reduce((sum, t) => sum + (t.amount || 0), 0)
+
+      const digitalTotal = transactions
+        .filter(t => t.payment_method?.toUpperCase() === 'DIGITAL' && t.amount > 0)
+        .reduce((sum, t) => sum + (t.amount || 0), 0)
+
+      const otherTotal = transactions
+        .filter(t => t.payment_method?.toUpperCase() === 'OTHER' && t.amount > 0)
+        .reduce((sum, t) => sum + (t.amount || 0), 0)
+
+      // Set the payment breakdown fields
+      cashPayments.value = cashTotal
+      cardPayments.value = cardTotal
+      digitalPayments.value = digitalTotal
+      otherPayments.value = otherTotal
+
       console.log('Pre-populated cut report:', cutReport.value)
+      console.log('Auto-filled payment methods:', {
+        cash: cashTotal,
+        card: cardTotal,
+        digital: digitalTotal,
+        other: otherTotal
+      })
     } catch (error) {
       console.error('Error loading cut report data:', error)
     }
@@ -712,6 +741,16 @@ const translateTransactionType = (type: string) => {
     'expense': t('app.views.cashRegister.typeExpense')
   }
   return typeMap[type] || type
+}
+
+const translatePaymentMethod = (method: string) => {
+  const methodMap: Record<string, string> = {
+    'cash': t('app.views.cashRegister.cash') || 'Cash',
+    'card': t('app.views.cashRegister.card') || 'Card',
+    'digital': t('app.views.cashRegister.digital') || 'Digital',
+    'other': t('app.views.cashRegister.other') || 'Other'
+  }
+  return methodMap[method?.toLowerCase()] || method
 }
 
 const getPaymentMethodBadgeClass = (paymentMethod: string) => {
