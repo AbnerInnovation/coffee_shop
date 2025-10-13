@@ -264,11 +264,12 @@ async def mark_order_as_paid(
         )
 
     try:
-        # Create cash register transaction
+        # Create cash register transaction with payment method
         create_transaction_from_order(
             db=db,
             order_id=order_id,
-            created_by_user_id=current_user.id
+            created_by_user_id=current_user.id,
+            payment_method=payment_method
         )
 
         # Mark order as paid

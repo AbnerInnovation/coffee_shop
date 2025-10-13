@@ -22,6 +22,12 @@ class TransactionType(str, PyEnum):
     MANUAL_WITHDRAW = "manual_withdraw"
     EXPENSE = "expense"
 
+class PaymentMethod(str, PyEnum):
+    CASH = "CASH"
+    CARD = "CARD"
+    DIGITAL = "DIGITAL"
+    OTHER = "OTHER"
+
 class ReportType(str, PyEnum):
     DAILY_SUMMARY = "daily_summary"
     CASH_DIFFERENCE = "cash_difference"
@@ -59,6 +65,8 @@ class CashTransaction(BaseModel):
     description = Column(Text, nullable=True)
     order_id = Column(Integer, ForeignKey("orders.id"), nullable=True)
     created_by_user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    payment_method = Column(SQLEnum(PaymentMethod, name='payment_method', values_callable=lambda x: [e.value for e in x]), nullable=True)
+    category = Column(Text, nullable=True)  # For expenses categorization
 
     # Relationships
     session = relationship("CashRegisterSession", back_populates="transactions")

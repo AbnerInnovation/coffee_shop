@@ -277,10 +277,12 @@ def create_transaction_from_order(
     order_id: int,
     created_by_user_id: int,
     transaction_type: TransactionType = TransactionType.SALE,
-    session_id: Optional[int] = None
+    session_id: Optional[int] = None,
+    payment_method: Optional[str] = None
 ) -> CashTransactionModel:
     """Create a cash register transaction from an order payment."""
     from ..models.order import Order as OrderModel
+    from ..models.cash_register import PaymentMethod
 
     # Get the order
     db_order = db.query(OrderModel).filter(OrderModel.id == order_id).first()
@@ -307,6 +309,19 @@ def create_transaction_from_order(
     if existing_transaction:
         raise ValueError("Transaction already exists for this order in the current session")
 
+    # Map payment method from order to PaymentMethod enum
+    payment_method_enum = None
+    if payment_method:
+        try:
+            payment_method_enum = PaymentMethod[payment_method.upper()]
+        except (KeyError, AttributeError):
+            payment_method_enum = PaymentMethod.CASH  # Default to cash
+    elif db_order.payment_method:
+        try:
+            payment_method_enum = PaymentMethod[db_order.payment_method.upper()]
+        except (KeyError, AttributeError):
+            payment_method_enum = PaymentMethod.CASH
+
     # Create the transaction
     transaction = CashTransactionModel(
         session_id=session_id,
@@ -314,7 +329,8 @@ def create_transaction_from_order(
         amount=db_order.total_amount,
         description=f"Payment for order #{order_id}",
         order_id=order_id,
-        created_by_user_id=created_by_user_id
+        created_by_user_id=created_by_user_id,
+        payment_method=payment_method_enum
     )
 
     db.add(transaction)

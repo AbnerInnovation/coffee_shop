@@ -186,7 +186,12 @@
       "typeSale": "Venta",
       "typeRefund": "Reembolso",
       "typeTip": "Propina",
+      "typeCancellation": "Cancelación",
+      "typeManualAdd": "Añadido Manual",
+      "typeManualWithdraw": "Retiro Manual",
+      "typeExpense": "Gasto",
       "typeAdjustment": "Ajuste",
+      "paymentForOrder": "Pago de orden #{orderNumber}",
       "searchTransactions": "Buscar transacciones...",
       "noTransactionsFound": "No se encontraron transacciones",
       "sessionNotFound": "Sesión no encontrada",
@@ -211,7 +216,12 @@
       "deleteTransaction": "Eliminar Transacción",
       "confirmDeleteTransaction": "¿Estás seguro de que deseas eliminar esta transacción?",
       "transactionDeleted": "Transacción eliminada exitosamente",
-      "transactionDeleteFailed": "Error al eliminar transacción"
+      "transactionDeleteFailed": "Error al eliminar transacción",
+      "cashRegisterSessionRequiredTitle": "Sesión de Caja Requerida",
+      "cashRegisterSessionRequiredMessage": "Necesitas abrir una sesión de caja registradora antes de procesar pagos.",
+      "openCashRegisterButton": "Abrir Caja Registradora",
+      "cancelPaymentButton": "Cancelar Pago",
+      "paymentFailedGeneric": "Error al procesar el pago"
     },
     "orders": {
       "title": "Órdenes",
@@ -244,7 +254,9 @@
       },
       "payment": {
         "paid": "Pagado",
-        "pending": "Pendiente de pago"
+        "pending": "Pendiente",
+        "select_method": "Seleccionar Método de Pago",
+        "confirm_payment": "Confirmar Pago"
       },
       "buttons": {
         "view": "Ver",

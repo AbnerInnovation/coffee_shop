@@ -18,6 +18,12 @@ class TransactionType(str, Enum):
     MANUAL_WITHDRAW = "manual_withdraw"
     EXPENSE = "expense"
 
+class PaymentMethod(str, Enum):
+    CASH = "CASH"
+    CARD = "CARD"
+    DIGITAL = "DIGITAL"
+    OTHER = "OTHER"
+
 class ReportType(str, Enum):
     DAILY_SUMMARY = "daily_summary"
     CASH_DIFFERENCE = "cash_difference"
@@ -58,6 +64,8 @@ class CashTransactionBase(BaseModel):
     description: Optional[str] = None
     order_id: Optional[int] = None
     created_by_user_id: int
+    payment_method: Optional[PaymentMethod] = None
+    category: Optional[str] = None
 
 class CashTransactionCreate(CashTransactionBase):
     session_id: int
@@ -65,6 +73,8 @@ class CashTransactionCreate(CashTransactionBase):
 class CashTransactionUpdate(BaseModel):
     amount: Optional[float] = None
     description: Optional[str] = None
+    payment_method: Optional[PaymentMethod] = None
+    category: Optional[str] = None
 
 class CashTransactionInDBBase(CashTransactionBase):
     id: int

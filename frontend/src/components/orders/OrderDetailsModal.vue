@@ -141,6 +141,26 @@
                   <p class="mt-1 text-sm text-gray-900 dark:text-gray-100">{{ order.notes }}</p>
                 </div>
                 
+                <!-- Payment Method Selection -->
+                <div v-if="!order.is_paid && order.status !== 'cancelled' && showPaymentMethodSelector" class="mt-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                  <h4 class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">{{$t('app.views.orders.payment.select_method') || 'Select Payment Method'}}</h4>
+                  <div class="grid grid-cols-2 gap-3">
+                    <button
+                      v-for="method in paymentMethods"
+                      :key="method.value"
+                      type="button"
+                      class="flex items-center justify-center gap-2 px-4 py-3 rounded-md border-2 transition-all"
+                      :class="selectedPaymentMethod === method.value 
+                        ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300' 
+                        : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:border-indigo-300 dark:hover:border-indigo-600'"
+                      @click="selectedPaymentMethod = method.value"
+                    >
+                      <component :is="method.icon" class="h-5 w-5" />
+                      <span class="font-medium">{{ method.label }}</span>
+                    </button>
+                  </div>
+                </div>
+                
                 <div class="mt-5 sm:mt-6 sm:grid sm:grid-flow-row-dense sm:grid-cols-3 sm:gap-3">
                   <button
                     type="button"
@@ -153,9 +173,9 @@
                     v-if="!order.is_paid && order.status !== 'cancelled'"
                     type="button"
                     class="inline-flex w-full justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:col-start-2 sm:text-sm"
-                    @click="completePayment"
+                    @click="showPaymentMethodSelector ? completePayment() : showPaymentMethodSelector = true"
                   >
-                    {{$t('app.views.orders.modals.details.complete_payment') || 'Complete Payment'}}
+                    {{showPaymentMethodSelector ? $t('app.views.orders.payment.confirm_payment') || 'Confirm Payment' : $t('app.views.orders.modals.details.complete_payment') || 'Complete Payment'}}
                   </button>
                   <button
                     v-if="order.status === 'Preparing'"
@@ -190,20 +210,15 @@
   </TransitionRoot>
 </template>
 
-<script setup>
-import { ref, computed, onMounted } from 'vue';
-import orderService from '@/services/orderService';
-import {
-  Dialog,
-  DialogPanel,
-  DialogTitle,
-  TransitionChild,
-  TransitionRoot
-} from '@headlessui/vue';
-import { XMarkIcon } from '@heroicons/vue/24/outline';
-import { useConfirm } from '@/composables/useConfirm';
-import { useToast } from '@/composables/useToast';
-import { useI18n } from 'vue-i18n';
+<script setup lang="ts">
+import { computed, ref, onMounted } from 'vue'
+import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
+import { XMarkIcon, BanknotesIcon, CreditCardIcon, DevicePhoneMobileIcon, EllipsisHorizontalIcon } from '@heroicons/vue/24/outline'
+import orderService from '@/services/orderService'
+import { useI18n } from 'vue-i18n'
+import { useToast } from '@/composables/useToast'
+import { useConfirm } from '@/composables/useConfirm'
+import { useTheme } from '@/composables/useTheme'
 
 const props = defineProps({
   open: {
@@ -328,11 +343,22 @@ function printOrder() {
   window.print();
 }
 
+const showPaymentMethodSelector = ref(false)
+const selectedPaymentMethod = ref<'cash' | 'card' | 'digital' | 'other'>('cash')
+
+const paymentMethods = [
+  { value: 'cash', label: t('app.views.cashRegister.cash') || 'Cash', icon: BanknotesIcon },
+  { value: 'card', label: t('app.views.cashRegister.card') || 'Card', icon: CreditCardIcon },
+  { value: 'digital', label: t('app.views.cashRegister.digital') || 'Digital', icon: DevicePhoneMobileIcon },
+  { value: 'other', label: t('app.views.cashRegister.other') || 'Other', icon: EllipsisHorizontalIcon }
+]
+
 async function completePayment() {
   try {
-    await orderService.markOrderPaid(props.order.id, 'cash'); // Default to cash payment
+    await orderService.markOrderPaid(props.order.id, selectedPaymentMethod.value);
     emit('paymentCompleted', props.order);
     emit('close');
+    showPaymentMethodSelector.value = false;
   } catch (e) {
     console.error('Failed to complete payment:', e);
     console.log('Full error object:', e);

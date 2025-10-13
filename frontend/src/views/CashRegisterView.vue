@@ -134,9 +134,20 @@
           <div v-for="transaction in transactions" :key="transaction.id" class="px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
             <div class="flex justify-between items-center gap-4">
               <div class="flex-1">
-                <p class="text-sm font-medium text-gray-900 dark:text-gray-100">
-                  {{ transaction.description }}
-                </p>
+                <div class="flex items-center gap-2 mb-1">
+                  <p class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                    {{ translateDescription(transaction.description) }}
+                  </p>
+                  <span v-if="transaction.payment_method" 
+                    class="px-2 py-0.5 text-xs font-medium rounded-full"
+                    :class="getPaymentMethodBadgeClass(transaction.payment_method)">
+                    {{ transaction.payment_method }}
+                  </span>
+                  <span v-if="transaction.category"
+                    class="px-2 py-0.5 text-xs font-medium rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
+                    {{ transaction.category }}
+                  </span>
+                </div>
                 <p class="text-sm text-gray-500 dark:text-gray-400">
                   {{ formatDate(transaction.created_at) }}
                 </p>
@@ -148,7 +159,7 @@
                     {{ transaction.amount >= 0 ? '+' : '-' }}${{ Math.abs(transaction.amount)?.toFixed(2) || '0.00' }}
                   </p>
                   <p class="text-sm text-gray-500 dark:text-gray-400">
-                    {{ transaction.transaction_type }}
+                    {{ translateTransactionType(transaction.transaction_type) }}
                   </p>
                 </div>
                 <button 
@@ -678,6 +689,44 @@ const formatDate = (dateString: string) => {
   } catch (error) {
     console.error('Error formatting date:', dateString, error)
     return 'Invalid date'
+  }
+}
+
+const translateDescription = (description: string) => {
+  // Translate "Payment for order #X" pattern
+  const orderPaymentMatch = description.match(/Payment for order #(\d+)/i)
+  if (orderPaymentMatch) {
+    return t('app.views.cashRegister.paymentForOrder', { orderNumber: orderPaymentMatch[1] })
+  }
+  return description
+}
+
+const translateTransactionType = (type: string) => {
+  const typeMap: Record<string, string> = {
+    'sale': t('app.views.cashRegister.typeSale'),
+    'refund': t('app.views.cashRegister.typeRefund'),
+    'cancellation': t('app.views.cashRegister.typeCancellation'),
+    'tip': t('app.views.cashRegister.typeTip'),
+    'manual_add': t('app.views.cashRegister.typeManualAdd'),
+    'manual_withdraw': t('app.views.cashRegister.typeManualWithdraw'),
+    'expense': t('app.views.cashRegister.typeExpense')
+  }
+  return typeMap[type] || type
+}
+
+const getPaymentMethodBadgeClass = (paymentMethod: string) => {
+  const method = paymentMethod?.toUpperCase()
+  switch (method) {
+    case 'CASH':
+      return 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800'
+    case 'CARD':
+      return 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800'
+    case 'DIGITAL':
+      return 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-800'
+    case 'OTHER':
+      return 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600'
+    default:
+      return 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
   }
 }
 

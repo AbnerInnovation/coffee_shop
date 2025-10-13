@@ -142,7 +142,9 @@
       },
       "payment": {
         "paid": "Paid",
-        "pending": "Pending Payment"
+        "pending": "Pending",
+        "select_method": "Select Payment Method",
+        "confirm_payment": "Confirm Payment"
       },
       "buttons": {
         "view": "View",
@@ -435,7 +437,12 @@
       "typeSale": "Sale",
       "typeRefund": "Refund",
       "typeTip": "Tip",
+      "typeCancellation": "Cancellation",
+      "typeManualAdd": "Manual Add",
+      "typeManualWithdraw": "Manual Withdraw",
+      "typeExpense": "Expense",
       "typeAdjustment": "Adjustment",
+      "paymentForOrder": "Payment for order #{orderNumber}",
       "searchTransactions": "Search transactions...",
       "noTransactionsFound": "No transactions found",
       "sessionNotFound": "Session not found",
@@ -460,7 +467,12 @@
       "deleteTransaction": "Delete Transaction",
       "confirmDeleteTransaction": "Are you sure you want to delete this transaction?",
       "transactionDeleted": "Transaction deleted successfully",
-      "transactionDeleteFailed": "Failed to delete transaction"
+      "transactionDeleteFailed": "Failed to delete transaction",
+      "cashRegisterSessionRequiredTitle": "Cash Register Session Required",
+      "cashRegisterSessionRequiredMessage": "You need to open a cash register session before processing payments.",
+      "openCashRegisterButton": "Open Cash Register",
+      "cancelPaymentButton": "Cancel Payment",
+      "paymentFailedGeneric": "Failed to process payment"
     }
   }
 }
