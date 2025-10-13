@@ -1,47 +1,47 @@
 <template>
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <!-- Tabs -->
-    <div class="mb-8">
-      <nav class="flex space-x-8">
+    <div class="mb-6 sm:mb-8 overflow-x-auto">
+      <nav class="flex space-x-4 sm:space-x-8 min-w-max">
         <button @click="activeTab = 'current'"
           :class="activeTab === 'current' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
           class="whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
           {{ t('app.views.cashRegister.currentSession') || 'Current Session' }}
         </button>
-        <button @click="activeTab = 'past'"
-          :class="activeTab === 'past' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+        <button @click="activeTab = 'reports'"
+          :class="activeTab === 'reports' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
           class="whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
-          {{ t('app.views.cashRegister.pastSessions') || 'Past Sessions' }}
+          {{ t('app.views.cashRegister.reports') || 'Reports' }}
         </button>
       </nav>
     </div>
 
     <!-- Current Session Tab -->
     <div v-if="activeTab === 'current'">
-      <div v-if="currentSession" class="mb-8 bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-        <div class="flex justify-between items-center mb-4">
+      <div v-if="currentSession" class="mb-8 bg-white dark:bg-gray-800 rounded-lg shadow p-4 sm:p-6">
+        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-4">
           <div class="flex items-center gap-3">
             <div class="text-sm text-gray-600 dark:text-gray-400">
               <span class="font-medium">Session opened:</span>
               <span class="ml-2">{{ sessionDuration }}</span>
             </div>
           </div>
-          <div class="flex space-x-2">
-            <button @click="openExpenseModal" class="px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 flex items-center gap-2 transition-colors">
+          <div class="flex flex-col sm:flex-row gap-2">
+            <button @click="openExpenseModal" class="w-full sm:w-auto px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 flex items-center justify-center gap-2 transition-colors">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                 <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z" />
                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z" clip-rule="evenodd" />
               </svg>
               {{ t('app.views.cashRegister.addExpense') || 'Add Expense' }}
             </button>
-            <button @click="openCutModal" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center gap-2 transition-colors">
+            <button @click="openCutModal" class="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center justify-center gap-2 transition-colors">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                 <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
                 <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd" />
               </svg>
               {{ t('app.views.cashRegister.cut') || 'Cut' }}
             </button>
-            <button @click="openCloseModal" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 flex items-center gap-2 transition-colors">
+            <button @click="openCloseModal" class="w-full sm:w-auto px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 flex items-center justify-center gap-2 transition-colors">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
               </svg>
@@ -97,7 +97,7 @@
                 {{ t('app.views.cashRegister.totalExpenses') || 'Total Expenses' }}
               </h3>
               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-amber-600 dark:text-amber-400" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v3.586L7.707 9.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 10.586V7z" clip-rule="evenodd" />
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v3.586L7.707 9.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 10.586V7z" />
               </svg>
             </div>
             <p class="text-2xl font-bold text-amber-600 dark:text-amber-400">
@@ -110,12 +110,20 @@
 
       <!-- No Session Message -->
       <div v-else class="mb-8 text-center">
-        <p class="text-gray-600 dark:text-gray-400 mb-4">
-          {{ t('app.views.cashRegister.noSession') || 'No cash register session is currently open.' }}
-        </p>
-        <button @click="openOpenModal" class="px-6 py-3 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">
-          {{ t('app.views.cashRegister.openSession') || 'Open Session' }}
-        </button>
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 sm:p-8">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 sm:h-16 sm:w-16 mx-auto text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <h3 class="text-base sm:text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+            {{ t('app.views.cashRegister.noActiveSession') || 'No Active Session' }}
+          </h3>
+          <p class="text-sm sm:text-base text-gray-600 dark:text-gray-400 mb-4">
+            {{ t('app.views.cashRegister.openSessionToStart') || 'Open a session to start managing cash register operations.' }}
+          </p>
+          <button @click="openOpenModal" class="w-full sm:w-auto px-6 py-3 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors">
+            {{ t('app.views.cashRegister.openSession') || 'Open Session' }}
+          </button>
+        </div>
       </div>
 
       <!-- Transactions List -->
@@ -177,9 +185,9 @@
       </div>
     </div>
 
-    <!-- Past Sessions Tab -->
-    <div v-if="activeTab === 'past'">
-      <PastSessionsView />
+    <!-- Reports Tab -->
+    <div v-if="activeTab === 'reports'">
+      <ReportsView />
     </div>
 
   </div>
@@ -208,16 +216,37 @@
 
   <!-- Close Session Modal -->
   <div v-if="closeModalOpen" class="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4">
-    <div class="w-full max-w-md rounded-lg bg-white dark:bg-gray-900 p-6 shadow-lg">
+    <div class="w-full max-w-2xl rounded-lg bg-white dark:bg-gray-900 p-6 shadow-lg max-h-[90vh] overflow-y-auto">
       <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
         {{ t('app.views.cashRegister.closeSession') || 'Close Session' }}
       </h3>
+      
+      <!-- Toggle for denomination counting -->
+      <div class="mb-4">
+        <label class="flex items-center cursor-pointer">
+          <input type="checkbox" v-model="useDenominationCounting" 
+            class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
+          <span class="ml-2 text-sm text-gray-700 dark:text-gray-200">
+            {{ t('app.views.cashRegister.useDenominationCounting') || 'Count denominations' }}
+          </span>
+        </label>
+      </div>
+
+      <!-- Denomination Counter -->
+      <div v-if="useDenominationCounting" class="mb-4">
+        <DenominationCounter v-model="denominations" @update:total="actualBalance = $event" />
+      </div>
+
+      <!-- Manual balance input (shown when not using denomination counting) -->
+      <div v-else class="mb-4">
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+          {{ t('app.views.cashRegister.actualBalance') || 'Actual Balance' }}
+        </label>
+        <input v-model="actualBalance" type="number" step="0.01"
+          class="w-full rounded-md border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+      </div>
+
       <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
-        {{ t('app.views.cashRegister.actualBalance') || 'Actual Balance' }}
-      </label>
-      <input v-model="actualBalance" type="number" step="0.01"
-        class="w-full rounded-md border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-      <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mt-4 mb-1">
         {{ t('app.views.cashRegister.notes') || 'Notes' }}
       </label>
       <textarea v-model="closeNotes" rows="3"
@@ -412,8 +441,9 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { cashRegisterService } from '@/services/cashRegisterService'
 import { useToast } from '@/composables/useToast'
-import PastSessionsView from '@/components/PastSessionsView.vue'
 import LastCutDisplay from '@/components/LastCutDisplay.vue'
+import ReportsView from '@/components/ReportsView.vue'
+import DenominationCounter from '@/components/DenominationCounter.vue'
 
 const { t } = useI18n()
 const toast = useToast()
@@ -469,6 +499,23 @@ const lastCutLoading = ref(false)
 const expenseAmount = ref(0)
 const expenseDescription = ref('')
 const expenseCategory = ref('')
+
+// Denomination counting (Mexican Pesos)
+const useDenominationCounting = ref(false)
+const denominations = ref({
+  bills_1000: 0,
+  bills_500: 0,
+  bills_200: 0,
+  bills_100: 0,
+  bills_50: 0,
+  bills_20: 0,
+  coins_20: 0,
+  coins_10: 0,
+  coins_5: 0,
+  coins_2: 0,
+  coins_1: 0,
+  coins_50_cent: 0
+})
 
 const openOpenModal = () => {
   openModalOpen.value = true
@@ -572,6 +619,21 @@ const closeModals = () => {
   expenseAmount.value = 0
   expenseDescription.value = ''
   expenseCategory.value = ''
+  useDenominationCounting.value = false
+  denominations.value = {
+    bills_1000: 0,
+    bills_500: 0,
+    bills_200: 0,
+    bills_100: 0,
+    bills_50: 0,
+    bills_20: 0,
+    coins_20: 0,
+    coins_10: 0,
+    coins_5: 0,
+    coins_2: 0,
+    coins_1: 0,
+    coins_50_cent: 0
+  }
 }
 
 const openSession = async () => {
@@ -600,11 +662,23 @@ const closeSession = async () => {
   }
 
   try {
-    const session = await cashRegisterService.closeSession(
-      currentSession.value.id,
-      Number(actualBalance.value),
-      closeNotes.value || undefined
-    )
+    let session
+    if (useDenominationCounting.value) {
+      // Use denomination counting endpoint
+      session = await cashRegisterService.closeSessionWithDenominations(
+        currentSession.value.id,
+        Number(actualBalance.value),
+        closeNotes.value || undefined,
+        denominations.value
+      )
+    } else {
+      // Use regular close endpoint
+      session = await cashRegisterService.closeSession(
+        currentSession.value.id,
+        Number(actualBalance.value),
+        closeNotes.value || undefined
+      )
+    }
     currentSession.value = session
     closeModals()
     toast.showToast(t('app.views.cashRegister.sessionClosed') || 'Session closed successfully', 'success')

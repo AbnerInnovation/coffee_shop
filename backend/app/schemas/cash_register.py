@@ -1,9 +1,12 @@
 from datetime import datetime
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, TYPE_CHECKING
 from pydantic import Field, validator
 from .base import PhoenixBaseModel as BaseModel
 from enum import Enum
 import json
+
+if TYPE_CHECKING:
+    from .user import User
 
 class SessionStatus(str, Enum):
     OPEN = "OPEN"
@@ -119,6 +122,10 @@ class CashRegisterReportInDBBase(CashRegisterReportBase):
 class CashRegisterSession(CashRegisterSessionInDBBase):
     transactions: List[CashTransactionInDBBase] = []
     reports: List[CashRegisterReportInDBBase] = []
+    opened_by_user: Optional['User'] = None
+    
+    class Config:
+        orm_mode = True
 
 class CashTransaction(CashTransactionInDBBase):
     pass
@@ -136,13 +143,15 @@ class CashDifferenceReport(BaseModel):
 
 class DailySummaryReport(BaseModel):
     session_id: int
-    total_sales: float
-    total_refunds: float
-    total_tips: float
-    total_expenses: float
-    total_transactions: int
-    net_cash_flow: float
-    payment_breakdown: Dict[str, float]
+    opened_at: Optional[datetime] = None
+    closed_at: Optional[datetime] = None
+    total_sales: float = 0.0
+    total_refunds: float = 0.0
+    total_tips: float = 0.0
+    total_expenses: float = 0.0
+    total_transactions: int = 0
+    net_cash_flow: float = 0.0
+    payment_breakdown: Dict[str, float] = {}
 
 class PaymentBreakdownReport(BaseModel):
     session_id: int
@@ -155,3 +164,77 @@ class ExpenseCreate(BaseModel):
     amount: float = Field(..., gt=0, description="Expense amount (always positive)")
     description: str = Field(..., min_length=1, description="Description of the expense")
     category: Optional[str] = Field(None, description="Expense category (e.g., supplies, utilities, maintenance)")
+
+# Denomination counting models
+class DenominationCount(BaseModel):
+    """Cash denomination breakdown for counting drawer (Mexican Pesos).
+    
+    MXN denominations:
+    - Bills: $1000, $500, $200, $100, $50, $20
+    - Coins: $20, $10, $5, $2, $1, $0.50
+    """
+    # MXN Bills
+    bills_1000: int = Field(default=0, ge=0, description="$1000 MXN bills")
+    bills_500: int = Field(default=0, ge=0, description="$500 MXN bills")
+    bills_200: int = Field(default=0, ge=0, description="$200 MXN bills")
+    bills_100: int = Field(default=0, ge=0, description="$100 MXN bills")
+    bills_50: int = Field(default=0, ge=0, description="$50 MXN bills")
+    bills_20: int = Field(default=0, ge=0, description="$20 MXN bills")
+    
+    # MXN Coins
+    coins_20: int = Field(default=0, ge=0, description="$20 MXN coins")
+    coins_10: int = Field(default=0, ge=0, description="$10 MXN coins")
+    coins_5: int = Field(default=0, ge=0, description="$5 MXN coins")
+    coins_2: int = Field(default=0, ge=0, description="$2 MXN coins")
+    coins_1: int = Field(default=0, ge=0, description="$1 MXN coins")
+    coins_50_cent: int = Field(default=0, ge=0, description="$0.50 MXN coins")
+
+    def calculate_total(self) -> float:
+        """Calculate total amount from MXN denominations."""
+        return (
+            self.bills_1000 * 1000.00 +
+            self.bills_500 * 500.00 +
+            self.bills_200 * 200.00 +
+            self.bills_100 * 100.00 +
+            self.bills_50 * 50.00 +
+            self.bills_20 * 20.00 +
+            self.coins_20 * 20.00 +
+            self.coins_10 * 10.00 +
+            self.coins_5 * 5.00 +
+            self.coins_2 * 2.00 +
+            self.coins_1 * 1.00 +
+            self.coins_50_cent * 0.50
+        )
+
+class SessionCloseWithDenominations(CashRegisterSessionUpdate):
+    """Session close data with denomination counting."""
+    denominations: Optional[DenominationCount] = None
+
+class CutWithDenominations(PaymentBreakdownReport):
+    """Cut data with denomination counting."""
+    denominations: Optional[DenominationCount] = None
+
+# Report query models
+class ReportDateRange(BaseModel):
+    """Date range for report queries."""
+    start_date: Optional[datetime] = None
+    end_date: Optional[datetime] = None
+    report_type: Optional[ReportType] = None
+
+class WeeklySummaryReport(BaseModel):
+    """Weekly summary aggregating multiple sessions."""
+    start_date: datetime
+    end_date: datetime
+    total_sessions: int
+    total_sales: float
+    total_refunds: float
+    total_tips: float
+    total_expenses: float
+    total_transactions: int
+    net_cash_flow: float
+    average_session_value: float
+    payment_breakdown: Dict[str, float]
+
+# Update forward references
+from .user import User
+CashRegisterSession.update_forward_refs()

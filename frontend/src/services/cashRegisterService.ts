@@ -140,6 +140,64 @@ export const cashRegisterService = {
   async deleteTransaction(transactionId: number) {
     const response = await api.delete(`${CASH_REGISTER_ENDPOINT}/transactions/${transactionId}`);
     return response;
+  },
+
+  // Advanced Reports
+  async getDailySummaries(startDate?: string, endDate?: string) {
+    const params = new URLSearchParams();
+    if (startDate) params.append('start_date', startDate);
+    if (endDate) params.append('end_date', endDate);
+    
+    const queryString = params.toString();
+    const url = `${CASH_REGISTER_ENDPOINT}/reports/daily-summaries${queryString ? `?${queryString}` : ''}`;
+    
+    const response = await api.get(url);
+    return response;
+  },
+
+  async getWeeklySummary(startDate?: string, endDate?: string) {
+    const params = new URLSearchParams();
+    if (startDate) params.append('start_date', startDate);
+    if (endDate) params.append('end_date', endDate);
+    
+    const queryString = params.toString();
+    const url = `${CASH_REGISTER_ENDPOINT}/reports/weekly-summary${queryString ? `?${queryString}` : ''}`;
+    
+    const response = await api.get(url);
+    return response;
+  },
+
+  // Denomination counting (Mexican Pesos)
+  async closeSessionWithDenominations(
+    sessionId: number,
+    finalBalance: number,
+    notes?: string,
+    denominations?: {
+      bills_1000?: number;
+      bills_500?: number;
+      bills_200?: number;
+      bills_100?: number;
+      bills_50?: number;
+      bills_20?: number;
+      coins_20?: number;
+      coins_10?: number;
+      coins_5?: number;
+      coins_2?: number;
+      coins_1?: number;
+      coins_50_cent?: number;
+    }
+  ) {
+    const currentUser = authService.getStoredUser();
+    if (!currentUser) {
+      throw new Error('User not authenticated');
+    }
+
+    const response = await api.patch(`${CASH_REGISTER_ENDPOINT}/sessions/${sessionId}/close-with-denominations`, {
+      final_balance: finalBalance,
+      notes: notes || `Session closed by ${currentUser.full_name || currentUser.email}`,
+      denominations: denominations || null
+    });
+    return response;
   }
 };
 

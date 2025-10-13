@@ -7,7 +7,7 @@
       </div>
 
       <!-- Modal panel -->
-      <div class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
+      <div class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full print-content">
         <div class="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
           <!-- Header -->
           <div class="flex justify-between items-center mb-4 pb-4 border-b border-gray-200 dark:border-gray-700">
@@ -64,7 +64,7 @@
                     {{ t('app.views.cashRegister.initialBalance') || 'Initial Balance' }}
                   </p>
                   <p class="font-medium text-gray-900 dark:text-gray-100">
-                    ${{ session.initial_balance?.toFixed(2) || '0.00' }}
+                    {{ formatCurrency(session.initial_balance || 0) }}
                   </p>
                 </div>
                 <div v-if="session.final_balance">
@@ -72,7 +72,7 @@
                     {{ t('app.views.cashRegister.finalBalance') || 'Final Balance' }}
                   </p>
                   <p class="font-medium text-gray-900 dark:text-gray-100">
-                    ${{ session.final_balance?.toFixed(2) || '0.00' }}
+                    {{ formatCurrency(session.final_balance || 0) }}
                   </p>
                 </div>
               </div>
@@ -107,7 +107,7 @@
                     {{ t('app.views.cashRegister.cashPayments') || 'Cash' }}
                   </p>
                   <p class="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                    ${{ paymentBreakdown.cash?.toFixed(2) || '0.00' }}
+                    {{ formatCurrency(paymentBreakdown.cash || 0) }}
                   </p>
                 </div>
                 <div class="text-center">
@@ -115,7 +115,7 @@
                     {{ t('app.views.cashRegister.cardPayments') || 'Card' }}
                   </p>
                   <p class="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                    ${{ paymentBreakdown.card?.toFixed(2) || '0.00' }}
+                    {{ formatCurrency(paymentBreakdown.card || 0) }}
                   </p>
                 </div>
                 <div class="text-center">
@@ -123,7 +123,7 @@
                     {{ t('app.views.cashRegister.digitalPayments') || 'Digital' }}
                   </p>
                   <p class="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                    ${{ paymentBreakdown.digital?.toFixed(2) || '0.00' }}
+                    {{ formatCurrency(paymentBreakdown.digital || 0) }}
                   </p>
                 </div>
                 <div class="text-center">
@@ -131,7 +131,7 @@
                     {{ t('app.views.cashRegister.otherPayments') || 'Other' }}
                   </p>
                   <p class="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                    ${{ paymentBreakdown.other?.toFixed(2) || '0.00' }}
+                    {{ formatCurrency(paymentBreakdown.other || 0) }}
                   </p>
                 </div>
               </div>
@@ -193,7 +193,7 @@
                   <div class="text-right">
                     <p class="text-sm font-semibold"
                        :class="transaction.amount >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'">
-                      {{ transaction.amount >= 0 ? '+' : '' }}${{ transaction.amount?.toFixed(2) || '0.00' }}
+                      {{ transaction.amount >= 0 ? '+' : '' }}{{ formatCurrency(Math.abs(transaction.amount || 0)) }}
                     </p>
                     <p class="text-xs text-gray-500 dark:text-gray-400">
                       {{ getTransactionTypeLabel(transaction.transaction_type) }}
@@ -243,7 +243,7 @@
                     {{ t('app.views.cashRegister.totalSales') || 'Total Sales' }}
                   </p>
                   <p class="text-xl font-bold text-green-600 dark:text-green-400">
-                    ${{ sessionSummary.total_sales?.toFixed(2) || '0.00' }}
+                    {{ formatCurrency(sessionSummary.total_sales || 0) }}
                   </p>
                 </div>
                 <div class="text-center">
@@ -251,7 +251,7 @@
                     {{ t('app.views.cashRegister.totalRefunds') || 'Total Refunds' }}
                   </p>
                   <p class="text-xl font-bold text-red-600 dark:text-red-400">
-                    ${{ sessionSummary.total_refunds?.toFixed(2) || '0.00' }}
+                    {{ formatCurrency(sessionSummary.total_refunds || 0) }}
                   </p>
                 </div>
                 <div class="text-center">
@@ -259,7 +259,7 @@
                     {{ t('app.views.cashRegister.netCashFlow') || 'Net Cash Flow' }}
                   </p>
                   <p class="text-xl font-bold text-blue-600 dark:text-blue-400">
-                    ${{ sessionSummary.net_cash_flow?.toFixed(2) || '0.00' }}
+                    {{ formatCurrency(sessionSummary.net_cash_flow || 0) }}
                   </p>
                 </div>
               </div>
@@ -273,21 +273,24 @@
             </p>
           </div>
         </div>
-        <div class="bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+        <div class="bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse sm:gap-3 print:hidden">
           <button
             @click="closeModal"
             type="button"
-            class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm"
+            class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:w-auto sm:text-sm"
           >
             {{ t('app.actions.close') || 'Close' }}
           </button>
           <button
             v-if="session"
-            @click="generateReport"
+            @click="printReport"
             type="button"
-            class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 dark:border-gray-600 shadow-sm px-4 py-2 bg-white dark:bg-gray-800 text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+            class="mt-3 w-full inline-flex justify-center items-center gap-2 rounded-md border border-gray-300 dark:border-gray-600 shadow-sm px-4 py-2 bg-white dark:bg-gray-800 text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:w-auto sm:text-sm"
           >
-            {{ t('app.views.cashRegister.generateReport') || 'Generate Report' }}
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M5 4v3H4a2 2 0 00-2 2v3a2 2 0 002 2h1v2a2 2 0 002 2h6a2 2 0 002-2v-2h1a2 2 0 002-2V9a2 2 0 00-2-2h-1V4a2 2 0 00-2-2H7a2 2 0 00-2 2zm8 0H7v3h6V4zm0 8H7v4h6v-4z" clip-rule="evenodd" />
+            </svg>
+            {{ t('app.actions.print') || 'Print' }}
           </button>
         </div>
       </div>
@@ -417,24 +420,11 @@ const closeModal = () => {
   emit('close')
 }
 
-const generateReport = async () => {
-  if (!props.sessionId) return
-
-  try {
-    const report = await cashRegisterService.getSessionReport(props.sessionId)
-    const reportData = report.data || report
-    console.log('Generated session report:', reportData)
-    toast.showToast(
-      t('app.views.cashRegister.sessionReportGenerated') || 'Session report generated',
-      'success'
-    )
-  } catch (error: any) {
-    console.error('Error generating session report:', error)
-    toast.showToast(
-      t('app.views.cashRegister.errorGeneratingReport') || 'Error generating session report',
-      'error'
-    )
-  }
+const printReport = () => {
+  if (!session.value) return
+  
+  // Use browser's print functionality
+  window.print()
 }
 
 const previousTransactionPage = () => {
@@ -484,6 +474,13 @@ const formatDate = (dateString: string) => {
   return new Date(dateString).toLocaleString()
 }
 
+const formatCurrency = (amount: number) => {
+  return new Intl.NumberFormat('es-MX', {
+    style: 'currency',
+    currency: 'MXN'
+  }).format(amount)
+}
+
 watch(
   [() => props.isVisible, () => props.sessionId],
   () => {
@@ -508,3 +505,72 @@ watch(
 )
 </script>
 
+<style>
+@media print {
+  @page {
+    margin: 0.5cm;
+  }
+  
+  /* Simple approach - hide everything, show only print-content */
+  body * {
+    visibility: hidden;
+  }
+  
+  .print-content,
+  .print-content * {
+    visibility: visible;
+  }
+  
+  .fixed.inset-0.z-50,
+  .flex.items-center {
+    position: static !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  
+  .print-content {
+    position: static !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  
+  /* Hide buttons, inputs, and icons */
+  button, input, select, textarea, svg {
+    display: none !important;
+  }
+  
+  /* Force black and white for print */
+  * {
+    background-color: white !important;
+    color: black !important;
+    border-color: #000 !important;
+    box-shadow: none !important;
+  }
+  
+  /* Colored sections get borders */
+  .bg-green-50, .bg-red-50, .bg-blue-50, .bg-purple-50,
+  .dark\:bg-green-900\/30, .dark\:bg-red-900\/30, .dark\:bg-blue-900\/30, .dark\:bg-purple-900\/30 {
+    background-color: white !important;
+    border: 2px solid black !important;
+  }
+  
+  /* Bold headings */
+  h1, h2, h3, h4, h5, h6 {
+    font-weight: bold !important;
+  }
+  
+  /* Compact spacing */
+  .p-6, .p-4, .px-4, .px-6, .pt-5, .pb-4 {
+    padding: 0.25rem !important;
+  }
+  
+  .mb-4, .mb-6 {
+    margin-bottom: 0.25rem !important;
+  }
+  
+  /* Remove rounded corners */
+  .rounded-lg {
+    border-radius: 0 !important;
+  }
+}
+</style>

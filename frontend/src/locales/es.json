@@ -28,7 +28,8 @@
       "update": "Actualizar",
       "search": "Buscar",
       "close": "Cerrar",
-      "open": "Abrir"
+      "open": "Abrir",
+      "print": "Imprimir"
     },
     "status": {
       "loading": "Cargando...",
@@ -221,7 +222,30 @@
       "cashRegisterSessionRequiredMessage": "Necesitas abrir una sesión de caja registradora antes de procesar pagos.",
       "openCashRegisterButton": "Abrir Caja Registradora",
       "cancelPaymentButton": "Cancelar Pago",
-      "paymentFailedGeneric": "Error al procesar el pago"
+      "paymentFailedGeneric": "Error al procesar el pago",
+      "reports": "Reportes",
+      "reportType": "Tipo de Reporte",
+      "dailySummaries": "Resúmenes Diarios",
+      "weeklySummary": "Resumen Semanal",
+      "noReportsFound": "No se encontraron reportes para el período seleccionado.",
+      "sessionReport": "Reporte de Sesión",
+      "totalSessions": "Total de Sesiones",
+      "avgSessionValue": "Promedio por Sesión",
+      "countDenominations": "Contar Denominaciones (MXN)",
+      "useDenominationCounting": "Contar denominaciones",
+      "totalCounted": "Total Contado",
+      "bills": "Billetes",
+      "coins": "Monedas",
+      "historyAndReports": "Historial y Reportes",
+      "summaryReports": "Reportes de Resumen",
+      "dateRange": "Rango de Fechas",
+      "today": "Hoy",
+      "thisWeek": "Semana",
+      "thisMonth": "Mes",
+      "details": "Detalles",
+      "opened": "Abierta",
+      "closed": "Cerrada",
+      "openSessionToStart": "Abre una sesión para comenzar a gestionar las operaciones de caja registradora."
     },
     "orders": {
       "title": "Órdenes",

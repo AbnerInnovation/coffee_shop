@@ -25,8 +25,11 @@
       "delete": "Delete",
       "create": "Create",
       "update": "Update",
-      "search": "Search",
-      "close": "Close"
+      "search": "Buscar",
+      "close": "Close",
+      "open": "Open",
+      "print": "Print",
+      "filter": "Filter"
     },
     "status": {
       "loading": "Loading...",
@@ -472,7 +475,29 @@
       "cashRegisterSessionRequiredMessage": "You need to open a cash register session before processing payments.",
       "openCashRegisterButton": "Open Cash Register",
       "cancelPaymentButton": "Cancel Payment",
-      "paymentFailedGeneric": "Failed to process payment"
+      "paymentFailedGeneric": "Failed to process payment",
+      "reports": "Reports",
+      "reportType": "Report Type",
+      "dailySummaries": "Daily Summaries",
+      "weeklySummary": "Weekly Summary",
+      "noReportsFound": "No reports found for the selected period.",
+      "sessionReport": "Session Report",
+      "totalSessions": "Total Sessions",
+      "avgSessionValue": "Avg Session",
+      "countDenominations": "Count Denominations",
+      "useDenominationCounting": "Count denominations",
+      "totalCounted": "Total Counted",
+      "bills": "Bills",
+      "coins": "Coins",
+      "historyAndReports": "History & Reports",
+      "summaryReports": "Summary Reports",
+      "dateRange": "Date Range",
+      "today": "Today",
+      "thisWeek": "Week",
+      "thisMonth": "Month",
+      "details": "Details",
+      "opened": "Opened",
+      "closed": "Closed"
     }
   }
 }

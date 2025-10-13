@@ -1,7 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from enum import Enum
+from datetime import datetime, timedelta
 
 from ...db.base import get_db
 from ...models.cash_register import (
@@ -23,7 +24,10 @@ from ...schemas.cash_register import (
     CashDifferenceReport,
     DailySummaryReport,
     PaymentBreakdownReport,
-    ExpenseCreate
+    ExpenseCreate,
+    WeeklySummaryReport,
+    DenominationCount,
+    SessionCloseWithDenominations
 )
 from ...services.user import get_current_active_user
 from ...services import cash_register as cash_register_service
@@ -231,3 +235,78 @@ def delete_transaction(
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error deleting transaction: {str(e)}")
+
+# -----------------------------
+# Advanced Reports
+# -----------------------------
+
+@router.get("/reports/daily-summaries", response_model=List[DailySummaryReport])
+def get_daily_summaries(
+    start_date: Optional[str] = Query(None, description="Start date for filtering reports (YYYY-MM-DD)"),
+    end_date: Optional[str] = Query(None, description="End date for filtering reports (YYYY-MM-DD)"),
+    skip: int = 0,
+    limit: int = 100,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+) -> List[DailySummaryReport]:
+    """Get daily summary reports within a date range."""
+    try:
+        # Convert date strings to datetime objects
+        start_datetime = None
+        end_datetime = None
+        
+        if start_date:
+            start_datetime = datetime.strptime(start_date, "%Y-%m-%d").replace(hour=0, minute=0, second=0, microsecond=0)
+        if end_date:
+            end_datetime = datetime.strptime(end_date, "%Y-%m-%d").replace(hour=23, minute=59, second=59, microsecond=999999)
+        
+        return cash_register_service.get_daily_summary_reports(
+            db, start_date=start_datetime, end_date=end_datetime, skip=skip, limit=limit
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=f"Invalid date format. Use YYYY-MM-DD: {str(e)}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error retrieving daily summaries: {str(e)}")
+
+@router.get("/reports/weekly-summary", response_model=WeeklySummaryReport)
+def get_weekly_summary(
+    start_date: Optional[str] = Query(None, description="Start of the week (YYYY-MM-DD)"),
+    end_date: Optional[str] = Query(None, description="End of the week (YYYY-MM-DD)"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+) -> WeeklySummaryReport:
+    """Generate a weekly summary report."""
+    try:
+        # Convert date strings to datetime objects
+        if start_date:
+            start_datetime = datetime.strptime(start_date, "%Y-%m-%d").replace(hour=0, minute=0, second=0, microsecond=0)
+        else:
+            start_datetime = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(days=7)
+        
+        if end_date:
+            end_datetime = datetime.strptime(end_date, "%Y-%m-%d").replace(hour=23, minute=59, second=59, microsecond=999999)
+        else:
+            end_datetime = datetime.now()
+        
+        return cash_register_service.get_weekly_summary(db, start_datetime, end_datetime)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=f"Invalid date format. Use YYYY-MM-DD: {str(e)}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error generating weekly summary: {str(e)}")
+
+@router.patch("/sessions/{session_id}/close-with-denominations", response_model=CashRegisterSession)
+def close_session_with_denominations(
+    session_id: int,
+    close_data: SessionCloseWithDenominations,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+) -> CashRegisterSession:
+    """Close a session with denomination counting."""
+    try:
+        return cash_register_service.close_session_with_denominations(
+            db, session_id, close_data, close_data.denominations
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error closing session: {str(e)}")

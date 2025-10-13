@@ -18,7 +18,9 @@ from ..schemas.cash_register import (
     CashDifferenceReport,
     DailySummaryReport,
     PaymentBreakdownReport,
-    ReportType
+    ReportType,
+    WeeklySummaryReport,
+    DenominationCount
 )
 
 logger = logging.getLogger(__name__)
@@ -52,6 +54,7 @@ def get_session(db: Session, session_id: int) -> Optional[CashRegisterSessionMod
     return db.query(CashRegisterSessionModel)\
         .options(joinedload(CashRegisterSessionModel.transactions))\
         .options(joinedload(CashRegisterSessionModel.reports))\
+        .options(joinedload(CashRegisterSessionModel.opened_by_user))\
         .filter(CashRegisterSessionModel.id == session_id)\
         .first()
 
@@ -60,6 +63,7 @@ def get_current_session(db: Session, user_id: int) -> Optional[CashRegisterSessi
     return db.query(CashRegisterSessionModel)\
         .options(joinedload(CashRegisterSessionModel.transactions))\
         .options(joinedload(CashRegisterSessionModel.reports))\
+        .options(joinedload(CashRegisterSessionModel.opened_by_user))\
         .filter(
             CashRegisterSessionModel.opened_by_user_id == user_id,
             CashRegisterSessionModel.status == SessionStatus.OPEN
@@ -76,6 +80,7 @@ def get_sessions(db: Session,
     return db.query(CashRegisterSessionModel)\
         .options(joinedload(CashRegisterSessionModel.transactions))\
         .options(joinedload(CashRegisterSessionModel.reports))\
+        .options(joinedload(CashRegisterSessionModel.opened_by_user))\
         .filter(CashRegisterSessionModel.status == status if status is not None else True)\
         .filter(CashRegisterSessionModel.cashier_id == cashier_id if cashier_id is not None else True)\
         .offset(skip)\
@@ -436,4 +441,195 @@ def add_expense_to_session(
     except Exception as e:
         db.rollback()
         logger.error(f"Error adding expense to session {session_id}: {e}")
+        raise
+
+def get_daily_summary_reports(
+    db: Session,
+    start_date: Optional[datetime] = None,
+    end_date: Optional[datetime] = None,
+    skip: int = 0,
+    limit: int = 100
+) -> List[DailySummaryReport]:
+    """Get daily summary reports within a date range.
+    
+    Generates reports on-the-fly from closed sessions.
+    
+    Args:
+        db: Database session
+        start_date: Optional start date filter
+        end_date: Optional end date filter
+        skip: Number of records to skip
+        limit: Maximum number of records to return
+    
+    Returns:
+        List of daily summary reports
+    """
+    try:
+        # Query closed sessions within date range
+        query = db.query(CashRegisterSessionModel).filter(
+            CashRegisterSessionModel.status == SessionStatus.CLOSED
+        )
+        
+        if start_date:
+            query = query.filter(CashRegisterSessionModel.closed_at >= start_date)
+        if end_date:
+            query = query.filter(CashRegisterSessionModel.closed_at <= end_date)
+        
+        sessions = query.order_by(CashRegisterSessionModel.closed_at.desc()).offset(skip).limit(limit).all()
+        
+        # Generate report for each session
+        result = []
+        for session in sessions:
+            transactions = get_transactions_by_session(db, session.id)
+            
+            total_sales = float(sum(t.amount for t in transactions if t.transaction_type == TransactionType.SALE))
+            total_refunds = abs(float(sum(t.amount for t in transactions if t.transaction_type in [TransactionType.REFUND, TransactionType.CANCELLATION])))
+            total_tips = float(sum(t.amount for t in transactions if t.transaction_type == TransactionType.TIP))
+            total_expenses = float(sum(abs(t.amount) for t in transactions if t.transaction_type == TransactionType.EXPENSE))
+            
+            # Payment breakdown
+            payment_breakdown = {"cash": 0.0, "card": 0.0, "digital": 0.0, "other": 0.0}
+            for t in transactions:
+                if t.payment_method and t.amount > 0:
+                    method_key = t.payment_method.value.lower()
+                    if method_key in payment_breakdown:
+                        payment_breakdown[method_key] += float(t.amount)
+            
+            net_cash_flow = total_sales - total_refunds + total_tips - total_expenses
+            
+            result.append(DailySummaryReport(
+                session_id=session.id,
+                opened_at=session.opened_at,
+                closed_at=session.closed_at,
+                total_sales=total_sales,
+                total_refunds=total_refunds,
+                total_tips=total_tips,
+                total_expenses=total_expenses,
+                total_transactions=len(transactions),
+                net_cash_flow=net_cash_flow,
+                payment_breakdown=payment_breakdown
+            ))
+        
+        return result
+    except Exception as e:
+        logger.error(f"Error getting daily summary reports: {e}")
+        raise
+
+def get_weekly_summary(
+    db: Session,
+    start_date: datetime,
+    end_date: datetime
+) -> WeeklySummaryReport:
+    """Generate a weekly summary report aggregating multiple sessions.
+    
+    Args:
+        db: Database session
+        start_date: Start of the week
+        end_date: End of the week
+    
+    Returns:
+        Weekly summary report
+    """
+    try:
+        # Get all sessions within the date range
+        sessions = db.query(CashRegisterSessionModel).filter(
+            CashRegisterSessionModel.opened_at >= start_date,
+            CashRegisterSessionModel.opened_at <= end_date
+        ).all()
+        
+        total_sales = 0.0
+        total_refunds = 0.0
+        total_tips = 0.0
+        total_expenses = 0.0
+        total_transactions = 0
+        payment_breakdown = {"cash": 0.0, "card": 0.0, "digital": 0.0, "other": 0.0}
+        
+        # Aggregate data from all sessions
+        for session in sessions:
+            transactions = get_transactions_by_session(db, session.id)
+            
+            total_sales += float(sum(t.amount for t in transactions if t.transaction_type == TransactionType.SALE))
+            total_refunds += float(sum(t.amount for t in transactions if t.transaction_type in [TransactionType.REFUND, TransactionType.CANCELLATION]))
+            total_tips += float(sum(t.amount for t in transactions if t.transaction_type == TransactionType.TIP))
+            total_expenses += float(sum(abs(t.amount) for t in transactions if t.transaction_type == TransactionType.EXPENSE))
+            total_transactions += len(transactions)
+            
+            # Aggregate payment methods
+            for t in transactions:
+                if t.payment_method and t.amount > 0:
+                    method_key = t.payment_method.value.lower()
+                    if method_key in payment_breakdown:
+                        payment_breakdown[method_key] += float(t.amount)
+        
+        net_cash_flow = total_sales - total_refunds + total_tips - total_expenses
+        average_session_value = net_cash_flow / len(sessions) if sessions else 0.0
+        
+        return WeeklySummaryReport(
+            start_date=start_date,
+            end_date=end_date,
+            total_sessions=len(sessions),
+            total_sales=total_sales,
+            total_refunds=total_refunds,
+            total_tips=total_tips,
+            total_expenses=total_expenses,
+            total_transactions=total_transactions,
+            net_cash_flow=net_cash_flow,
+            average_session_value=average_session_value,
+            payment_breakdown=payment_breakdown
+        )
+    except Exception as e:
+        logger.error(f"Error generating weekly summary: {e}")
+        raise
+
+def close_session_with_denominations(
+    db: Session,
+    session_id: int,
+    session_update: CashRegisterSessionUpdate,
+    denominations: Optional[DenominationCount] = None
+) -> CashRegisterSessionModel:
+    """Close a cash register session with optional denomination counting.
+    
+    Args:
+        db: Database session
+        session_id: ID of the session to close
+        session_update: Update data including final_balance and notes
+        denominations: Optional denomination breakdown
+    
+    Returns:
+        The closed session
+    """
+    try:
+        db_session = get_session(db, session_id)
+        if not db_session:
+            raise ValueError("Session not found")
+        if db_session.status != SessionStatus.OPEN:
+            raise ValueError("Session is not open")
+
+        transactions = get_transactions_by_session(db, session_id)
+        expected_balance = db_session.initial_balance + sum(t.amount for t in transactions)
+
+        # If denominations provided, calculate actual balance from them
+        if denominations:
+            actual_balance = denominations.calculate_total()
+            # Store denominations in notes if needed
+            denomination_note = f"\nDenominations: {denominations.dict()}"
+            session_update.notes = (session_update.notes or "") + denomination_note
+        else:
+            actual_balance = session_update.final_balance
+
+        # Set all the required fields for closing
+        db_session.closed_at = datetime.now(timezone.utc)
+        db_session.final_balance = actual_balance
+        db_session.actual_balance = actual_balance
+        db_session.expected_balance = expected_balance
+        db_session.status = SessionStatus.CLOSED
+        db_session.notes = session_update.notes
+
+        db.commit()
+        db.refresh(db_session)
+        logger.info(f"Closed cash register session {session_id} with denominations")
+        return db_session
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Error closing session {session_id}: {e}")
         raise

@@ -88,7 +88,7 @@
                   {{ t('app.views.cashRegister.initialBalance') || 'Initial' }}
                 </p>
                 <p class="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100">
-                  ${{ session.initial_balance?.toFixed(2) || '0.00' }}
+                  {{ formatCurrency(session.initial_balance || 0) }}
                 </p>
               </div>
               <div v-if="session.final_balance" class="text-center sm:text-right">
@@ -96,7 +96,7 @@
                   {{ t('app.views.cashRegister.finalBalance') || 'Final' }}
                 </p>
                 <p class="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100">
-                  ${{ session.final_balance?.toFixed(2) || '0.00' }}
+                  {{ formatCurrency(session.final_balance || 0) }}
                 </p>
               </div>
               <div class="text-center sm:text-right">
@@ -296,6 +296,13 @@ const getStatusBadgeClass = (status: string) => {
 const formatDate = (dateString: string) => {
   if (!dateString) return 'N/A'
   return new Date(dateString).toLocaleDateString() + ' ' + new Date(dateString).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+}
+
+const formatCurrency = (amount: number) => {
+  return new Intl.NumberFormat('es-MX', {
+    style: 'currency',
+    currency: 'MXN'
+  }).format(amount)
 }
 
 // Watch for filter changes to reload data
