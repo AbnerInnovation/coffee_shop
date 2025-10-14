@@ -28,11 +28,21 @@
             </div>
           </div>
           <div class="hidden md:block">
-            <div class="ml-4 flex items-center md:ml-6">
+            <div class="ml-4 flex items-center md:ml-6 gap-3">
+              <!-- Quick New Order Button -->
+              <button
+                type="button"
+                @click="showNewOrderModal = true"
+                class="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+              >
+                <PlusIcon class="h-4 w-4" />
+                {{ t('app.nav.new_order') }}
+              </button>
+              
               <!-- Theme toggle -->
               <button
                 type="button"
-                class="mr-3 rounded-full p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-300 dark:hover:text-white dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                class="rounded-full p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-300 dark:hover:text-white dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-primary-500"
                 :aria-label="$t('app.actions.toggle_theme')"
                 @click="toggleTheme()"
               >
@@ -165,16 +175,24 @@
     
     <!-- Confirmation dialog -->
     <ConfirmDialog />
+    
+    <!-- Global New Order Modal -->
+    <NewOrderModal
+      :open="showNewOrderModal"
+      @close="showNewOrderModal = false"
+      @order-created="handleOrderCreated"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { Bars3Icon, XMarkIcon, MoonIcon, SunIcon } from '@heroicons/vue/24/outline';
+import { Bars3Icon, XMarkIcon, MoonIcon, SunIcon, PlusIcon } from '@heroicons/vue/24/outline';
 import { useAuthStore } from '@/stores/auth';
 import { useToast } from '@/composables/useToast';
 import ConfirmDialog from '@/components/ui/ConfirmationDialog.vue'
+import NewOrderModal from '@/components/orders/NewOrderModal.vue'
 import { useI18n } from 'vue-i18n';
 import { useTheme } from '@/composables/useTheme';
 
@@ -197,6 +215,7 @@ const navigation = ref([
 
 const isMobileMenuOpen = ref(false);
 const isProfileMenuOpen = ref(false);
+const showNewOrderModal = ref(false);
 
 // Update current route in navigation
 const updateCurrentRoute = (path) => {
@@ -267,6 +286,14 @@ watch(
     isMobileMenuOpen.value = false;
   }
 );
+
+// Handle order created from modal
+function handleOrderCreated(order) {
+  // If not on orders page, navigate to it
+  if (route.path !== '/orders') {
+    router.push('/orders');
+  }
+}
 </script>
 
 <style scoped>

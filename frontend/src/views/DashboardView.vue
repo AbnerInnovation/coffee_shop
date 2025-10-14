@@ -1,15 +1,57 @@
 <template>
   <div>
+    <!-- Quick Actions Panel -->
+    <div class="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <button
+        @click="openNewOrderModal"
+        class="flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+      >
+        <PlusIcon class="h-5 w-5" />
+        {{ t('app.dashboard.quick_actions.new_order') }}
+      </button>
+      <button
+        @click="$router.push('/cash-register')"
+        class="flex items-center justify-center gap-2 rounded-lg bg-green-600 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-green-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-600"
+      >
+        <BanknotesIcon class="h-5 w-5" />
+        {{ t('app.dashboard.quick_actions.cash_register') }}
+      </button>
+      <button
+        @click="$router.push('/kitchen')"
+        class="flex items-center justify-center gap-2 rounded-lg bg-orange-600 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-orange-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-600"
+      >
+        <FireIcon class="h-5 w-5" />
+        {{ t('app.dashboard.quick_actions.kitchen') }}
+      </button>
+      <button
+        @click="$router.push('/menu')"
+        class="flex items-center justify-center gap-2 rounded-lg bg-purple-600 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-purple-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-600"
+      >
+        <DocumentPlusIcon class="h-5 w-5" />
+        {{ t('app.dashboard.quick_actions.add_menu_item') }}
+      </button>
+    </div>
+
     <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
       <!-- Stats Cards -->
       <div class="overflow-hidden rounded-lg bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 px-4 py-5 shadow sm:p-6">
         <dt class="truncate text-sm font-medium text-gray-500 dark:text-gray-400">{{ t('app.dashboard.total_orders_today') }}</dt>
         <dd class="mt-1 text-3xl font-semibold tracking-tight text-gray-900 dark:text-white">{{ stats.totalOrdersToday }}</dd>
+        <dd v-if="stats.ordersComparison !== null" class="mt-2 flex items-center text-sm" :class="stats.ordersComparison >= 0 ? 'text-green-600' : 'text-red-600'">
+          <ArrowUpIcon v-if="stats.ordersComparison > 0" class="h-4 w-4 mr-1" />
+          <ArrowDownIcon v-else-if="stats.ordersComparison < 0" class="h-4 w-4 mr-1" />
+          <span>{{ Math.abs(stats.ordersComparison) }} {{ t('app.dashboard.vs_yesterday') }}</span>
+        </dd>
       </div>
       
       <div class="overflow-hidden rounded-lg bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 px-4 py-5 shadow sm:p-6">
         <dt class="truncate text-sm font-medium text-gray-500 dark:text-gray-400">{{ t('app.dashboard.revenue_today') }}</dt>
         <dd class="mt-1 text-3xl font-semibold tracking-tight text-gray-900 dark:text-white">${{ stats.revenueToday.toFixed(2) }}</dd>
+        <dd v-if="stats.revenueComparison !== null" class="mt-2 flex items-center text-sm" :class="stats.revenueComparison >= 0 ? 'text-green-600' : 'text-red-600'">
+          <ArrowUpIcon v-if="stats.revenueComparison > 0" class="h-4 w-4 mr-1" />
+          <ArrowDownIcon v-else-if="stats.revenueComparison < 0" class="h-4 w-4 mr-1" />
+          <span>${{ Math.abs(stats.revenueComparison).toFixed(2) }} {{ t('app.dashboard.vs_yesterday') }}</span>
+        </dd>
       </div>
       
       <div class="overflow-hidden rounded-lg bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 px-4 py-5 shadow sm:p-6">
@@ -22,8 +64,29 @@
         <dd class="mt-1 text-3xl font-semibold tracking-tight text-gray-900 dark:text-white">{{ stats.popularItem || '—' }}</dd>
       </div>
     </div>
+
+    <!-- Kitchen Performance Metrics -->
+    <div class="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-3">
+      <div class="overflow-hidden rounded-lg bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 px-4 py-5 shadow sm:p-6">
+        <dt class="truncate text-sm font-medium text-gray-500 dark:text-gray-400">{{ t('app.dashboard.orders_in_queue') }}</dt>
+        <dd class="mt-1 text-3xl font-semibold tracking-tight text-gray-900 dark:text-white">{{ kitchenStats.ordersInQueue }}</dd>
+        <dd class="mt-2 text-xs text-gray-500 dark:text-gray-400">{{ t('app.dashboard.pending_and_preparing') }}</dd>
+      </div>
+      
+      <div class="overflow-hidden rounded-lg bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 px-4 py-5 shadow sm:p-6">
+        <dt class="truncate text-sm font-medium text-gray-500 dark:text-gray-400">{{ t('app.dashboard.avg_prep_time') }}</dt>
+        <dd class="mt-1 text-3xl font-semibold tracking-tight text-gray-900 dark:text-white">{{ kitchenStats.avgPrepTime }}</dd>
+        <dd class="mt-2 text-xs text-gray-500 dark:text-gray-400">{{ t('app.dashboard.minutes') }}</dd>
+      </div>
+      
+      <div class="overflow-hidden rounded-lg bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 px-4 py-5 shadow sm:p-6">
+        <dt class="truncate text-sm font-medium text-gray-500 dark:text-gray-400">{{ t('app.dashboard.longest_wait') }}</dt>
+        <dd class="mt-1 text-3xl font-semibold tracking-tight text-gray-900 dark:text-white">{{ kitchenStats.longestWait }}</dd>
+        <dd class="mt-2 text-xs text-gray-500 dark:text-gray-400">{{ t('app.dashboard.minutes') }}</dd>
+      </div>
+    </div>
     
-    <div class="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
+    <div v-if="false" class="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
       <!-- Recent Orders -->
       <div class="overflow-hidden rounded-lg bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow">
         <div class="border-b border-gray-200 dark:border-gray-800 px-4 py-5 sm:px-6">
@@ -119,6 +182,13 @@
         </div>
       </div>
     </div>
+    
+    <!-- New Order Modal -->
+    <NewOrderModal
+      :open="showNewOrderModal"
+      @close="showNewOrderModal = false"
+      @order-created="handleOrderCreated"
+    />
   </div>
 </template>
 
@@ -128,19 +198,32 @@ import orderService from '@/services/orderService';
 import menuService from '@/services/menuService';
 import tableService from '@/services/tableService';
 import { useI18n } from 'vue-i18n';
+import { useToast } from '@/composables/useToast';
+import { PlusIcon, BanknotesIcon, FireIcon, DocumentPlusIcon, ArrowUpIcon, ArrowDownIcon } from '@heroicons/vue/24/outline';
+import NewOrderModal from '@/components/orders/NewOrderModal.vue';
 
 type BackendOrderStatus = 'pending' | 'preparing' | 'ready' | 'completed' | 'cancelled';
 
 const loading = ref(false);
 const error = ref<string | null>(null);
 const { t } = useI18n();
+const { showSuccess } = useToast();
+const showNewOrderModal = ref(false);
 
 const stats = ref({
   totalOrdersToday: 0,
   revenueToday: 0,
   activeTables: 0,
   totalTables: 0,
-  popularItem: '' as string | null
+  popularItem: '' as string | null,
+  ordersComparison: null as number | null,
+  revenueComparison: null as number | null
+});
+
+const kitchenStats = ref({
+  ordersInQueue: 0,
+  avgPrepTime: '—',
+  longestWait: '—'
 });
 
 const recentOrders = ref<{ id: number; table: string; status: string; amount: number; createdAt: Date }[]>([]);
@@ -181,6 +264,19 @@ function isToday(dateStr: string | Date) {
   return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
 }
 
+function isYesterday(dateStr: string | Date) {
+  const d = new Date(dateStr);
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  return d.getFullYear() === yesterday.getFullYear() && d.getMonth() === yesterday.getMonth() && d.getDate() === yesterday.getDate();
+}
+
+function getMinutesSince(dateStr: string | Date): number {
+  const d = new Date(dateStr);
+  const now = new Date();
+  return Math.floor((now.getTime() - d.getTime()) / (1000 * 60));
+}
+
 onMounted(async () => {
   try {
     loading.value = true;
@@ -189,9 +285,37 @@ onMounted(async () => {
     // Fetch orders (limit 50 for dashboard)
     const orders = await orderService.getActiveOrders();
     const todayOrders = Array.isArray(orders) ? orders.filter(o => isToday(o.created_at)) : [];
+    const yesterdayOrders = Array.isArray(orders) ? orders.filter(o => isYesterday(o.created_at)) : [];
 
     stats.value.totalOrdersToday = todayOrders.length;
     stats.value.revenueToday = todayOrders.reduce((sum, o) => sum + (o.total_amount || 0), 0);
+    
+    // Comparison with yesterday
+    const yesterdayOrderCount = yesterdayOrders.length;
+    const yesterdayRevenue = yesterdayOrders.reduce((sum, o) => sum + (o.total_amount || 0), 0);
+    stats.value.ordersComparison = stats.value.totalOrdersToday - yesterdayOrderCount;
+    stats.value.revenueComparison = stats.value.revenueToday - yesterdayRevenue;
+    
+    // Kitchen performance metrics
+    const activeOrders = todayOrders.filter(o => o.status === 'pending' || o.status === 'preparing');
+    kitchenStats.value.ordersInQueue = activeOrders.length;
+    
+    // Calculate average prep time for completed orders today
+    const completedToday = todayOrders.filter(o => o.status === 'completed' || o.status === 'ready');
+    if (completedToday.length > 0) {
+      const totalPrepTime = completedToday.reduce((sum, o) => {
+        const created = new Date(o.created_at);
+        const updated = new Date(o.updated_at || o.created_at);
+        return sum + Math.floor((updated.getTime() - created.getTime()) / (1000 * 60));
+      }, 0);
+      kitchenStats.value.avgPrepTime = Math.round(totalPrepTime / completedToday.length).toString();
+    }
+    
+    // Find longest waiting order
+    if (activeOrders.length > 0) {
+      const waitTimes = activeOrders.map(o => getMinutesSince(o.created_at));
+      kitchenStats.value.longestWait = Math.max(...waitTimes).toString();
+    }
 
     // Popular item by frequency in today's orders
     const freq: Record<string, number> = {};
@@ -240,4 +364,72 @@ onMounted(async () => {
     loading.value = false;
   }
 });
+
+function openNewOrderModal() {
+  showNewOrderModal.value = true;
+}
+
+function handleOrderCreated() {
+  showNewOrderModal.value = false;
+  // Reload dashboard stats
+  loadDashboardData();
+}
+
+async function loadDashboardData() {
+  try {
+    loading.value = true;
+    error.value = null;
+
+    const orders = await orderService.getActiveOrders();
+    const todayOrders = Array.isArray(orders) ? orders.filter(o => isToday(o.created_at)) : [];
+    const yesterdayOrders = Array.isArray(orders) ? orders.filter(o => isYesterday(o.created_at)) : [];
+
+    stats.value.totalOrdersToday = todayOrders.length;
+    stats.value.revenueToday = todayOrders.reduce((sum, o) => sum + (o.total_amount || 0), 0);
+    
+    const yesterdayOrderCount = yesterdayOrders.length;
+    const yesterdayRevenue = yesterdayOrders.reduce((sum, o) => sum + (o.total_amount || 0), 0);
+    stats.value.ordersComparison = stats.value.totalOrdersToday - yesterdayOrderCount;
+    stats.value.revenueComparison = stats.value.revenueToday - yesterdayRevenue;
+    
+    const activeOrders = todayOrders.filter(o => o.status === 'pending' || o.status === 'preparing');
+    kitchenStats.value.ordersInQueue = activeOrders.length;
+    
+    const completedToday = todayOrders.filter(o => o.status === 'completed' || o.status === 'ready');
+    if (completedToday.length > 0) {
+      const totalPrepTime = completedToday.reduce((sum, o) => {
+        const created = new Date(o.created_at);
+        const updated = new Date(o.updated_at || o.created_at);
+        return sum + Math.floor((updated.getTime() - created.getTime()) / (1000 * 60));
+      }, 0);
+      kitchenStats.value.avgPrepTime = Math.round(totalPrepTime / completedToday.length).toString();
+    }
+    
+    if (activeOrders.length > 0) {
+      const waitTimes = activeOrders.map(o => getMinutesSince(o.created_at));
+      kitchenStats.value.longestWait = Math.max(...waitTimes).toString();
+    }
+
+    const freq: Record<string, number> = {};
+    for (const o of todayOrders) {
+      if (Array.isArray(o.items)) {
+        for (const it of o.items) {
+          const name = it.menu_item?.name || 'Unknown Item';
+          freq[name] = (freq[name] || 0) + (it.quantity || 1);
+        }
+      }
+    }
+    const popular = Object.entries(freq).sort((a,b) => b[1]-a[1])[0]?.[0] || '';
+    stats.value.popularItem = popular || null;
+
+    const tables = await tableService.getTables();
+    stats.value.totalTables = Array.isArray(tables) ? tables.length : 0;
+    stats.value.activeTables = Array.isArray(tables) ? tables.filter(t => t.is_occupied).length : 0;
+  } catch (e) {
+    console.error('Dashboard load failed:', e);
+    error.value = t('app.messages.dashboard_load_failed');
+  } finally {
+    loading.value = false;
+  }
+}
 </script>

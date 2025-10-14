@@ -8,7 +8,8 @@
       "kitchen": "Cocina",
       "tables": "Mesas",
       "categories": "Categorías",
-      "cash_register": "Caja Registradora"
+      "cash_register": "Caja Registradora",
+      "new_order": "Nueva Orden"
     },
     "actions": {
       "sign_out": "Cerrar sesión",
@@ -114,7 +115,19 @@
       "stock": "Stock",
       "table_number": "Mesa {number}",
       "takeaway": "Para llevar",
-      "dine_in": "Para comer aquí"
+      "dine_in": "Para comer aquí",
+      "vs_yesterday": "vs ayer",
+      "orders_in_queue": "Órdenes en Cola",
+      "pending_and_preparing": "Pendientes y Preparando",
+      "avg_prep_time": "Tiempo Prom. de Prep.",
+      "longest_wait": "Espera Más Larga",
+      "minutes": "minutos",
+      "quick_actions": {
+        "new_order": "Nueva Orden",
+        "cash_register": "Caja Registradora",
+        "kitchen": "Ver Cocina",
+        "add_menu_item": "Agregar Artículo"
+      }
     }
   ,
   "validation": {
