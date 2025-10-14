@@ -8,10 +8,13 @@
               :menu-items="menuItems"
               :loading="loading"
               :error="error"
+              :categories="menuStore.categoriesDetailed"
+              :selected-category-id="selectedCategoryId"
               @add-item="handleAddItem"
               @edit-item="handleEditItem"
               @delete-item="handleDeleteItem"
               @toggle-availability="handleToggleAvailability"
+              @filter-category="handleFilterCategory"
             />
 
             <!-- Menu Item Form -->
@@ -77,18 +80,20 @@ const showForm = ref<boolean>(false);
 const formLoading = ref<boolean>(false);
 const formErrors = ref<Record<string, string>>({});
 const currentItem = ref<MenuItem | null>(null);
+const selectedCategoryId = ref<number | null>(null);
 
 // Fetch menu items on component mount
 onMounted(async () => {
+  await menuStore.getCategories();
   await loadMenuItems();
 });
 
-async function loadMenuItems() {
-  console.log('Loading menu items...');
+async function loadMenuItems(categoryId?: number) {
+  console.log('Loading menu items...', categoryId ? `filtered by category ID: ${categoryId}` : 'all');
   loading.value = true;
   error.value = null;
   try {
-    const items = await menuStore.fetchMenuItems();
+    const items = await menuStore.fetchMenuItems(categoryId);
     console.log('Fetched menu items:', items);
     menuItems.value = items;
     console.log('menuItems after update:', menuItems.value);
@@ -100,6 +105,11 @@ async function loadMenuItems() {
   } finally {
     loading.value = false;
   }
+}
+
+function handleFilterCategory(categoryId: number | null) {
+  selectedCategoryId.value = categoryId;
+  loadMenuItems(categoryId || undefined);
 }
 
 function handleAddItem() {

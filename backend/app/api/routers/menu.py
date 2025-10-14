@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 from app.db.base import get_db
 from app.models.menu import MenuItem as MenuItemModel
-from app.schemas.menu import MenuItem, MenuItemCreate, MenuItemUpdate, Category
+from app.schemas.menu import MenuItem, MenuItemCreate, MenuItemUpdate
 from app.services.menu import (
     get_menu_items,
     get_menu_item,
@@ -54,7 +54,7 @@ async def read_menu_items(
     request: Request,
     skip: int = Query(0, ge=0, description="Number of items to skip"),
     limit: int = Query(100, le=100, description="Max items to return"),
-    category: Optional[Category] = None,
+    category_id: Optional[int] = Query(None, description="Filter by category ID"),
     available: Optional[bool] = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
@@ -68,7 +68,7 @@ async def read_menu_items(
         restaurant_id=restaurant.id,
         skip=skip,
         limit=limit,
-        category=category.value if category else None,
+        category_id=category_id,
         available=available
     )
 

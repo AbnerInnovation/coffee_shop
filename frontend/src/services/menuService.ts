@@ -90,9 +90,9 @@ const normalizeMenuItem = (item: any): MenuItemResponse => {
 
 // Menu Item Operations
 
-export const getMenuItems = async (category?: string, available?: boolean): Promise<MenuItemResponse[]> => {
+export const getMenuItems = async (categoryId?: number, available?: boolean): Promise<MenuItemResponse[]> => {
   const params = new URLSearchParams();
-  if (category) params.append('category', category);
+  if (categoryId !== undefined) params.append('category_id', String(categoryId));
   if (available !== undefined) params.append('available', String(available));
   
   const response = await apiInstance.get<MenuItemResponse[]>(

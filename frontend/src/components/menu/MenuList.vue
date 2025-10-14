@@ -1,12 +1,15 @@
 <script setup lang="ts">
 import { XCircleIcon } from '@heroicons/vue/20/solid';
-import type { MenuItem, MenuItemVariant } from '@/types/menu';
+import { FunnelIcon } from '@heroicons/vue/24/outline';
+import type { MenuItem, MenuItemVariant, MenuCategory } from '@/types/menu';
 import { useI18n } from 'vue-i18n';
 
 interface Props {
   menuItems: MenuItem[];
   loading: boolean;
   error: string | null;
+  categories: MenuCategory[];
+  selectedCategoryId: number | null;
 }
 
 interface Emits {
@@ -14,6 +17,7 @@ interface Emits {
   (e: 'edit-item', item: MenuItem): void;
   (e: 'delete-item', item: MenuItem): void;
   (e: 'toggle-availability', item: MenuItem): void;
+  (e: 'filter-category', categoryId: number | null): void;
 }
 
 const props = defineProps<Props>();
@@ -49,6 +53,27 @@ function isItemAvailable(item: MenuItem): boolean {
           {{ t('app.views.menu.list.add') }}
         </button>
       </div>
+    </div>
+    
+    <!-- Category Filter -->
+    <div class="mt-4 flex items-center gap-4">
+      <div class="flex items-center gap-2">
+        <FunnelIcon class="h-5 w-5 text-gray-400" />
+        <label for="category-filter" class="text-sm font-medium text-gray-700 dark:text-gray-300">
+          {{ t('app.views.menu.list.filter_by_category') }}
+        </label>
+      </div>
+      <select
+        id="category-filter"
+        :value="selectedCategoryId || ''"
+        @change="$emit('filter-category', ($event.target as HTMLSelectElement).value ? Number(($event.target as HTMLSelectElement).value) : null)"
+        class="rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
+      >
+        <option value="">{{ t('app.views.menu.list.all_categories') }}</option>
+        <option v-for="category in categories" :key="category.id" :value="category.id">
+          {{ category.name }}
+        </option>
+      </select>
     </div>
     <div class="mt-8 flow-root">
       <div class="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">

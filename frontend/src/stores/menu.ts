@@ -41,11 +41,11 @@ export const useMenuStore = defineStore('menu', () => {
     };
   }
 
-  async function fetchMenuItems(category?: string, available?: boolean) {
+  async function fetchMenuItems(categoryId?: number, available?: boolean) {
     loading.value = true;
     error.value = null;
     try {
-      const response = await menuService.getMenuItems(category, available);
+      const response = await menuService.getMenuItems(categoryId, available);
       menuItems.value = Array.isArray(response) ? response.map(normalizeMenuItem) : [];
       return menuItems.value;
     } catch (err: any) {
@@ -83,6 +83,7 @@ export const useMenuStore = defineStore('menu', () => {
         variants: menuItemData.variants?.map(variant => ({
           name: variant.name,
           price: Number(variant.price),
+          discount_price: variant.discount_price ? Number(variant.discount_price) : undefined,
           is_available: variant.is_available ?? true
         })) || []
       };
@@ -115,6 +116,7 @@ export const useMenuStore = defineStore('menu', () => {
           ...(variant.id && { id: variant.id }), // Only include id if it exists
           name: variant.name,
           price: Number(variant.price),
+          discount_price: variant.discount_price ? Number(variant.discount_price) : undefined,
           is_available: variant.is_available ?? true
         }));
       }

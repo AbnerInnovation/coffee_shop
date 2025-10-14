@@ -1,4 +1,4 @@
-from sqlalchemy import String, Float, Boolean, Integer, ForeignKey, Column, Text
+from sqlalchemy import String, Float, Boolean, Integer, ForeignKey, Column, Text, and_
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from typing import List, Optional, TYPE_CHECKING
 from .base import BaseModel
@@ -52,7 +52,8 @@ class MenuItem(BaseModel):
     variants: Mapped[List["MenuItemVariant"]] = relationship(
         "MenuItemVariant", 
         back_populates="menu_item", 
-        cascade="all, delete-orphan"
+        cascade="all, delete-orphan",
+        primaryjoin="and_(MenuItem.id==MenuItemVariant.menu_item_id, MenuItemVariant.deleted_at==None)"
     )
     order_items: Mapped[List["OrderItem"]] = relationship("OrderItem", back_populates="menu_item")
     

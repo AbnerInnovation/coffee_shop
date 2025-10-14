@@ -69,7 +69,7 @@
       </div>
       
       <!-- Low Stock Items (derived from menu availability) -->
-      <div class="overflow-hidden rounded-lg bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow">
+      <div v-if="false" class="overflow-hidden rounded-lg bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow">
         <div class="border-b border-gray-200 dark:border-gray-800 px-4 py-5 sm:px-6">
           <h3 class="text-lg font-medium leading-6 text-gray-900 dark:text-white">{{ t('app.dashboard.low_stock_items') }}</h3>
         </div>

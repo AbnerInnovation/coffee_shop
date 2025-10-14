@@ -14,7 +14,7 @@ def get_menu_items(
     restaurant_id: int,
     skip: int = 0,
     limit: int = 100,
-    category: Optional[str] = None,
+    category_id: Optional[int] = None,
     available: Optional[bool] = None,
 ) -> List[MenuItemModel]:
     """
@@ -32,19 +32,18 @@ def get_menu_items(
         MenuItemModel.restaurant_id == restaurant_id
     )
 
-    if category is not None:
-        # Look up the category by name
-        category_name = (
-            category.value.upper() if hasattr(category, "value") else category.upper()
-        )
-        category_obj = (
-            db.query(CategoryModel).filter(CategoryModel.name == category_name).first()
-        )
-        if category_obj:
-            query = query.filter(MenuItemModel.category_id == category_obj.id)
+    if category_id is not None:
+        # Filter by category_id directly
+        query = query.filter(MenuItemModel.category_id == category_id)
 
     if available is not None:
         query = query.filter(MenuItemModel.is_available == available)
+
+    # Order by category name and then by menu item name
+    query = query.join(CategoryModel).order_by(
+        CategoryModel.name.asc(),
+        MenuItemModel.name.asc()
+    )
 
     # Execute the query and get results
     items = query.offset(skip).limit(limit).all()
@@ -86,9 +85,9 @@ def create_menu_item(db: Session, menu_item: MenuItemCreate, restaurant_id: int)
     logger.info(f"Creating menu item with data: {menu_item}")
     logger.info(f"Variants data: {menu_item.variants if hasattr(menu_item, 'variants') else 'No variants'}")
 
-    # Get the data as dict
-    item_data = menu_item.dict(exclude={"variants"}, exclude_unset=True)
-    logger.info(f"Item data (excluding variants): {item_data}")
+    # Get the data as dict, excluding variants and category
+    item_data = menu_item.dict(exclude={"variants", "category"}, exclude_unset=True)
+    logger.info(f"Item data (excluding variants and category): {item_data}")
 
     # Look up the category by name within the same restaurant
     category_name = menu_item.category.upper()
@@ -205,7 +204,8 @@ def update_menu_item(
 
     # --- Handle variants ---
     if variants_data is not None:
-        existing_variants = {v.id: v for v in db_item.variants}
+        # Only consider non-deleted variants
+        existing_variants = {v.id: v for v in db_item.variants if v.deleted_at is None}
         sent_variant_ids = set()
 
         print('Variants data-------------------------->', variants_data)
@@ -220,14 +220,15 @@ def update_menu_item(
                 db.add(variant)
                 sent_variant_ids.add(variant_id)
             else:
-                # Create new variant
-                variant_data["menu_item_id"] = db_item.id
-                new_variant = MenuItemVariantModel(**variant_data)
+                # Create new variant (only if it doesn't have an id or the id doesn't exist)
+                new_variant_data = {k: v for k, v in variant_data.items() if k != "id"}
+                new_variant_data["menu_item_id"] = db_item.id
+                new_variant = MenuItemVariantModel(**new_variant_data)
                 db.add(new_variant)
 
         # Soft delete variants that were not included
         for variant in db_item.variants:
-            if variant.id not in sent_variant_ids:
+            if variant.deleted_at is None and variant.id not in sent_variant_ids:
                 variant.deleted_at = datetime.now(timezone.utc)
                 db.add(variant)
 

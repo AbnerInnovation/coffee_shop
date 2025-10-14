@@ -505,6 +505,8 @@
         "subtitle": "Lista de todos los artículos del menú en el sistema.",
         "add": "Agregar artículo",
         "error_title": "Error al cargar los artículos del menú",
+        "filter_by_category": "Filtrar por categoría:",
+        "all_categories": "Todas las Categorías",
         "table": {
           "name": "Nombre",
           "category": "Categoría",

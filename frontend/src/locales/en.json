@@ -355,6 +355,8 @@
         "subtitle": "A list of all menu items in the system.",
         "add": "Add menu item",
         "error_title": "Error loading menu items",
+        "filter_by_category": "Filter by category:",
+        "all_categories": "All Categories",
         "table": {
           "name": "Name",
           "category": "Category",
