@@ -20,6 +20,7 @@ export interface MenuItemResponse {
   name: string;
   description?: string;
   price: number | string;
+  discount_price?: number;
   category: Category;
   is_available?: boolean;
   isAvailable?: boolean;
@@ -66,6 +67,7 @@ const normalizeMenuItem = (item: any): MenuItemResponse => {
     id: v.id,
     name: v.name,
     price: Number(v.price),
+    discount_price: v.discount_price ? Number(v.discount_price) : undefined,
     is_available: v.is_available ?? v.isAvailable ?? true,
     isAvailable: v.isAvailable ?? v.is_available ?? true
   })) : [];
@@ -75,6 +77,7 @@ const normalizeMenuItem = (item: any): MenuItemResponse => {
     name: item.name,
     description: item.description,
     price: Number(item.price),
+    discount_price: item.discount_price ? Number(item.discount_price) : undefined,
     category: item.category,
     is_available: item.is_available ?? item.isAvailable ?? true,
     isAvailable: item.isAvailable ?? item.is_available ?? true,
@@ -117,6 +120,7 @@ export const createMenuItem = async (menuItemData: Omit<MenuItem, 'id'>): Promis
     variants: menuItemData.variants?.map(variant => ({
       name: variant.name,
       price: Number(variant.price),
+      discount_price: variant.discount_price ? Number(variant.discount_price) : undefined,
       is_available: variant.is_available ?? true
     })) || []
   };
@@ -141,6 +145,7 @@ export const updateMenuItem = async (
         ...(variant.id && { id: variant.id }), // Only include id if it exists
         name: variant.name,
         price: Number(variant.price),
+        discount_price: variant.discount_price ? Number(variant.discount_price) : undefined,
         is_available: variant.is_available ?? true
       }))
     })

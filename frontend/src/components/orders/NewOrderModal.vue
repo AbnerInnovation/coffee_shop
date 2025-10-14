@@ -110,9 +110,26 @@
                                 {{ item.name }}
                                 <span v-if="item.has_variants" class="text-xs text-gray-500 ml-1">{{$t('app.views.orders.modals.new_order.select_options_hint')}}</span>
                               </h4>
-                              <p class="text-sm text-gray-500 dark:text-gray-400">
-                                ${{ (item.price || 0).toFixed(2) }}
-                              </p>
+                              <div class="flex items-center gap-2">
+                                <p 
+                                  v-if="item.discount_price && item.discount_price > 0"
+                                  class="text-sm text-gray-500 dark:text-gray-400 line-through"
+                                >
+                                  ${{ (item.price || 0).toFixed(2) }}
+                                </p>
+                                <p 
+                                  class="text-sm font-medium"
+                                  :class="item.discount_price && item.discount_price > 0 ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'"
+                                >
+                                  ${{ getEffectivePrice(item.price || 0, item.discount_price).toFixed(2) }}
+                                </p>
+                                <span 
+                                  v-if="item.discount_price && item.discount_price > 0"
+                                  class="inline-flex items-center rounded-full bg-green-100 dark:bg-green-900/30 px-1.5 py-0.5 text-xs font-medium text-green-800 dark:text-green-200"
+                                >
+                                  {{ $t('app.forms.sale_badge') }}
+                                </span>
+                              </div>
                             </div>
                             <div class="flex items-center space-x-2">
                               <span class="text-sm text-gray-900 dark:text-gray-200">
@@ -148,7 +165,17 @@
                         @click="selectedVariant = null">
                         <div class="flex-1">
                           <p class="text-sm font-medium text-gray-900 dark:text-gray-100">{{$t('app.views.orders.modals.new_order.base_item') || 'Base item'}}</p>
-                          <p class="text-sm text-gray-500 dark:text-gray-400">${{ (selectedItem.price || 0).toFixed(2) }}</p>
+                          <div class="flex items-center gap-2">
+                            <p v-if="selectedItem.discount_price && selectedItem.discount_price > 0" class="text-sm text-gray-500 dark:text-gray-400 line-through">
+                              ${{ (selectedItem.price || 0).toFixed(2) }}
+                            </p>
+                            <p class="text-sm font-medium" :class="selectedItem.discount_price && selectedItem.discount_price > 0 ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'">
+                              ${{ getEffectivePrice(selectedItem.price || 0, selectedItem.discount_price).toFixed(2) }}
+                            </p>
+                            <span v-if="selectedItem.discount_price && selectedItem.discount_price > 0" class="inline-flex items-center rounded-full bg-green-100 dark:bg-green-900/30 px-1.5 py-0.5 text-xs font-medium text-green-800 dark:text-green-200">
+                              {{ $t('app.forms.sale_badge') }}
+                            </span>
+                          </div>
                         </div>
                         <div class="ml-2 flex items-center">
                           <input type="radio" :checked="!selectedVariant"
@@ -162,13 +189,17 @@
                         @click="selectedVariant = variant">
                         <div class="flex-1">
                           <p class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ variant.name }}</p>
-                          <p class="text-sm text-gray-500 dark:text-gray-400">
-                            <template v-if="variant.price_adjustment !== 0">
-                              <span v-if="variant.price_adjustment > 0">+</span>
-                              ${{ Math.abs(variant.price_adjustment).toFixed(2) }} •
-                            </template>
-                            ${{ getVariantPrice(selectedItem, variant).toFixed(2) }}
-                          </p>
+                          <div class="flex items-center gap-2">
+                            <p v-if="variant.discount_price && variant.discount_price > 0" class="text-sm text-gray-500 dark:text-gray-400 line-through">
+                              ${{ variant.price.toFixed(2) }}
+                            </p>
+                            <p class="text-sm font-medium" :class="variant.discount_price && variant.discount_price > 0 ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'">
+                              ${{ getVariantPrice(selectedItem, variant).toFixed(2) }}
+                            </p>
+                            <span v-if="variant.discount_price && variant.discount_price > 0" class="inline-flex items-center rounded-full bg-green-100 dark:bg-green-900/30 px-1.5 py-0.5 text-xs font-medium text-green-800 dark:text-green-200">
+                              {{ $t('app.forms.sale_badge') }}
+                            </span>
+                          </div>
                         </div>
                         <div class="ml-2 flex items-center">
                           <input type="radio" :checked="selectedVariant?.id === variant.id"
@@ -295,9 +326,19 @@
                             :class="{ 'bg-indigo-50 border-indigo-500': !selectedVariant }"
                             @click="selectedVariant = null">
                             <div class="flex-1">
-                              <div class="flex justify-between">
+                              <div class="flex justify-between items-center">
                                 <span class="font-medium">{{$t('app.views.orders.modals.new_order.base_item') || 'Base item'}}</span>
-                                <span class="text-gray-600">${{ (selectedItem?.price || 0).toFixed(2) }}</span>
+                                <div class="flex items-center gap-2">
+                                  <span v-if="selectedItem?.discount_price && selectedItem.discount_price > 0" class="text-gray-500 line-through text-sm">
+                                    ${{ (selectedItem?.price || 0).toFixed(2) }}
+                                  </span>
+                                  <span class="font-medium" :class="selectedItem?.discount_price && selectedItem.discount_price > 0 ? 'text-green-600' : 'text-gray-600'">
+                                    ${{ getEffectivePrice(selectedItem?.price || 0, selectedItem?.discount_price).toFixed(2) }}
+                                  </span>
+                                  <span v-if="selectedItem?.discount_price && selectedItem.discount_price > 0" class="inline-flex items-center rounded-full bg-green-100 px-1.5 py-0.5 text-xs font-medium text-green-800">
+                                    {{ $t('app.forms.sale_badge') }}
+                                  </span>
+                                </div>
                               </div>
                             </div>
                           </div>
@@ -307,12 +348,19 @@
                             :class="{ 'bg-indigo-50 border-indigo-500': selectedVariant?.id === variant.id }"
                             @click="selectedVariant = variant">
                             <div class="flex-1">
-                              <div class="flex justify-between">
+                              <div class="flex justify-between items-center">
                                 <span class="font-medium">{{ variant.name }}</span>
-                                <span v-if="variant.price_adjustment !== 0"
-                                  :class="{ 'text-green-600': variant.price_adjustment > 0, 'text-gray-500': variant.price_adjustment < 0 }">
-                                  {{ variant.price_adjustment > 0 ? '+' : '' }}{{ variant.price_adjustment.toFixed(2) }}
-                                </span>
+                                <div class="flex items-center gap-2">
+                                  <span v-if="variant.discount_price && variant.discount_price > 0" class="text-gray-500 line-through text-sm">
+                                    ${{ variant.price.toFixed(2) }}
+                                  </span>
+                                  <span class="font-medium" :class="variant.discount_price && variant.discount_price > 0 ? 'text-green-600' : 'text-gray-600'">
+                                    ${{ getVariantPrice(selectedItem, variant).toFixed(2) }}
+                                  </span>
+                                  <span v-if="variant.discount_price && variant.discount_price > 0" class="inline-flex items-center rounded-full bg-green-100 px-1.5 py-0.5 text-xs font-medium text-green-800">
+                                    {{ $t('app.forms.sale_badge') }}
+                                  </span>
+                                </div>
                               </div>
                             </div>
                           </div>
@@ -377,6 +425,7 @@ interface MenuItemVariant {
   id: string | number;
   name: string;
   price: number;
+  discount_price?: number;
   price_adjustment: number;
   is_available: boolean;
   is_default: boolean;
@@ -392,6 +441,7 @@ interface ExtendedMenuItem extends Omit<MenuItemType, 'variants' | 'id' | 'price
   has_variants: boolean;
   variants?: MenuItemVariant[];
   price: number;
+  discount_price?: number;
   category?: { name: string } | string;
 }
 
@@ -558,6 +608,7 @@ const fetchMenuItems = async () => {
           id: variant.id || 0,
           name: variant.name || '',
           price: typeof variant.price === 'string' ? parseFloat(variant.price) : (variant.price || 0),
+          discount_price: variant.discount_price ? (typeof variant.discount_price === 'string' ? parseFloat(variant.discount_price) : variant.discount_price) : undefined,
           price_adjustment: 'price_adjustment' in variant ? Number(variant.price_adjustment) || 0 : 0,
           is_available: 'is_available' in variant ? Boolean(variant.is_available) : true,
           is_default: 'is_default' in variant ? Boolean(variant.is_default) : false,
@@ -574,6 +625,7 @@ const fetchMenuItems = async () => {
         name: item.name || '',
         description: item.description || '',
         price: typeof item.price === 'string' ? parseFloat(item.price) : (item.price || 0),
+        discount_price: item.discount_price ? (typeof item.discount_price === 'string' ? parseFloat(item.discount_price) : item.discount_price) : undefined,
         category: item.category || { name: 'Uncategorized' },
         is_available: item.is_available !== false,
         has_variants: variants.length > 0,
@@ -684,6 +736,7 @@ function addItemWithDetails() {
   if (!selectedItem.value) return;
 
   const variant = selectedVariant.value as MenuItemVariant | null;
+  
   // Determine the correct unit price: prefer variant.price if present
   const itemPrice = getVariantPrice(selectedItem.value, variant);
 
@@ -704,6 +757,7 @@ function addItemWithDetails() {
     // Update existing item
     const existingItem = form.value.items[existingItemIndex];
     existingItem.quantity += 1;
+    existingItem.unit_price = itemPrice; // Update the unit_price in case discount changed
     if (itemNotes.value) {
       existingItem.notes = itemNotes.value;
     }
@@ -981,13 +1035,42 @@ watch(() => props.open, (isOpen, wasOpen) => {
   }
 });
 
+// Helper: get effective price (discount_price if set and > 0, otherwise regular price)
+function getEffectivePrice(price: number, discount_price?: number): number {
+  if (discount_price && discount_price > 0) {
+    return discount_price;
+  }
+  return price;
+}
+
 // Helper: compute variant price (prefer absolute variant.price; fallback to base + adjustment)
 function getVariantPrice(item: ExtendedMenuItem, variant: MenuItemVariant | null): number {
   const basePrice = typeof item.price === 'string' ? parseFloat(item.price) : (item.price || 0);
+  
+  // If variant has an absolute price (not price_adjustment)
   if (variant && typeof (variant as any).price === 'number' && !Number.isNaN((variant as any).price)) {
-    return (variant as any).price as number;
+    const variantPrice = (variant as any).price as number;
+    // Use variant's discount_price if available
+    return getEffectivePrice(variantPrice, variant.discount_price);
   }
+  
+  // For base item or variant with price_adjustment
+  // First, get the effective base price (with discount if available)
+  const effectiveBasePrice = getEffectivePrice(basePrice, item.discount_price);
+  
+  // Then add any variant adjustment
   const adjustment = variant?.price_adjustment || 0;
-  return basePrice + adjustment;
+  return effectiveBasePrice + adjustment;
+}
+
+// Helper: check if item or variant has active discount
+function hasDiscount(item: ExtendedMenuItem, variant: MenuItemVariant | null): boolean {
+  if (variant && variant.discount_price && variant.discount_price > 0) {
+    return true;
+  }
+  if (!variant && item.discount_price && item.discount_price > 0) {
+    return true;
+  }
+  return false;
 }
 </script>

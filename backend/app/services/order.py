@@ -13,13 +13,12 @@ from ..schemas.order import OrderCreate, OrderUpdate, OrderItemCreate, OrderItem
 # Serialization helpers
 # -----------------------------
 
-def serialize_menu_item(menu_item: Optional[MenuItem]) -> Optional[dict]:
-    if not menu_item:
-        return None
+def serialize_menu_item(menu_item: MenuItem) -> dict:
     return {
         "id": menu_item.id,
         "name": menu_item.name,
         "price": float(menu_item.price) if menu_item.price is not None else 0.0,
+        "discount_price": float(menu_item.discount_price) if menu_item.discount_price is not None else None,
         "description": menu_item.description,
         "category": getattr(menu_item.category, "name", menu_item.category) if menu_item.category else None,
         "image_url": menu_item.image_url,
@@ -33,6 +32,7 @@ def serialize_variant(variant: Optional[MenuItemVariant]) -> Optional[dict]:
         "id": variant.id,
         "name": variant.name,
         "price": float(variant.price) if variant.price is not None else 0.0,
+        "discount_price": float(variant.discount_price) if variant.discount_price is not None else None,
         "description": getattr(variant, "description", None),
     }
 
@@ -180,7 +180,7 @@ def create_order_with_items(db: Session, order: OrderCreate, restaurant_id: int)
             raise ValueError(f"Menu item {item.menu_item_id} not found")
 
         variant = None
-        unit_price = menu_item.price
+        unit_price = menu_item.get_effective_price()  # Use discount price if available
         if item.variant_id:
             variant = db.query(MenuItemVariant).filter(
                 MenuItemVariant.id == item.variant_id,
@@ -188,7 +188,7 @@ def create_order_with_items(db: Session, order: OrderCreate, restaurant_id: int)
             ).first()
             if not variant:
                 raise ValueError(f"Variant {item.variant_id} not found for menu item {item.menu_item_id}")
-            unit_price = variant.price
+            unit_price = variant.get_effective_price()  # Use discount price if available
 
         db_item = OrderItemModel(
             order_id=db_order.id,
@@ -257,7 +257,7 @@ def add_order_item(db: Session, db_order: OrderModel, item: OrderItemCreate, uni
         raise ValueError(f"Menu item {item.menu_item_id} not found")
 
     variant = None
-    unit_price = menu_item.price
+    unit_price = menu_item.get_effective_price()  # Use discount price if available
     if item.variant_id:
         variant = db.query(MenuItemVariant).filter(
             MenuItemVariant.id == item.variant_id,
@@ -265,7 +265,7 @@ def add_order_item(db: Session, db_order: OrderModel, item: OrderItemCreate, uni
         ).first()
         if not variant:
             raise ValueError(f"Variant {item.variant_id} not found for menu item {item.menu_item_id}")
-        unit_price = variant.price
+        unit_price = variant.get_effective_price()  # Use discount price if available
 
     db_item = OrderItemModel(
         order_id=db_order.id,
@@ -295,11 +295,11 @@ def update_order_item(db: Session, db_item: OrderItemModel, item: OrderItemUpdat
             ).first()
             if not variant:
                 raise ValueError(f"Variant {update_data['variant_id']} not found")
-            update_data["unit_price"] = variant.price
+            update_data["unit_price"] = variant.get_effective_price()  # Use discount price if available
         else:
             menu_item = db.query(MenuItem).filter(MenuItem.id == db_item.menu_item_id).first()
             if menu_item:
-                update_data["unit_price"] = menu_item.price
+                update_data["unit_price"] = menu_item.get_effective_price()  # Use discount price if available
 
     # Validate and convert status if provided
     if 'status' in update_data:

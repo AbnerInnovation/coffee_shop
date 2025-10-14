@@ -84,10 +84,19 @@
       "variant": {
         "name": "Name",
         "price": "Price",
+        "discount_price": "Discount Price",
         "available": "Available for ordering",
         "add": "Add Variant",
         "edit": "Edit Variant"
-      }
+      },
+      "discount_price": "Discount Price (Optional)",
+      "discount_price_help": "When set, this price will be used instead of the regular price",
+      "discount_active": "Discount Active",
+      "customers_save": "Customers save: {amount}",
+      "sale_badge": "Sale",
+      "save_badge": "Save {amount}",
+      "discount_placeholder": "Leave empty for no discount",
+      "total_savings": "Total Savings"
     },
     "dashboard": {
       "total_orders_today": "Total Orders Today",
@@ -145,7 +154,7 @@
       },
       "payment": {
         "paid": "Paid",
-        "pending": "Pending",
+        "pending": "Payment Pending",
         "select_method": "Select Payment Method",
         "confirm_payment": "Confirm Payment"
       },

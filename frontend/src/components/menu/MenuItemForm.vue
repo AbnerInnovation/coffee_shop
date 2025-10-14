@@ -54,6 +54,7 @@ type FormData = {
   name: string;
   description: string;
   price: number;
+  discount_price?: number;
   category: string | CategoryForm;
   is_available: boolean;
   image_url: string;
@@ -61,6 +62,7 @@ type FormData = {
     id?: string | number;
     name: string;
     price: number;
+    discount_price?: number;
     is_available: boolean;
   }>;
 };
@@ -70,6 +72,7 @@ const formData = ref<FormData>({
   name: '',
   description: '',
   price: 0,
+  discount_price: undefined,
   category: '',
   is_available: true,
   image_url: '',
@@ -83,6 +86,7 @@ if (props.menuItem) {
     name: menuItem.name || '',
     description: menuItem.description || '',
     price: menuItem.price || 0,
+    discount_price: menuItem.discount_price,
     category: menuItem.category || '',
     is_available: menuItem.is_available ?? true,
     image_url: menuItem.image_url || '',
@@ -90,6 +94,7 @@ if (props.menuItem) {
       id: variant.id,
       name: variant.name,
       price: variant.price,
+      discount_price: variant.discount_price,
       is_available: variant.is_available ?? true
     }))
   };
@@ -102,12 +107,14 @@ type VariantForm = {
   id?: string | number;
   name: string;
   price: number;
+  discount_price?: number;
   is_available: boolean;
 };
 
 const variantForm = ref<VariantForm>({
   name: '',
   price: 0,
+  discount_price: undefined,
   is_available: true
 });
 
@@ -229,12 +236,14 @@ function handleSubmit() {
   const submitData = {
     ...formData.value,
     price: Number(formData.value.price),
+    discount_price: formData.value.discount_price ? Number(formData.value.discount_price) : undefined,
     category: formData.value.category,
     is_available: formData.value.is_available,
     image_url: formData.value.image_url,
     variants: formData.value.variants.map(variant => ({
       ...variant,
       price: Number(variant.price),
+      discount_price: variant.discount_price ? Number(variant.discount_price) : undefined,
       is_available: variant.is_available
     }))
   };
@@ -265,6 +274,7 @@ const handleSaveVariant = (): void => {
     id: variantForm.value.id,
     name: variantForm.value.name,
     price: Number(variantForm.value.price),
+    discount_price: variantForm.value.discount_price ? Number(variantForm.value.discount_price) : undefined,
     is_available: variantForm.value.is_available ?? true
   };
 
@@ -296,6 +306,7 @@ const editVariant = (index: number): void => {
     id: variant.id,
     name: variant.name,
     price: typeof variant.price === 'string' ? parseFloat(variant.price) : variant.price,
+    discount_price: variant.discount_price,
     is_available: variant.is_available ?? true
   };
   editingVariantIndex.value = index;
@@ -308,6 +319,7 @@ const resetVariantForm = (): void => {
   variantForm.value = {
     name: '',
     price: 0,
+    discount_price: undefined,
     is_available: true
   };
   editingVariantIndex.value = null;
@@ -431,6 +443,46 @@ defineExpose({
         </div>
       </div>
 
+      <!-- Discount Price (Promotional Price) -->
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div>
+          <label for="discount_price" class="block text-sm font-medium text-gray-700 dark:text-white">
+            {{ t('app.forms.discount_price') }}
+          </label>
+          <div class="relative mt-1 rounded-md shadow-sm">
+            <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+              <span class="text-gray-500 sm:text-sm">{{ t('app.forms.price_symbol') }}</span>
+            </div>
+            <input
+              id="discount_price"
+              v-model.number="formData.discount_price"
+              type="number"
+              step="0.01"
+              min="0"
+              class="block w-full dark:bg-gray-900 dark:text-white rounded-md border border-gray-300 pl-7 pr-12 py-2 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
+              :placeholder="t('app.forms.discount_placeholder')"
+            />
+          </div>
+          <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            {{ t('app.forms.discount_price_help') }}
+          </p>
+        </div>
+        <div v-if="formData.discount_price && formData.discount_price > 0" class="flex items-center">
+          <div class="rounded-md bg-green-50 dark:bg-green-900/20 p-3">
+            <div class="flex">
+              <div class="ml-3">
+                <p class="text-sm font-medium text-green-800 dark:text-green-200">
+                  {{ t('app.forms.discount_active') }}
+                </p>
+                <p class="mt-1 text-sm text-green-700 dark:text-green-300">
+                  {{ t('app.forms.customers_save', { amount: `$${(formData.price - formData.discount_price).toFixed(2)}` }) }}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Image URL -->
       <div>
         <label for="image_url" class="block text-sm font-medium text-gray-700 dark:text-white">
@@ -477,14 +529,36 @@ defineExpose({
           <div 
             v-for="(variant, index) in formData.variants" 
             :key="index"
-            class="flex items-center justify-between rounded-md border border-gray-200 p-3"
+            class="flex items-center justify-between rounded-md border border-gray-200 dark:border-gray-700 p-3"
           >
             <div>
-              <p class="text-sm font-medium text-gray-900">{{ variant.name }}</p>
-              <p class="text-sm text-gray-500">${{ typeof variant.price === 'number' ? variant.price.toFixed(2) : variant.price }}</p>
+              <p class="text-sm font-medium text-gray-900 dark:text-white">{{ variant.name }}</p>
+              <div class="flex items-center gap-2">
+                <p 
+                  v-if="variant.discount_price && variant.discount_price > 0"
+                  class="text-sm text-gray-500 dark:text-gray-400 line-through"
+                >
+                  ${{ typeof variant.price === 'number' ? variant.price.toFixed(2) : variant.price }}
+                </p>
+                <p 
+                  class="text-sm font-medium"
+                  :class="variant.discount_price && variant.discount_price > 0 ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'"
+                >
+                  ${{ variant.discount_price && variant.discount_price > 0 
+                    ? (typeof variant.discount_price === 'number' ? variant.discount_price.toFixed(2) : variant.discount_price)
+                    : (typeof variant.price === 'number' ? variant.price.toFixed(2) : variant.price) 
+                  }}
+                </p>
+                <span 
+                  v-if="variant.discount_price && variant.discount_price > 0"
+                  class="inline-flex items-center rounded-full bg-green-100 dark:bg-green-900/30 px-2 py-0.5 text-xs font-medium text-green-800 dark:text-green-200"
+                >
+                  {{ t('app.forms.sale_badge') }}
+                </span>
+              </div>
               <span 
                 v-if="!variant.is_available"
-                class="inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800"
+                class="inline-flex items-center rounded-full bg-red-100 dark:bg-red-900/30 px-2 py-0.5 text-xs font-medium text-red-800 dark:text-red-200"
               >
                 {{ t('app.status.unavailable') }}
               </span>
@@ -492,7 +566,7 @@ defineExpose({
             <div class="flex space-x-2">
               <button
                 type="button"
-                class="text-indigo-600 hover:text-indigo-900"
+                class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300"
                 @click="editVariant(index)"
               >
                 <span class="sr-only">{{ t('app.forms.edit') }}</span>
@@ -500,7 +574,7 @@ defineExpose({
               </button>
               <button
                 type="button"
-                class="text-red-600 hover:text-red-900"
+                class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
                 @click="handleRemoveVariant(index)"
               >
                 <XMarkIcon class="h-5 w-5" />
@@ -710,6 +784,35 @@ defineExpose({
                           :placeholder="t('app.forms.placeholder_price')"
                         />
                       </div>
+                    </div>
+
+                    <!-- Variant discount price -->
+                    <div>
+                      <label
+                        for="variant-discount-price"
+                        class="block text-sm font-medium text-gray-700 dark:text-gray-100"
+                      >
+                        {{ t('app.forms.variant.discount_price') }} ({{ t('app.forms.discount_placeholder').split(' ')[0] }})
+                      </label>
+                      <div class="mt-1 relative rounded-md shadow-sm">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                          <span class="text-gray-500 sm:text-sm">
+                            {{ t('app.forms.price_symbol') }}
+                          </span>
+                        </div>
+                        <input
+                          type="number"
+                          id="variant-discount-price"
+                          v-model.number="variantForm.discount_price"
+                          step="0.01"
+                          min="0"
+                          class="block w-full pl-7 pr-12 py-1 rounded-md border-gray-300 dark:border-gray-700 focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-800 dark:text-gray-100 sm:text-sm"
+                          :placeholder="t('app.forms.discount_placeholder')"
+                        />
+                      </div>
+                      <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                        {{ t('app.forms.discount_price_help') }}
+                      </p>
                     </div>
 
                     <!-- Available toggle -->

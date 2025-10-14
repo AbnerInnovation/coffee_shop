@@ -96,6 +96,7 @@ class Category(str, Enum):
 class MenuItemVariantBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=50)
     price: float = Field(...)
+    discount_price: Optional[float] = None
     is_available: bool = True
 
 class MenuItemVariantCreate(MenuItemVariantBase):
@@ -104,6 +105,7 @@ class MenuItemVariantCreate(MenuItemVariantBase):
 class MenuItemVariantUpdate(BaseModel):
     name: Optional[str] = Field(None, min_length=1, max_length=50)
     price: Optional[float] = Field(...)
+    discount_price: Optional[float] = None
     is_available: Optional[bool] = None
 
 class MenuItemVariantInDBBase(MenuItemVariantBase):
@@ -127,6 +129,7 @@ class MenuItemBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=100)
     description: Optional[str] = None
     price: float = Field(...)
+    discount_price: Optional[float] = None
     is_available: bool = True
     image_url: Optional[str] = None
 
@@ -143,6 +146,7 @@ class MenuItemUpdate(BaseModel):
     name: Optional[str] = Field(None, min_length=1, max_length=100)
     description: Optional[str] = None
     price: Optional[float] = Field(None)
+    discount_price: Optional[float] = None
     category_id: Optional[int] = None
     category: Optional[str] = Field(None, min_length=1, max_length=50)
     is_available: Optional[bool] = None

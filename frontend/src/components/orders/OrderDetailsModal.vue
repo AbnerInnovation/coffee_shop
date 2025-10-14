@@ -98,8 +98,19 @@
                           <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 text-right">
                             {{ item.quantity }}
                           </td>
-                          <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 text-right">
-                            ${{ (item.unit_price || 0).toFixed(2) }}
+                          <td class="px-4 py-3 whitespace-nowrap text-sm text-right">
+                            <div class="flex items-center justify-end gap-2">
+                              <!-- Show original price if unit_price is less than menu item price (discount was applied) -->
+                              <span v-if="item.menu_item?.price && item.unit_price < item.menu_item.price" class="text-gray-500 dark:text-gray-400 line-through text-xs">
+                                ${{ (item.menu_item.price || 0).toFixed(2) }}
+                              </span>
+                              <span :class="item.menu_item?.price && item.unit_price < item.menu_item.price ? 'text-green-600 dark:text-green-400 font-medium' : 'text-gray-500 dark:text-gray-400'">
+                                ${{ (item.unit_price || 0).toFixed(2) }}
+                              </span>
+                              <span v-if="item.menu_item?.price && item.unit_price < item.menu_item.price" class="inline-flex items-center rounded-full bg-green-100 dark:bg-green-900/30 px-1.5 py-0.5 text-xs font-medium text-green-800 dark:text-green-200">
+                                {{ $t('app.forms.sale_badge') }}
+                              </span>
+                            </div>
                           </td>
                           <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100 text-right">
                             ${{ (item.quantity * (item.price || item.unit_price || 0)).toFixed(2) }}
@@ -107,6 +118,14 @@
                         </tr>
                       </tbody>
                       <tfoot>
+                        <tr v-if="totalSavings > 0">
+                          <td colspan="3" class="px-4 py-2 text-sm text-green-600 dark:text-green-400 text-right">
+                            {{$t('app.forms.total_savings')}}
+                          </td>
+                          <td class="px-4 py-2 text-sm font-medium text-green-600 dark:text-green-400 text-right">
+                            -${{ totalSavings.toFixed(2) }}
+                          </td>
+                        </tr>
                         <tr>
                           <td colspan="3" class="px-4 py-3 text-sm font-medium text-gray-900 dark:text-gray-100 text-right">
                             {{$t('app.views.orders.modals.details.subtotal')}}
@@ -270,6 +289,20 @@ const handleClose = () => {
     emit('close');
   }
 };
+
+// Calculate total savings from discounts
+const totalSavings = computed(() => {
+  if (!props.order.items) return 0;
+  
+  return props.order.items.reduce((total, item) => {
+    // Check if unit_price is less than menu item price (discount was applied)
+    if (item.menu_item?.price && item.unit_price && item.unit_price < item.menu_item.price) {
+      const savings = (item.menu_item.price - item.unit_price) * item.quantity;
+      return total + savings;
+    }
+    return total;
+  }, 0);
+});
 
 // Calculate totals if needed
 const orderWithTotals = computed(() => {

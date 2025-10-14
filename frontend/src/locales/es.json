@@ -84,10 +84,19 @@
       "variant": {
         "name": "Nombre",
         "price": "Precio",
+        "discount_price": "Precio de descuento",
         "available": "Disponible para pedidos",
         "add": "Agregar variante",
         "edit": "Editar variante"
-      }
+      },
+      "discount_price": "Precio de Descuento (Opcional)",
+      "discount_price_help": "Cuando se establece, este precio se usará en lugar del precio regular",
+      "discount_active": "Descuento Activo",
+      "customers_save": "Los clientes ahorran: {amount}",
+      "sale_badge": "Oferta",
+      "save_badge": "Ahorra {amount}",
+      "discount_placeholder": "Dejar vacío para no aplicar descuento",
+      "total_savings": "Ahorro Total"
     },
     "dashboard": {
       "total_orders_today": "Órdenes totales hoy",
@@ -278,7 +287,7 @@
       },
       "payment": {
         "paid": "Pagado",
-        "pending": "Pendiente",
+        "pending": "Pago Pendiente",
         "select_method": "Seleccionar Método de Pago",
         "confirm_payment": "Confirmar Pago"
       },

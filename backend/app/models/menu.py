@@ -38,6 +38,7 @@ class MenuItem(BaseModel):
     name: Mapped[str] = mapped_column(String(100), nullable=False)
     description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     price: Mapped[float] = mapped_column(nullable=False)
+    discount_price: Mapped[Optional[float]] = mapped_column(Float, nullable=True, default=None)  # Promotional price
     category_id: Mapped[int] = mapped_column(ForeignKey("categories.id"), nullable=False)
     is_available: Mapped[bool] = mapped_column(default=True, nullable=False)
     image_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
@@ -55,6 +56,12 @@ class MenuItem(BaseModel):
     )
     order_items: Mapped[List["OrderItem"]] = relationship("OrderItem", back_populates="menu_item")
     
+    def get_effective_price(self) -> float:
+        """Returns discount_price if set and > 0, otherwise returns regular price"""
+        if self.discount_price is not None and self.discount_price > 0:
+            return self.discount_price
+        return self.price
+    
     def __repr__(self) -> str:
         return f"<MenuItem(id={self.id}, name='{self.name}', price={self.price})>"
 
@@ -64,12 +71,18 @@ class MenuItemVariant(BaseModel):
     menu_item_id: Mapped[int] = mapped_column(ForeignKey("menu_items.id"), nullable=False)
     name: Mapped[str] = mapped_column(String(50), nullable=False)  # e.g. "Small", "Medium", "Large"
     price: Mapped[float] = mapped_column(nullable=False)
+    discount_price: Mapped[Optional[float]] = mapped_column(Float, nullable=True, default=None)  # Promotional price
     is_available: Mapped[bool] = mapped_column(default=True, nullable=False)
 
     # Relationships
     menu_item: Mapped["MenuItem"] = relationship("MenuItem", back_populates="variants")
     order_items: Mapped[List["OrderItem"]] = relationship("OrderItem", back_populates="variant")
     
+    def get_effective_price(self) -> float:
+        """Returns discount_price if set and > 0, otherwise returns regular price"""
+        if self.discount_price is not None and self.discount_price > 0:
+            return self.discount_price
+        return self.price
+    
     def __repr__(self) -> str:
         return f"<MenuItemVariant(id={self.id}, name='{self.name}', price={self.price}, menu_item_id={self.menu_item_id})>"
-    order_items = relationship("OrderItem", back_populates="variant")

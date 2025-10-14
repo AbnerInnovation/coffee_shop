@@ -107,17 +107,47 @@ function isItemAvailable(item: MenuItem): boolean {
                   </td>
                   <td class="whitespace-nowrap px-3 py-4 text-sm dark:text-gray-300 text-gray-700">
                     <template v-if="item.variants && item.variants.length > 0">
-                      <div v-if="item.price" class="flex justify-between">
+                      <div v-if="item.price" class="flex justify-between items-center gap-2">
                         <span class="dark:text-gray-400 text-gray-700">Base:</span>
-                        <span class="font-medium">${{ item.price.toFixed(2) }}</span>
+                        <div class="flex items-center gap-2">
+                          <span v-if="item.discount_price && item.discount_price > 0" class="text-gray-500 dark:text-gray-400 line-through text-xs">
+                            ${{ item.price.toFixed(2) }}
+                          </span>
+                          <span class="font-medium" :class="item.discount_price && item.discount_price > 0 ? 'text-green-600 dark:text-green-400' : ''">
+                            ${{ (item.discount_price && item.discount_price > 0 ? item.discount_price : item.price).toFixed(2) }}
+                          </span>
+                          <span v-if="item.discount_price && item.discount_price > 0" class="inline-flex items-center rounded-full bg-green-100 dark:bg-green-900/30 px-1.5 py-0.5 text-xs font-medium text-green-800 dark:text-green-200">
+                            {{ t('app.forms.sale_badge') }}
+                          </span>
+                        </div>
                       </div>
-                      <div v-for="variant in item.variants" :key="variant.id" class="flex justify-between">
+                      <div v-for="variant in item.variants" :key="variant.id" class="flex justify-between items-center gap-2">
                         <span class="dark:text-gray-400 text-gray-700">{{ variant.name }}:</span>
-                        <span class="font-medium">${{ variant.price.toFixed(2) }}</span>
+                        <div class="flex items-center gap-2">
+                          <span v-if="variant.discount_price && variant.discount_price > 0" class="text-gray-500 dark:text-gray-400 line-through text-xs">
+                            ${{ variant.price.toFixed(2) }}
+                          </span>
+                          <span class="font-medium" :class="variant.discount_price && variant.discount_price > 0 ? 'text-green-600 dark:text-green-400' : ''">
+                            ${{ (variant.discount_price && variant.discount_price > 0 ? variant.discount_price : variant.price).toFixed(2) }}
+                          </span>
+                          <span v-if="variant.discount_price && variant.discount_price > 0" class="inline-flex items-center rounded-full bg-green-100 dark:bg-green-900/30 px-1.5 py-0.5 text-xs font-medium text-green-800 dark:text-green-200">
+                            {{ t('app.forms.sale_badge') }}
+                          </span>
+                        </div>
                       </div>
                     </template>
                     <template v-else>
-                      ${{ item.price?.toFixed(2) || '0.00' }}
+                      <div class="flex items-center gap-2">
+                        <span v-if="item.discount_price && item.discount_price > 0" class="text-gray-500 dark:text-gray-400 line-through">
+                          ${{ item.price?.toFixed(2) || '0.00' }}
+                        </span>
+                        <span class="font-medium" :class="item.discount_price && item.discount_price > 0 ? 'text-green-600 dark:text-green-400' : ''">
+                          ${{ (item.discount_price && item.discount_price > 0 ? item.discount_price : item.price)?.toFixed(2) || '0.00' }}
+                        </span>
+                        <span v-if="item.discount_price && item.discount_price > 0" class="inline-flex items-center rounded-full bg-green-100 dark:bg-green-900/30 px-1.5 py-0.5 text-xs font-medium text-green-800 dark:text-green-200">
+                          {{ t('app.forms.sale_badge') }}
+                        </span>
+                      </div>
                     </template>
                   </td>
                   <td class="whitespace-nowrap px-3 py-4 text-sm dark:text-gray-400">

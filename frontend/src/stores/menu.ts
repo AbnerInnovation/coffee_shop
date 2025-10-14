@@ -25,6 +25,7 @@ export const useMenuStore = defineStore('menu', () => {
       name: item.name,
       description: item.description || '',
       price: typeof item.price === 'number' ? item.price : parseFloat(item.price) || 0,
+      discount_price: item.discount_price ? (typeof item.discount_price === 'number' ? item.discount_price : parseFloat(item.discount_price)) : undefined,
       category: category,
       is_available: item.is_available ?? true,
       image_url: item.image_url ?? '',
@@ -33,6 +34,7 @@ export const useMenuStore = defineStore('menu', () => {
             id: v.id,
             name: v.name || '',
             price: typeof v.price === 'number' ? v.price : parseFloat(v.price) || 0,
+            discount_price: v.discount_price ? (typeof v.discount_price === 'number' ? v.discount_price : parseFloat(v.discount_price)) : undefined,
             is_available: v.is_available ?? true
           }))
         : []
