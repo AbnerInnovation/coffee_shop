@@ -56,7 +56,7 @@
                           {{ table?.capacity }} seats
                         </span>
                         <span class="ml-2 text-sm text-gray-500">
-                          • {{ table?.location }}
+                          • {{ translateLocation(table?.location) }}
                         </span>
                       </div>
                     </div>
@@ -191,7 +191,7 @@
                             <div class="py-2 sm:grid sm:grid-cols-3 sm:gap-4">
                               <dt class="text-sm font-medium text-gray-500">Location</dt>
                               <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
-                                {{ table?.location }}
+                                {{ translateLocation(table?.location) }}
                               </dd>
                             </div>
                             <div class="py-2 sm:grid sm:grid-cols-3 sm:gap-4">
@@ -222,6 +222,7 @@
 
 <script setup>
 import { ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { 
   Dialog, 
   DialogPanel, 
@@ -239,6 +240,8 @@ import {
 } from '@heroicons/vue/24/outline';
 import { useConfirm } from '@/composables/useConfirm';
 import { useToast } from '@/composables/useToast';
+
+const { t } = useI18n();
 
 defineProps({
   open: {
@@ -262,6 +265,17 @@ const emit = defineEmits(['close', 'checkout', 'start-order', 'edit-table', 'del
 
 const { confirm } = useConfirm();
 const { showSuccess, showError } = useToast();
+
+// Translate location from English to current locale
+function translateLocation(location) {
+  if (!location) return '';
+  const locationMap = {
+    'Inside': t('app.views.tables.modal.fields.location_inside'),
+    'Patio': t('app.views.tables.modal.fields.location_patio'),
+    'Bar': t('app.views.tables.modal.fields.location_bar')
+  };
+  return locationMap[location] || location;
+}
 
 function getStatusBadgeClass(status) {
   const statusClasses = {

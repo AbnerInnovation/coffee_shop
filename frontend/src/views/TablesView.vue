@@ -60,7 +60,7 @@
       <div 
         v-for="table in tables" 
         :key="table.id"
-        class="relative rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200"
+        class="relative rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm hover:shadow-md transition-shadow duration-200"
         :class="{
           'ring-2 ring-offset-2 ring-indigo-500': selectedTableId === table.id,
           'border-l-4 border-red-500': table.is_occupied,
@@ -68,9 +68,81 @@
         }"
         @click="selectTable(table)"
       >
+        <!-- Three Dots Menu -->
+        <div class="absolute top-2 right-2 z-30">
+          <div class="relative">
+            <button
+              @click.stop="toggleMenu(table.id)"
+              class="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              :class="{ 'bg-gray-100 dark:bg-gray-800': openMenuId === table.id }"
+            >
+              <EllipsisVerticalIcon class="h-5 w-5 text-gray-600 dark:text-gray-400" />
+            </button>
+            
+            <!-- Dropdown Menu -->
+            <div
+              v-if="openMenuId === table.id"
+              class="absolute right-0 mt-1 w-56 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 z-50"
+            >
+              <div class="py-1" role="menu">
+                <!-- Order Actions -->
+                <button
+                  v-if="!hasOpenOrder(table.id)"
+                  @click.stop="openOrderModalFromMenu(table)"
+                  class="w-full text-left px-4 py-2 text-sm text-indigo-600 dark:text-indigo-400 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                  role="menuitem"
+                >
+                  <PlusIcon class="h-4 w-4" />
+                  {{ t('app.views.orders.new_order') || 'New Order' }}
+                </button>
+                <button
+                  v-else
+                  @click.stop="goToEditOrderFromMenu(table)"
+                  class="w-full text-left px-4 py-2 text-sm text-amber-600 dark:text-amber-400 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                  role="menuitem"
+                >
+                  <ShoppingBagIcon class="h-4 w-4" />
+                  {{ t('app.views.orders.edit_order') || 'Edit Order' }}
+                </button>
+                
+                <!-- Divider -->
+                <div class="border-t border-gray-200 dark:border-gray-700 my-1"></div>
+                
+                <!-- Table Actions -->
+                <button
+                  @click.stop="toggleOccupancyFromMenu(table)"
+                  class="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                  :class="table.is_occupied ? 'text-green-600 dark:text-green-400' : 'text-orange-600 dark:text-orange-400'"
+                  role="menuitem"
+                >
+                  <CheckCircleIcon v-if="table.is_occupied" class="h-4 w-4" />
+                  <XCircleIconOutline v-else class="h-4 w-4" />
+                  {{ table.is_occupied ? t('app.views.tables.mark_available') : t('app.views.tables.mark_occupied') }}
+                </button>
+                <button
+                  @click.stop="editTableFromMenu(table)"
+                  class="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                  role="menuitem"
+                >
+                  <PencilIcon class="h-4 w-4" />
+                  {{ t('app.views.tables.edit') }}
+                </button>
+                <button
+                  @click.stop="confirmDeleteTable(table)"
+                  class="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                  role="menuitem"
+                >
+                  <TrashIcon class="h-4 w-4" />
+                  {{ t('app.actions.delete') }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- Table Status Badge -->
         <div 
-          class="absolute top-4 right-4 px-2 py-1 rounded-full text-xs font-medium"
+          class="absolute top-2 right-12 px-2 py-1 rounded-full text-xs font-medium"
           :class="table.is_occupied ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-200' : 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200'"
         >
           {{ table.is_occupied ? t('app.views.tables.occupied') : t('app.views.tables.available') }}
@@ -86,52 +158,14 @@
           
           <div class="mt-3">
             <div class="text-sm text-gray-600 dark:text-gray-300">
-              {{ t('app.views.tables.location', { location: table.location }) }}
+              {{ t('app.views.tables.location', { location: translateLocation(table.location) }) }}
             </div>
             <div class="mt-1 text-xs text-gray-400 dark:text-gray-500">
               {{ t('app.views.tables.last_updated', { time: formatTimeAgo(table.updated_at) }) }}
             </div>
           </div>
           
-          <div class="mt-4 flex flex-col sm:flex-row gap-2">
-              <BaseButton
-                size="xs"
-                full-width
-                class="sm:w-auto"
-                :variant="table.is_occupied ? 'danger' : 'success'"
-                @click.stop="toggleOccupancy(table)"
-              >
-                {{ table.is_occupied ? t('app.views.tables.mark_available') : t('app.views.tables.mark_occupied') }}
-              </BaseButton>
-            <!-- <button
-              type="button"
-              class="inline-flex items-center px-3 py-1.5 border text-xs font-medium rounded shadow-sm text-gray-700 bg-white hover:bg-gray-50 border-gray-300 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700 dark:hover:bg-gray-700"
-              @click.stop="editTable(table)"
-            >
-              {{ t('app.views.tables.edit') }}
-            </button> -->
-            <!-- Create/Edit Order buttons -->
-            <BaseButton
-              v-if="!hasOpenOrder(table.id)"
-              size="xs"
-              variant="primary"
-              full-width
-              class="sm:w-auto"
-              @click.stop="openOrderModal(table)"
-            >
-              {{ t('app.views.orders.new_order') || 'Create Order' }}
-            </BaseButton>
-            <BaseButton
-              v-else
-              size="xs"
-              variant="warning"
-              full-width
-              class="sm:w-auto"
-              @click.stop="goToEditOrder(table)"
-            >
-              {{ t('app.views.orders.edit_order') || 'Edit Order' }}
-            </BaseButton>
-          </div>
+          <!-- Removed order buttons - now in menu -->
         </div>
       </div>
     </div>
@@ -226,7 +260,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { PlusIcon, XMarkIcon, XCircleIcon } from '@heroicons/vue/24/outline';
+import { PlusIcon, XMarkIcon, XCircleIcon, EllipsisVerticalIcon, PencilIcon, TrashIcon, CheckCircleIcon, XCircleIcon as XCircleIconOutline, ShoppingBagIcon } from '@heroicons/vue/24/outline';
 import tableService from '@/services/tableService';
 import NewOrderModal from '@/components/orders/NewOrderModal.vue';
 import BaseButton from '@/components/ui/BaseButton.vue';
@@ -244,6 +278,7 @@ const error = ref('');
 const selectedTableId = ref<number | null>(null);
 const showTableModal = ref(false);
 const editingTable = ref<number | null>(null);
+const openMenuId = ref<number | null>(null);
 
 interface TableFormData {
   number: number;
@@ -288,6 +323,16 @@ const refreshOpenOrders = async () => {
 };
 
 const hasOpenOrder = (tableId: number) => openOrderTableIds.value.has(tableId);
+
+// Translate location from English to current locale
+const translateLocation = (location: string) => {
+  const locationMap: Record<string, string> = {
+    'Inside': t('app.views.tables.modal.fields.location_inside'),
+    'Patio': t('app.views.tables.modal.fields.location_patio'),
+    'Bar': t('app.views.tables.modal.fields.location_bar')
+  };
+  return locationMap[location] || location;
+};
 
 // Format time ago
 const formatTimeAgo = (dateString) => {
@@ -390,9 +435,76 @@ const goToEditOrder = async (table: Table) => {
   }
 };
 
+// Toggle menu
+const toggleMenu = (tableId: number) => {
+  openMenuId.value = openMenuId.value === tableId ? null : tableId;
+};
+
+// Toggle occupancy from menu
+const toggleOccupancyFromMenu = async (table: Table) => {
+  openMenuId.value = null;
+  await toggleOccupancy(table);
+};
+
+// Open order modal from menu
+const openOrderModalFromMenu = (table: Table) => {
+  openMenuId.value = null;
+  openOrderModal(table);
+};
+
+// Go to edit order from menu
+const goToEditOrderFromMenu = async (table: Table) => {
+  openMenuId.value = null;
+  await goToEditOrder(table);
+};
+
+// Edit table from menu
+const editTableFromMenu = (table: Table) => {
+  openMenuId.value = null;
+  formData.value = {
+    number: table.number,
+    capacity: table.capacity,
+    location: table.location,
+    is_occupied: table.is_occupied
+  };
+  editingTable.value = table.id;
+  showTableModal.value = true;
+};
+
+// Confirm and delete table
+const confirmDeleteTable = async (table: Table) => {
+  openMenuId.value = null;
+  
+  if (!confirm(t('app.views.tables.confirm_delete', { number: table.number }) || `Are you sure you want to delete Table #${table.number}?`)) {
+    return;
+  }
+  
+  try {
+    await tableService.deleteTable(table.id);
+    await fetchTables();
+  } catch (err) {
+    console.error('Error deleting table:', err);
+    error.value = t('app.views.tables.errors.delete_failed') || 'Failed to delete table. Please try again.';
+  }
+};
+
+// Close menu when clicking outside
+const handleClickOutside = (event: MouseEvent) => {
+  if (openMenuId.value !== null) {
+    openMenuId.value = null;
+  }
+};
+
 // Initialize component
 onMounted(() => {
   fetchTables();
   refreshOpenOrders();
+  document.addEventListener('click', handleClickOutside);
+});
+
+// Cleanup
+import { onUnmounted } from 'vue';
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside);
 });
 </script>

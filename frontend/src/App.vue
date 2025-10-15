@@ -29,18 +29,6 @@
           </div>
           <div class="hidden md:block">
             <div class="ml-4 flex items-center md:ml-6 gap-2 sm:gap-3">
-              <!-- Quick New Order Button -->
-              <BaseButton
-                variant="primary"
-                size="sm"
-                @click="showNewOrderModal = true"
-              >
-                <template #icon>
-                  <PlusIcon class="h-4 w-4" />
-                </template>
-                <span class="hidden lg:inline">{{ t('app.nav.new_order') }}</span>
-              </BaseButton>
-              
               <!-- Theme toggle -->
               <button
                 type="button"

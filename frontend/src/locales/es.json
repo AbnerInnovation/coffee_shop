@@ -1,6 +1,6 @@
 {
   "app": {
-    "title": "Coffee Shop Admin",
+    "title": "Cloud Restaurant",
     "nav": {
       "dashboard": "Inicio",
       "menu": "Menú",
@@ -456,11 +456,13 @@
           "submit_add": "Agregar mesa"
         }
       },
+      "confirm_delete": "¿Estás seguro de que deseas eliminar la Mesa #{number}? Esta acción no se puede deshacer.",
       "errors": {
         "load_failed": "No se pudieron cargar las mesas. Inténtalo de nuevo.",
         "update_failed": "No se pudo actualizar el estado de la mesa. Inténtalo de nuevo.",
         "save_failed_update": "No se pudo actualizar la mesa. Inténtalo de nuevo.",
-        "save_failed_create": "No se pudo crear la mesa. Inténtalo de nuevo."
+        "save_failed_create": "No se pudo crear la mesa. Inténtalo de nuevo.",
+        "delete_failed": "No se pudo eliminar la mesa. Inténtalo de nuevo."
       }
     },
     "kitchen": {
