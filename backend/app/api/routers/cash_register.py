@@ -145,7 +145,7 @@ def get_transactions(
         if session_id is not None:
             query = query.filter(CashTransactionModel.session_id == session_id)
 
-        transactions = query.offset(skip).limit(limit).all()
+        transactions = query.order_by(CashTransactionModel.id.desc()).offset(skip).limit(limit).all()
         return transactions
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error retrieving transactions: {str(e)}")

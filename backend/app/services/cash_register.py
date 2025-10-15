@@ -210,7 +210,7 @@ def get_transactions_by_session(db: Session, session_id: int) -> List[CashTransa
     """Get all transactions for a session."""
     return db.query(CashTransactionModel).filter(
         CashTransactionModel.session_id == session_id
-    ).all()
+    ).order_by(CashTransactionModel.id.desc()).all()
 
 def delete_transaction(db: Session, transaction_id: int, user_id: int) -> bool:
     """Delete a transaction from a cash register session.
