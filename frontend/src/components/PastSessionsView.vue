@@ -30,14 +30,15 @@
             type="date"
             class="px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md text-sm dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
-          <button
+          <BaseButton
             @click="loadPastSessions"
             :disabled="isLoading"
-            class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+            :loading="isLoading"
+            variant="primary"
+            size="sm"
           >
-            <span v-if="isLoading" class="inline-block animate-spin mr-2">⟳</span>
             {{ t('app.actions.search') || 'Search' }}
-          </button>
+          </BaseButton>
         </div>
       </div>
     </div>
@@ -111,18 +112,24 @@
 
             <!-- Action Buttons -->
             <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
-              <button
+              <BaseButton
                 @click="viewSessionDetails(session.id)"
-                class="w-full sm:w-auto px-3 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                variant="info"
+                size="sm"
+                full-width
+                class="sm:w-auto"
               >
                 {{ t('app.actions.view') || 'View' }}
-              </button>
-              <button
+              </BaseButton>
+              <BaseButton
                 @click="viewSessionReport(session.id)"
-                class="w-full sm:w-auto px-3 py-2 text-sm bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+                variant="success"
+                size="sm"
+                full-width
+                class="sm:w-auto"
               >
                 {{ t('app.views.cashRegister.report') || 'Report' }}
-              </button>
+              </BaseButton>
             </div>
           </div>
         </div>
@@ -138,20 +145,22 @@
           {{ t('app.views.cashRegister.of') || 'of' }} {{ pagination.total }} {{ t('app.views.cashRegister.sessions') || 'sessions' }}
         </div>
         <div class="flex justify-center sm:justify-end space-x-2">
-          <button
+          <BaseButton
             @click="previousPage"
             :disabled="pagination.page <= 1"
-            class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded-md disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-700 dark:text-white transition-colors"
+            variant="secondary"
+            size="sm"
           >
             {{ t('app.actions.previous') || 'Previous' }}
-          </button>
-          <button
+          </BaseButton>
+          <BaseButton
             @click="nextPage"
             :disabled="pagination.page >= pagination.totalPages"
-            class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded-md disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-700 dark:text-white transition-colors"
+            variant="secondary"
+            size="sm"
           >
             {{ t('app.actions.next') || 'Next' }}
-          </button>
+          </BaseButton>
         </div>
       </div>
     </div>
@@ -171,6 +180,7 @@ import { useI18n } from 'vue-i18n'
 import { cashRegisterService } from '@/services/cashRegisterService'
 import { useToast } from '@/composables/useToast'
 import SessionDetailsModal from '@/components/SessionDetailsModal.vue'
+import BaseButton from '@/components/ui/BaseButton.vue'
 
 const { t } = useI18n()
 const toast = useToast()

@@ -30,14 +30,16 @@
           <div class="hidden md:block">
             <div class="ml-4 flex items-center md:ml-6 gap-2 sm:gap-3">
               <!-- Quick New Order Button -->
-              <button
-                type="button"
+              <BaseButton
+                variant="primary"
+                size="sm"
                 @click="showNewOrderModal = true"
-                class="inline-flex items-center gap-1.5 sm:gap-2 rounded-md bg-indigo-600 px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 active:bg-indigo-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 touch-manipulation"
               >
-                <PlusIcon class="h-4 w-4" />
+                <template #icon>
+                  <PlusIcon class="h-4 w-4" />
+                </template>
                 <span class="hidden lg:inline">{{ t('app.nav.new_order') }}</span>
-              </button>
+              </BaseButton>
               
               <!-- Theme toggle -->
               <button
@@ -204,6 +206,7 @@ import { useAuthStore } from '@/stores/auth';
 import { useToast } from '@/composables/useToast';
 import ConfirmDialog from '@/components/ui/ConfirmationDialog.vue'
 import NewOrderModal from '@/components/orders/NewOrderModal.vue'
+import BaseButton from '@/components/ui/BaseButton.vue'
 import { useI18n } from 'vue-i18n';
 import { useTheme } from '@/composables/useTheme';
 

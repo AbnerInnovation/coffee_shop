@@ -19,21 +19,27 @@
             {{ t('app.views.cashRegister.dateRange') || 'Date Range' }}
           </label>
           <div class="flex gap-2">
-            <button @click="setDateRange('today')" 
-              :class="dateRangeType === 'today' ? 'bg-indigo-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'"
-              class="flex-1 px-3 py-2 rounded-md text-sm font-medium transition-colors hover:opacity-80">
+            <BaseButton 
+              @click="setDateRange('today')" 
+              :variant="dateRangeType === 'today' ? 'primary' : 'secondary'"
+              size="sm"
+              class="flex-1">
               {{ t('app.views.cashRegister.today') || 'Today' }}
-            </button>
-            <button @click="setDateRange('week')" 
-              :class="dateRangeType === 'week' ? 'bg-indigo-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'"
-              class="flex-1 px-3 py-2 rounded-md text-sm font-medium transition-colors hover:opacity-80">
+            </BaseButton>
+            <BaseButton 
+              @click="setDateRange('week')" 
+              :variant="dateRangeType === 'week' ? 'primary' : 'secondary'"
+              size="sm"
+              class="flex-1">
               {{ t('app.views.cashRegister.thisWeek') || 'Week' }}
-            </button>
-            <button @click="setDateRange('month')" 
-              :class="dateRangeType === 'month' ? 'bg-indigo-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'"
-              class="flex-1 px-3 py-2 rounded-md text-sm font-medium transition-colors hover:opacity-80">
+            </BaseButton>
+            <BaseButton 
+              @click="setDateRange('month')" 
+              :variant="dateRangeType === 'month' ? 'primary' : 'secondary'"
+              size="sm"
+              class="flex-1">
               {{ t('app.views.cashRegister.thisMonth') || 'Month' }}
-            </button>
+            </BaseButton>
           </div>
         </div>
       </div>
@@ -70,14 +76,20 @@
               {{ report.total_transactions }} {{ t('app.views.cashRegister.transactions') || 'transactions' }}
             </p>
           </div>
-          <button @click="viewSessionDetails(report.session_id)"
-            class="w-full sm:w-auto px-3 py-1.5 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center justify-center gap-1">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-              <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-              <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" />
-            </svg>
+          <BaseButton 
+            @click="viewSessionDetails(report.session_id)"
+            variant="info"
+            size="sm"
+            full-width
+            class="sm:w-auto">
+            <template #icon>
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" />
+              </svg>
+            </template>
             {{ t('app.views.cashRegister.details') || 'Details' }}
-          </button>
+          </BaseButton>
         </div>
         
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -269,6 +281,7 @@ import { useI18n } from 'vue-i18n'
 import { cashRegisterService } from '@/services/cashRegisterService'
 import { useToast } from '@/composables/useToast'
 import SessionDetailsModal from '@/components/SessionDetailsModal.vue'
+import BaseButton from '@/components/ui/BaseButton.vue'
 
 const { t } = useI18n()
 const toast = useToast()

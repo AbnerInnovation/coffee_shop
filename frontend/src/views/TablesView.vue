@@ -6,14 +6,17 @@
         <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ t('app.views.tables.subtitle') }}</p>
       </div>
       <div class="w-full sm:w-auto">
-        <button
-          type="button"
-          class="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2.5 sm:py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 touch-manipulation"
+        <BaseButton
+          variant="primary"
+          full-width
+          class="sm:w-auto"
           @click="openAddTableModal"
         >
-          <PlusIcon class="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
+          <template #icon>
+            <PlusIcon class="h-5 w-5" aria-hidden="true" />
+          </template>
           {{ t('app.views.tables.add_table') }}
-        </button>
+        </BaseButton>
       </div>
     </div>
 
@@ -43,10 +46,12 @@
       <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">{{ t('app.views.tables.no_tables') }}</h3>
       <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ t('app.views.tables.no_tables_description') }}</p>
       <div class="mt-6">
-        <button type="button" @click="openAddTableModal" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-          <PlusIcon class="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
+        <BaseButton variant="primary" @click="openAddTableModal">
+          <template #icon>
+            <PlusIcon class="h-5 w-5" aria-hidden="true" />
+          </template>
           {{ t('app.views.tables.add_table') }}
-        </button>
+        </BaseButton>
       </div>
     </div>
 
@@ -89,14 +94,15 @@
           </div>
           
           <div class="mt-4 flex flex-col sm:flex-row gap-2">
-              <button
-                type="button"
-                class="inline-flex items-center justify-center px-3 py-2 sm:py-1.5 border border-transparent text-xs font-medium rounded shadow-sm text-white touch-manipulation"
-                :class="table.is_occupied ? 'bg-red-600 hover:bg-red-700 active:bg-red-800' : 'bg-green-600 hover:bg-green-700 active:bg-green-800'"
+              <BaseButton
+                size="xs"
+                full-width
+                class="sm:w-auto"
+                :variant="table.is_occupied ? 'danger' : 'success'"
                 @click.stop="toggleOccupancy(table)"
               >
                 {{ table.is_occupied ? t('app.views.tables.mark_available') : t('app.views.tables.mark_occupied') }}
-              </button>
+              </BaseButton>
             <!-- <button
               type="button"
               class="inline-flex items-center px-3 py-1.5 border text-xs font-medium rounded shadow-sm text-gray-700 bg-white hover:bg-gray-50 border-gray-300 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700 dark:hover:bg-gray-700"
@@ -105,22 +111,26 @@
               {{ t('app.views.tables.edit') }}
             </button> -->
             <!-- Create/Edit Order buttons -->
-            <button
+            <BaseButton
               v-if="!hasOpenOrder(table.id)"
-              type="button"
-              class="inline-flex items-center justify-center px-3 py-2 sm:py-1.5 border border-transparent text-xs font-medium rounded shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 touch-manipulation"
+              size="xs"
+              variant="primary"
+              full-width
+              class="sm:w-auto"
               @click.stop="openOrderModal(table)"
             >
               {{ t('app.views.orders.new_order') || 'Create Order' }}
-            </button>
-            <button
+            </BaseButton>
+            <BaseButton
               v-else
-              type="button"
-              class="inline-flex items-center justify-center px-3 py-2 sm:py-1.5 border border-transparent text-xs font-medium rounded shadow-sm text-white bg-amber-600 hover:bg-amber-700 active:bg-amber-800 touch-manipulation"
+              size="xs"
+              variant="warning"
+              full-width
+              class="sm:w-auto"
               @click.stop="goToEditOrder(table)"
             >
               {{ t('app.views.orders.edit_order') || 'Edit Order' }}
-            </button>
+            </BaseButton>
           </div>
         </div>
       </div>
@@ -182,19 +192,21 @@
             </div>
             
             <div class="flex justify-end space-x-3 pt-4">
-              <button
+              <BaseButton
                 type="button"
+                variant="secondary"
+                size="sm"
                 @click="closeModal"
-                class="inline-flex justify-center rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700 dark:hover:bg-gray-700 dark:focus:ring-offset-gray-900"
               >
                 {{ t('app.views.tables.modal.actions.cancel') }}
-              </button>
-              <button
+              </BaseButton>
+              <BaseButton
                 type="submit"
-                class="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                variant="primary"
+                size="sm"
               >
                 {{ editingTable ? t('app.views.tables.modal.actions.submit_update') : t('app.views.tables.modal.actions.submit_add') }}
-              </button>
+              </BaseButton>
             </div>
           </div>
         </form>
@@ -217,6 +229,7 @@ import { useI18n } from 'vue-i18n';
 import { PlusIcon, XMarkIcon, XCircleIcon } from '@heroicons/vue/24/outline';
 import tableService from '@/services/tableService';
 import NewOrderModal from '@/components/orders/NewOrderModal.vue';
+import BaseButton from '@/components/ui/BaseButton.vue';
 import { formatDistanceToNow } from 'date-fns';
 import orderService from '@/services/orderService';
 import { useRouter } from 'vue-router';
@@ -268,7 +281,7 @@ const refreshOpenOrders = async () => {
     // Fetch active orders (pending, preparing, ready) and not paid
     const all = await orderService.getActiveOrders();
     const active = (Array.isArray(all) ? all : []).filter(o => o && o.table_id && o.status !== 'completed' && o.status !== 'cancelled' && !o.is_paid);
-    openOrderTableIds.value = new Set(active.map(o => o.table_id));
+    openOrderTableIds.value = new Set(active.map(o => o.table_id).filter((id): id is number => id !== null));
   } catch (e) {
     console.warn('Failed to fetch open orders for tables view:', e);
   }
