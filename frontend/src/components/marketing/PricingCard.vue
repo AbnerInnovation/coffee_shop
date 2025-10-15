@@ -31,14 +31,14 @@
       </div>
     </div>
 
-    <div class="mt-6">
+    <!-- <div class="mt-6">
       <RouterLink
         :to="{ name: ctaRouteName }"
         class="block text-center rounded-lg py-2.5 px-4 bg-indigo-600 text-white font-medium hover:bg-indigo-700 transition shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-slate-900"
       >
         {{ ctaLabel }}
       </RouterLink>
-    </div>
+    </div> -->
   </article>
 </template>
 
