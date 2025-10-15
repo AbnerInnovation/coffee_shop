@@ -1,7 +1,12 @@
 <template>
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <MainLayout>
+    <PageHeader
+      :title="t('app.views.cashRegister.title') || 'Cash Register'"
+      :subtitle="t('app.views.cashRegister.subtitle') || 'Manage cash register sessions and transactions'"
+    />
+    
     <!-- Tabs -->
-    <div class="mb-6 sm:mb-8 overflow-x-auto">
+    <div class="mt-6 mb-6 sm:mb-8 overflow-x-auto">
       <nav class="flex space-x-4 sm:space-x-8 min-w-max">
         <button @click="activeTab = 'current'"
           :class="activeTab === 'current' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
@@ -197,8 +202,7 @@
       <ReportsView />
     </div>
 
-  </div>
-  <!-- Open Session Modal -->
+    <!-- Open Session Modal -->
   <div v-if="openModalOpen" class="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4">
     <div class="w-full max-w-md rounded-lg bg-white dark:bg-gray-900 p-6 shadow-lg">
       <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
@@ -432,13 +436,158 @@
           {{ t('app.actions.delete') || 'Delete' }}
         </BaseButton>
       </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+          {{ t('app.views.cashRegister.expenseCategory') || 'Category (Optional)' }}
+        </label>
+        <select v-model="expenseCategory"
+          class="w-full rounded-md border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500">
+          <option value="">{{ t('app.views.cashRegister.selectCategory') || 'Select a category' }}</option>
+          <option value="supplies">{{ t('app.views.cashRegister.categorySupplies') || 'Supplies' }}</option>
+          <option value="utilities">{{ t('app.views.cashRegister.categoryUtilities') || 'Utilities' }}</option>
+          <option value="maintenance">{{ t('app.views.cashRegister.categoryMaintenance') || 'Maintenance' }}</option>
+          <option value="inventory">{{ t('app.views.cashRegister.categoryInventory') || 'Inventory' }}</option>
+          <option value="other">{{ t('app.views.cashRegister.categoryOther') || 'Other' }}</option>
+        </select>
+      </div>
+    </div>
+    <div class="mt-6 flex justify-end space-x-3">
+      <BaseButton type="button" variant="secondary" size="sm" @click="closeModals">
+        {{ t('app.actions.cancel') || 'Cancel' }}
+      </BaseButton>
+      <BaseButton type="button" variant="warning" size="sm" @click="addExpense">
+        {{ t('app.actions.save') || 'Save' }}
+      </BaseButton>
     </div>
   </div>
+
+<!-- Cut Modal -->
+<div v-if="cutModalOpen" class="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4">
+  <div class="w-full rounded-lg bg-white dark:bg-gray-900 p-6 shadow-lg">
+    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+      {{ t('app.views.cashRegister.cutSession') || 'Cut Session' }}
+    </h3>
+    <div class="space-y-4">
+      <div>
+        <h4 class="font-medium text-gray-900 dark:text-gray-100">
+          {{ t('app.views.cashRegister.summary') || 'Summary' }}
+        </h4>
+        <div class="mt-2 space-y-2">
+          <div class="flex justify-between">
+            <span class="text-gray-600 dark:text-gray-400">
+              {{ t('app.views.cashRegister.totalSales') || 'Total Sales' }}
+            </span>
+            <span class="font-medium">${{ cutReport.total_sales?.toFixed(2) || '0.00' }}</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-600 dark:text-gray-400">
+              {{ t('app.views.cashRegister.totalRefunds') || 'Total Refunds' }}
+            </span>
+            <span class="font-medium">${{ cutReport.total_refunds?.toFixed(2) || '0.00' }}</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-600 dark:text-gray-400">
+              {{ t('app.views.cashRegister.totalTips') || 'Total Tips' }}
+            </span>
+            <span class="font-medium">${{ cutReport.total_tips?.toFixed(2) || '0.00' }}</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-600 dark:text-gray-400">
+              {{ t('app.views.cashRegister.totalExpenses') || 'Total Expenses' }}
+            </span>
+            <span class="font-medium text-red-600 dark:text-red-400">${{ cutReport.total_expenses?.toFixed(2) || '0.00' }}</span>
+          </div>
+          <div class="flex justify-between font-bold">
+            <span class="text-gray-900 dark:text-gray-100">
+              {{ t('app.views.cashRegister.netCashFlow') || 'Net Cash Flow' }}
+            </span>
+            <span>${{ cutReport.net_cash_flow?.toFixed(2) || '0.00' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <h4 class="font-medium text-gray-900 dark:text-gray-100">
+          {{ t('app.views.cashRegister.paymentBreakdown') || 'Payment Breakdown' }}
+        </h4>
+        <div class="mt-2 space-y-3">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+              {{ t('app.views.cashRegister.cashPayments') || 'Cash Payments' }}
+            </label>
+            <input v-model="cashPayments" type="number" step="0.01"
+              class="w-full rounded-md border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+              {{ t('app.views.cashRegister.cardPayments') || 'Card Payments' }}
+            </label>
+            <input v-model="cardPayments" type="number" step="0.01"
+              class="w-full rounded-md border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+              {{ t('app.views.cashRegister.digitalPayments') || 'Digital Payments' }}
+            </label>
+            <input v-model="digitalPayments" type="number" step="0.01"
+              class="w-full rounded-md border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+              {{ t('app.views.cashRegister.otherPayments') || 'Other Payments' }}
+            </label>
+            <input v-model="otherPayments" type="number" step="0.01"
+              class="w-full rounded-md border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="mt-6 flex justify-end space-x-3">
+      <BaseButton type="button" variant="secondary" size="sm" @click="closeModals">
+        {{ t('app.actions.cancel') || 'Cancel' }}
+      </BaseButton>
+      <BaseButton type="button" variant="info" size="sm" @click="performCut">
+        {{ t('app.actions.save') || 'Save' }}
+      </BaseButton>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div v-if="deleteConfirmModalOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+  <div class="w-full rounded-lg bg-white dark:bg-gray-900 p-6 shadow-lg">
+    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+      {{ t('app.views.cashRegister.deleteTransaction') || 'Delete Transaction' }}
+    </h3>
+    <p class="text-gray-600 dark:text-gray-400 mb-2">
+      {{ t('app.views.cashRegister.confirmDeleteTransaction') || 'Are you sure you want to delete this transaction?' }}
+    </p>
+    <div v-if="transactionToDelete" class="bg-gray-50 dark:bg-gray-800 p-3 rounded-md mb-6">
+      <p class="text-sm font-medium text-gray-900 dark:text-gray-100">
+        {{ transactionToDelete.description }}
+      </p>
+      <p class="text-sm text-gray-500 dark:text-gray-400">
+        {{ transactionToDelete.amount >= 0 ? '+' : '-' }}${{ Math.abs(transactionToDelete.amount)?.toFixed(2) || '0.00' }}
+      </p>
+    </div>
+    <div class="flex justify-end space-x-3">
+      <BaseButton type="button" variant="secondary" size="sm" @click="cancelDelete">
+        {{ t('app.actions.cancel') || 'Cancel' }}
+      </BaseButton>
+      <BaseButton type="button" variant="danger" size="sm" @click="deleteTransaction">
+        {{ t('app.actions.delete') || 'Delete' }}
+      </BaseButton>
+    </div>
+  </div>
+</div>
+</MainLayout>
 </template>
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { useI18n } from 'vue-i18n'
-import { cashRegisterService } from '@/services/cashRegisterService'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
+import MainLayout from '@/components/layout/MainLayout.vue';
+import PageHeader from '@/components/layout/PageHeader.vue';
+import cashRegisterService from '@/services/cashRegisterService';
 import { useToast } from '@/composables/useToast'
 import LastCutDisplay from '@/components/LastCutDisplay.vue'
 import ReportsView from '@/components/ReportsView.vue'

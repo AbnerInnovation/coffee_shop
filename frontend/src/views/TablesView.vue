@@ -1,16 +1,13 @@
 <template>
   <MainLayout>
     <div class="tables-view space-y-4 sm:space-y-6">
-    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
-      <div>
-        <h2 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{{ t('app.views.tables.title') }}</h2>
-        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ t('app.views.tables.subtitle') }}</p>
-      </div>
-      <div class="w-full sm:w-auto">
+    <PageHeader
+      :title="t('app.views.tables.title')"
+      :subtitle="t('app.views.tables.subtitle')"
+    >
+      <template #actions>
         <BaseButton
           variant="primary"
-          full-width
-          class="sm:w-auto"
           @click="openAddTableModal"
         >
           <template #icon>
@@ -18,8 +15,8 @@
           </template>
           {{ t('app.views.tables.add_table') }}
         </BaseButton>
-      </div>
-    </div>
+      </template>
+    </PageHeader>
 
     <!-- Loading State -->
     <div v-if="loading" class="text-center py-8">
@@ -245,6 +242,7 @@
 import { ref, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import MainLayout from '@/components/layout/MainLayout.vue';
+import PageHeader from '@/components/layout/PageHeader.vue';
 import { PlusIcon, XMarkIcon, XCircleIcon, PencilIcon, TrashIcon, CheckCircleIcon, XCircleIcon as XCircleIconOutline, ShoppingBagIcon } from '@heroicons/vue/24/outline';
 import tableService from '@/services/tableService';
 import NewOrderModal from '@/components/orders/NewOrderModal.vue';

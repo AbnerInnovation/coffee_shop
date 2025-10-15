@@ -4,6 +4,7 @@ import { XCircleIcon } from '@heroicons/vue/20/solid';
 import { FunnelIcon, PencilIcon, TrashIcon, CheckCircleIcon, XCircleIcon as XCircleIconOutline } from '@heroicons/vue/24/outline';
 import type { MenuItem, MenuItemVariant, MenuCategory } from '@/types/menu';
 import { useI18n } from 'vue-i18n';
+import PageHeader from '@/components/layout/PageHeader.vue';
 import DropdownMenu from '@/components/ui/DropdownMenu.vue';
 import DropdownMenuItem from '@/components/ui/DropdownMenuItem.vue';
 import DropdownMenuDivider from '@/components/ui/DropdownMenuDivider.vue';
@@ -59,14 +60,11 @@ function isItemAvailable(item: MenuItem): boolean {
 
 <template>
   <div>
-    <div class="sm:flex sm:items-center">
-      <div class="sm:flex-auto">
-        <h1 class="text-base font-semibold leading-6 text-gray-900 dark:text-gray-100">{{ t('app.views.menu.list.title') }}</h1>
-        <p class="mt-2 text-sm text-gray-700 dark:text-gray-400">
-          {{ t('app.views.menu.list.subtitle') }}
-        </p>
-      </div>
-      <div class="mt-4 sm:ml-16 sm:mt-0 sm:flex-none">
+    <PageHeader
+      :title="t('app.views.menu.list.title')"
+      :subtitle="t('app.views.menu.list.subtitle')"
+    >
+      <template #actions>
         <button
           type="button"
           @click="$emit('add-item')"
@@ -74,8 +72,8 @@ function isItemAvailable(item: MenuItem): boolean {
         >
           {{ t('app.views.menu.list.add') }}
         </button>
-      </div>
-    </div>
+      </template>
+    </PageHeader>
     
     <!-- Category Filter -->
     <div class="mt-4 flex flex-col sm:flex-row sm:items-center gap-3">

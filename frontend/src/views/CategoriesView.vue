@@ -1,13 +1,10 @@
 <template>
   <MainLayout>
-    <div class="sm:flex sm:items-center">
-      <div class="sm:flex-auto">
-        <h1 class="text-base font-semibold leading-6 text-gray-900 dark:text-gray-100">{{ t('app.views.menu.categories.title') || 'Categories' }}</h1>
-        <p class="mt-2 text-sm text-gray-700 dark:text-gray-400">
-          {{ t('app.views.menu.categories.subtitle') || 'Manage your menu categories' }}
-        </p>
-      </div>
-      <div class="mt-4 sm:ml-16 sm:mt-0 sm:flex-none">
+    <PageHeader
+      :title="t('app.views.menu.categories.title') || 'Categories'"
+      :subtitle="t('app.views.menu.categories.subtitle') || 'Manage your menu categories'"
+    >
+      <template #actions>
         <button
           type="button"
           @click="openCategoryModal()"
@@ -15,8 +12,8 @@
         >
           {{ t('app.views.menu.categories.add') || 'Add Category' }}
         </button>
-      </div>
-    </div>
+      </template>
+    </PageHeader>
     
     <div class="mt-8 flow-root">
       <div class="overflow-x-auto">
@@ -94,6 +91,7 @@ import { useMenuStore } from '@/stores/menu';
 import { useToast } from '@/composables/useToast';
 import { useConfirm } from '@/composables/useConfirm';
 import MainLayout from '@/components/layout/MainLayout.vue';
+import PageHeader from '@/components/layout/PageHeader.vue';
 import DropdownMenu from '@/components/ui/DropdownMenu.vue';
 import DropdownMenuItem from '@/components/ui/DropdownMenuItem.vue';
 import DropdownMenuDivider from '@/components/ui/DropdownMenuDivider.vue';

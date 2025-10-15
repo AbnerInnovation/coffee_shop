@@ -23,23 +23,21 @@
     </div>
 
     <div v-else class="space-y-4 sm:space-y-6">
-      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
-        <div>
-          <h2 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{{ t('app.views.orders.title') }}</h2>
-          <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            {{ selectedStatus === 'all' ? t('app.views.orders.tabs.all') : t('app.status.' + selectedStatus) }} {{
-              t('app.views.orders.title').toLowerCase() }}
-          </p>
-        </div>
-        <div class="w-full sm:w-auto">
-          <button type="button"
-            class="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2.5 sm:py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 touch-manipulation"
-            @click="openNewOrderModal">
-            <PlusIcon class="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
+      <PageHeader
+        :title="t('app.views.orders.title')"
+        :subtitle="selectedStatus === 'all' ? t('app.views.orders.tabs.all') + ' ' + t('app.views.orders.title').toLowerCase() : t('app.status.' + selectedStatus) + ' ' + t('app.views.orders.title').toLowerCase()"
+      >
+        <template #actions>
+          <button
+            type="button"
+            @click="openNewOrderModal"
+            class="block rounded-md bg-indigo-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+          >
+            <PlusIcon class="-ml-1 mr-2 h-5 w-5 inline" aria-hidden="true" />
             {{ t('app.views.orders.new_order') }}
           </button>
-        </div>
-      </div>
+        </template>
+      </PageHeader>
       <!-- Status Tabs -->
       <div class="border-b border-gray-200 dark:border-gray-700 overflow-x-auto overflow-y-hidden -mx-3 sm:mx-0">
         <nav class="flex -mb-px" aria-label="Tabs">
@@ -228,6 +226,7 @@ import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import MainLayout from '@/components/layout/MainLayout.vue';
+import PageHeader from '@/components/layout/PageHeader.vue';
 import orderService from '@/services/orderService';
 import type { Order } from '@/services/orderService';
 import {

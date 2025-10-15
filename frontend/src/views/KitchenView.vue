@@ -1,11 +1,10 @@
 <template>
-  <div class="kitchen-view p-3 sm:p-4 space-y-4 sm:space-y-6">
-    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-0">
-      <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">{{ t('app.views.kitchen.title') }}</h1>
-      <div class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-        {{ t('app.views.kitchen.last_updated', { time: new Date().toLocaleTimeString() }) }}
-      </div>
-    </div>
+  <MainLayout>
+    <div class="kitchen-view space-y-4 sm:space-y-6">
+      <PageHeader
+        :title="t('app.views.kitchen.title')"
+        :subtitle="t('app.views.kitchen.last_updated', { time: new Date().toLocaleTimeString() })"
+      />
 
     <div v-if="loading" class="flex justify-center items-center py-12">
       <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
@@ -91,12 +90,15 @@
         </div>
       </div>
     </div>
-  </div>
+    </div>
+  </MainLayout>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import MainLayout from '@/components/layout/MainLayout.vue';
+import PageHeader from '@/components/layout/PageHeader.vue';
 import orderService from '@/services/orderService';
 import type { Order, OrderItem } from '@/services/orderService';
 
