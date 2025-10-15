@@ -1,7 +1,7 @@
 <template>
   <div class="min-h-full">
-    <!-- Navigation -->
-    <nav class="bg-white/80 dark:bg-gray-900/80 backdrop-blur border-b border-gray-200 dark:border-gray-800 sticky top-0 z-40">
+    <!-- Navigation (hidden on pages with hideNavbar meta) -->
+    <nav v-if="showNavbar" class="bg-white/80 dark:bg-gray-900/80 backdrop-blur border-b border-gray-200 dark:border-gray-800 sticky top-0 z-40">
       <div class="mx-auto max-w-7xl px-3 sm:px-4 lg:px-8 w-full">
         <div class="flex h-14 sm:h-16 items-center justify-between">
           <div class="flex items-center">
@@ -172,8 +172,14 @@
     </nav>
 
     <!-- Main content -->
-    <main class="bg-gray-50 dark:bg-gray-950 min-h-[calc(100vh-3.5rem)] sm:min-h-[calc(100vh-4rem)]">
-      <div class="bg-gray-50 dark:bg-gray-950 mx-auto max-w-7xl px-3 py-4 sm:px-6 sm:py-6 lg:px-8">
+    <main :class="[
+      'bg-gray-50 dark:bg-gray-950',
+      showNavbar ? 'min-h-[calc(100vh-3.5rem)] sm:min-h-[calc(100vh-4rem)]' : 'min-h-screen'
+    ]">
+      <div :class="[
+        'bg-gray-50 dark:bg-gray-950 mx-auto',
+        showNavbar ? 'max-w-7xl px-3 py-4 sm:px-6 sm:py-6 lg:px-8' : ''
+      ]">
         <router-view v-slot="{ Component }">
           <transition name="fade" mode="out-in">
             <div class="transition-all duration-200">
@@ -231,6 +237,11 @@ const navigation = ref([
 const isMobileMenuOpen = ref(false);
 const isProfileMenuOpen = ref(false);
 const showNewOrderModal = ref(false);
+
+// Computed property to determine if navbar should be shown
+const showNavbar = computed(() => {
+  return !route.meta.hideNavbar;
+});
 
 // Update current route in navigation
 const updateCurrentRoute = (path) => {

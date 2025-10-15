@@ -64,7 +64,7 @@ export const routes: RouteRecordRaw[] = [
     path: '/plans',
     name: 'Plans',
     component: () => import('./views/LandingView.vue'),
-    meta: { requiresAuth: false }
+    meta: { requiresAuth: false, hideNavbar: true }
   },
 
   // Catch-all
