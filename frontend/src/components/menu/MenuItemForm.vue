@@ -131,15 +131,12 @@ const isFormValid = computed(() => {
 
 // Load categories when component mounts
 onMounted(async () => {
-  console.log('Component mounted, loading categories...');
   try {
     // Load categories first
     const categories = await menuStore.getCategories();
-    console.log('Categories loaded:', categories);
     
     // If editing, load the menu item data
     if (props.menuItem?.id) {
-      console.log('Loading menu item data for ID:', props.menuItem.id);
       const item = await menuStore.getMenuItem(props.menuItem.id);
       const normalizedCategory = normalizeCategory(item.category);
       
@@ -156,11 +153,7 @@ onMounted(async () => {
       };
       
       // Ensure the current category is in the categories list
-      console.log('Normalized category:', normalizedCategory);
-      console.log('Current categories:', menuStore.categories);
-      
       if (normalizedCategory && !menuStore.categories.includes(normalizedCategory)) {
-        console.log('Adding category to list:', normalizedCategory);
         menuStore.categories = [normalizedCategory, ...menuStore.categories];
       }
     } else if (menuStore.categories.length > 0) {
@@ -180,11 +173,9 @@ async function loadCategories() {
     loadingCategories.value = true;
     // Force refresh categories
     const categories = await menuStore.getCategories();
-    console.log('Loaded categories:', categories);
     
     // If we're editing and the current category isn't in the list, add it
     if (props.menuItem?.id && formData.value.category && !categories.includes(formData.value.category)) {
-      console.log('Adding missing category to store:', formData.value.category);
       menuStore.categories = [formData.value.category, ...categories];
     }
   } catch (error: unknown) {
@@ -248,8 +239,6 @@ function handleSubmit() {
     }))
   };
   
-  console.log('Submitting menu item:', submitData);
-  
   try {
     emit('submit', submitData);
   } catch (error: unknown) {
@@ -263,7 +252,6 @@ function handleCancel() {
 }
 
 const handleSaveVariant = (): void => {
-  console.log('variantForm.value:', variantForm.value)
   if (!variantForm.value || !formData.value) return;
   if (!variantForm.value.name || variantForm.value.price === undefined) {
     showError(t('app.messages.variant_required'));

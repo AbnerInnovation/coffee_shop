@@ -90,14 +90,11 @@ onMounted(async () => {
 });
 
 async function loadMenuItems(categoryId?: number) {
-  console.log('Loading menu items...', categoryId ? `filtered by category ID: ${categoryId}` : 'all');
   loading.value = true;
   error.value = null;
   try {
     const items = await menuStore.fetchMenuItems(categoryId);
-    console.log('Fetched menu items:', items);
     menuItems.value = items;
-    console.log('menuItems after update:', menuItems.value);
   } catch (err: unknown) {
     const errorMessage = err instanceof Error ? err.message : 'Failed to load menu items';
     console.error('Error loading menu items:', errorMessage);

@@ -287,7 +287,6 @@ function formatTimeAgo(date) {
 
 function printReceipt() {
   // In a real app, this would open a print dialog with a formatted receipt
-  console.log('Printing receipt for order:', props.table.currentOrder?.id);
   showSuccess('Opening print dialog...');
 }
 

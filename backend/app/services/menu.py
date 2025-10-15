@@ -175,9 +175,7 @@ def update_menu_item(
         raise ValueError(f"Menu item with ID {item_id} not found")
 
     data = menu_item.dict(exclude_unset=True)
-    print('Data-------------------------->', data)
     variants_data = data.pop("variants", None)
-    print('Variants data-------------------------->', variants_data)
 
     # --- Handle category update ---
     if "category" in data:
@@ -208,7 +206,6 @@ def update_menu_item(
         existing_variants = {v.id: v for v in db_item.variants if v.deleted_at is None}
         sent_variant_ids = set()
 
-        print('Variants data-------------------------->', variants_data)
         for variant_data in variants_data:
             variant_id = variant_data.get("id")
             if variant_id and variant_id in existing_variants:

@@ -13,7 +13,7 @@
             leave-from="opacity-100 translate-y-0 sm:scale-100"
             leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
             <DialogPanel
-              class="relative transform overflow-hidden bg-white dark:bg-gray-900 px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 w-screen max-w-screen sm:max-w-4xl sm:w-full sm:p-6 mx-0 sm:mx-0 rounded-none sm:rounded-lg border border-gray-200 dark:border-gray-800">
+              class="relative transform overflow-hidden bg-white mt-10 dark:bg-gray-900 px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-20 w-screen max-w-screen sm:max-w-4xl sm:w-full sm:p-6 mx-0 sm:mx-0 rounded-none sm:rounded-lg border border-gray-200 dark:border-gray-800">
               <div class="flex items-center justify-between">
                 <DialogTitle as="h3" class="text-lg font-medium leading-6 text-gray-900 dark:text-gray-100">
                   {{ isEditMode ? $t('app.views.orders.modals.new_order.title_edit_order', { id: orderToEdit?.id }) : $t('app.views.orders.modals.new_order.title') }}
@@ -493,8 +493,6 @@ const selectedVariant = ref<MenuItemVariant | null>(null);
 const itemNotes = ref('');
 const showItemModal = ref(false);
 const isEditMode = computed(() => { 
-  console.log(props.mode);
-  console.log(props.orderToEdit);
   return (props.mode || 'create') === 'edit' && !!props.orderToEdit});
 
 const { showError, showSuccess } = useToast();

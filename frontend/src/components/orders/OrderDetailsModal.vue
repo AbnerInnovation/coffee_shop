@@ -394,13 +394,9 @@ async function completePayment() {
     showPaymentMethodSelector.value = false;
   } catch (e) {
     console.error('Failed to complete payment:', e);
-    console.log('Full error object:', e);
-    console.log('Error response:', e.response);
-    console.log('Error response data:', e.response?.data);
 
     // Handle specific cash register session error
     const errorDetail = e.response?.data?.detail || '';
-    console.log('Error detail:', errorDetail);
 
     if (errorDetail.includes('No open cash register session found') || errorDetail.includes('cash register session')) {
       const openSession = await confirm(

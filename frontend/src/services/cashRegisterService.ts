@@ -29,18 +29,13 @@ export const cashRegisterService = {
 
   // Session endpoints
   async getCurrentSession() {
-    console.log('Fetching current session from:', `${CASH_REGISTER_ENDPOINT}/sessions/current`)
     const response = await api.get(`${CASH_REGISTER_ENDPOINT}/sessions/current`);
-    console.log('Current session API response:', response)
     const session = response || null;
-    console.log('Processed session data:', session)
     return session;
   },
 
   async getSessionById(sessionId: number) {
-    console.log('Fetching session details for ID:', sessionId)
     const response = await api.get(`${CASH_REGISTER_ENDPOINT}/sessions/${sessionId}`);
-    console.log('Session details API response:', response)
     return response;
   },
 

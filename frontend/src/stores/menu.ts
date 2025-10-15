@@ -187,18 +187,15 @@ export const useMenuStore = defineStore('menu', () => {
   async function getCategories(forceRefresh = false) {
     // Return cached categories if we have them and don't force refresh
     if (!forceRefresh && categories.value.length > 0) {
-      console.log('Returning cached categories:', categories.value);
       return categories.value;
     }
     
     loading.value = true;
     error.value = null;
     try {
-      console.log('Fetching categories from API...');
       let categoryData: MenuCategory[] = [];
       try {
         categoryData = await (menuService as any).getCategories();
-        console.log('Raw categories from API:', categoryData);
       } catch (err) {
         console.error('Error fetching categories from API:', err);
         categoryData = []; // Fallback to empty array on error
@@ -208,7 +205,6 @@ export const useMenuStore = defineStore('menu', () => {
         categoriesDetailed.value = categoryData;
         categories.value = categoryData.map(c => c.name);
       } else {
-        console.warn('No valid categories received from API, using defaults');
         const defaults: MenuCategory[] = [
           { id: 1, name: 'Coffee', description: '' },
           { id: 2, name: 'Tea', description: '' },

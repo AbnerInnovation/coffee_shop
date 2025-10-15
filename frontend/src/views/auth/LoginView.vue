@@ -174,11 +174,9 @@ const handleLogin = async () => {
 
 const signInWithGoogle = () => {
   // TODO: Implement Google OAuth
-  console.log('Sign in with Google')
 }
 
 const signInWithGithub = () => {
   // TODO: Implement GitHub OAuth
-  console.log('Sign in with GitHub')
 }
 </script>

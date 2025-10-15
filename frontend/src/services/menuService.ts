@@ -176,7 +176,6 @@ export const updateMenuItemAvailability = async (
 
 export const getCategories = async (): Promise<MenuCategory[]> => {
   const response = await apiInstance.get<MenuCategory[]>(`${CATEGORIES_BASE_PATH}/`);
-  console.log('categories response:', response);
   const arr = Array.isArray(response) ? response : [];
   // The response is already normalized category objects from the backend
   return arr.map((c: any) => ({

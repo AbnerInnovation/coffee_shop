@@ -259,7 +259,6 @@ const closeSessionDetailsModal = () => {
 const viewSessionReport = async (sessionId: number) => {
   try {
     const report = await cashRegisterService.getSessionReport(sessionId)
-    console.log('Session report:', report)
     toast.showToast(t('app.views.cashRegister.sessionReportGenerated') || 'Session report generated', 'success')
     // Here you could display the report in a modal or download it
   } catch (error: any) {

@@ -197,7 +197,6 @@ export default defineComponent({
 
     const selectTable = (table: typeof tables.value[0]) => {
       // Handle table selection (e.g., show orders for this table)
-      console.log('Selected table:', table);
     };
 
     const editTable = (table: typeof tables.value[0]) => {

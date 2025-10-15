@@ -348,7 +348,6 @@ const saveTable = async () => {
 const selectTable = (table) => {
   selectedTableId.value = table.id;
   // Here you could add logic to show table details or orders
-  console.log('Selected table:', table);
 };
 
 // Order modal state
@@ -363,7 +362,6 @@ const openOrderModal = (table) => {
 
 // Handle order created event
 const handleOrderCreated = (order) => {
-  console.log('Order created:', order);
   // You might want to update the table status or show a notification
   fetchTables(); // Refresh tables to show updated status
   refreshOpenOrders();

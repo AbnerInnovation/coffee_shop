@@ -217,7 +217,6 @@ async function openEditOrder(order: OrderWithLocalFields) {
     // Fetch full order from API to provide complete data to the modal
     const fullOrder = await orderService.getOrder(order.id);
     selectedOrderForEdit.value = fullOrder;
-    console.log(selectedOrderForEdit.value);
     isNewOrderModalOpen.value = true;
   } catch (e) {
     console.error('Failed to open edit order modal:', e);
@@ -459,20 +458,14 @@ function closeOrderDetails() {
   onUnmounted(() => {
     clearTimeout(cleanup);
   });
-
-  console.log('Order details closed');
 }
 
 function openNewOrderModal() {
-  console.log('Opening new order modal');
   isNewOrderModalOpen.value = true;
-  console.log('isNewOrderModalOpen after open:', isNewOrderModalOpen.value);
 }
 
 function closeNewOrderModal() {
-  console.log('Closing new order modal');
   isNewOrderModalOpen.value = false;
-  console.log('isNewOrderModalOpen after close:', isNewOrderModalOpen.value);
   // Reset mode back to create when closing
   newOrderMode.value = 'create';
 }
@@ -501,7 +494,6 @@ const handleStatusUpdate = ({ orderId, status }: { orderId: number; status: Orde
 };
 
 const handlePaymentCompleted = async (updatedOrder: any) => {
-  console.log('Payment completed for order:', updatedOrder);
   try {
     showSuccess(t('app.views.orders.messages.payment_completed_success', { id: updatedOrder.id }) as string);
 
@@ -557,26 +549,16 @@ const fetchOrders = async (fetchAll = false) => {
     const statusToFetch = selectedStatus.value === 'all' || fetchAll ? undefined : selectedStatus.value;
     const tableIdParam = route.query.table_id ? Number(route.query.table_id) : undefined;
     const response = await orderService.getActiveOrders(statusToFetch, tableIdParam);
-    console.log('API Response:', JSON.stringify(response, null, 2));
 
     // The service should return an array, but we'll double-check here
     const ordersData = Array.isArray(response) ? response : [];
-    console.log('Processed orders data:', JSON.stringify(ordersData, null, 2));
 
     // Transform the API response to match our local OrderWithLocalFields type
     const processedOrders = ordersData
       .map((order): OrderWithLocalFields | null => {
         if (!order) return null;
 
-        console.log('Processing order:', order.id);
-
         const mappedItems = Array.isArray(order.items) ? order.items.map((item) => {
-          console.log('Processing order item:', {
-            id: item.id,
-            menu_item_id: item.menu_item_id,
-            variant_id: item.variant_id,
-            menu_item: item.menu_item
-          });
 
           // Get the variant if it exists
           const variant = item.variant;

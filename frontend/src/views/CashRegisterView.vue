@@ -590,14 +590,6 @@ const openCutModal = async () => {
       cardPayments.value = cardTotal
       digitalPayments.value = digitalTotal
       otherPayments.value = otherTotal
-
-      console.log('Pre-populated cut report:', cutReport.value)
-      console.log('Auto-filled payment methods:', {
-        cash: cashTotal,
-        card: cardTotal,
-        digital: digitalTotal,
-        other: otherTotal
-      })
     } catch (error) {
       console.error('Error loading cut report data:', error)
     }
@@ -846,17 +838,11 @@ const getPaymentMethodBadgeClass = (paymentMethod: string) => {
 const loadCurrentSession = async () => {
   try {
     isRefreshing.value = true
-    console.log('Loading current session...')
     const session = await cashRegisterService.getCurrentSession()
-    console.log('Current session response:', session)
     currentSession.value = session || null
-    console.log('Current session state:', currentSession.value)
     if (currentSession.value) {
-      console.log('Loading transactions for session:', currentSession.value.id)
       loadTransactions()
       loadLastCut() // Load last cut information
-    } else {
-      console.log('No current session found')
     }
   } catch (error) {
     console.error('Error loading current session:', error)
@@ -877,9 +863,6 @@ const loadTransactions = async () => {
     // Calculate current balance
     const totalTransactions = transactions.value.reduce((sum, t) => sum + (t.amount || 0), 0)
     currentBalance.value = (currentSession.value.initial_balance || 0) + totalTransactions
-
-    console.log('Loaded transactions:', transactions.value.length)
-    console.log('Current balance:', currentBalance.value)
   } catch (error) {
     console.error('Error loading transactions:', error)
     transactions.value = []
@@ -897,9 +880,6 @@ const loadLastCut = async () => {
     lastCutLoading.value = true
     const cutData = await cashRegisterService.getLastCut(currentSession.value.id)
     lastCut.value = cutData || null
-    console.log('Last cut data:', lastCut.value)
-    console.log('Last cut data structure:', Object.keys(lastCut.value || {}))
-    console.log('Last cut created_at value:', lastCut.value?.created_at)
   } catch (error) {
     console.error('Error loading last cut:', error)
     lastCut.value = null
@@ -918,7 +898,6 @@ onMounted(() => {
 
   // Listen for order payment completion events
   const handlePaymentCompleted = () => {
-    console.log('Payment completed event received, refreshing cash register...')
     loadCurrentSession()
   }
 
