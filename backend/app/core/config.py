@@ -15,7 +15,6 @@ load_dotenv()
 class Settings(BaseSettings):
     # API Settings
     API_V1_STR: str = "/api/v1"
-    PROJECT_NAME: str = "Coffee Shop Admin API"
     
     # Security
     SECRET_KEY: str = Field(..., env='SECRET_KEY')

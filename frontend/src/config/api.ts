@@ -8,9 +8,6 @@ const API_CONFIG = {
     return import.meta.env.VITE_API_URL || getApiBaseUrl();
   },
   
-  // API version
-  VERSION: 'v1',
-  
   // API endpoints
   ENDPOINTS: {
     AUTH: '/auth',
@@ -24,7 +21,7 @@ const API_CONFIG = {
   
   // Helper function to get full API URL
   getUrl: function(endpoint: string, path = '') {
-    return `${this.BASE_URL}/api/${this.VERSION}${endpoint}${path}`;
+    return `${this.BASE_URL}/api/v1${endpoint}${path}`;
   }
 };
 

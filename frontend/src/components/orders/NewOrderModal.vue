@@ -403,7 +403,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, defineExpose, nextTick, watch } from 'vue';
-import orderService, { type CreateOrderData, type OrderItem, type OrderStatus, type Order as OrderType } from '@/services/orderService';
+import orderService, { type CreateOrderData, type OrderItem, type Order as OrderType } from '@/services/orderService';
 import menuService from '@/services/menuService';
 import tableService from '@/services/tableService';
 import { useToast } from '@/composables/useToast';
@@ -495,8 +495,7 @@ const showItemModal = ref(false);
 const isEditMode = computed(() => { 
   return (props.mode || 'create') === 'edit' && !!props.orderToEdit});
 
-const { showError, showSuccess } = useToast();
-const { showToast } = useToast();
+const { showError, showSuccess, showToast } = useToast();
 const { t } = useI18n();
 const menuItems = ref<ExtendedMenuItem[]>([]);
 const availableTables = ref<any[]>([]);
@@ -720,13 +719,6 @@ const calculateItemTotal = (item: OrderItemWithDetails) => {
     (item.price !== undefined && item.price !== null ?
       (typeof item.price === 'string' ? parseFloat(item.price) : item.price) : 0);
   return (price * (item.quantity || 0)).toFixed(2);
-};
-
-// Format price for display
-const formatPrice = (price: number | string | undefined | null): string => {
-  if (price === undefined || price === null) return '$0.00';
-  const numPrice = typeof price === 'string' ? parseFloat(price) : price;
-  return `$${numPrice.toFixed(2)}`;
 };
 
 // Add item with variant and notes
@@ -955,7 +947,6 @@ type PublicApi = {
   getItemQuantity: (menuItemId: number | string, variantId?: number | string | null) => number;
   createOrder: () => Promise<void>;
   calculateItemTotal: (item: OrderItemWithDetails) => string;
-  formatPrice: (price: number | string | undefined | null) => string;
 };
 
 // Create public API object with explicit type assertion
@@ -966,8 +957,7 @@ const publicApi: PublicApi = {
   decreaseQuantity,
   getItemQuantity,
   createOrder,
-  calculateItemTotal,
-  formatPrice
+  calculateItemTotal
 };
 
 // Expose the public API
@@ -1061,14 +1051,4 @@ function getVariantPrice(item: ExtendedMenuItem, variant: MenuItemVariant | null
   return effectiveBasePrice + adjustment;
 }
 
-// Helper: check if item or variant has active discount
-function hasDiscount(item: ExtendedMenuItem, variant: MenuItemVariant | null): boolean {
-  if (variant && variant.discount_price && variant.discount_price > 0) {
-    return true;
-  }
-  if (!variant && item.discount_price && item.discount_price > 0) {
-    return true;
-  }
-  return false;
-}
 </script>

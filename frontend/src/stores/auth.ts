@@ -2,7 +2,6 @@ import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
-import type { Router } from 'vue-router';
 
 // Types
 export interface LoginCredentials {
