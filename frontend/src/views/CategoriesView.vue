@@ -1,50 +1,74 @@
 <template>
-  <div class="min-h-full dark:bg-gray-950">
-    <main>
-      <div class="mx-auto max-w-7xl sm:px-6 lg:px-8 dark:bg-gray-950">
-        <div class="rounded-lg bg-white dark:bg-gray-900 shadow mb-6">
-          <div class="px-4 py-5 sm:p-6">
-            <div class="flex items-center justify-between mb-4">
-              <div>
-                <h2 class="text-base font-semibold text-gray-900 dark:text-gray-100">{{ t('app.views.menu.categories.title') || 'Categories' }}</h2>
-                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{ t('app.views.menu.categories.subtitle') || 'Manage your menu categories' }}</p>
-              </div>
-              <button type="button" @click="openCategoryModal()" class="inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">
-                {{ t('app.views.menu.categories.add') || 'Add Category' }}
-              </button>
+  <div class="px-4 dark:bg-gray-950 sm:px-6 lg:px-8">
+    <div class="sm:flex sm:items-center">
+      <div class="sm:flex-auto">
+        <h1 class="text-base font-semibold leading-6 text-gray-900 dark:text-gray-100">{{ t('app.views.menu.categories.title') || 'Categories' }}</h1>
+        <p class="mt-2 text-sm text-gray-700 dark:text-gray-400">
+          {{ t('app.views.menu.categories.subtitle') || 'Manage your menu categories' }}
+        </p>
+      </div>
+      <div class="mt-4 sm:ml-16 sm:mt-0 sm:flex-none">
+        <button
+          type="button"
+          @click="openCategoryModal()"
+          class="block rounded-md bg-indigo-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+        >
+          {{ t('app.views.menu.categories.add') || 'Add Category' }}
+        </button>
+      </div>
+    </div>
+    
+    <div class="mt-8 flow-root">
+      <div class="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+        <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
+          <div v-if="categoriesLoading" class="text-center py-12">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
+          </div>
+          <div v-else class="overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg dark:bg-gray-950">
+            <div v-if="menuCategoriesDetailed.length === 0" class="text-center py-12 text-sm text-gray-500 dark:text-gray-400">
+              {{ t('app.views.menu.categories.empty') || 'No categories yet' }}
             </div>
-
-            <div v-if="categoriesLoading" class="text-center py-6">
-              <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
-            </div>
-            <div v-else>
-              <div v-if="menuCategoriesDetailed.length === 0" class="text-sm text-gray-500 dark:text-gray-400">{{ t('app.views.menu.categories.empty') || 'No categories yet' }}</div>
-              <ul v-else class="divide-y divide-gray-200 dark:divide-gray-800">
-                <li v-for="cat in menuCategoriesDetailed" :key="cat.id" class="py-2 flex items-center justify-between">
-                  <div>
-                    <p class="text-sm text-gray-900 dark:text-gray-100">{{ cat.name }}</p>
-                    <p v-if="cat.description" class="text-xs text-gray-500 dark:text-gray-400">{{ cat.description }}</p>
+            <ul v-else class="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-900">
+              <li v-for="cat in menuCategoriesDetailed" :key="cat.id" :data-dropdown-container="`category-${cat.id}`" class="px-4 py-4 sm:px-6 relative hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                <div class="flex items-center justify-between">
+                  <div class="flex-1 min-w-0 pr-12">
+                    <p class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ cat.name }}</p>
+                    <p v-if="cat.description" class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{ cat.description }}</p>
                   </div>
-                  <div class="flex items-center space-x-3">
-                    <button type="button" class="text-indigo-600 hover:text-indigo-800 dark:text-indigo-400" @click="openCategoryModal(cat)">{{ t('app.actions.edit') || 'Edit' }}</button>
-                    <ConfirmDeleteButton
-                      :title="getCategoryDeleteTitle()"
-                      :message="getCategoryDeleteMessage(cat)"
-                      :confirmText="t('app.actions.delete') as string"
-                      :cancelText="t('app.actions.cancel') as string"
-                      confirmClass="bg-red-600 hover:bg-red-700 focus:ring-red-500"
-                      @confirm="onDeleteCategory(cat)"
+                  <div v-if="cat.id" class="absolute top-4 right-4" @click.stop>
+                    <DropdownMenu
+                      :id="`category-${cat.id}`"
+                      button-label="Category actions"
+                      width="md"
                     >
-                      {{ t('app.actions.delete') || 'Delete' }}
-                    </ConfirmDeleteButton>
+                      <DropdownMenuItem
+                        :icon="PencilIcon"
+                        variant="default"
+                        @click="openCategoryModal(cat)"
+                      >
+                        {{ t('app.actions.edit') }}
+                      </DropdownMenuItem>
+                      
+                      <DropdownMenuDivider />
+                      
+                      <DropdownMenuItem
+                        :icon="TrashIcon"
+                        variant="danger"
+                        @click="confirmDeleteCategory(cat)"
+                      >
+                        {{ t('app.actions.delete') }}
+                      </DropdownMenuItem>
+                    </DropdownMenu>
                   </div>
-                </li>
-              </ul>
-            </div>
+                </div>
+              </li>
+            </ul>
           </div>
         </div>
+      </div>
+    </div>
 
-        <!-- Category Modal -->
+    <!-- Category Modal -->
         <div v-if="categoryModalOpen" class="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4">
           <div class="w-full max-w-md rounded-lg bg-white dark:bg-gray-900 p-6 shadow-lg">
             <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
@@ -56,12 +80,10 @@
             <textarea v-model="categoryFormDescription" rows="3" class="w-full rounded-md border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
             <div class="mt-6 flex justify-end space-x-3">
               <button type="button" class="px-4 py-2 rounded-md border border-gray-300 dark:border-gray-700 text-sm" @click="categoryModalOpen = false">{{ t('app.actions.cancel') || 'Cancel' }}</button>
-              <button type="button" class="px-4 py-2 rounded-md bg-indigo-600 text-white text-sm" @click="saveCategory">{{ t('app.actions.save') || 'Save' }}</button>
+              <button type="button" class="px-4 py-2 rounded-md bg-indigo-600 text-white text-sm hover:bg-indigo-500" @click="saveCategory">{{ t('app.actions.save') || 'Save' }}</button>
             </div>
           </div>
         </div>
-      </div>
-    </main>
   </div>
 </template>
 
@@ -70,11 +92,16 @@ import { ref, onMounted, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useMenuStore } from '@/stores/menu';
 import { useToast } from '@/composables/useToast';
-import ConfirmDeleteButton from '@/components/ui/ConfirmDeleteButton.vue';
+import { useConfirm } from '@/composables/useConfirm';
+import DropdownMenu from '@/components/ui/DropdownMenu.vue';
+import DropdownMenuItem from '@/components/ui/DropdownMenuItem.vue';
+import DropdownMenuDivider from '@/components/ui/DropdownMenuDivider.vue';
+import { PencilIcon, TrashIcon } from '@heroicons/vue/24/outline';
 import type { MenuCategory } from '@/types/menu';
 
 const menuStore = useMenuStore();
 const { showSuccess, showError } = useToast();
+const { confirm } = useConfirm();
 const { t } = useI18n();
 
 // Categories state
@@ -131,6 +158,20 @@ async function saveCategory() {
     categoryModalOpen.value = false;
   } catch (err: any) {
     showError(err?.message || (t('app.messages.submit_failed') as string));
+  }
+}
+
+async function confirmDeleteCategory(cat: MenuCategory) {
+  const confirmed = await confirm(
+    getCategoryDeleteTitle(),
+    getCategoryDeleteMessage(cat),
+    t('app.actions.delete') as string,
+    t('app.actions.cancel') as string,
+    'bg-red-600 hover:bg-red-700 focus:ring-red-500'
+  );
+  
+  if (confirmed) {
+    await onDeleteCategory(cat);
   }
 }
 

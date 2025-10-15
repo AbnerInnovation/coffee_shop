@@ -1,8 +1,12 @@
 <script setup lang="ts">
+import { ref } from 'vue';
 import { XCircleIcon } from '@heroicons/vue/20/solid';
-import { FunnelIcon } from '@heroicons/vue/24/outline';
+import { FunnelIcon, PencilIcon, TrashIcon, CheckCircleIcon, XCircleIcon as XCircleIconOutline } from '@heroicons/vue/24/outline';
 import type { MenuItem, MenuItemVariant, MenuCategory } from '@/types/menu';
 import { useI18n } from 'vue-i18n';
+import DropdownMenu from '@/components/ui/DropdownMenu.vue';
+import DropdownMenuItem from '@/components/ui/DropdownMenuItem.vue';
+import DropdownMenuDivider from '@/components/ui/DropdownMenuDivider.vue';
 
 interface Props {
   menuItems: MenuItem[];
@@ -23,6 +27,24 @@ interface Emits {
 const props = defineProps<Props>();
 const emit = defineEmits<Emits>();
 const { t } = useI18n();
+
+// Menu states for dropdowns
+const menuStates = ref<Record<string | number, boolean>>({});
+
+// Helper to ensure menu state exists
+const ensureMenuState = (itemId: number | string | undefined) => {
+  if (itemId !== undefined && !(itemId in menuStates.value)) {
+    menuStates.value[itemId] = false;
+  }
+};
+
+// Helper to close menu and execute action
+const closeMenuAndExecute = (itemId: number | string | undefined, action: () => void) => {
+  if (itemId !== undefined) {
+    menuStates.value[itemId] = false;
+  }
+  action();
+};
 
 // Helper function to get the correct image URL (handles both camelCase and snake_case)
 function getImageUrl(item: MenuItem): string | undefined {
@@ -104,14 +126,50 @@ function isItemAvailable(item: MenuItem): boolean {
               <div 
                 v-for="item in menuItems" 
                 :key="item.id"
-                class="bg-white dark:bg-gray-900 rounded-lg shadow border border-gray-200 dark:border-gray-800 p-4"
+                :data-dropdown-container="`menu-item-${item.id}`"
+                class="bg-white dark:bg-gray-900 rounded-lg shadow border border-gray-200 dark:border-gray-800 p-4 relative"
               >
+                <!-- Three Dots Menu -->
+                <div v-if="item.id" class="absolute top-3 right-3 z-30" @click.stop>
+                  <DropdownMenu
+                    :id="`menu-item-${item.id}`"
+                    button-label="Menu item actions"
+                    width="md"
+                  >
+                    <DropdownMenuItem
+                      :icon="PencilIcon"
+                      variant="default"
+                      @click="closeMenuAndExecute(item.id, () => $emit('edit-item', item))"
+                    >
+                      {{ t('app.views.menu.list.edit') }}
+                    </DropdownMenuItem>
+                    
+                    <DropdownMenuItem
+                      :icon="isItemAvailable(item) ? XCircleIconOutline : CheckCircleIcon"
+                      :variant="isItemAvailable(item) ? 'warning' : 'success'"
+                      @click="closeMenuAndExecute(item.id, () => $emit('toggle-availability', item))"
+                    >
+                      {{ isItemAvailable(item) ? t('app.views.menu.list.disable') : t('app.views.menu.list.enable') }}
+                    </DropdownMenuItem>
+                    
+                    <DropdownMenuDivider />
+                    
+                    <DropdownMenuItem
+                      :icon="TrashIcon"
+                      variant="danger"
+                      @click="closeMenuAndExecute(item.id, () => $emit('delete-item', item))"
+                    >
+                      {{ t('app.views.menu.list.delete') }}
+                    </DropdownMenuItem>
+                  </DropdownMenu>
+                </div>
+                
                 <!-- Item Header -->
                 <div class="flex items-start gap-3 mb-3">
                   <div v-if="getImageUrl(item)" class="flex-shrink-0">
                     <img class="h-16 w-16 rounded-lg object-cover" :src="getImageUrl(item)" :alt="item.name" />
                   </div>
-                  <div class="flex-1 min-w-0">
+                  <div class="flex-1 min-w-0 pr-8">
                     <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100">{{ item.name }}</h3>
                     <div class="mt-1 flex items-center gap-2 flex-wrap">
                       <span 
@@ -183,30 +241,7 @@ function isItemAvailable(item: MenuItem): boolean {
                   </template>
                 </div>
 
-                <!-- Actions -->
-                <div class="flex gap-2 pt-3 border-t border-gray-200 dark:border-gray-700">
-                  <button 
-                    type="button" 
-                    @click="$emit('edit-item', item)"
-                    class="flex-1 inline-flex items-center justify-center px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 touch-manipulation"
-                  >
-                    {{ t('app.views.menu.list.edit') }}
-                  </button>
-                  <button 
-                    type="button" 
-                    @click="$emit('toggle-availability', item)"
-                    class="flex-1 inline-flex items-center justify-center px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 touch-manipulation"
-                  >
-                    {{ item.is_available ? t('app.views.menu.list.disable') : t('app.views.menu.list.enable') }}
-                  </button>
-                  <button 
-                    type="button" 
-                    @click="$emit('delete-item', item)"
-                    class="inline-flex items-center justify-center px-3 py-2 border border-red-300 dark:border-red-600 rounded-md text-sm font-medium text-red-700 dark:text-red-400 bg-white dark:bg-gray-800 hover:bg-red-50 dark:hover:bg-red-900/20 touch-manipulation"
-                  >
-                    {{ t('app.views.menu.list.delete') }}
-                  </button>
-                </div>
+                <!-- Actions removed - now in dropdown menu -->
               </div>
             </div>
           </div>
@@ -226,7 +261,7 @@ function isItemAvailable(item: MenuItem): boolean {
                 </tr>
               </thead>
               <tbody class="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-900">
-                <tr v-for="item in menuItems" :key="item.id">
+                <tr v-for="item in menuItems" :key="item.id" :data-dropdown-container="`menu-item-desktop-${item.id}`" class="relative">
                   <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6 dark:text-gray-100">
                     <div class="flex items-center">
                       <div v-if="getImageUrl(item)" class="h-10 w-10 flex-shrink-0">
@@ -305,28 +340,38 @@ function isItemAvailable(item: MenuItem): boolean {
                     </span>
                   </td>
                   <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6 dark:text-gray-400">
-                    <div class="flex justify-end space-x-2">
-                      <button 
-                        type="button" 
-                        @click="$emit('edit-item', item)"
-                        class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400"
+                    <div v-if="item.id" class="flex justify-end" @click.stop>
+                      <DropdownMenu
+                        :id="`menu-item-desktop-${item.id}`"
+                        button-label="Menu item actions"
+                        width="md"
                       >
-                        {{ t('app.views.menu.list.edit') }}<span class="sr-only">, {{ item.name }}</span>
-                      </button>
-                      <button 
-                        type="button" 
-                        @click="$emit('toggle-availability', item)"
-                        class="text-gray-600 hover:text-gray-900 dark:text-gray-400"
-                      >
-                        {{ item.is_available ? t('app.views.menu.list.disable') : t('app.views.menu.list.enable') }}<span class="sr-only">, {{ item.name }}</span>
-                      </button>
-                      <button 
-                        type="button" 
-                        @click="$emit('delete-item', item)"
-                        class="text-red-600 hover:text-red-900 dark:text-red-400"
-                      >
-                        {{ t('app.views.menu.list.delete') }}<span class="sr-only">, {{ item.name }}</span>
-                      </button>
+                        <DropdownMenuItem
+                          :icon="PencilIcon"
+                          variant="default"
+                          @click="closeMenuAndExecute(item.id, () => $emit('edit-item', item))"
+                        >
+                          {{ t('app.views.menu.list.edit') }}
+                        </DropdownMenuItem>
+                        
+                        <DropdownMenuItem
+                          :icon="isItemAvailable(item) ? XCircleIconOutline : CheckCircleIcon"
+                          :variant="isItemAvailable(item) ? 'warning' : 'success'"
+                          @click="closeMenuAndExecute(item.id, () => $emit('toggle-availability', item))"
+                        >
+                          {{ isItemAvailable(item) ? t('app.views.menu.list.disable') : t('app.views.menu.list.enable') }}
+                        </DropdownMenuItem>
+                        
+                        <DropdownMenuDivider />
+                        
+                        <DropdownMenuItem
+                          :icon="TrashIcon"
+                          variant="danger"
+                          @click="closeMenuAndExecute(item.id, () => $emit('delete-item', item))"
+                        >
+                          {{ t('app.views.menu.list.delete') }}
+                        </DropdownMenuItem>
+                      </DropdownMenu>
                     </div>
                   </td>
                 </tr>
