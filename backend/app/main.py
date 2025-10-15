@@ -1,16 +1,24 @@
-from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi import FastAPI, Depends, HTTPException, status, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer
 from fastapi.openapi.models import OAuthFlows as OAuthFlowsModel
 from fastapi.openapi.models import OAuthFlowPassword
 from fastapi.openapi.utils import get_openapi
 from sqlalchemy.orm import Session
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 import logging
 
 from .core.config import settings
 from .db.base import Base, engine, get_db
 from .core.security import oauth2_scheme
 from .middleware.restaurant import RestaurantMiddleware
+from .middleware.security import SecurityHeadersMiddleware
+from .core.rate_limit import limiter
+from .core.exceptions import AppException
+from fastapi.responses import JSONResponse
+from fastapi.exceptions import RequestValidationError
+from sqlalchemy.exc import SQLAlchemyError
 
 # Configure logging
 logging.basicConfig(
@@ -98,6 +106,10 @@ app = FastAPI(
 # Set the custom OpenAPI schema
 app.openapi = custom_openapi
 
+# Configure rate limiting
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
@@ -115,12 +127,85 @@ app.add_middleware(
     max_age=600,  # Cache preflight response for 10 minutes
 )
 
+# Security headers middleware
+app.add_middleware(SecurityHeadersMiddleware)
+
 # Tenant context middleware (subdomain -> restaurant)
 app.add_middleware(RestaurantMiddleware)
+
+# Exception handlers
+@app.exception_handler(AppException)
+async def app_exception_handler(request: Request, exc: AppException):
+    """Handle custom application exceptions."""
+    logger.error(
+        f"AppException: {exc.message}",
+        extra={
+            "path": request.url.path,
+            "method": request.method,
+            "status_code": exc.status_code,
+            "details": exc.details
+        }
+    )
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={
+            "detail": exc.message,
+            "type": "application_error",
+            **exc.details
+        }
+    )
+
+@app.exception_handler(SQLAlchemyError)
+async def sqlalchemy_exception_handler(request: Request, exc: SQLAlchemyError):
+    """Handle database errors."""
+    logger.error(
+        f"Database error: {str(exc)}",
+        exc_info=True,
+        extra={"path": request.url.path, "method": request.method}
+    )
+    return JSONResponse(
+        status_code=500,
+        content={
+            "detail": "Database error occurred",
+            "type": "database_error"
+        }
+    )
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    """Handle request validation errors."""
+    logger.warning(
+        f"Validation error: {exc.errors()}",
+        extra={"path": request.url.path, "method": request.method}
+    )
+    return JSONResponse(
+        status_code=422,
+        content={
+            "detail": exc.errors(),
+            "type": "validation_error"
+        }
+    )
+
+@app.exception_handler(Exception)
+async def general_exception_handler(request: Request, exc: Exception):
+    """Handle all unhandled exceptions."""
+    logger.error(
+        f"Unhandled exception: {str(exc)}",
+        exc_info=True,
+        extra={"path": request.url.path, "method": request.method}
+    )
+    return JSONResponse(
+        status_code=500,
+        content={
+            "detail": "Internal server error",
+            "type": "server_error"
+        }
+    )
 
 # Include API router
 app.include_router(api_router, prefix="/api/v1")
 
 @app.get("/")
-async def root():
+@limiter.limit("100/minute")  # Apply rate limiting to root endpoint
+async def root(request: Request):
     return {"message": "Welcome to Coffee Shop API"}
