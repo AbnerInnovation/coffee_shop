@@ -1,42 +1,46 @@
 <template>
   <div>
     <!-- Quick Actions Panel -->
-    <div class="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div class="mb-6 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
       <button
         @click="openNewOrderModal"
-        class="flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+        class="flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-3 py-3 sm:px-4 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 active:bg-indigo-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 touch-manipulation"
       >
         <PlusIcon class="h-5 w-5" />
-        {{ t('app.dashboard.quick_actions.new_order') }}
+        <span class="hidden sm:inline">{{ t('app.dashboard.quick_actions.new_order') }}</span>
+        <span class="sm:hidden">{{ t('app.dashboard.quick_actions.new_order').split(' ')[0] }}</span>
       </button>
       <button
         @click="$router.push('/cash-register')"
-        class="flex items-center justify-center gap-2 rounded-lg bg-green-600 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-green-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-600"
+        class="flex items-center justify-center gap-2 rounded-lg bg-green-600 px-3 py-3 sm:px-4 text-sm font-semibold text-white shadow-sm hover:bg-green-500 active:bg-green-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-600 touch-manipulation"
       >
         <BanknotesIcon class="h-5 w-5" />
-        {{ t('app.dashboard.quick_actions.cash_register') }}
+        <span class="hidden sm:inline">{{ t('app.dashboard.quick_actions.cash_register') }}</span>
+        <span class="sm:hidden">{{ t('app.dashboard.quick_actions.cash_register').split(' ')[0] }}</span>
       </button>
       <button
         @click="$router.push('/kitchen')"
-        class="flex items-center justify-center gap-2 rounded-lg bg-orange-600 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-orange-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-600"
+        class="flex items-center justify-center gap-2 rounded-lg bg-orange-600 px-3 py-3 sm:px-4 text-sm font-semibold text-white shadow-sm hover:bg-orange-500 active:bg-orange-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-600 touch-manipulation"
       >
         <FireIcon class="h-5 w-5" />
-        {{ t('app.dashboard.quick_actions.kitchen') }}
+        <span class="hidden sm:inline">{{ t('app.dashboard.quick_actions.kitchen') }}</span>
+        <span class="sm:hidden">{{ t('app.dashboard.quick_actions.kitchen').split(' ')[0] }}</span>
       </button>
       <button
         @click="$router.push('/menu')"
-        class="flex items-center justify-center gap-2 rounded-lg bg-purple-600 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-purple-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-600"
+        class="flex items-center justify-center gap-2 rounded-lg bg-purple-600 px-3 py-3 sm:px-4 text-sm font-semibold text-white shadow-sm hover:bg-purple-500 active:bg-purple-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-600 touch-manipulation"
       >
         <DocumentPlusIcon class="h-5 w-5" />
-        {{ t('app.dashboard.quick_actions.add_menu_item') }}
+        <span class="hidden sm:inline">{{ t('app.dashboard.quick_actions.add_menu_item') }}</span>
+        <span class="sm:hidden">Menu</span>
       </button>
     </div>
 
-    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+    <div class="grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-4">
       <!-- Stats Cards -->
-      <div class="overflow-hidden rounded-lg bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 px-4 py-5 shadow sm:p-6">
-        <dt class="truncate text-sm font-medium text-gray-500 dark:text-gray-400">{{ t('app.dashboard.total_orders_today') }}</dt>
-        <dd class="mt-1 text-3xl font-semibold tracking-tight text-gray-900 dark:text-white">{{ stats.totalOrdersToday }}</dd>
+      <div class="overflow-hidden rounded-lg bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 px-3 py-4 sm:px-4 sm:py-5 shadow">
+        <dt class="truncate text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">{{ t('app.dashboard.total_orders_today') }}</dt>
+        <dd class="mt-1 text-2xl sm:text-3xl font-semibold tracking-tight text-gray-900 dark:text-white">{{ stats.totalOrdersToday }}</dd>
         <dd v-if="stats.ordersComparison !== null" class="mt-2 flex items-center text-sm" :class="stats.ordersComparison >= 0 ? 'text-green-600' : 'text-red-600'">
           <ArrowUpIcon v-if="stats.ordersComparison > 0" class="h-4 w-4 mr-1" />
           <ArrowDownIcon v-else-if="stats.ordersComparison < 0" class="h-4 w-4 mr-1" />
@@ -44,9 +48,9 @@
         </dd>
       </div>
       
-      <div class="overflow-hidden rounded-lg bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 px-4 py-5 shadow sm:p-6">
-        <dt class="truncate text-sm font-medium text-gray-500 dark:text-gray-400">{{ t('app.dashboard.revenue_today') }}</dt>
-        <dd class="mt-1 text-3xl font-semibold tracking-tight text-gray-900 dark:text-white">${{ stats.revenueToday.toFixed(2) }}</dd>
+      <div class="overflow-hidden rounded-lg bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 px-3 py-4 sm:px-4 sm:py-5 shadow">
+        <dt class="truncate text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">{{ t('app.dashboard.revenue_today') }}</dt>
+        <dd class="mt-1 text-2xl sm:text-3xl font-semibold tracking-tight text-gray-900 dark:text-white">${{ stats.revenueToday.toFixed(2) }}</dd>
         <dd v-if="stats.revenueComparison !== null" class="mt-2 flex items-center text-sm" :class="stats.revenueComparison >= 0 ? 'text-green-600' : 'text-red-600'">
           <ArrowUpIcon v-if="stats.revenueComparison > 0" class="h-4 w-4 mr-1" />
           <ArrowDownIcon v-else-if="stats.revenueComparison < 0" class="h-4 w-4 mr-1" />
@@ -54,34 +58,34 @@
         </dd>
       </div>
       
-      <div class="overflow-hidden rounded-lg bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 px-4 py-5 shadow sm:p-6">
-        <dt class="truncate text-sm font-medium text-gray-500 dark:text-gray-400">{{ t('app.dashboard.active_tables') }}</dt>
-        <dd class="mt-1 text-3xl font-semibold tracking-tight text-gray-900 dark:text-white">{{ stats.activeTables }}/{{ stats.totalTables }}</dd>
+      <div class="overflow-hidden rounded-lg bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 px-3 py-4 sm:px-4 sm:py-5 shadow">
+        <dt class="truncate text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">{{ t('app.dashboard.active_tables') }}</dt>
+        <dd class="mt-1 text-2xl sm:text-3xl font-semibold tracking-tight text-gray-900 dark:text-white">{{ stats.activeTables }}/{{ stats.totalTables }}</dd>
       </div>
       
-      <div class="overflow-hidden rounded-lg bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 px-4 py-5 shadow sm:p-6">
-        <dt class="truncate text-sm font-medium text-gray-500 dark:text-gray-400">{{ t('app.dashboard.popular_item') }}</dt>
-        <dd class="mt-1 text-3xl font-semibold tracking-tight text-gray-900 dark:text-white">{{ stats.popularItem || '—' }}</dd>
+      <div class="overflow-hidden rounded-lg bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 px-3 py-4 sm:px-4 sm:py-5 shadow col-span-2 lg:col-span-1">
+        <dt class="truncate text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">{{ t('app.dashboard.popular_item') }}</dt>
+        <dd class="mt-1 text-xl sm:text-2xl lg:text-3xl font-semibold tracking-tight text-gray-900 dark:text-white truncate">{{ stats.popularItem || '—' }}</dd>
       </div>
     </div>
 
     <!-- Kitchen Performance Metrics -->
-    <div class="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-3">
-      <div class="overflow-hidden rounded-lg bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 px-4 py-5 shadow sm:p-6">
-        <dt class="truncate text-sm font-medium text-gray-500 dark:text-gray-400">{{ t('app.dashboard.orders_in_queue') }}</dt>
-        <dd class="mt-1 text-3xl font-semibold tracking-tight text-gray-900 dark:text-white">{{ kitchenStats.ordersInQueue }}</dd>
+    <div class="mt-4 sm:mt-6 grid grid-cols-1 gap-3 sm:gap-6 sm:grid-cols-3">
+      <div class="overflow-hidden rounded-lg bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 px-3 py-4 sm:px-4 sm:py-5 shadow">
+        <dt class="truncate text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">{{ t('app.dashboard.orders_in_queue') }}</dt>
+        <dd class="mt-1 text-2xl sm:text-3xl font-semibold tracking-tight text-gray-900 dark:text-white">{{ kitchenStats.ordersInQueue }}</dd>
         <dd class="mt-2 text-xs text-gray-500 dark:text-gray-400">{{ t('app.dashboard.pending_and_preparing') }}</dd>
       </div>
       
-      <div class="overflow-hidden rounded-lg bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 px-4 py-5 shadow sm:p-6">
-        <dt class="truncate text-sm font-medium text-gray-500 dark:text-gray-400">{{ t('app.dashboard.avg_prep_time') }}</dt>
-        <dd class="mt-1 text-3xl font-semibold tracking-tight text-gray-900 dark:text-white">{{ kitchenStats.avgPrepTime }}</dd>
+      <div class="overflow-hidden rounded-lg bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 px-3 py-4 sm:px-4 sm:py-5 shadow">
+        <dt class="truncate text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">{{ t('app.dashboard.avg_prep_time') }}</dt>
+        <dd class="mt-1 text-2xl sm:text-3xl font-semibold tracking-tight text-gray-900 dark:text-white">{{ kitchenStats.avgPrepTime }}</dd>
         <dd class="mt-2 text-xs text-gray-500 dark:text-gray-400">{{ t('app.dashboard.minutes') }}</dd>
       </div>
       
-      <div class="overflow-hidden rounded-lg bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 px-4 py-5 shadow sm:p-6">
-        <dt class="truncate text-sm font-medium text-gray-500 dark:text-gray-400">{{ t('app.dashboard.longest_wait') }}</dt>
-        <dd class="mt-1 text-3xl font-semibold tracking-tight text-gray-900 dark:text-white">{{ kitchenStats.longestWait }}</dd>
+      <div class="overflow-hidden rounded-lg bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 px-3 py-4 sm:px-4 sm:py-5 shadow">
+        <dt class="truncate text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">{{ t('app.dashboard.longest_wait') }}</dt>
+        <dd class="mt-1 text-2xl sm:text-3xl font-semibold tracking-tight text-gray-900 dark:text-white">{{ kitchenStats.longestWait }}</dd>
         <dd class="mt-2 text-xs text-gray-500 dark:text-gray-400">{{ t('app.dashboard.minutes') }}</dd>
       </div>
     </div>
@@ -182,25 +186,16 @@
         </div>
       </div>
     </div>
-    
-    <!-- New Order Modal -->
-    <NewOrderModal
-      :open="showNewOrderModal"
-      @close="showNewOrderModal = false"
-      @order-created="handleOrderCreated"
-    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import orderService from '@/services/orderService';
-import menuService from '@/services/menuService';
 import tableService from '@/services/tableService';
 import { useI18n } from 'vue-i18n';
 import { useToast } from '@/composables/useToast';
 import { PlusIcon, BanknotesIcon, FireIcon, DocumentPlusIcon, ArrowUpIcon, ArrowDownIcon } from '@heroicons/vue/24/outline';
-import NewOrderModal from '@/components/orders/NewOrderModal.vue';
 
 type BackendOrderStatus = 'pending' | 'preparing' | 'ready' | 'completed' | 'cancelled';
 
@@ -208,7 +203,6 @@ const loading = ref(false);
 const error = ref<string | null>(null);
 const { t } = useI18n();
 const { showSuccess } = useToast();
-const showNewOrderModal = ref(false);
 
 const stats = ref({
   totalOrdersToday: 0,
@@ -227,7 +221,6 @@ const kitchenStats = ref({
 });
 
 const recentOrders = ref<{ id: number; table: string; status: string; amount: number; createdAt: Date }[]>([]);
-const lowStockItems = ref<{ id: number | string; name: string; category: string; stock: number; image?: string }[]>([]);
 
 function getStatusBadgeClass(status: BackendOrderStatus | string) {
   const statusClasses = {
@@ -244,18 +237,6 @@ function getStatusBadgeClass(status: BackendOrderStatus | string) {
     'cancelled': 'bg-red-100 text-red-800',
   };
   return statusClasses[status] || 'bg-gray-100 text-gray-800';
-}
-
-function getStockStatusClass(stock: number) {
-  if (stock === 0) return 'bg-red-100 text-red-800';
-  if (stock <= 3) return 'bg-yellow-100 text-yellow-800';
-  return 'bg-green-100 text-green-800';
-}
-
-function getStockStatusLabel(stock: number) {
-  if (stock === 0) return t('app.status.out_of_stock');
-  if (stock <= 3) return t('app.status.low_stock');
-  return t('app.status.in_stock');
 }
 
 function isToday(dateStr: string | Date) {
@@ -278,6 +259,9 @@ function getMinutesSince(dateStr: string | Date): number {
 }
 
 onMounted(async () => {
+  // Listen for order-created event to refresh dashboard
+  window.addEventListener('order-created', handleOrderCreatedEvent);
+  
   try {
     loading.value = true;
     error.value = null;
@@ -344,19 +328,6 @@ onMounted(async () => {
     const tables = await tableService.getTables();
     stats.value.totalTables = Array.isArray(tables) ? tables.length : 0;
     stats.value.activeTables = Array.isArray(tables) ? tables.filter(t => t.is_occupied).length : 0;
-
-    // Low stock: derive from menu items that are unavailable
-    const menuItems = await menuService.getMenuItems();
-    lowStockItems.value = (menuItems || [])
-      .filter(mi => mi.is_available === false || mi.isAvailable === false)
-      .slice(0,5)
-      .map(mi => ({
-        id: mi.id,
-        name: mi.name,
-        category: typeof mi.category === 'string' ? mi.category : (mi.category?.name || ''),
-        stock: 0,
-        image: mi.image_url
-      }));
   } catch (e) {
     console.error('Dashboard load failed:', e);
     error.value = t('app.messages.dashboard_load_failed');
@@ -366,13 +337,8 @@ onMounted(async () => {
 });
 
 function openNewOrderModal() {
-  showNewOrderModal.value = true;
-}
-
-function handleOrderCreated() {
-  showNewOrderModal.value = false;
-  // Reload dashboard stats
-  loadDashboardData();
+  // Trigger the global modal in App.vue by dispatching a custom event
+  window.dispatchEvent(new CustomEvent('open-new-order-modal'));
 }
 
 async function loadDashboardData() {
@@ -432,4 +398,13 @@ async function loadDashboardData() {
     loading.value = false;
   }
 }
+
+// Listen for order-created event to refresh dashboard
+const handleOrderCreatedEvent = () => {
+  loadDashboardData();
+};
+
+onUnmounted(() => {
+  window.removeEventListener('order-created', handleOrderCreatedEvent);
+});
 </script>

@@ -84,6 +84,7 @@ const selectedCategoryId = ref<number | null>(null);
 
 // Fetch menu items on component mount
 onMounted(async () => {
+  // getCategories has built-in caching, so it won't fetch twice
   await menuStore.getCategories();
   await loadMenuItems();
 });

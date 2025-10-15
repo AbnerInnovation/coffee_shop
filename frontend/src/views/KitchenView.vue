@@ -1,8 +1,8 @@
 <template>
-  <div class="kitchen-view p-4">
-    <div class="flex justify-between items-center mb-6">
-      <h1 class="text-3xl font-bold text-gray-900">{{ t('app.views.kitchen.title') }}</h1>
-      <div class="text-sm text-gray-500">
+  <div class="kitchen-view p-3 sm:p-4 space-y-4 sm:space-y-6">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-0">
+      <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">{{ t('app.views.kitchen.title') }}</h1>
+      <div class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
         {{ t('app.views.kitchen.last_updated', { time: new Date().toLocaleTimeString() }) }}
       </div>
     </div>
@@ -12,58 +12,59 @@
     </div>
 
     <div v-else>
-      <div v-if="activeOrders.length === 0" class="text-center py-12">
-        <p class="text-gray-500 text-lg">{{ t('app.views.kitchen.no_active') }}</p>
+      <div v-if="activeOrders.length === 0" class="text-center py-12 px-4 bg-white dark:bg-gray-900 rounded-lg shadow">
+        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+        </svg>
+        <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">{{ t('app.views.kitchen.no_active') }}</h3>
+        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ t('app.views.kitchen.no_active_description') }}</p>
       </div>
 
-      <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <div v-for="order in activeOrders" :key="order.id" class="bg-white dark:bg-gray-900 dark:border-gray-800 border-gray-200 border-2 rounded-lg shadow overflow-hidden">
-          <div class="p-4 border-b border-gray-200 dark:border-gray-600">
-            <div class="flex justify-between items-start">
-              <div>
-                <h3 class="text-lg font-semibold">{{ t('app.views.kitchen.order', { id: order.id }) }}</h3>
-                <p class="text-sm text-gray-500">
+      <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+        <div v-for="order in activeOrders" :key="order.id" class="bg-white dark:bg-gray-900 dark:border-gray-700 border-gray-200 border-2 rounded-lg shadow-md overflow-hidden">
+          <div class="p-3 sm:p-4 border-b border-gray-200 dark:border-gray-700">
+            <div class="flex justify-between items-start gap-2">
+              <div class="flex-1 min-w-0">
+                <h3 class="text-base sm:text-lg font-semibold text-gray-900 dark:text-white truncate">{{ t('app.views.kitchen.order', { id: order.id }) }}</h3>
+                <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
                   {{ formatTime(order.created_at) }}
-                  <span v-if="order.table_number" class="ml-2">• {{ t('app.views.kitchen.table', { number: order.table_number }) }}</span>
+                  <span v-if="order.table_number" class="ml-1 sm:ml-2">• {{ t('app.views.kitchen.table', { number: order.table_number }) }}</span>
                 </p>
               </div>
               <span 
-                class="px-2 py-1 text-xs font-medium rounded-full"
+                class="flex-shrink-0 px-2 py-1 text-xs font-medium rounded-full"
                 :class="getStatusBadgeClass(order.status)"
               >
                 {{ t(`app.status.${order.status}`) }}
               </span>
             </div>
-            <div v-if="order.notes" class="mt-2 p-2 bg-yellow-50 text-sm text-yellow-700 rounded">
+            <div v-if="order.notes" class="mt-2 p-2 bg-yellow-50 dark:bg-yellow-900/20 text-xs sm:text-sm text-yellow-700 dark:text-yellow-300 rounded">
               {{ order.notes }}
             </div>
           </div>
 
-          <div class="divide-y divide-gray-200">
+          <div class="divide-y divide-gray-200 dark:divide-gray-700">
             <div 
               v-for="item in order.items" 
               :key="item.id"
-              class="p-4 hover:bg-gray-50 dark:hover:bg-gray-900"
-              :class="{ 'bg-green-50 dark:bg-green-700': item.status === 'completed' }"
+              class="p-3 sm:p-4 hover:bg-gray-50 dark:hover:bg-gray-800/50"
+              :class="{ 'bg-green-50 dark:bg-green-900/20': item.status === 'completed' }"
             >
-              <div class="flex justify-between items-start">
-                <div class="flex-1">
-                  <div class="flex items-center">
-                    <span class="font-medium text-lg mr-2">{{ item.quantity }}x</span>
-                    <span class="text-lg">{{ item.menu_item.name }}</span>
-                    <span v-if="item.variant" class="text-lg ml-2">({{ item.variant.name }})</span>
-                    
+              <div class="flex justify-between items-start gap-2">
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center flex-wrap">
+                    <span class="font-semibold text-base sm:text-lg mr-2 text-gray-900 dark:text-white">{{ item.quantity }}x</span>
+                    <span class="text-base sm:text-lg text-gray-900 dark:text-white">{{ item.menu_item.name }}</span>
+                    <span v-if="item.variant" class="text-sm sm:text-base ml-1 sm:ml-2 text-gray-600 dark:text-gray-400">({{ item.variant.name }})</span>
                   </div>
                   
-                  <div v-if="item.special_instructions" class="ml-7 mt-1 text-sm text-gray-600 dark:text-gray-400">
-                    <div>
-                      <span class="font-medium">{{ t('app.views.kitchen.note') }}</span> {{ item.special_instructions }}
-                    </div>
+                  <div v-if="item.special_instructions" class="mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded text-xs sm:text-sm text-blue-700 dark:text-blue-300">
+                    <span class="font-medium">{{ t('app.views.kitchen.note') }}</span> {{ item.special_instructions }}
                   </div>
                 </div>
                 
-                <div class="flex items-center">
-                  <span class="text-gray-500 dark:text-gray-400">
+                <div class="flex items-center flex-shrink-0">
+                  <span class="text-xs sm:text-sm text-gray-500 dark:text-gray-400 font-medium">
                     {{ getTimeElapsed(item.created_at) }}
                   </span>
                 </div>
@@ -71,18 +72,18 @@
             </div>
           </div>
 
-          <div class="p-4 bg-gray-50 dark:bg-gray-900 border-t border-gray-200">
+          <div class="p-3 sm:p-4 bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
             <button
               v-if="order.status === 'preparing'"
               @click="markOrderReady(order)"
-              class="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+              class="w-full bg-green-600 text-white py-2.5 sm:py-2 px-4 rounded-md hover:bg-green-700 active:bg-green-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 font-medium text-sm sm:text-base touch-manipulation"
             >
               {{ t('app.views.kitchen.actions.order_ready') }}
             </button>
             <button
               v-else-if="order.status === 'pending'"
               @click="startPreparingOrder(order)"
-              class="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              class="w-full bg-indigo-600 text-white py-2.5 sm:py-2 px-4 rounded-md hover:bg-indigo-700 active:bg-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 font-medium text-sm sm:text-base touch-manipulation"
             >
               {{ t('app.views.kitchen.actions.start_preparing') }}
             </button>

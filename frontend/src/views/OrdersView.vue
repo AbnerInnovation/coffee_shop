@@ -21,18 +21,18 @@
       </div>
     </div>
 
-    <div v-else class="space-y-6">
-      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div v-else class="space-y-4 sm:space-y-6">
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
         <div>
-          <h2 class="text-2xl font-bold text-gray-900">{{ t('app.views.orders.title') }}</h2>
-          <p class="mt-1 text-sm text-gray-500">
+          <h2 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{{ t('app.views.orders.title') }}</h2>
+          <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
             {{ selectedStatus === 'all' ? t('app.views.orders.tabs.all') : t('app.status.' + selectedStatus) }} {{
               t('app.views.orders.title').toLowerCase() }}
           </p>
         </div>
-        <div class="flex items-center space-x-3">
+        <div class="w-full sm:w-auto">
           <button type="button"
-            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            class="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2.5 sm:py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 touch-manipulation"
             @click="openNewOrderModal">
             <PlusIcon class="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
             {{ t('app.views.orders.new_order') }}
@@ -40,19 +40,19 @@
         </div>
       </div>
       <!-- Status Tabs -->
-      <div class="border-b border-gray-200 dark:border-gray-700 overflow-x-auto overflow-y-hidden">
-        <nav class="flex -mb-px min-w-max" aria-label="Tabs">
-          <div class="flex space-x-8 px-2 sm:px-0">
+      <div class="border-b border-gray-200 dark:border-gray-700 overflow-x-auto overflow-y-hidden -mx-3 sm:mx-0">
+        <nav class="flex -mb-px" aria-label="Tabs">
+          <div class="flex space-x-4 sm:space-x-8 px-3 sm:px-0 min-w-max">
             <button v-for="tab in tabs" :key="tab.id" @click="selectTab(tab.id)" :class="[
-              'whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium',
+              'whitespace-nowrap border-b-2 py-3 sm:py-4 px-1 text-sm font-medium touch-manipulation',
               selectedStatus === tab.id
-                ? 'border-indigo-500 text-indigo-600'
-                : 'border-transparent text-gray-500 hover:border-gray-300 dark:hover:border-gray-700 dark:hover:text-gray-100 hover:text-gray-700'
+                ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400 dark:border-indigo-400'
+                : 'border-transparent text-gray-500 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-700 dark:hover:text-gray-100 hover:text-gray-700'
             ]">
               <span class="inline-flex items-center">
                 {{ t('app.views.orders.tabs.' + tab.id) }}
                 <span v-if="getOrderCount(tab.id) > 0" :class="[
-                  selectedStatus === tab.id ? 'bg-indigo-100 text-indigo-600' : 'bg-gray-100 text-gray-900',
+                  selectedStatus === tab.id ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-300' : 'bg-gray-100 text-gray-900 dark:bg-gray-700 dark:text-gray-300',
                   'ml-2 py-0.5 px-2 rounded-full text-xs font-medium'
                 ]">
                   {{ getOrderCount(tab.id) }}
@@ -64,68 +64,80 @@
       </div>
 
       <!-- Order List -->
-      <div class="bg-white shadow overflow-hidden sm:rounded-md">
-        <ul role="list" class="divide-y divide-gray-200">
-          <li v-for="order in filteredOrders" :key="order.id" class=" hover:bg-gray-50 dark:bg-gray-900 border-none">
-            <div class="p-6 border-b border-gray-100 dark:border-gray-700">
-              <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+      <div class="bg-white dark:bg-gray-900 shadow overflow-hidden rounded-lg sm:rounded-md">
+        <!-- Empty State -->
+        <div v-if="filteredOrders.length === 0" class="text-center py-12 px-4">
+          <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+          </svg>
+          <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">{{ t('app.views.orders.no_orders') }}</h3>
+          <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ t('app.views.orders.no_orders_description') }}</p>
+          <div class="mt-6">
+            <button type="button" @click="openNewOrderModal" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+              <PlusIcon class="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
+              {{ t('app.views.orders.new_order') }}
+            </button>
+          </div>
+        </div>
+        <ul v-else role="list" class="divide-y divide-gray-200 dark:divide-gray-700">
+          <li v-for="order in filteredOrders" :key="order.id" class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+            <div class="p-4 sm:p-6 border-b border-gray-100 dark:border-gray-700">
+              <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
                 <div class="flex-1 min-w-0">
                   <!-- Status dropdown -->
-                  <div class="flex items-center mt-2 sm:mt-0 space-x-2">
-                    <p class="text-sm font-medium text-indigo-600 truncate">
+                  <div class="flex items-center flex-wrap gap-2">
+                    <p class="text-base sm:text-sm font-semibold text-indigo-600 dark:text-indigo-400">
                       #{{ order.id }}
                     </p>
-                    <span class="hidden sm:inline-flex ml-2 px-2.5 py-0.5 rounded-full text-xs font-medium"
+                    <span class="inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium"
                       :class="getStatusBadgeClass(order.status)">
                       {{ t('app.status.' + order.status) }}
                     </span>
                     <span
-                      class="hidden sm:inline-flex ml-1 px-2.5 py-0.5 rounded-full text-xs font-medium"
-                      :class="order.is_paid ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'"
+                      class="inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium"
+                      :class="order.is_paid ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200' : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-200'"
                     >
                       {{ order.is_paid ? t('app.views.orders.payment.paid') : t('app.views.orders.payment.pending') }}
                     </span>
                   </div>
-                  <div class="mt-2 grid grid-cols-2 gap-x-4 gap-y-2 sm:flex sm:flex-wrap sm:space-x-6">
-                    <div class="flex items-center text-sm text-gray-500">
-                      <RectangleGroupIcon class="flex-shrink-0 mr-1.5 h-4 w-4 sm:h-5 sm:w-5 text-gray-400"
+                  <div class="mt-2 flex flex-wrap gap-x-4 gap-y-2">
+                    <div class="flex items-center text-sm text-gray-500 dark:text-gray-400">
+                      <RectangleGroupIcon class="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400 dark:text-gray-500"
                         aria-hidden="true" />
                       <span class="truncate">{{ order.table || t('app.views.orders.labels.takeaway') }}</span>
                     </div>
-                    <div class="col-span-2 sm:col-auto flex items-center text-sm text-gray-500">
-                      <ClockIcon class="flex-shrink-0 mr-1.5 h-4 w-4 sm:h-5 sm:w-5 text-gray-400" aria-hidden="true" />
+                    <div class="flex items-center text-sm text-gray-500 dark:text-gray-400">
+                      <ClockIcon class="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400 dark:text-gray-500" aria-hidden="true" />
                       <span>{{ formatTime(order.createdAt) }}</span>
                     </div>
                   </div>
                 </div>
-                <div class="mt-4 sm:mt-0 sm:ml-4 flex-shrink-0 flex items-center justify-between w-full sm:w-auto">
-                  <p class="text-lg font-medium text-gray-900">${{ order.total.toFixed(2) }}</p>
-                  <div class="ml-4 flex space-x-1 sm:space-x-2">
+                <div class="mt-3 sm:mt-0 sm:ml-4 flex-shrink-0 flex items-center justify-between w-full sm:w-auto">
+                  <p class="text-xl sm:text-lg font-semibold text-gray-900 dark:text-white">${{ order.total.toFixed(2) }}</p>
+                  <div class="ml-4 flex gap-2">
                     <button type="button"
-                      class="inline-flex items-center p-2 sm:p-1.5 border border-transparent rounded-full shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                      class="inline-flex items-center p-2.5 sm:p-2 border border-transparent rounded-full shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 touch-manipulation"
                       @click="viewOrderDetails(order)" aria-label="View order details">
-                      <EyeIcon class="h-4 w-4" aria-hidden="true" />
-                      <span class="sr-only sm:not-sr-only ml-1 text-xs">{{ t('app.views.orders.buttons.view') }}</span>
+                      <EyeIcon class="h-5 w-5 sm:h-4 sm:w-4" aria-hidden="true" />
+                      <span class="sr-only">{{ t('app.views.orders.buttons.view') }}</span>
                     </button>
                     <button v-if="order.status === 'preparing'" type="button"
-                      class="inline-flex items-center p-2 sm:p-1.5 border border-transparent rounded-full shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                      class="inline-flex items-center p-2.5 sm:p-2 border border-transparent rounded-full shadow-sm text-white bg-green-600 hover:bg-green-700 active:bg-green-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 touch-manipulation"
                       @click="updateOrderStatus(order.id, 'ready' as const)" aria-label="Mark as ready">
-                      <CheckIcon class="h-4 w-4" aria-hidden="true" />
-                      <span class="sr-only sm:not-sr-only ml-1 text-xs">{{ t('app.views.orders.buttons.ready') }}</span>
+                      <CheckIcon class="h-5 w-5 sm:h-4 sm:w-4" aria-hidden="true" />
+                      <span class="sr-only">{{ t('app.views.orders.buttons.ready') }}</span>
                     </button>
                     <button v-if="order.status === 'ready'" type="button"
-                      class="inline-flex items-center p-2 sm:p-1.5 border border-transparent rounded-full shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                      class="inline-flex items-center p-2.5 sm:p-2 border border-transparent rounded-full shadow-sm text-white bg-green-600 hover:bg-green-700 active:bg-green-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 touch-manipulation"
                       @click="updateOrderStatus(order.id, 'completed' as const)" aria-label="Mark as completed">
-                      <CheckCircleIcon class="h-4 w-4" aria-hidden="true" />
-                      <span class="sr-only sm:not-sr-only ml-1 text-xs">{{ t('app.views.orders.buttons.complete')
-                        }}</span>
+                      <CheckCircleIcon class="h-5 w-5 sm:h-4 sm:w-4" aria-hidden="true" />
+                      <span class="sr-only">{{ t('app.views.orders.buttons.complete') }}</span>
                     </button>
                     <button v-if="order.status !== 'cancelled' && order.status !== 'completed'" type="button"
-                      class="inline-flex items-center p-2 sm:p-1.5 border border-transparent rounded-full shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                      class="inline-flex items-center p-2.5 sm:p-2 border border-transparent rounded-full shadow-sm text-white bg-red-600 hover:bg-red-700 active:bg-red-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 touch-manipulation"
                       @click="cancelOrder(order.id)" aria-label="Cancel order">
-                      <XMarkIcon class="h-4 w-4" aria-hidden="true" />
-                      <span class="sr-only sm:not-sr-only ml-1 text-xs">{{ t('app.views.orders.buttons.cancel')
-                        }}</span>
+                      <XMarkIcon class="h-5 w-5 sm:h-4 sm:w-4" aria-hidden="true" />
+                      <span class="sr-only">{{ t('app.views.orders.buttons.cancel') }}</span>
                     </button>
                   </div>
                 </div>
@@ -150,8 +162,10 @@
       <OrderDetails v-if="isOrderDetailsOpen && selectedOrder" :open="isOrderDetailsOpen" :order="selectedOrder"
         @close="closeOrderDetails" @status-update="handleStatusUpdate" @paymentCompleted="handlePaymentCompleted" @edit-order="openEditOrder" @openCashRegister="handleOpenCashRegister" />
 
-      <!-- New Order Modal -->
-      <NewOrderModal :open="isNewOrderModalOpen"
+      <!-- New Order Modal - only mount when needed -->
+      <NewOrderModal
+        v-if="isNewOrderModalOpen"
+        :open="isNewOrderModalOpen"
         :mode="newOrderMode"
         :orderToEdit="newOrderMode === 'edit' ? selectedOrderForEdit : null"
         :tableId="newOrderMode === 'create' ? undefined : (selectedOrderForEdit?.table_id ?? undefined)"

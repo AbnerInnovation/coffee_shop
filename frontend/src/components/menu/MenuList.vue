@@ -56,9 +56,9 @@ function isItemAvailable(item: MenuItem): boolean {
     </div>
     
     <!-- Category Filter -->
-    <div class="mt-4 flex items-center gap-4">
+    <div class="mt-4 flex flex-col sm:flex-row sm:items-center gap-3">
       <div class="flex items-center gap-2">
-        <FunnelIcon class="h-5 w-5 text-gray-400" />
+        <FunnelIcon class="h-5 w-5 text-gray-400 dark:text-gray-500" />
         <label for="category-filter" class="text-sm font-medium text-gray-700 dark:text-gray-300">
           {{ t('app.views.menu.list.filter_by_category') }}
         </label>
@@ -67,7 +67,7 @@ function isItemAvailable(item: MenuItem): boolean {
         id="category-filter"
         :value="selectedCategoryId || ''"
         @change="$emit('filter-category', ($event.target as HTMLSelectElement).value ? Number(($event.target as HTMLSelectElement).value) : null)"
-        class="rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
+        class="flex-1 sm:flex-initial rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
       >
         <option value="">{{ t('app.views.menu.list.all_categories') }}</option>
         <option v-for="category in categories" :key="category.id" :value="category.id">
@@ -94,8 +94,126 @@ function isItemAvailable(item: MenuItem): boolean {
               </div>
             </div>
           </div>
-          <div v-else class="overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg dark:bg-gray-950">
-            <table class="min-w-full divide-y divide-gray-300">
+          <div v-else>
+          <!-- Mobile Card View -->
+          <div class="block md:hidden">
+            <div v-if="menuItems.length === 0" class="text-center py-8 text-sm text-gray-500 dark:text-gray-400">
+              {{ t('app.views.menu.list.empty') }}
+            </div>
+            <div v-else class="space-y-4">
+              <div 
+                v-for="item in menuItems" 
+                :key="item.id"
+                class="bg-white dark:bg-gray-900 rounded-lg shadow border border-gray-200 dark:border-gray-800 p-4"
+              >
+                <!-- Item Header -->
+                <div class="flex items-start gap-3 mb-3">
+                  <div v-if="getImageUrl(item)" class="flex-shrink-0">
+                    <img class="h-16 w-16 rounded-lg object-cover" :src="getImageUrl(item)" :alt="item.name" />
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100">{{ item.name }}</h3>
+                    <div class="mt-1 flex items-center gap-2 flex-wrap">
+                      <span 
+                        v-if="item.category"
+                        class="inline-flex items-center rounded-md bg-blue-50 dark:bg-blue-950 px-2 py-0.5 text-xs font-medium text-blue-700 dark:text-blue-100"
+                      >
+                        {{ typeof item.category === 'string' ? item.category : item.category.name }}
+                      </span>
+                      <span 
+                        :class="{
+                          'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200': isItemAvailable(item),
+                          'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-200': !isItemAvailable(item)
+                        }"
+                        class="inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium"
+                      >
+                        {{ isItemAvailable(item) ? t('app.views.menu.list.available') : t('app.views.menu.list.unavailable') }}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Pricing -->
+                <div class="mb-3 space-y-1">
+                  <template v-if="item.variants && item.variants.length > 0">
+                    <div v-if="item.price" class="flex justify-between items-center text-sm">
+                      <span class="text-gray-600 dark:text-gray-400">Base:</span>
+                      <div class="flex items-center gap-2">
+                        <span v-if="item.discount_price && item.discount_price > 0" class="text-gray-500 dark:text-gray-400 line-through text-xs">
+                          ${{ item.price.toFixed(2) }}
+                        </span>
+                        <span class="font-semibold" :class="item.discount_price && item.discount_price > 0 ? 'text-green-600 dark:text-green-400' : 'text-gray-900 dark:text-white'">
+                          ${{ (item.discount_price && item.discount_price > 0 ? item.discount_price : item.price).toFixed(2) }}
+                        </span>
+                        <span v-if="item.discount_price && item.discount_price > 0" class="inline-flex items-center rounded-full bg-green-100 dark:bg-green-900/30 px-1.5 py-0.5 text-xs font-medium text-green-800 dark:text-green-200">
+                          {{ t('app.forms.sale_badge') }}
+                        </span>
+                      </div>
+                    </div>
+                    <div v-for="variant in item.variants" :key="variant.id" class="flex justify-between items-center text-sm">
+                      <span class="text-gray-600 dark:text-gray-400">{{ variant.name }}:</span>
+                      <div class="flex items-center gap-2">
+                        <span v-if="variant.discount_price && variant.discount_price > 0" class="text-gray-500 dark:text-gray-400 line-through text-xs">
+                          ${{ variant.price.toFixed(2) }}
+                        </span>
+                        <span class="font-semibold" :class="variant.discount_price && variant.discount_price > 0 ? 'text-green-600 dark:text-green-400' : 'text-gray-900 dark:text-white'">
+                          ${{ (variant.discount_price && variant.discount_price > 0 ? variant.discount_price : variant.price).toFixed(2) }}
+                        </span>
+                        <span v-if="variant.discount_price && variant.discount_price > 0" class="inline-flex items-center rounded-full bg-green-100 dark:bg-green-900/30 px-1.5 py-0.5 text-xs font-medium text-green-800 dark:text-green-200">
+                          {{ t('app.forms.sale_badge') }}
+                        </span>
+                      </div>
+                    </div>
+                  </template>
+                  <template v-else>
+                    <div class="flex justify-between items-center">
+                      <span class="text-sm text-gray-600 dark:text-gray-400">{{ t('app.views.menu.list.table.price') }}:</span>
+                      <div class="flex items-center gap-2">
+                        <span v-if="item.discount_price && item.discount_price > 0" class="text-gray-500 dark:text-gray-400 line-through text-sm">
+                          ${{ item.price?.toFixed(2) || '0.00' }}
+                        </span>
+                        <span class="text-lg font-semibold" :class="item.discount_price && item.discount_price > 0 ? 'text-green-600 dark:text-green-400' : 'text-gray-900 dark:text-white'">
+                          ${{ (item.discount_price && item.discount_price > 0 ? item.discount_price : item.price)?.toFixed(2) || '0.00' }}
+                        </span>
+                        <span v-if="item.discount_price && item.discount_price > 0" class="inline-flex items-center rounded-full bg-green-100 dark:bg-green-900/30 px-1.5 py-0.5 text-xs font-medium text-green-800 dark:text-green-200">
+                          {{ t('app.forms.sale_badge') }}
+                        </span>
+                      </div>
+                    </div>
+                  </template>
+                </div>
+
+                <!-- Actions -->
+                <div class="flex gap-2 pt-3 border-t border-gray-200 dark:border-gray-700">
+                  <button 
+                    type="button" 
+                    @click="$emit('edit-item', item)"
+                    class="flex-1 inline-flex items-center justify-center px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 touch-manipulation"
+                  >
+                    {{ t('app.views.menu.list.edit') }}
+                  </button>
+                  <button 
+                    type="button" 
+                    @click="$emit('toggle-availability', item)"
+                    class="flex-1 inline-flex items-center justify-center px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 touch-manipulation"
+                  >
+                    {{ item.is_available ? t('app.views.menu.list.disable') : t('app.views.menu.list.enable') }}
+                  </button>
+                  <button 
+                    type="button" 
+                    @click="$emit('delete-item', item)"
+                    class="inline-flex items-center justify-center px-3 py-2 border border-red-300 dark:border-red-600 rounded-md text-sm font-medium text-red-700 dark:text-red-400 bg-white dark:bg-gray-800 hover:bg-red-50 dark:hover:bg-red-900/20 touch-manipulation"
+                  >
+                    {{ t('app.views.menu.list.delete') }}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Desktop Table View -->
+          <div class="hidden md:block overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg dark:bg-gray-950">
+            <table class="min-w-full divide-y divide-gray-300 dark:divide-gray-700">
               <thead class="bg-gray-50 dark:bg-gray-900">
                 <tr>
                   <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 dark:text-gray-100 sm:pl-6">{{ t('app.views.menu.list.table.name') }}</th>
@@ -107,7 +225,7 @@ function isItemAvailable(item: MenuItem): boolean {
                   </th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-gray-200 bg-white dark:bg-gray-900">
+              <tbody class="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-900">
                 <tr v-for="item in menuItems" :key="item.id">
                   <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6 dark:text-gray-100">
                     <div class="flex items-center">
@@ -220,8 +338,9 @@ function isItemAvailable(item: MenuItem): boolean {
               </tbody>
             </table>
           </div>
-        </div>
-      </div>
-    </div>
-  </div>
+          </div> <!-- Close v-else wrapper -->
+        </div> <!-- Close align-middle wrapper -->
+      </div> <!-- Close overflow-x-auto wrapper -->
+    </div> <!-- Close flow-root wrapper -->
+  </div> <!-- Close main container -->
 </template>

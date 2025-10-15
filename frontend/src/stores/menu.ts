@@ -237,9 +237,6 @@ export const useMenuStore = defineStore('menu', () => {
     }
   }
 
-  // Initialize categories when store is created
-  getCategories().catch(console.error);
-
   return {
     menuItems,
     categoriesDetailed,

@@ -1,14 +1,14 @@
 <template>
-  <div class="tables-view space-y-6">
-    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+  <div class="tables-view space-y-4 sm:space-y-6">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
       <div>
-        <h2 class="text-2xl font-bold text-gray-900 dark:text-white">{{ t('app.views.tables.title') }}</h2>
+        <h2 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{{ t('app.views.tables.title') }}</h2>
         <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ t('app.views.tables.subtitle') }}</p>
       </div>
-      <div class="flex items-center space-x-3">
+      <div class="w-full sm:w-auto">
         <button
           type="button"
-          class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          class="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2.5 sm:py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 touch-manipulation"
           @click="openAddTableModal"
         >
           <PlusIcon class="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
@@ -24,14 +24,29 @@
     </div>
 
     <!-- Error State -->
-    <div v-else-if="error" class="bg-red-50 border-l-4 border-red-400 p-4 mb-4">
+    <div v-else-if="error" class="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-400 p-4 mb-4 rounded-r-lg">
       <div class="flex">
         <div class="flex-shrink-0">
           <XCircleIcon class="h-5 w-5 text-red-400" aria-hidden="true" />
         </div>
         <div class="ml-3">
-          <p class="text-sm text-red-700">{{ error }}</p>
+          <p class="text-sm text-red-700 dark:text-red-300">{{ error }}</p>
         </div>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div v-else-if="tables.length === 0" class="text-center py-12 px-4 bg-white dark:bg-gray-900 rounded-lg shadow">
+      <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+      </svg>
+      <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">{{ t('app.views.tables.no_tables') }}</h3>
+      <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ t('app.views.tables.no_tables_description') }}</p>
+      <div class="mt-6">
+        <button type="button" @click="openAddTableModal" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+          <PlusIcon class="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
+          {{ t('app.views.tables.add_table') }}
+        </button>
       </div>
     </div>
 
@@ -50,19 +65,21 @@
       >
         <!-- Table Status Badge -->
         <div 
-          class="absolute bottom-4 right-4 px-2 py-1 rounded-full text-xs font-medium"
-          :class="table.is_occupied ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'"
+          class="absolute top-4 right-4 px-2 py-1 rounded-full text-xs font-medium"
+          :class="table.is_occupied ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-200' : 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200'"
         >
           {{ table.is_occupied ? t('app.views.tables.occupied') : t('app.views.tables.available') }}
         </div>
 
-        <div class="p-4">
-          <div class="flex items-center justify-between">
-            <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">{{ t('app.views.tables.table_number_header', { number: table.number }) }}</h3>
-            <span class="text-sm text-gray-500 dark:text-gray-400">{{ t('app.views.tables.seats', { count: table.capacity }) }}</span>
+        <div class="p-4 pb-3">
+          <div class="flex items-start justify-between pr-16 sm:pr-20">
+            <div>
+              <h3 class="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100">{{ t('app.views.tables.table_number_header', { number: table.number }) }}</h3>
+              <span class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">{{ t('app.views.tables.seats', { count: table.capacity }) }}</span>
+            </div>
           </div>
           
-          <div class="mt-2">
+          <div class="mt-3">
             <div class="text-sm text-gray-600 dark:text-gray-300">
               {{ t('app.views.tables.location', { location: table.location }) }}
             </div>
@@ -71,11 +88,11 @@
             </div>
           </div>
           
-          <div class="mt-4 flex space-x-2">
+          <div class="mt-4 flex flex-col sm:flex-row gap-2">
               <button
                 type="button"
-                class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded shadow-sm text-white"
-                :class="table.is_occupied ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'"
+                class="inline-flex items-center justify-center px-3 py-2 sm:py-1.5 border border-transparent text-xs font-medium rounded shadow-sm text-white touch-manipulation"
+                :class="table.is_occupied ? 'bg-red-600 hover:bg-red-700 active:bg-red-800' : 'bg-green-600 hover:bg-green-700 active:bg-green-800'"
                 @click.stop="toggleOccupancy(table)"
               >
                 {{ table.is_occupied ? t('app.views.tables.mark_available') : t('app.views.tables.mark_occupied') }}
@@ -91,7 +108,7 @@
             <button
               v-if="!hasOpenOrder(table.id)"
               type="button"
-              class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded shadow-sm text-white bg-indigo-600 hover:bg-indigo-700"
+              class="inline-flex items-center justify-center px-3 py-2 sm:py-1.5 border border-transparent text-xs font-medium rounded shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 touch-manipulation"
               @click.stop="openOrderModal(table)"
             >
               {{ t('app.views.orders.new_order') || 'Create Order' }}
@@ -99,7 +116,7 @@
             <button
               v-else
               type="button"
-              class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded shadow-sm text-white bg-amber-600 hover:bg-amber-700"
+              class="inline-flex items-center justify-center px-3 py-2 sm:py-1.5 border border-transparent text-xs font-medium rounded shadow-sm text-white bg-amber-600 hover:bg-amber-700 active:bg-amber-800 touch-manipulation"
               @click.stop="goToEditOrder(table)"
             >
               {{ t('app.views.orders.edit_order') || 'Edit Order' }}
@@ -183,8 +200,9 @@
         </form>
       </div>
     </div>
-    <!-- New Order Modal (same used in Orders view) -->
+    <!-- New Order Modal (same used in Orders view) - only mount when needed -->
     <NewOrderModal
+      v-if="showOrderModal"
       :open="showOrderModal"
       :table-id="selectedTableForOrder ? selectedTableForOrder.id : null"
       @close="showOrderModal = false"
