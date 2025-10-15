@@ -6,7 +6,20 @@
         <div class="flex h-14 sm:h-16 items-center justify-between">
           <div class="flex items-center">
             <div class="flex-shrink-0">
-              <h3 class="text-gray-900 dark:text-white font-bold">{{ t('app.title') }}</h3>
+              <!-- Logo for dark mode -->
+              <img 
+                v-if="isDark" 
+                src="@/assets/DarkModeLogo.png" 
+                alt="Logo" 
+                class="h-8 sm:h-12 w-auto"
+              />
+              <!-- Logo for light mode -->
+              <img 
+                v-else 
+                src="@/assets/Logo.png" 
+                alt="Logo" 
+                class="h-8 sm:h-12 w-auto"
+              />
             </div>
             <div class="hidden md:block">
               <div class="ml-10 flex items-baseline space-x-4">
