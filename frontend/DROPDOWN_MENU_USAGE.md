@@ -7,6 +7,7 @@ The reusable dropdown menu components provide a consistent way to add action men
 - ✅ **Singleton Pattern**: Only one dropdown can be open at a time across the entire app
 - ✅ **High Z-Index**: z-index: 9999 ensures visibility above all elements
 - ✅ **Auto-close**: Automatically closes when clicking outside or opening another dropdown
+- ✅ **Automatic Z-Index Elevation**: Parent containers are automatically elevated when dropdown opens (no manual z-index management needed!)
 - ✅ **Dark Mode**: Full dark mode support
 - ✅ **Accessible**: Proper ARIA attributes
 
@@ -19,6 +20,8 @@ Main container with the three-dots button.
 - `modelValue` (boolean): Controls menu open/close state
 - `buttonLabel` (string): Aria label for accessibility
 - `width` ('sm' | 'md' | 'lg'): Menu width
+- `id` (string): Unique identifier (auto-generated if not provided)
+- `elevateParent` (boolean): Automatically elevate parent container z-index (default: true)
 
 ### 2. DropdownMenuItem
 Individual menu item with icon and variant styling.
@@ -30,6 +33,27 @@ Individual menu item with icon and variant styling.
 
 ### 3. DropdownMenuDivider
 Visual separator between menu sections.
+
+## Automatic Z-Index Elevation
+
+The DropdownMenu component automatically handles z-index stacking to prevent overlap issues. No manual z-index management needed!
+
+**How it works:**
+1. Add a `data-dropdown-container` attribute to the parent element you want to elevate
+2. Pass the same `id` to the DropdownMenu component
+3. When the dropdown opens, the parent container automatically gets `z-50` class
+4. When it closes, the class is automatically removed
+
+**Example:**
+```vue
+<div :data-dropdown-container="`item-${item.id}`">
+  <DropdownMenu :id="`item-${item.id}`" v-model="menuOpen">
+    <!-- Menu items -->
+  </DropdownMenu>
+</div>
+```
+
+That's it! The component handles everything automatically.
 
 ## Example: Adding to Orders List
 

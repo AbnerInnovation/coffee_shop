@@ -80,9 +80,80 @@
           </div>
         </div>
         <ul v-else role="list" class="divide-y divide-gray-200 dark:divide-gray-700">
-          <li v-for="order in filteredOrders" :key="order.id" class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-            <div class="p-4 sm:p-6 border-b border-gray-100 dark:border-gray-700">
-              <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
+          <li v-for="order in filteredOrders" :key="order.id" :data-dropdown-container="`order-${order.id}`" class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+            <div class="p-4 sm:p-6 border-b border-gray-100 dark:border-gray-700 relative">
+              <!-- Three Dots Menu -->
+              <div class="absolute top-4 right-4 z-30" @click.stop>
+                <DropdownMenu
+                  v-model="orderMenuStates[order.id]"
+                  :id="`order-${order.id}`"
+                  button-label="Order actions"
+                  width="md"
+                >
+                  <!-- View Details -->
+                  <DropdownMenuItem
+                    :icon="EyeIcon"
+                    variant="info"
+                    @click="closeMenuAndExecute(order.id, () => viewOrderDetails(order))"
+                  >
+                    {{ t('app.views.orders.buttons.view') }}
+                  </DropdownMenuItem>
+                  
+                  <!-- Edit Order -->
+                  <DropdownMenuItem
+                    v-if="order.status !== 'completed' && order.status !== 'cancelled'"
+                    :icon="PencilIcon"
+                    variant="default"
+                    @click="closeMenuAndExecute(order.id, () => openEditOrder(order))"
+                  >
+                    {{ t('app.actions.edit') }}
+                  </DropdownMenuItem>
+                  
+                  <DropdownMenuDivider v-if="order.status !== 'completed' && order.status !== 'cancelled'" />
+                  
+                  <!-- Status Actions -->
+                  <DropdownMenuItem
+                    v-if="order.status === 'pending'"
+                    :icon="PlayIcon"
+                    variant="primary"
+                    @click="closeMenuAndExecute(order.id, () => updateOrderStatus(order.id, 'preparing'))"
+                  >
+                    {{ t('app.views.orders.status_menu.mark_preparing') || 'Mark as Preparing' }}
+                  </DropdownMenuItem>
+                  
+                  <DropdownMenuItem
+                    v-if="order.status === 'preparing'"
+                    :icon="CheckIcon"
+                    variant="success"
+                    @click="closeMenuAndExecute(order.id, () => updateOrderStatus(order.id, 'ready'))"
+                  >
+                    {{ t('app.views.orders.buttons.ready') }}
+                  </DropdownMenuItem>
+                  
+                  <DropdownMenuItem
+                    v-if="order.status === 'ready'"
+                    :icon="CheckCircleIcon"
+                    variant="success"
+                    @click="closeMenuAndExecute(order.id, () => updateOrderStatus(order.id, 'completed'))"
+                  >
+                    {{ t('app.views.orders.buttons.complete') }}
+                  </DropdownMenuItem>
+                  
+                  <DropdownMenuDivider v-if="order.status !== 'cancelled' && order.status !== 'completed'" />
+                  
+                  <!-- Cancel Order -->
+                  <DropdownMenuItem
+                    v-if="order.status !== 'cancelled' && order.status !== 'completed'"
+                    :icon="XMarkIcon"
+                    variant="danger"
+                    @click="closeMenuAndExecute(order.id, () => cancelOrder(order.id))"
+                  >
+                    {{ t('app.views.orders.buttons.cancel') }}
+                  </DropdownMenuItem>
+                </DropdownMenu>
+              </div>
+              
+              <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0 pr-12">
                 <div class="flex-1 min-w-0">
                   <!-- Status dropdown -->
                   <div class="flex items-center flex-wrap gap-2">
@@ -112,34 +183,8 @@
                     </div>
                   </div>
                 </div>
-                <div class="mt-3 sm:mt-0 sm:ml-4 flex-shrink-0 flex items-center justify-between w-full sm:w-auto">
+                <div class="mt-3 sm:mt-0 sm:ml-4 flex-shrink-0 pr-2">
                   <p class="text-xl sm:text-lg font-semibold text-gray-900 dark:text-white">${{ order.total.toFixed(2) }}</p>
-                  <div class="ml-4 flex gap-2">
-                    <button type="button"
-                      class="inline-flex items-center p-2.5 sm:p-2 border border-transparent rounded-full shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 touch-manipulation"
-                      @click="viewOrderDetails(order)" aria-label="View order details">
-                      <EyeIcon class="h-5 w-5 sm:h-4 sm:w-4" aria-hidden="true" />
-                      <span class="sr-only">{{ t('app.views.orders.buttons.view') }}</span>
-                    </button>
-                    <button v-if="order.status === 'preparing'" type="button"
-                      class="inline-flex items-center p-2.5 sm:p-2 border border-transparent rounded-full shadow-sm text-white bg-green-600 hover:bg-green-700 active:bg-green-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 touch-manipulation"
-                      @click="updateOrderStatus(order.id, 'ready' as const)" aria-label="Mark as ready">
-                      <CheckIcon class="h-5 w-5 sm:h-4 sm:w-4" aria-hidden="true" />
-                      <span class="sr-only">{{ t('app.views.orders.buttons.ready') }}</span>
-                    </button>
-                    <button v-if="order.status === 'ready'" type="button"
-                      class="inline-flex items-center p-2.5 sm:p-2 border border-transparent rounded-full shadow-sm text-white bg-green-600 hover:bg-green-700 active:bg-green-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 touch-manipulation"
-                      @click="updateOrderStatus(order.id, 'completed' as const)" aria-label="Mark as completed">
-                      <CheckCircleIcon class="h-5 w-5 sm:h-4 sm:w-4" aria-hidden="true" />
-                      <span class="sr-only">{{ t('app.views.orders.buttons.complete') }}</span>
-                    </button>
-                    <button v-if="order.status !== 'cancelled' && order.status !== 'completed'" type="button"
-                      class="inline-flex items-center p-2.5 sm:p-2 border border-transparent rounded-full shadow-sm text-white bg-red-600 hover:bg-red-700 active:bg-red-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 touch-manipulation"
-                      @click="cancelOrder(order.id)" aria-label="Cancel order">
-                      <XMarkIcon class="h-5 w-5 sm:h-4 sm:w-4" aria-hidden="true" />
-                      <span class="sr-only">{{ t('app.views.orders.buttons.cancel') }}</span>
-                    </button>
-                  </div>
                 </div>
               </div>
 
@@ -191,10 +236,15 @@ import {
   RectangleGroupIcon,
   ClockIcon,
   ChevronDownIcon,
-  CheckCircleIcon
+  CheckCircleIcon,
+  PencilIcon,
+  PlayIcon
 } from '@heroicons/vue/24/outline';
 import OrderDetails from '@/components/orders/OrderDetailsModal.vue';
 import NewOrderModal from '@/components/orders/NewOrderModal.vue';
+import DropdownMenu from '@/components/ui/DropdownMenu.vue';
+import DropdownMenuItem from '@/components/ui/DropdownMenuItem.vue';
+import DropdownMenuDivider from '@/components/ui/DropdownMenuDivider.vue';
 // Removed unused imports
 import { useToast } from '@/composables/useToast';
 import { useConfirm } from '@/composables/useConfirm';
@@ -338,6 +388,7 @@ const isOrderDetailsOpen = ref(false);
 const hasAutoOpenedFromTable = ref(false);
 const selectedOrder = ref<OrderWithLocalFields | null>(null);
 const orders = ref<OrderWithLocalFields[]>([]);
+const orderMenuStates = ref<Record<number, boolean>>({});
 
 // Tab definitions
 const tabs = [
@@ -434,6 +485,12 @@ const getOrderItemsSummary = (items: OrderItemLocal[]): string => {
 };
 
 const isMounted = ref(true);
+
+// Helper function to close menu and execute action
+const closeMenuAndExecute = (orderId: number, action: () => void) => {
+  orderMenuStates.value[orderId] = false;
+  action();
+};
 
 const viewOrderDetails = (order: OrderWithLocalFields) => {
   if (!isMounted.value) return;

@@ -1,5 +1,5 @@
 <template>
-  <div class="relative">
+  <div class="relative" :class="internalIsOpen ? 'z-[10000]' : ''">
     <button
       @click.stop="toggleMenu"
       class="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
@@ -33,13 +33,15 @@ interface Props {
   buttonLabel?: string;
   width?: 'sm' | 'md' | 'lg';
   id?: string;
+  elevateParent?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
   modelValue: false,
   buttonLabel: 'Open menu',
   width: 'md',
-  id: () => `dropdown-${Math.random().toString(36).substr(2, 9)}`
+  id: () => `dropdown-${Math.random().toString(36).substr(2, 9)}`,
+  elevateParent: true
 });
 
 const emit = defineEmits<{
@@ -87,6 +89,18 @@ watch(currentOpenDropdownId, (newId) => {
 // Emit changes to parent
 watch(internalIsOpen, (newValue) => {
   emit('update:modelValue', newValue);
+  
+  // Automatically elevate parent container if enabled
+  if (props.elevateParent) {
+    const container = document.querySelector(`[data-dropdown-container="${props.id}"]`);
+    if (container) {
+      if (newValue) {
+        container.classList.add('z-50');
+      } else {
+        container.classList.remove('z-50');
+      }
+    }
+  }
 });
 
 // Handle click outside to close menu
@@ -103,5 +117,13 @@ onMounted(() => {
 
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside);
+  
+  // Clean up parent elevation on unmount
+  if (props.elevateParent) {
+    const container = document.querySelector(`[data-dropdown-container="${props.id}"]`);
+    if (container) {
+      container.classList.remove('z-50');
+    }
+  }
 });
 </script>

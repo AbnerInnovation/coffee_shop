@@ -60,6 +60,7 @@
       <div 
         v-for="table in tables" 
         :key="table.id"
+        :data-dropdown-container="`table-${table.id}`"
         class="relative rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm hover:shadow-md transition-shadow duration-200"
         :class="{
           'ring-2 ring-offset-2 ring-indigo-500': selectedTableId === table.id,
@@ -72,6 +73,7 @@
         <div class="absolute top-2 right-2 z-30" @click.stop>
           <DropdownMenu
             v-model="menuStates[table.id]"
+            :id="`table-${table.id}`"
             button-label="Table actions"
             width="md"
           >
