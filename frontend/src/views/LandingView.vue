@@ -10,8 +10,22 @@
             </div>
             <header class="text-center px-6 py-12 md:py-16">
                 <p class="text-xs tracking-widest text-indigo-600 font-semibold">Presentamos</p>
-                <h1 class="mt-2 text-3xl md:text-5xl font-extrabold leading-tight text-slate-900 dark:text-slate-100">
-                    {{ brand }} — software para restaurantes moderno y listo para crecer
+                <div class="mt-4 flex justify-center">
+                    <img 
+                        v-if="isDark" 
+                        src="@/assets/logos/DarkModeLogo.png" 
+                        alt="Cloud Restaurant Logo" 
+                        class="h-16 md:h-20 w-auto"
+                    />
+                    <img 
+                        v-else 
+                        src="@/assets/logos/Logo.png" 
+                        alt="Cloud Restaurant Logo" 
+                        class="h-16 md:h-20 w-auto"
+                    />
+                </div>
+                <h1 class="mt-4 text-2xl md:text-4xl font-extrabold leading-tight text-slate-900 dark:text-slate-100">
+                    Software para restaurantes moderno y listo para crecer
                 </h1>
                 <p class="mt-4 text-gray-600 dark:text-slate-300 max-w-2xl mx-auto">
                     Optimiza mesas, pedidos, cocina y caja en minutos. Escalable de taquerías a cadenas. Añade módulos
@@ -136,8 +150,10 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
 import PricingCard from '@/components/marketing/PricingCard.vue'
+import { useTheme } from '@/composables/useTheme'
 
 const brand = 'Cloud Restaurant'
+const { isDark } = useTheme()
 
 const highlights = [
         {
