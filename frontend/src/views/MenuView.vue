@@ -1,60 +1,56 @@
 <template>
-  <div class="min-h-full dark:bg-gray-950">
-      <main>
-        <div class="mx-auto max-w-7xl sm:px-6 lg:px-8 dark:bg-gray-950">
-            <!-- Menu List -->
-            <MenuList
-              v-if="!showForm"
-              :menu-items="menuItems"
-              :loading="loading"
-              :error="error"
-              :categories="menuStore.categoriesDetailed"
-              :selected-category-id="selectedCategoryId"
-              @add-item="handleAddItem"
-              @edit-item="handleEditItem"
-              @delete-item="handleDeleteItem"
-              @toggle-availability="handleToggleAvailability"
-              @filter-category="handleFilterCategory"
-            />
+  <MainLayout>
+    <!-- Menu List -->
+    <MenuList
+      v-if="!showForm"
+      :menu-items="menuItems"
+      :loading="loading"
+      :error="error"
+      :categories="menuStore.categoriesDetailed"
+      :selected-category-id="selectedCategoryId"
+      @add-item="handleAddItem"
+      @edit-item="handleEditItem"
+      @delete-item="handleDeleteItem"
+      @toggle-availability="handleToggleAvailability"
+      @filter-category="handleFilterCategory"
+    />
 
-            <!-- Menu Item Form -->
-            <div v-else>
-              <div class="mb-6">
-                <button
-                  type="button"
-                  @click="showForm = false; currentItem = null"
-                  class="inline-flex items-center text-sm text-gray-600 hover:text-gray-900"
-                >
-                  <ArrowLeftIcon class="mr-1 h-4 w-4" />
-                  {{ t('app.views.menu.view.back') }}
-                </button>
-              </div>
-              
-              <div class="rounded-lg bg-white dark:bg-gray-900 shadow">
-                <div class="px-4 py-5 sm:p-6">
-                  <MenuItemForm
-                    v-if="currentItem !== null"
-                    :menu-item="currentItem"
-                    :loading="formLoading"
-                    :errors="formErrors"
-                    :is-editing="true"
-                    @submit="handleSubmit"
-                    @cancel="showForm = false"
-                  />
-                  <MenuItemForm
-                    v-else
-                    :loading="formLoading"
-                    :errors="formErrors"
-                    :is-editing="false"
-                    @submit="handleSubmit"
-                    @cancel="showForm = false"
-                  />
-                </div>
-              </div>
-            </div>
+    <!-- Menu Item Form -->
+    <div v-else>
+      <div class="mb-6">
+        <button
+          type="button"
+          @click="showForm = false; currentItem = null"
+          class="inline-flex items-center text-sm text-gray-600 hover:text-gray-900"
+        >
+          <ArrowLeftIcon class="mr-1 h-4 w-4" />
+          {{ t('app.views.menu.view.back') }}
+        </button>
+      </div>
+      
+      <div class="rounded-lg bg-white dark:bg-gray-900 shadow">
+        <div class="px-4 py-5 sm:p-6">
+          <MenuItemForm
+            v-if="currentItem !== null"
+            :menu-item="currentItem"
+            :loading="formLoading"
+            :errors="formErrors"
+            :is-editing="true"
+            @submit="handleSubmit"
+            @cancel="showForm = false"
+          />
+          <MenuItemForm
+            v-else
+            :loading="formLoading"
+            :errors="formErrors"
+            :is-editing="false"
+            @submit="handleSubmit"
+            @cancel="showForm = false"
+          />
         </div>
-      </main>
-  </div>
+      </div>
+    </div>
+  </MainLayout>
 </template>
 
 <script setup lang="ts">
@@ -63,6 +59,7 @@ import { useI18n } from 'vue-i18n';
 import { useMenuStore } from '@/stores/menu';
 import { useConfirm } from '@/composables/useConfirm';
 import { useToast } from '@/composables/useToast';
+import MainLayout from '@/components/layout/MainLayout.vue';
 import MenuList from '@/components/menu/MenuList.vue';
 import MenuItemForm from '@/components/menu/MenuItemForm.vue';
 import type { MenuItem } from '@/types/menu';

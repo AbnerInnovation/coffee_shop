@@ -1,5 +1,5 @@
 <template>
-  <div class="px-4 dark:bg-gray-950 sm:px-6 lg:px-8">
+  <MainLayout>
     <div class="sm:flex sm:items-center">
       <div class="sm:flex-auto">
         <h1 class="text-base font-semibold leading-6 text-gray-900 dark:text-gray-100">{{ t('app.views.menu.categories.title') || 'Categories' }}</h1>
@@ -19,8 +19,8 @@
     </div>
     
     <div class="mt-8 flow-root">
-      <div class="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
-        <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
+      <div class="overflow-x-auto">
+        <div class="inline-block min-w-full py-2 align-middle">
           <div v-if="categoriesLoading" class="text-center py-12">
             <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
           </div>
@@ -84,7 +84,7 @@
             </div>
           </div>
         </div>
-  </div>
+  </MainLayout>
 </template>
 
 <script setup lang="ts">
@@ -93,6 +93,7 @@ import { useI18n } from 'vue-i18n';
 import { useMenuStore } from '@/stores/menu';
 import { useToast } from '@/composables/useToast';
 import { useConfirm } from '@/composables/useConfirm';
+import MainLayout from '@/components/layout/MainLayout.vue';
 import DropdownMenu from '@/components/ui/DropdownMenu.vue';
 import DropdownMenuItem from '@/components/ui/DropdownMenuItem.vue';
 import DropdownMenuDivider from '@/components/ui/DropdownMenuDivider.vue';

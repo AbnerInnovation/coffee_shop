@@ -1,5 +1,6 @@
 <template>
-  <div class="space-y-6">
+  <MainLayout>
+    <div class="space-y-6">
     <!-- Loading State -->
     <div v-if="loading" class="flex justify-center items-center py-12">
       <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
@@ -218,13 +219,15 @@
         @order-created="handleNewOrder"
         @order-updated="handleOrderUpdated" />
     </div>
-  </div>
+    </div>
+  </MainLayout>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
+import MainLayout from '@/components/layout/MainLayout.vue';
 import orderService from '@/services/orderService';
 import type { Order } from '@/services/orderService';
 import {

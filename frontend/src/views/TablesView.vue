@@ -1,5 +1,6 @@
 <template>
-  <div class="tables-view space-y-4 sm:space-y-6">
+  <MainLayout>
+    <div class="tables-view space-y-4 sm:space-y-6">
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
       <div>
         <h2 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{{ t('app.views.tables.title') }}</h2>
@@ -236,12 +237,14 @@
       @close="showOrderModal = false"
       @order-created="handleOrderCreated"
     />
-  </div>
+    </div>
+  </MainLayout>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
+import MainLayout from '@/components/layout/MainLayout.vue';
 import { PlusIcon, XMarkIcon, XCircleIcon, PencilIcon, TrashIcon, CheckCircleIcon, XCircleIcon as XCircleIconOutline, ShoppingBagIcon } from '@heroicons/vue/24/outline';
 import tableService from '@/services/tableService';
 import NewOrderModal from '@/components/orders/NewOrderModal.vue';
