@@ -88,6 +88,11 @@
                             <div v-if="item.variant" class="text-xs text-gray-600 dark:text-gray-400 mt-1">
                               {{ item.variant.name }}
                             </div>
+                            <div v-if="item.menu_item?.category" class="mt-1">
+                              <span class="inline-flex items-center rounded-full bg-gray-100 dark:bg-gray-700 px-2 py-0.5 text-xs font-medium text-gray-600 dark:text-gray-300">
+                                {{ item.menu_item.category }}
+                              </span>
+                            </div>
                             <div v-if="item.notes" class="text-xs text-gray-500 dark:text-gray-400 mt-1">
                               <span class="font-medium">{{$t('app.views.orders.modals.details.note')}}</span> {{ item.notes }}
                             </div>

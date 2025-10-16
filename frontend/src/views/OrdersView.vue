@@ -347,11 +347,21 @@ interface OrderItemLocal {
   variant_id?: number | null;
   variant_price_adjustment?: number | null;
   price?: number;
+  variant?: {
+    id: number;
+    name: string;
+  } | null;
   variants?: Array<{
     id: number;
     name: string;
     price_adjustment: number;
   }>;
+  menu_item?: {
+    id: number;
+    name: string;
+    category?: string;
+    price?: number;
+  };
   special_instructions?: string;
 }
 
@@ -646,11 +656,21 @@ const fetchOrders = async (fetchAll = false) => {
             unit_price: unitPrice,
             total_price: total,
             notes: item.special_instructions || undefined,
+            variant: variant ? {
+              id: variant.id,
+              name: variant.name
+            } : null,
             variants: variant ? [{
               id: variant.id,
               name: variant.name,
               price_adjustment: variant.price
-            }] : []
+            }] : [],
+            menu_item: item.menu_item ? {
+              id: item.menu_item.id,
+              name: item.menu_item.name,
+              category: item.menu_item.category,
+              price: item.menu_item.price
+            } : undefined
           };
         }) : [];
 

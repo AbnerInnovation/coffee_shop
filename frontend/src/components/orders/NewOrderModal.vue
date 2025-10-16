@@ -241,6 +241,11 @@
                           {{ item.name }}
                           <span v-if="item.variant_name" class="text-xs text-gray-500 ml-1">({{ item.variant_name }})</span>
                         </p>
+                        <div v-if="item.category" class="mt-1">
+                          <span class="inline-flex items-center rounded-full bg-gray-100 dark:bg-gray-700 px-2 py-0.5 text-xs font-medium text-gray-600 dark:text-gray-300">
+                            {{ item.category }}
+                          </span>
+                        </div>
                         <p v-if="item.notes" class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ item.notes }}</p>
                       </div>
                       <div class="flex items-center space-x-4 ml-4">
@@ -451,6 +456,7 @@ interface OrderItemWithDetails {
   variant_id?: number | null;
   name: string;
   variant_name?: string;
+  category?: string;
   price: number;
   quantity: number;
   notes?: string;
@@ -697,12 +703,19 @@ const selectedItems = computed<OrderItemWithDetails[]>(() => {
       const adjustment = variant?.price_adjustment || 0;
       const price = variant ? basePrice + adjustment : basePrice;
 
+      const categoryName = menuItem?.category && typeof menuItem.category === 'object' && menuItem.category.name
+        ? menuItem.category.name
+        : typeof menuItem?.category === 'string'
+        ? menuItem.category
+        : undefined;
+
       return {
         id: Number(item.menu_item_id) * 1000 + (item.variant_id ? Number(item.variant_id) : 0), // Generate a unique ID
         menu_item_id: Number(item.menu_item_id),
         variant_id: item.variant_id ? Number(item.variant_id) : null,
         name: menuItem?.name || 'Unknown Item',
         variant_name: variant?.name,
+        category: categoryName,
         price,
         quantity: item.quantity,
         notes: item.notes,

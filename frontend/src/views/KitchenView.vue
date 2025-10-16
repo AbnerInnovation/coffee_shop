@@ -57,6 +57,12 @@
                     <span v-if="item.variant" class="text-sm sm:text-base ml-1 sm:ml-2 text-gray-600 dark:text-gray-400">({{ item.variant.name }})</span>
                   </div>
                   
+                  <div v-if="item.menu_item.category" class="mt-1">
+                    <span class="inline-flex items-center rounded-full bg-gray-100 dark:bg-gray-700 px-2 py-0.5 text-xs font-medium text-gray-600 dark:text-gray-300">
+                      {{ item.menu_item.category }}
+                    </span>
+                  </div>
+                  
                   <div v-if="item.special_instructions" class="mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded text-xs sm:text-sm text-blue-700 dark:text-blue-300">
                     <span class="font-medium">{{ t('app.views.kitchen.note') }}</span> {{ item.special_instructions }}
                   </div>
