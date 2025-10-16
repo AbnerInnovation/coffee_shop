@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from typing import List
@@ -11,6 +11,7 @@ from ...models.user import User
 from ...models.restaurant import Restaurant
 from ...core.dependencies import get_current_restaurant
 from ...services.user import get_current_active_user, UserRole
+from ...core.exceptions import ResourceNotFoundError, ConflictError, ValidationError
 
 router = APIRouter(
     prefix="/tables",
@@ -57,9 +58,9 @@ async def create_table(
     """
     db_table = table_service.get_table_by_number(db, number=table.number, restaurant_id=restaurant.id)
     if db_table:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Table with this number already exists"
+        raise ConflictError(
+            f"Table number {table.number} already exists in this restaurant",
+            resource="Table"
         )
     return table_service.create_table(db=db, table=table, restaurant_id=restaurant.id)
 
@@ -74,10 +75,7 @@ async def read_table(
     """
     db_table = table_service.get_table(db, table_id=table_id, restaurant_id=restaurant.id)
     if db_table is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Table not found"
-        )
+        raise ResourceNotFoundError("Table", table_id)
     return db_table
 
 class TableOccupancyUpdate(BaseModel):
@@ -96,10 +94,7 @@ async def update_table_occupancy(
     is_occupied = occupancy_data.is_occupied
     db_table = table_service.get_table(db, table_id=table_id, restaurant_id=restaurant.id)
     if db_table is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Table not found"
-        )
+        raise ResourceNotFoundError("Table", table_id)
     
     # Update only the is_occupied field
     db_table.is_occupied = is_occupied
@@ -121,17 +116,14 @@ async def update_table(
     """
     db_table = table_service.get_table(db, table_id=table_id, restaurant_id=restaurant.id)
     if db_table is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Table not found"
-        )
+        raise ResourceNotFoundError("Table", table_id)
     
     if table.number and table.number != db_table.number:
         existing_table = table_service.get_table_by_number(db, number=table.number, restaurant_id=restaurant.id)
         if existing_table and existing_table.id != table_id:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Table with this number already exists"
+            raise ConflictError(
+                f"Table number {table.number} already exists in this restaurant",
+                resource="Table"
             )
     
     return table_service.update_table(
@@ -156,16 +148,13 @@ async def delete_table(
     """
     db_table = table_service.get_table(db, table_id=table_id)
     if db_table is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Table not found"
-        )
+        raise ResourceNotFoundError("Table", table_id)
     
     # Check if table has active orders
     if db_table.orders:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Cannot delete a table with active orders"
+        raise ConflictError(
+            "Cannot delete a table with active orders. Please complete or cancel orders first.",
+            resource="Table"
         )
     
     table_service.delete_table(db=db, db_table=db_table)

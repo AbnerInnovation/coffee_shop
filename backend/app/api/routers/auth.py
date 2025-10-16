@@ -1,7 +1,7 @@
 from datetime import timedelta
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
@@ -12,6 +12,7 @@ from ...schemas.user import UserCreate, User as UserSchema
 from ...core.security import create_access_token, create_refresh_token, decode_token
 from ...core.config import settings
 from ...services import user as user_service
+from ...core.exceptions import ValidationError, UnauthorizedError, ConflictError
 
 router = APIRouter(
     prefix="/auth",
@@ -38,10 +39,10 @@ async def register_user(
         )
         return db_user
     except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
+        # Check if it's a duplicate email error
+        if "already registered" in str(e).lower() or "already exists" in str(e).lower():
+            raise ConflictError(str(e), resource="User")
+        raise ValidationError(str(e))
 
 @router.post("/token", response_model=Token)
 async def login_for_access_token(
@@ -58,17 +59,10 @@ async def login_for_access_token(
     )
     
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+        raise UnauthorizedError("Incorrect email or password")
     
     if not user.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Inactive user",
-        )
+        raise ValidationError("Account is inactive. Please contact support.")
     
     # Define scopes based on user role
     if user.role == UserRole.ADMIN:
@@ -103,18 +97,18 @@ async def refresh_token(body: TokenRefreshRequest, db: Session = Depends(get_db)
         token_type = payload.get("type")
         sub = payload.get("sub")
         if token_type != "refresh" or not sub:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")
+            raise UnauthorizedError("Invalid refresh token")
         # Find the user
         user = user_service.get_user(db, int(sub)) if str(sub).isdigit() else user_service.get_user_by_email(db, str(sub))
         if not user or not user.is_active:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid user")
+            raise UnauthorizedError("Invalid user or inactive account")
         # Issue new tokens
         access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
         access_token = create_access_token(subject=user.id, expires_delta=access_token_expires)
         # Optionally rotate refresh token
         new_refresh_token = create_refresh_token(subject=user.id)
         return {"access_token": access_token, "token_type": "bearer", "refresh_token": new_refresh_token}
-    except HTTPException:
+    except (UnauthorizedError, ValidationError):
         raise
     except Exception:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not refresh token")
+        raise UnauthorizedError("Could not refresh token")

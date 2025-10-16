@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks, Request
+from fastapi import APIRouter, Depends, status, BackgroundTasks, Request
 from sqlalchemy.orm import Session, selectinload
 from typing import List, Optional
 
@@ -14,6 +14,7 @@ from ...services.order import serialize_order_item
 from ...services.cash_register import create_transaction_from_order
 from ...services.user import get_current_active_user
 from ...core.dependencies import get_current_restaurant
+from ...core.exceptions import ResourceNotFoundError, ValidationError, ConflictError, DatabaseError
 
 router = APIRouter(
     prefix="/orders",
@@ -47,7 +48,7 @@ async def read_orders(
             table_id=table_id
         )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error retrieving orders: {str(e)}")
+        raise DatabaseError(f"Error retrieving orders: {str(e)}", operation="select")
 
 
 
@@ -66,15 +67,12 @@ async def create_order(
     if order.table_id is not None:
         db_table = db.query(TableModel).filter(TableModel.id == order.table_id).first()
         if not db_table:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Table not found")
+            raise ResourceNotFoundError("Table", order.table_id)
     
     for item in order.items:
         db_item = db.query(MenuItemModel).filter(MenuItemModel.id == item.menu_item_id).first()
         if not db_item:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Menu item with ID {item.menu_item_id} not found"
-            )
+            raise ResourceNotFoundError("MenuItem", item.menu_item_id)
     
     return order_service.create_order_with_items(db=db, order=order, restaurant_id=restaurant.id)
 
@@ -86,7 +84,7 @@ async def read_order(order_id: int, db: Session = Depends(get_db), restaurant: R
     """
     db_order = order_service.get_order(db, order_id=order_id, restaurant_id=restaurant.id)
     if db_order is None:
-        raise HTTPException(status_code=404, detail="Order not found")
+        raise ResourceNotFoundError("Order", order_id)
     return db_order
 
 
@@ -98,7 +96,7 @@ async def update_order(order_id: int, order: OrderUpdate, db: Session = Depends(
     # First get the database order object
     db_order = db.query(OrderModel).filter(OrderModel.id == order_id).first()
     if db_order is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found")
+        raise ResourceNotFoundError("Order", order_id)
 
     # Check if order is being marked as paid
     if order.is_paid and not db_order.is_paid:
@@ -108,10 +106,7 @@ async def update_order(order_id: int, order: OrderUpdate, db: Session = Depends(
             try:
                 payment_method_enum = PaymentMethod(order.payment_method.value)
             except (ValueError, AttributeError):
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Invalid payment method"
-                )
+                raise ValidationError("Invalid payment method", field="payment_method")
             db_order.payment_method = payment_method_enum
         # If no payment method provided, default to CASH
         else:
@@ -130,7 +125,7 @@ async def update_order(order_id: int, order: OrderUpdate, db: Session = Depends(
                 created_by_user_id=current_user.id
             )
         except ValueError as e:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+            raise ValidationError(str(e))
 
         # Commit the payment changes first
         db.commit()
@@ -154,7 +149,7 @@ async def delete_order(order_id: int, db: Session = Depends(get_db)) -> None:
     """
     db_order = db.query(OrderModel).filter(OrderModel.id == order_id).first()
     if db_order is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found")
+        raise ResourceNotFoundError("Order", order_id)
     
     order_service.delete_order(db, db_order=db_order)
 
@@ -167,14 +162,11 @@ async def add_order_item(order_id: int, item: OrderItemCreate, db: Session = Dep
     # Fetch the ORM model, not the serialized dict
     db_order = db.query(OrderModel).filter(OrderModel.id == order_id, OrderModel.deleted_at.is_(None)).first()
     if not db_order:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found")
+        raise ResourceNotFoundError("Order", order_id)
     
     db_menu_item = db.query(MenuItemModel).filter(MenuItemModel.id == item.menu_item_id).first()
     if not db_menu_item:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Menu item with ID {item.menu_item_id} not found"
-        )
+        raise ResourceNotFoundError("MenuItem", item.menu_item_id)
     
     return order_service.add_order_item(db=db, db_order=db_order, item=item, unit_price=db_menu_item.price)
 
@@ -186,7 +178,7 @@ async def update_order_item(order_id: int, item_id: int, item: OrderItemUpdate, 
     """
     db_order_item = order_service.get_order_item(db, item_id=item_id)
     if not db_order_item or db_order_item.order_id != order_id:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order item not found")
+        raise ResourceNotFoundError("OrderItem", item_id)
     
     return order_service.update_order_item(db=db, db_item=db_order_item, item=item)
 
@@ -206,14 +198,14 @@ async def update_order_item_status(
     try:
         status_enum = OrderStatus(status.lower())
     except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid status. Must be one of: {', '.join([s.value for s in OrderStatus])}"
+        raise ValidationError(
+            f"Invalid status. Must be one of: {', '.join([s.value for s in OrderStatus])}",
+            field="status"
         )
     
     db_order_item = order_service.get_order_item(db, item_id=item_id)
     if not db_order_item or db_order_item.order_id != order_id:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order item not found")
+        raise ResourceNotFoundError("OrderItem", item_id)
     
     # Update the status
     db_order_item.status = status_enum
@@ -230,7 +222,7 @@ async def delete_order_item(order_id: int, item_id: int, db: Session = Depends(g
     """
     db_order_item = order_service.get_order_item(db, item_id=item_id)
     if not db_order_item or db_order_item.order_id != order_id:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order item not found")
+        raise ResourceNotFoundError("OrderItem", item_id)
     
     order_service.delete_order_item(db=db, db_item=db_order_item)
 
@@ -248,19 +240,19 @@ async def mark_order_as_paid(
     # Get the order
     db_order = db.query(OrderModel).filter(OrderModel.id == order_id).first()
     if not db_order:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found")
+        raise ResourceNotFoundError("Order", order_id)
 
     if db_order.is_paid:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Order is already paid")
+        raise ConflictError("Order is already paid", resource="Order")
 
     # Validate payment method
     from ...schemas.order import PaymentMethod
     try:
         payment_method_enum = PaymentMethod(payment_method.lower())
     except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid payment method. Must be one of: {', '.join([pm.value for pm in PaymentMethod])}"
+        raise ValidationError(
+            f"Invalid payment method. Must be one of: {', '.join([pm.value for pm in PaymentMethod])}",
+            field="payment_method"
         )
 
     try:
@@ -283,7 +275,7 @@ async def mark_order_as_paid(
         return order_service.get_order(db, order_id, db_order.restaurant_id)
 
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        raise ValidationError(str(e))
     except Exception as e:
         db.rollback()
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error processing payment: {str(e)}")
+        raise DatabaseError(f"Error processing payment: {str(e)}", operation="update")

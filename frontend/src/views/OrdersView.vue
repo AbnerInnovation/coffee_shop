@@ -82,7 +82,7 @@
           <li v-for="order in filteredOrders" :key="order.id" :data-dropdown-container="`order-${order.id}`" class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
             <div class="p-4 sm:p-6 border-b border-gray-100 dark:border-gray-700 relative">
               <!-- Three Dots Menu -->
-              <div class="absolute top-4 right-4 z-30" @click.stop>
+              <div class="absolute top-4 right-4" @click.stop>
                 <DropdownMenu
                   v-model="orderMenuStates[order.id]"
                   :id="`order-${order.id}`"

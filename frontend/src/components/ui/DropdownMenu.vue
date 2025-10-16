@@ -1,8 +1,9 @@
 <template>
-  <div class="relative" :class="internalIsOpen ? 'z-[10000]' : ''">
+  <div class="relative">
     <button
+      ref="buttonRef"
       @click.stop="toggleMenu"
-      class="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+      class="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors relative z-10"
       :class="{ 'bg-gray-100 dark:bg-gray-800': internalIsOpen }"
       :aria-label="buttonLabel"
     >
@@ -12,9 +13,10 @@
     <!-- Dropdown Menu -->
     <div
       v-if="internalIsOpen"
-      class="absolute right-0 mt-1 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5"
+      ref="menuRef"
+      class="fixed rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 max-h-[80vh] overflow-y-auto"
       :class="menuWidthClass"
-      style="z-index: 9999;"
+      :style="menuStyle"
     >
       <div class="py-1" role="menu">
         <slot></slot>
@@ -24,7 +26,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, watch } from 'vue';
+import { computed, ref, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import { EllipsisVerticalIcon } from '@heroicons/vue/24/outline';
 import { useDropdownManager } from '@/composables/useDropdownManager';
 
@@ -52,6 +54,14 @@ const emit = defineEmits<{
 // Use the dropdown manager composable
 const { isOpen: internalIsOpen, toggle: internalToggle, currentOpenDropdownId } = useDropdownManager(props.id);
 
+const buttonRef = ref<HTMLElement | null>(null);
+const menuRef = ref<HTMLElement | null>(null);
+const menuPosition = ref<{ top: number | 'auto', right: number, bottom: number | 'auto' }>({ 
+  top: 0, 
+  right: 0, 
+  bottom: 'auto' 
+});
+
 const menuWidthClass = computed(() => {
   const widths = {
     sm: 'w-48',
@@ -61,10 +71,56 @@ const menuWidthClass = computed(() => {
   return widths[props.width];
 });
 
+const menuStyle = computed(() => ({
+  top: menuPosition.value.top !== 'auto' ? `${menuPosition.value.top}px` : 'auto',
+  bottom: menuPosition.value.bottom !== 'auto' ? `${menuPosition.value.bottom}px` : 'auto',
+  right: `${menuPosition.value.right}px`,
+  zIndex: 9999
+}));
+
+const updateMenuPosition = () => {
+  if (buttonRef.value && menuRef.value) {
+    const rect = buttonRef.value.getBoundingClientRect();
+    const menuHeight = menuRef.value.offsetHeight || 200; // Estimate if not rendered yet
+    const spaceBelow = window.innerHeight - rect.bottom - 10; // 10px bottom padding
+    const spaceAbove = rect.top - 10; // 10px top padding
+    
+    // Determine if menu should open upward or downward
+    // Prefer downward unless there's clearly more space above
+    const openUpward = spaceBelow < menuHeight && spaceAbove > spaceBelow && spaceAbove > menuHeight;
+    
+    if (openUpward) {
+      // Open upward - position from bottom
+      const bottomPos = window.innerHeight - rect.top + 4;
+      menuPosition.value = {
+        top: 'auto',
+        bottom: bottomPos,
+        right: window.innerWidth - rect.right
+      };
+    } else {
+      // Open downward (default) - position from top
+      const topPos = rect.bottom + 4;
+      // Ensure menu doesn't go below viewport
+      const maxTop = Math.min(topPos, window.innerHeight - menuHeight - 10);
+      menuPosition.value = {
+        top: maxTop,
+        bottom: 'auto',
+        right: window.innerWidth - rect.right
+      };
+    }
+  }
+};
+
 const toggleMenu = () => {
   internalToggle();
   emit('update:modelValue', internalIsOpen.value);
   emit('toggle', internalIsOpen.value);
+  
+  if (internalIsOpen.value) {
+    nextTick(() => {
+      updateMenuPosition();
+    });
+  }
 };
 
 // Sync internal state with v-model
@@ -72,6 +128,9 @@ watch(() => props.modelValue, (newValue) => {
   if (newValue !== internalIsOpen.value) {
     if (newValue) {
       internalToggle();
+      nextTick(() => {
+        updateMenuPosition();
+      });
     } else if (internalIsOpen.value) {
       internalToggle();
     }
@@ -113,10 +172,14 @@ const handleClickOutside = () => {
 
 onMounted(() => {
   document.addEventListener('click', handleClickOutside);
+  window.addEventListener('scroll', updateMenuPosition, true);
+  window.addEventListener('resize', updateMenuPosition);
 });
 
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside);
+  window.removeEventListener('scroll', updateMenuPosition, true);
+  window.removeEventListener('resize', updateMenuPosition);
   
   // Clean up parent elevation on unmount
   if (props.elevateParent) {
