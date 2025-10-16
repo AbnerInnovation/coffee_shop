@@ -1,6 +1,6 @@
 <template>
-  <TransitionRoot as="div" :show="open" class="fixed inset-0 z-10">
-    <Dialog as="div" class="relative z-10 h-full" @close="$emit('close')">
+  <TransitionRoot as="div" :show="open" class="fixed inset-0 z-[10001]">
+    <Dialog as="div" class="relative z-[10001] h-full" @close="$emit('close')">
       <TransitionChild as="div" enter="ease-out duration-300" enter-from="opacity-0" enter-to="opacity-100"
         leave="ease-in duration-200" leave-from="opacity-100" leave-to="opacity-0"
         class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
@@ -298,8 +298,8 @@
     </Dialog>
 
     <!-- Item Selection Modal -->
-    <TransitionRoot as="div" :show="showItemModal" class="fixed inset-0 z-20">
-      <Dialog as="div" class="relative z-20 h-full" @close="showItemModal = false">
+    <TransitionRoot as="div" :show="showItemModal" class="fixed inset-0 z-[10002]">
+      <Dialog as="div" class="relative z-[10002] h-full" @close="showItemModal = false">
         <TransitionChild as="div" enter="ease-out duration-300" enter-from="opacity-0" enter-to="opacity-100"
           leave="ease-in duration-200" leave-from="opacity-100" leave-to="opacity-0"
           class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
