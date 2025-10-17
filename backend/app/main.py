@@ -106,10 +106,58 @@ def custom_openapi():
     app.openapi_schema = openapi_schema
     return app.openapi_schema
 
+# Background tasks
+import asyncio
+from contextlib import asynccontextmanager
+
+@asynccontextmanager
+async def lifespan(app_instance: FastAPI):
+    """
+    Lifespan context manager for startup and shutdown events.
+    Handles background tasks like flushing special note statistics.
+    """
+    # Startup
+    logger.info("Starting background tasks...")
+    
+    # Create background task for flushing special note stats
+    async def flush_special_notes_task():
+        """Background task that flushes special note statistics every 5 minutes."""
+        from .services.special_notes import SpecialNotesService
+        
+        while True:
+            try:
+                await asyncio.sleep(300)  # 5 minutes
+                
+                # Get a database session
+                db = next(get_db())
+                try:
+                    updated_count = SpecialNotesService.flush_updates(db)
+                    if updated_count > 0:
+                        logger.info(f"Flushed {updated_count} special note updates to database")
+                finally:
+                    db.close()
+                    
+            except Exception as e:
+                logger.error(f"Error in special notes flush task: {str(e)}", exc_info=True)
+    
+    # Start the background task
+    task = asyncio.create_task(flush_special_notes_task())
+    
+    yield
+    
+    # Shutdown
+    logger.info("Shutting down background tasks...")
+    task.cancel()
+    try:
+        await task
+    except asyncio.CancelledError:
+        pass
+
 app = FastAPI(
     title="Coffee Shop API",
     description="API for managing a coffee shop's menu and orders",
-    version="0.1.0"
+    version="0.1.0",
+    lifespan=lifespan
 )
 
 # Set the custom OpenAPI schema

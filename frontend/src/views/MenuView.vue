@@ -132,7 +132,8 @@ async function handleDeleteItem(item) {
 
   try {
     await menuStore.deleteMenuItem(item.id)
-    menuItems.value = menuItems.value.filter(i => i.id !== item.id)
+    // Refresh list with current filter to ensure consistency
+    await loadMenuItems(selectedCategoryId.value || undefined)
     showSuccess(t('app.messages.delete_item_success') as string)
   } catch (err: any) {
     showError(err.message || (t('app.messages.delete_item_failed') as string))
@@ -177,8 +178,8 @@ async function handleSubmit(formData: Omit<MenuItem, 'id'>) {
       showSuccess(t('app.messages.create_item_success') as string);
     }
     
-    // Refresh the menu items list
-    await loadMenuItems();
+    // Refresh the menu items list with current filter
+    await loadMenuItems(selectedCategoryId.value || undefined);
     showForm.value = false;
     currentItem.value = null;
   } catch (err: unknown) {

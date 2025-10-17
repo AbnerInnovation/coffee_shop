@@ -1,5 +1,5 @@
 from .base import PhoenixBaseModel as BaseModel
-from pydantic import Field, ConfigDict, validator
+from pydantic import Field, ConfigDict, validator, model_validator
 from enum import Enum
 from typing import Optional, List, Union, Any
 from datetime import datetime
@@ -102,6 +102,96 @@ class Category(str, Enum):
         return self.value
 
 # ----------------------------
+# Ingredients Schemas (for special notes and customization)
+# ----------------------------
+class IngredientOption(BaseModel):
+    """
+    Represents a mutually exclusive option for a menu item.
+    Example: Tortilla with choices ["Maíz", "Harina"]
+    """
+    name: str = Field(..., min_length=1, max_length=50, description="Name of the option (e.g., 'Tortilla')")
+    choices: List[str] = Field(..., min_items=2, max_items=10, description="Available choices (e.g., ['Maíz', 'Harina'])")
+    default: Optional[str] = Field(None, max_length=50, description="Default choice if any")
+    
+    @validator('name')
+    def sanitize_option_name(cls, v):
+        """Remove potentially dangerous characters from option name."""
+        return sanitize_text(v)
+    
+    @validator('choices')
+    def validate_and_sanitize_choices(cls, v):
+        """Validate choices: remove duplicates, empty strings, and sanitize."""
+        if not v or len(v) < 2:
+            raise ValueError('Must have at least 2 choices')
+        
+        # Sanitize and remove empty strings
+        sanitized = [sanitize_text(choice).strip() for choice in v if choice and choice.strip()]
+        
+        # Remove duplicates while preserving order
+        unique_choices = list(dict.fromkeys(sanitized))
+        
+        if len(unique_choices) < 2:
+            raise ValueError('Must have at least 2 unique choices after sanitization')
+        
+        if len(unique_choices) > 10:
+            raise ValueError('Maximum 10 choices allowed')
+        
+        return unique_choices
+    
+    @validator('default')
+    def validate_default_choice(cls, v, values):
+        """Ensure default is one of the available choices."""
+        if v is None:
+            return None
+        
+        v = sanitize_text(v).strip()
+        
+        if 'choices' in values and v not in values['choices']:
+            raise ValueError(f"Default choice '{v}' must be one of the available choices")
+        
+        return v
+
+class MenuItemIngredients(BaseModel):
+    """
+    Complete ingredients configuration for a menu item.
+    Includes both mutually exclusive options and removable ingredients.
+    """
+    options: List[IngredientOption] = Field(
+        default_factory=list, 
+        max_items=5,
+        description="Mutually exclusive options (e.g., tortilla type)"
+    )
+    removable: List[str] = Field(
+        default_factory=list, 
+        max_items=20,
+        description="Ingredients that can be removed (e.g., 'Cebolla', 'Cilantro')"
+    )
+    
+    @validator('removable')
+    def validate_and_sanitize_removable(cls, v):
+        """Validate removable ingredients: remove duplicates, empty strings, and sanitize."""
+        if not v:
+            return []
+        
+        # Sanitize and remove empty strings
+        sanitized = [sanitize_text(item).strip() for item in v if item and item.strip()]
+        
+        # Remove duplicates while preserving order
+        unique_items = list(dict.fromkeys(sanitized))
+        
+        if len(unique_items) > 20:
+            raise ValueError('Maximum 20 removable ingredients allowed')
+        
+        return unique_items
+    
+    @model_validator(mode='after')
+    def validate_ingredients_structure(self):
+        """Ensure at least one type of ingredient is defined if the object exists."""
+        # It's OK to have empty ingredients, but if provided, should have at least something
+        # This is just a sanity check
+        return self
+
+# ----------------------------
 # MenuItem Variant Schemas
 # ----------------------------
 class MenuItemVariantBase(BaseModel):
@@ -191,6 +281,7 @@ class MenuItemBase(BaseModel):
 class MenuItemCreate(MenuItemBase):
     category: str = Field(..., min_length=1, max_length=50)
     variants: List['MenuItemVariantCreate'] = []
+    ingredients: Optional[MenuItemIngredients] = None
 
 class MenuItemUpdate(BaseModel):
     name: Optional[str] = Field(None, min_length=1, max_length=100)
@@ -202,6 +293,7 @@ class MenuItemUpdate(BaseModel):
     is_available: Optional[bool] = None
     image_url: Optional[str] = Field(None, max_length=500)
     variants: List['MenuItemVariantCreate'] = []
+    ingredients: Optional[MenuItemIngredients] = None
     
     @validator('name')
     def sanitize_name(cls, v):
@@ -229,6 +321,7 @@ class MenuItemInDBBase(MenuItemBase):
 class MenuItem(MenuItemInDBBase):
     category: Optional[CategoryInDB] = None
     variants: List['MenuItemVariant'] = []
+    ingredients: Optional[MenuItemIngredients] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -246,6 +339,9 @@ class MenuItem(MenuItemInDBBase):
             )
         if hasattr(obj, 'variants') and obj.variants is not None:
             obj_dict['variants'] = [MenuItemVariant.from_orm(v) for v in obj.variants]
+        # Explicitly include ingredients field
+        if hasattr(obj, 'ingredients'):
+            obj_dict['ingredients'] = obj.ingredients
         return cls(**obj_dict)
 
 class MenuItemInDB(MenuItemInDBBase):

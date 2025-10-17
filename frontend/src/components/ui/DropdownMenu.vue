@@ -1,6 +1,7 @@
 <template>
   <div class="relative">
     <button
+      type="button"
       ref="buttonRef"
       @click.stop="toggleMenu"
       class="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors relative z-10"
@@ -163,10 +164,16 @@ watch(internalIsOpen, (newValue) => {
 });
 
 // Handle click outside to close menu
-const handleClickOutside = () => {
+const handleClickOutside = (event: MouseEvent) => {
   if (internalIsOpen.value) {
-    internalIsOpen.value = false;
-    emit('update:modelValue', false);
+    const target = event.target as Node;
+    const isClickInsideButton = buttonRef.value?.contains(target);
+    const isClickInsideMenu = menuRef.value?.contains(target);
+    
+    if (!isClickInsideButton && !isClickInsideMenu) {
+      internalIsOpen.value = false;
+      emit('update:modelValue', false);
+    }
   }
 };
 

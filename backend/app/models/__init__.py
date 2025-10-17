@@ -13,6 +13,7 @@ from .cash_register import (
     TransactionType,
     ReportType
 )
+from .special_note_stats import SpecialNoteStats
 
 # Make models available for import from app.models
 __all__ = [
@@ -26,5 +27,6 @@ __all__ = [
     "CashRegisterReport",
     "SessionStatus",
     "TransactionType",
-    "ReportType"
+    "ReportType",
+    "SpecialNoteStats"
 ]

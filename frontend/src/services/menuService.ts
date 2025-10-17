@@ -15,6 +15,15 @@ export interface Category {
   description?: string;
 }
 
+export interface MenuItemIngredients {
+  options: Array<{
+    name: string;
+    choices: string[];
+    default: string;
+  }>;
+  removable: string[];
+}
+
 export interface MenuItemResponse {
   id: string | number;
   name: string;
@@ -25,6 +34,7 @@ export interface MenuItemResponse {
   is_available?: boolean;
   isAvailable?: boolean;
   image_url?: string;
+  ingredients?: MenuItemIngredients | null;
   variants?: MenuItemVariant[];
   created_at?: string;
   updated_at?: string;
@@ -82,6 +92,7 @@ const normalizeMenuItem = (item: any): MenuItemResponse => {
     is_available: item.is_available ?? item.isAvailable ?? true,
     isAvailable: item.isAvailable ?? item.is_available ?? true,
     image_url: item.image_url ?? item.imageUrl,
+    ingredients: item.ingredients || null,
     variants,
     created_at: item.created_at,
     updated_at: item.updated_at

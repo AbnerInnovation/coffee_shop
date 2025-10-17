@@ -1,5 +1,6 @@
 <template>
   <button
+    type="button"
     @click.stop="handleClick"
     class="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 transition-colors"
     :class="[variantClass, { 'opacity-50 cursor-not-allowed': disabled }]"

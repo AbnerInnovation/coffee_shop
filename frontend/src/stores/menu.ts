@@ -15,10 +15,21 @@ export const useMenuStore = defineStore('menu', () => {
 
   // Helper to normalize menu item data
   function normalizeMenuItem(item: any): MenuItem {
-    // Extract category name whether it's a string or an object
-    const category = typeof item.category === 'string' 
-      ? item.category 
-      : item.category?.name || '';
+    // Preserve category as object if it has id, otherwise use string
+    let category: string | { id: string | number; name: string; description?: string };
+    
+    if (typeof item.category === 'string') {
+      category = item.category;
+    } else if (item.category && typeof item.category === 'object' && 'id' in item.category) {
+      // Preserve the full category object with id
+      category = {
+        id: item.category.id,
+        name: item.category.name || '',
+        description: item.category.description
+      };
+    } else {
+      category = item.category?.name || '';
+    }
       
     return {
       id: item.id,
@@ -29,6 +40,7 @@ export const useMenuStore = defineStore('menu', () => {
       category: category,
       is_available: item.is_available ?? true,
       image_url: item.image_url ?? '',
+      ingredients: item.ingredients || null,
       variants: Array.isArray(item.variants) 
         ? item.variants.map((v: any) => ({
             id: v.id,
@@ -62,7 +74,12 @@ export const useMenuStore = defineStore('menu', () => {
     error.value = null;
     try {
       const response = await menuService.getMenuItem(id);
-      return normalizeMenuItem(response);
+      console.log('🔍 Raw response from API:', response);
+      console.log('🔍 Response.ingredients:', response.ingredients);
+      const normalized = normalizeMenuItem(response);
+      console.log('🔍 After normalizeMenuItem:', normalized);
+      console.log('🔍 Normalized.ingredients:', normalized.ingredients);
+      return normalized;
     } catch (err: any) {
       const message = err.response?.data?.message || err.message || `Failed to fetch menu item ${id}`;
       error.value = message;

@@ -4,6 +4,9 @@ import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } fro
 import { XMarkIcon, PlusIcon, ArrowPathIcon, TrashIcon, ExclamationTriangleIcon, PencilIcon } from '@heroicons/vue/24/outline';
 import type { MenuItem, MenuItemVariant, CategoryForm } from '@/types/menu';
 import { useMenuStore } from '@/stores/menu';
+import IngredientsManager, { type MenuItemIngredients } from './IngredientsManager.vue';
+import DropdownMenu from '@/components/ui/DropdownMenu.vue';
+import DropdownMenuItem from '@/components/ui/DropdownMenuItem.vue';
 import * as menuService from '@/services/menuService';
 import { useToast } from '@/composables/useToast';
 import { useI18n } from 'vue-i18n';
@@ -58,6 +61,7 @@ type FormData = {
   category: string | CategoryForm;
   is_available: boolean;
   image_url: string;
+  ingredients: MenuItemIngredients | null;
   variants: Array<{
     id?: string | number;
     name: string;
@@ -76,6 +80,7 @@ const formData = ref<FormData>({
   category: '',
   is_available: true,
   image_url: '',
+  ingredients: null,
   variants: []
 });
 
@@ -90,6 +95,7 @@ if (props.menuItem) {
     category: menuItem.category || '',
     is_available: menuItem.is_available ?? true,
     image_url: menuItem.image_url || '',
+    ingredients: (menuItem as any).ingredients || null,
     variants: (menuItem.variants || []).map(variant => ({
       id: variant.id,
       name: variant.name,
@@ -102,6 +108,7 @@ if (props.menuItem) {
 
 const showVariantForm = ref(false);
 const editingVariantIndex = ref<number | null>(null);
+const variantMenus = ref<Record<string, boolean>>({});
 // Define variant form type
 type VariantForm = {
   id?: string | number;
@@ -129,6 +136,19 @@ const isFormValid = computed(() => {
   );
 });
 
+// Store category ID separately for IngredientsManager
+const categoryIdForIngredients = ref<number | string | undefined>(undefined);
+
+// Computed to get category name for display
+const categoryName = computed(() => {
+  if (typeof formData.value.category === 'string') {
+    return formData.value.category;
+  } else if (formData.value.category && typeof formData.value.category === 'object') {
+    return formData.value.category.name;
+  }
+  return '';
+});
+
 // Load categories when component mounts
 onMounted(async () => {
   try {
@@ -142,15 +162,27 @@ onMounted(async () => {
       
       // Update form data with the menu item
       formData.value = {
-        ...item,
+        name: item.name || '',
+        description: item.description || '',
+        price: item.price || 0,
+        discount_price: item.discount_price,
         category: normalizedCategory || '',
-        isAvailable: item.isAvailable ?? item.is_available ?? true,
-        imageUrl: item.imageUrl ?? item.image_url ?? '',
+        is_available: item.is_available ?? true,
+        image_url: item.image_url || '',
+        ingredients: item.ingredients || null,
         variants: (item.variants || []).map(v => ({
-          ...v,
-          isAvailable: v.isAvailable ?? v.is_available ?? true
+          id: v.id,
+          name: v.name,
+          price: v.price,
+          discount_price: v.discount_price,
+          is_available: v.is_available ?? true
         }))
       };
+      
+      // Extract category ID for IngredientsManager
+      if (typeof item.category === 'object' && item.category && 'id' in item.category) {
+        categoryIdForIngredients.value = item.category.id;
+      }
       
       // Ensure the current category is in the categories list
       if (normalizedCategory && !menuStore.categories.includes(normalizedCategory)) {
@@ -502,8 +534,17 @@ defineExpose({
         </label>
       </div>
 
+      <!-- Ingredients Section -->
+      <div class="border-t border-gray-200 dark:border-gray-700 pt-6 mt-6">
+        <IngredientsManager 
+          v-model="formData.ingredients"
+          :category-id="categoryIdForIngredients"
+          :current-item-id="props.menuItem?.id"
+        />
+      </div>
+
       <!-- Variants Section -->
-      <div class="border-t border-gray-200 pt-4">
+      <div class="border-t border-gray-200 dark:border-gray-700 pt-4 mt-6">
         <div class="flex items-center justify-between">
           <h3 class="text-sm font-medium text-gray-700">{{ t('app.forms.variants') }}</h3>
           <button @click="handleAddVariant" type="button" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
@@ -551,22 +592,24 @@ defineExpose({
                 {{ t('app.status.unavailable') }}
               </span>
             </div>
-            <div class="flex space-x-2">
-              <button
-                type="button"
-                class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300"
-                @click="editVariant(index)"
-              >
-                <span class="sr-only">{{ t('app.forms.edit') }}</span>
-                <PencilIcon class="h-4 w-4" />
-              </button>
-              <button
-                type="button"
-                class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
-                @click="handleRemoveVariant(index)"
-              >
-                <XMarkIcon class="h-5 w-5" />
-              </button>
+            <div class="flex-shrink-0">
+              <DropdownMenu v-model="variantMenus[`variant-${index}`]" width="sm">
+                <DropdownMenuItem 
+                  :icon="PencilIcon" 
+                  variant="primary"
+                  @click="editVariant(index)"
+                >
+                  {{ t('app.actions.edit') }}
+                </DropdownMenuItem>
+                
+                <DropdownMenuItem 
+                  :icon="TrashIcon" 
+                  variant="danger"
+                  @click="handleRemoveVariant(index)"
+                >
+                  {{ t('app.actions.delete') }}
+                </DropdownMenuItem>
+              </DropdownMenu>
             </div>
           </div>
         </div>

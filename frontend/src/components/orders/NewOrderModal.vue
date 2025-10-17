@@ -208,8 +208,18 @@
                       </div>
                     </div>
 
-                    <!-- Notes -->
+                    <!-- Special Notes Builder -->
                     <div class="mt-4">
+                      <SpecialNotesBuilder
+                        v-if="selectedItem"
+                        :ingredients="(selectedItem as any).ingredients || null"
+                        v-model="itemSpecialNote"
+                        :top-notes="topNotes"
+                      />
+                    </div>
+
+                    <!-- Additional Notes (fallback) -->
+                    <div v-if="!selectedItem || !(selectedItem as any).ingredients" class="mt-4">
                       <label for="item-notes" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{$t('app.views.orders.modals.new_order.special_instructions')}}</label>
                       <textarea id="item-notes" v-model="itemNotes" rows="2"
                         class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
@@ -411,6 +421,7 @@ import { ref, computed, onMounted, defineExpose, nextTick, watch } from 'vue';
 import orderService, { type CreateOrderData, type OrderItem, type Order as OrderType } from '@/services/orderService';
 import menuService from '@/services/menuService';
 import tableService from '@/services/tableService';
+import specialNotesService from '@/services/specialNotesService';
 import { useToast } from '@/composables/useToast';
 import {
   Dialog,
@@ -421,6 +432,8 @@ import {
 } from '@headlessui/vue';
 import { XMarkIcon, PlusIcon, MinusIcon, ChevronDownIcon } from '@heroicons/vue/24/outline';
 import { useI18n } from 'vue-i18n';
+import SpecialNotesBuilder from './SpecialNotesBuilder.vue';
+import type { MenuItemIngredients } from '../menu/IngredientsManager.vue';
 
 // Import types
 import type { MenuItem as MenuItemType } from '@/types/menu';
@@ -448,6 +461,7 @@ interface ExtendedMenuItem extends Omit<MenuItemType, 'variants' | 'id' | 'price
   price: number;
   discount_price?: number;
   category?: { name: string } | string;
+  ingredients?: MenuItemIngredients | null;
 }
 
 interface OrderItemWithDetails {
@@ -497,6 +511,8 @@ const form = ref({
 const selectedItem = ref<ExtendedMenuItem | null>(null);
 const selectedVariant = ref<MenuItemVariant | null>(null);
 const itemNotes = ref('');
+const itemSpecialNote = ref('');
+const topNotes = ref<string[]>([]);
 const showItemModal = ref(false);
 const isEditMode = computed(() => { 
   return (props.mode || 'create') === 'edit' && !!props.orderToEdit});
@@ -632,7 +648,8 @@ const fetchMenuItems = async () => {
         category: item.category || { name: 'Uncategorized' },
         is_available: item.is_available !== false,
         has_variants: variants.length > 0,
-        variants: variants.length > 0 ? variants : undefined
+        variants: variants.length > 0 ? variants : undefined,
+        ingredients: item.ingredients || null
       };
 
       return menuItem;
@@ -756,13 +773,16 @@ function addItemWithDetails() {
     return sameMenuItem && sameVariant;
   });
 
+  // Use itemSpecialNote if available, otherwise fallback to itemNotes
+  const finalNote = itemSpecialNote.value || itemNotes.value;
+
   if (existingItemIndex !== -1) {
     // Update existing item
     const existingItem = form.value.items[existingItemIndex];
     existingItem.quantity += 1;
     existingItem.unit_price = itemPrice; // Update the unit_price in case discount changed
-    if (itemNotes.value) {
-      existingItem.notes = itemNotes.value;
+    if (finalNote) {
+      existingItem.notes = finalNote;
     }
   } else {
     // Add new item
@@ -771,7 +791,7 @@ function addItemWithDetails() {
       variant_id: variantId,
       quantity: 1,
       unit_price: itemPrice,
-      notes: itemNotes.value || '',
+      notes: finalNote || '',
       special_instructions: ''
     });
   }
@@ -779,6 +799,7 @@ function addItemWithDetails() {
   // Reset the form
   showItemModal.value = false;
   itemNotes.value = '';
+  itemSpecialNote.value = '';
 }
 
 function increaseQuantity(item: OrderItemWithDetails) {
@@ -916,6 +937,16 @@ async function createOrder() {
       };
 
       const created = await orderService.createOrder(orderPayload);
+      
+      // Record special note usage for analytics (non-blocking)
+      validItems.forEach(item => {
+        if (item.notes) {
+          specialNotesService.recordSpecialNoteUsage(item.notes).catch(err => {
+            console.error('Failed to record note usage:', err);
+          });
+        }
+      });
+      
       emit('order-created', created);
       emit('close');
       showSuccess(t('app.views.orders.messages.order_created_success') as string);
@@ -939,6 +970,7 @@ async function selectItem(menuItem: ExtendedMenuItem) {
     selectedVariant.value = null;
   }
   itemNotes.value = '';
+  itemSpecialNote.value = '';
 
   // Scroll to the bottom to show the options after the next DOM update
   await nextTick();
@@ -976,11 +1008,23 @@ const publicApi: PublicApi = {
 // Expose the public API
 defineExpose(publicApi);
 
+// Load top special notes
+async function loadTopNotes() {
+  try {
+    const notes = await specialNotesService.getTopSpecialNotes(3);
+    topNotes.value = notes.map(n => n.note_text);
+  } catch (error) {
+    console.error('Error loading top notes:', error);
+    // Non-critical, continue without top notes
+  }
+}
+
 // Initialize component
 onMounted(async () => {
   await Promise.all([
     fetchMenuItems(),
-    fetchAvailableTables()
+    fetchAvailableTables(),
+    loadTopNotes()
   ]);
 
   // Initialize form items after menu is loaded

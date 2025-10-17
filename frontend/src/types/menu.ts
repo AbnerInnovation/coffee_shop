@@ -16,6 +16,15 @@ export type CategoryForm = {
   description?: string;
 };
 
+export interface MenuItemIngredients {
+  options: Array<{
+    name: string;
+    choices: string[];
+    default: string;
+  }>;
+  removable: string[];
+}
+
 export interface MenuItem {
   id?: string | number;
   name: string;
@@ -25,6 +34,7 @@ export interface MenuItem {
   discount_price?: number;
   image_url?: string;
   is_available?: boolean;
+  ingredients?: MenuItemIngredients | null;
   variants?: MenuItemVariant[];
   created_at?: string;
   updated_at?: string;
@@ -38,6 +48,7 @@ export interface MenuItemFormData {
   discount_price?: number | string;
   is_available: boolean;
   image_url?: string;
+  ingredients?: MenuItemIngredients | null;
   variants: MenuItemVariant[];
 }
 

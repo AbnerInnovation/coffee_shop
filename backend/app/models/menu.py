@@ -1,4 +1,4 @@
-from sqlalchemy import String, Float, Boolean, Integer, ForeignKey, Column, Text, and_
+from sqlalchemy import String, Float, Boolean, Integer, ForeignKey, Column, Text, and_, JSON
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from typing import List, Optional, TYPE_CHECKING
 from .base import BaseModel
@@ -42,6 +42,10 @@ class MenuItem(BaseModel):
     category_id: Mapped[int] = mapped_column(ForeignKey("categories.id"), nullable=False)
     is_available: Mapped[bool] = mapped_column(default=True, nullable=False)
     image_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    
+    # Ingredients configuration (JSON field for flexibility and performance)
+    # Structure: {"options": [{"name": str, "choices": [str], "default": str}], "removable": [str]}
+    ingredients: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True, default=None)
     
     # Multi-tenant support
     restaurant_id: Mapped[int] = mapped_column(Integer, ForeignKey("restaurants.id"), nullable=False, index=True)

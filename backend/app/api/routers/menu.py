@@ -384,6 +384,59 @@ async def delete_variant(
             detail=str(e) or "Error deleting variant"
         )
 
+# ----------------------------
+# Special Notes Endpoints
+# ----------------------------
+from app.services.special_notes import SpecialNotesService
+from app.schemas.special_notes import TopSpecialNote, TrackNoteRequest, TrackNoteResponse
+
+@router.get("/special-notes/top", response_model=List[TopSpecialNote])
+async def get_top_special_notes(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+    restaurant: Restaurant = Depends(get_current_restaurant)
+):
+    """
+    Get the top 3 most frequently used special notes for quick access.
+    Results are cached for 1 hour for optimal performance.
+    """
+    try:
+        top_notes = SpecialNotesService.get_top_notes(restaurant.id, db)
+        return top_notes
+    except Exception as e:
+        logger.error(f"Error fetching top special notes: {str(e)}")
+        # Return empty list on error instead of failing
+        return []
+
+@router.post("/special-notes/track", response_model=TrackNoteResponse)
+async def track_special_note(
+    request: TrackNoteRequest,
+    current_user: User = Depends(get_current_active_user),
+    restaurant: Restaurant = Depends(get_current_restaurant)
+):
+    """
+    Track usage of a special note for statistics.
+    Updates are batched for performance (actual DB write happens in background).
+    """
+    try:
+        # Async tracking - accumulates in memory
+        SpecialNotesService.track_note_async(restaurant.id, request.note_text)
+        return TrackNoteResponse(success=True)
+    except Exception as e:
+        logger.error(f"Error tracking special note: {str(e)}")
+        # Don't fail the request if tracking fails
+        return TrackNoteResponse(success=False, message="Failed to track note")
+
+@router.get("/special-notes/cache-stats")
+async def get_cache_stats(
+    current_user: User = Depends(get_current_active_user)
+):
+    """
+    Get cache statistics for monitoring (admin only).
+    """
+    check_admin(current_user)
+    return SpecialNotesService.get_cache_stats()
+
 # Include the routers
 router.include_router(items_router)
 router.include_router(variants_router)

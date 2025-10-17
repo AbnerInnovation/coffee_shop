@@ -128,14 +128,8 @@
         "kitchen": "Ver Cocina",
         "add_menu_item": "Agregar Artículo"
       }
-    }
-  ,
-  "validation": {
-    "name_required": "El nombre es obligatorio",
-    "category_required": "La categoría es obligatoria",
-    "price_non_negative": "El precio no puede ser negativo"
-  },
-  "views": {
+    },
+    "views": {
     "cashRegister": {
       "title": "Caja Registradora",
       "subtitle": "Gestionar sesiones de caja registradora y transacciones",
@@ -414,6 +408,17 @@
           "confirm": "Sí, cancelar orden",
           "cancel": "No, mantener"
         }
+      },
+      "special_notes": {
+        "title": "Notas Especiales",
+        "clear": "Limpiar",
+        "popular": "Notas populares",
+        "customize": "Personalizar",
+        "remove": "Quitar ingredientes",
+        "custom": "Nota personalizada",
+        "custom_placeholder": "Escribe una nota personalizada aquí...",
+        "preview": "Vista previa",
+        "empty": "Sin notas especiales"
       }
     },
     "tables": {
@@ -555,8 +560,34 @@
         "empty": "Sin categorías por ahora",
         "confirm_delete_title": "Eliminar categoría",
         "confirm_delete_message_named": "¿Seguro que deseas eliminar la categoría \"{name}\"? Esta acción no se puede deshacer."
+      },
+      "ingredients": {
+        "title": "Ingredientes y Opciones",
+        "clear_all": "Limpiar todo",
+        "copy_from_product": "Copiar ingredientes de otro producto",
+        "select_product": "Selecciona un producto...",
+        "copy_hint": "Los ingredientes se copiarán automáticamente al seleccionar un producto",
+        "options_title": "Opciones de Ingredientes",
+        "options_description": "Define opciones personalizables (ej: tipo de tortilla, salsa, etc.). Mínimo 2 opciones por ingrediente.",
+        "choices": "Opciones",
+        "default": "Por defecto",
+        "option_name_placeholder": "Nombre de la opción (ej: Tortilla)",
+        "choices_placeholder": "Opciones separadas por comas (ej: Maíz, Harina, Integral)",
+        "default_placeholder": "Opción por defecto (opcional, se usa la primera si está vacío)",
+        "add_option": "Agregar Opción",
+        "removable_title": "Ingredientes Removibles",
+        "removable_description": "Ingredientes que los clientes pueden pedir sin ellos (ej: Cebolla, Cilantro).",
+        "removable_placeholder": "Nombre del ingrediente",
+        "add": "Agregar",
+        "info_title": "Nota",
+        "info_text": "Estas configuraciones permiten a los clientes personalizar sus pedidos. Las opciones aparecerán como botones de selección, y los ingredientes removibles como opciones de 'Sin...'."
       }
     }
-  }
+    }
+  },
+  "validation": {
+    "name_required": "El nombre es obligatorio",
+    "category_required": "La categoría es obligatoria",
+    "price_non_negative": "El precio no puede ser negativo"
   }
 }

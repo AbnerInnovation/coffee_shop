@@ -176,6 +176,13 @@ def update_menu_item(
 
     data = menu_item.dict(exclude_unset=True)
     variants_data = data.pop("variants", None)
+    
+    # Debug: Log ingredients data
+    import logging
+    logger = logging.getLogger(__name__)
+    logger.info(f"Updating menu item {item_id} with data: {data}")
+    if 'ingredients' in data:
+        logger.info(f"Ingredients data: {data['ingredients']}")
 
     # --- Handle category update ---
     if "category" in data:
