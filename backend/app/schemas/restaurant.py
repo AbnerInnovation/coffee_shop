@@ -2,37 +2,68 @@ from .base import PhoenixBaseModel as BaseModel
 from pydantic import Field, validator
 from typing import Optional
 from datetime import datetime
-import re
+from ..core.validators import (
+    sanitize_text,
+    validate_subdomain,
+    validate_phone,
+    validate_email,
+    validate_url,
+    validate_currency_code
+)
 
 
 class RestaurantBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=100)
     subdomain: str = Field(..., min_length=1, max_length=50)
-    description: Optional[str] = None
-    address: Optional[str] = None
-    phone: Optional[str] = None
-    email: Optional[str] = None
-    logo_url: Optional[str] = None
-    timezone: str = Field(default="America/Phoenix")
+    description: Optional[str] = Field(None, max_length=1000)
+    address: Optional[str] = Field(None, max_length=500)
+    phone: Optional[str] = Field(None, max_length=20)
+    email: Optional[str] = Field(None, max_length=100)
+    logo_url: Optional[str] = Field(None, max_length=500)
+    timezone: str = Field(default="America/Phoenix", max_length=100)
     currency: str = Field(default="USD", max_length=3)
     tax_rate: Optional[float] = Field(default=0.0, ge=0, le=1)
     is_active: bool = True
     
+    @validator('name')
+    def sanitize_name(cls, v):
+        """Remove potentially dangerous characters from restaurant name."""
+        return sanitize_text(v)
+    
     @validator('subdomain')
-    def validate_subdomain(cls, v):
+    def validate_subdomain_field(cls, v):
         """Validate subdomain format (alphanumeric and hyphens only)"""
-        if not re.match(r'^[a-z0-9-]+$', v):
-            raise ValueError('Subdomain must contain only lowercase letters, numbers, and hyphens')
-        if v.startswith('-') or v.endswith('-'):
-            raise ValueError('Subdomain cannot start or end with a hyphen')
-        return v
+        return validate_subdomain(v)
+    
+    @validator('description')
+    def sanitize_description(cls, v):
+        """Remove potentially dangerous characters from description."""
+        return sanitize_text(v)
+    
+    @validator('address')
+    def sanitize_address(cls, v):
+        """Remove potentially dangerous characters from address."""
+        return sanitize_text(v)
+    
+    @validator('phone')
+    def validate_phone_field(cls, v):
+        """Validate phone number format."""
+        return validate_phone(v)
     
     @validator('email')
-    def validate_email(cls, v):
-        """Basic email validation"""
-        if v and '@' not in v:
-            raise ValueError('Invalid email format')
-        return v
+    def validate_email_field(cls, v):
+        """Enhanced email validation"""
+        return validate_email(v)
+    
+    @validator('logo_url')
+    def validate_logo_url(cls, v):
+        """Validate logo URL format."""
+        return validate_url(v, 'Logo URL')
+    
+    @validator('currency')
+    def validate_currency_field(cls, v):
+        """Validate currency code format."""
+        return validate_currency_code(v)
 
 
 class RestaurantCreate(RestaurantBase):
@@ -43,15 +74,50 @@ class RestaurantCreate(RestaurantBase):
 class RestaurantUpdate(BaseModel):
     """Schema for updating a restaurant (all fields optional)"""
     name: Optional[str] = Field(None, min_length=1, max_length=100)
-    description: Optional[str] = None
-    address: Optional[str] = None
-    phone: Optional[str] = None
-    email: Optional[str] = None
-    logo_url: Optional[str] = None
-    timezone: Optional[str] = None
+    description: Optional[str] = Field(None, max_length=1000)
+    address: Optional[str] = Field(None, max_length=500)
+    phone: Optional[str] = Field(None, max_length=20)
+    email: Optional[str] = Field(None, max_length=100)
+    logo_url: Optional[str] = Field(None, max_length=500)
+    timezone: Optional[str] = Field(None, max_length=100)
     currency: Optional[str] = Field(None, max_length=3)
     tax_rate: Optional[float] = Field(None, ge=0, le=1)
     is_active: Optional[bool] = None
+    
+    @validator('name')
+    def sanitize_name(cls, v):
+        """Remove potentially dangerous characters from restaurant name."""
+        return sanitize_text(v)
+    
+    @validator('description')
+    def sanitize_description(cls, v):
+        """Remove potentially dangerous characters from description."""
+        return sanitize_text(v)
+    
+    @validator('address')
+    def sanitize_address(cls, v):
+        """Remove potentially dangerous characters from address."""
+        return sanitize_text(v)
+    
+    @validator('phone')
+    def validate_phone_field(cls, v):
+        """Validate phone number format."""
+        return validate_phone(v)
+    
+    @validator('email')
+    def validate_email_field(cls, v):
+        """Enhanced email validation"""
+        return validate_email(v)
+    
+    @validator('logo_url')
+    def validate_logo_url(cls, v):
+        """Validate logo URL format."""
+        return validate_url(v, 'Logo URL')
+    
+    @validator('currency')
+    def validate_currency_field(cls, v):
+        """Validate currency code format."""
+        return validate_currency_code(v)
 
 
 class Restaurant(RestaurantBase):

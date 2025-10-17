@@ -105,35 +105,90 @@ def get_order(db, order_id):
 
 ---
 
-### 4. ✅ Input Validation & Sanitization
+### 4. Input Validation & Sanitization
 
 **Files Modified:**
-- `backend/app/schemas/order.py` - Enhanced validation
+- `backend/app/schemas/order.py` - Enhanced validation 
+- `backend/app/schemas/menu.py` - Enhanced validation 
+- `backend/app/schemas/table.py` - Enhanced validation 
+- `backend/app/schemas/cash_register.py` - Enhanced validation 
+- `backend/app/schemas/user.py` - Enhanced validation 
+- `backend/app/schemas/restaurant.py` - Enhanced validation 
+
+**Files Created:**
+- `backend/INPUT_VALIDATION_SANITIZATION_SUMMARY.md` - Complete documentation
 
 **What was added:**
-- Field-level validation with constraints:
-  - `menu_item_id`: Must be >= 1
-  - `quantity`: Must be 1-100
-  - `special_instructions`: Max 200 characters
-  - `customer_name`: Max 100 characters, only valid characters
-  - `notes`: Max 500 characters
-  - `items`: 1-50 items per order
 
-- Input sanitization:
-  - Removes HTML tags from text fields
-  - Removes `<>` characters to prevent XSS
-  - Validates customer names (letters, spaces, hyphens, apostrophes)
-  - Strips whitespace
+**All Schemas - Common Patterns:**
+- HTML tag removal from all text fields: `re.sub(r'<[^>]*>', '', v)`
+- Dangerous character removal: `re.sub(r'[<>]', '', v)`
+- Whitespace trimming on all inputs
+- Field length constraints on all text fields
+- Numeric range validation with reasonable limits
+
+**Order Schema:**
+- `menu_item_id`, `variant_id`: >= 1
+- `quantity`: 1-100
+- `special_instructions`: Max 200 chars, sanitized
+- `customer_name`: Max 100 chars, character validation (letters, spaces, hyphens, apostrophes)
+- `notes`: Max 500 chars, sanitized
+- `items`: 1-50 items per order
+
+**Menu Schema:**
+- `name`: 1-100 chars, sanitized
+- `description`: Max 1000 chars, sanitized
+- `price`: > 0, <= 999,999.99
+- `discount_price`: >= 0, <= 999,999.99, must be < regular price
+- `image_url`: Max 500 chars, URL format validation (http:// or https://)
+- Category names: 1-50 chars, sanitized
+
+**Table Schema:**
+- `number`: 1-9999
+- `capacity`: 1-100
+- `location`: 1-50 chars, alphanumeric + spaces, hyphens, periods only
+
+**Cash Register Schema:**
+- `user_id`, `cashier_id`, `session_id`: >= 1
+- `balance`, `amount`: -999,999,999.99 to 999,999,999.99
+- `notes`: Max 1000 chars, sanitized
+- `description`: Max 500 chars, sanitized
+- `category`: Max 100 chars, sanitized
+- Denominations: 0-10,000 per denomination type
+
+**User Schema:**
+- `full_name`: 1-100 chars, character validation (letters, spaces, hyphens, apostrophes, Spanish characters)
+- `password`: 8-100 chars with strength requirements:
+  - At least one uppercase letter
+  - At least one lowercase letter
+  - At least one digit
+  - At least one special character
+- `email`: EmailStr validation (Pydantic built-in)
+
+**Restaurant Schema:**
+- `name`: 1-100 chars, sanitized
+- `subdomain`: 3-50 chars, lowercase alphanumeric + hyphens, no leading/trailing hyphens
+- `description`: Max 1000 chars, sanitized
+- `address`: Max 500 chars, sanitized
+- `phone`: Max 20 chars, 10-15 digits validation
+- `email`: Max 100 chars, email format validation
+- `logo_url`: Max 500 chars, URL format validation
+- `currency`: 3-letter ISO code (e.g., USD, EUR, MXN)
+- `tax_rate`: 0-1 (0% to 100%)
 
 **Impact:**
-- 🔒 Prevents XSS and injection attacks
-- ✅ Ensures data quality
-- 🚫 Blocks malformed requests early
-- 📊 Better data consistency
+- Prevents XSS and injection attacks across ALL endpoints
+- Ensures data quality and consistency
+- Blocks malformed requests early (before database)
+- Better data integrity across all entities
+- Comprehensive security coverage (6/6 schemas protected)
+- Strong password requirements for user accounts
+- URL and email format validation
+- Reasonable numeric limits prevent overflow attacks
 
 ---
 
-### 5. ✅ Security Headers Middleware
+### 5. Security Headers Middleware
 
 **Files Created/Modified:**
 - `backend/app/middleware/security.py` - Security headers middleware

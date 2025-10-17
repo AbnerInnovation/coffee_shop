@@ -36,8 +36,20 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         # response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
         
         # Content Security Policy - restrict resource loading
-        # Adjust this based on your frontend needs
-        response.headers["Content-Security-Policy"] = "default-src 'self'"
+        # Relax CSP for API documentation endpoints (/docs, /redoc)
+        if request.url.path in ["/docs", "/redoc", "/openapi.json"]:
+            # Allow Swagger UI and ReDoc to load resources from CDNs
+            response.headers["Content-Security-Policy"] = (
+                "default-src 'self'; "
+                "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
+                "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
+                "img-src 'self' data: blob: https://cdn.jsdelivr.net https://fastapi.tiangolo.com; "
+                "font-src 'self' data: https://cdn.jsdelivr.net; "
+                "connect-src 'self' https://cdn.jsdelivr.net;"
+            )
+        else:
+            # Strict CSP for API endpoints
+            response.headers["Content-Security-Policy"] = "default-src 'self'"
         
         # Referrer policy - control referrer information
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"

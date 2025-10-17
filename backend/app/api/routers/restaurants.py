@@ -15,12 +15,12 @@ router = APIRouter(
 )
 
 
-def require_admin(current_user: User = Depends(get_current_active_user)) -> User:
-    """Dependency to ensure user is an admin"""
-    if current_user.role != UserRole.ADMIN:
+def require_sysadmin(current_user: User = Depends(get_current_active_user)) -> User:
+    """Dependency to ensure user is a system administrator"""
+    if current_user.role != UserRole.SYSADMIN:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only administrators can perform this action"
+            detail="Only system administrators can perform this action"
         )
     return current_user
 
@@ -47,10 +47,10 @@ async def list_restaurants(
     skip: int = 0,
     limit: int = 100,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_admin)
+    current_user: User = Depends(require_sysadmin)
 ):
     """
-    List all restaurants (admin only).
+    List all restaurants (sysadmin only).
     """
     restaurants = db.query(RestaurantModel).offset(skip).limit(limit).all()
     return restaurants
@@ -60,10 +60,10 @@ async def list_restaurants(
 async def get_restaurant(
     restaurant_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_admin)
+    current_user: User = Depends(require_sysadmin)
 ):
     """
-    Get a specific restaurant by ID (admin only).
+    Get a specific restaurant by ID (sysadmin only).
     """
     restaurant = db.query(RestaurantModel).filter(RestaurantModel.id == restaurant_id).first()
     
@@ -80,10 +80,10 @@ async def get_restaurant(
 async def create_restaurant(
     restaurant: RestaurantCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_admin)
+    current_user: User = Depends(require_sysadmin)
 ):
     """
-    Create a new restaurant (admin only).
+    Create a new restaurant (sysadmin only).
     """
     # Check if subdomain already exists
     existing = db.query(RestaurantModel).filter(
@@ -110,10 +110,10 @@ async def update_restaurant(
     restaurant_id: int,
     restaurant: RestaurantUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_admin)
+    current_user: User = Depends(require_sysadmin)
 ):
     """
-    Update a restaurant (admin only).
+    Update a restaurant (sysadmin only).
     """
     db_restaurant = db.query(RestaurantModel).filter(RestaurantModel.id == restaurant_id).first()
     
@@ -138,10 +138,10 @@ async def update_restaurant(
 async def delete_restaurant(
     restaurant_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_admin)
+    current_user: User = Depends(require_sysadmin)
 ):
     """
-    Delete a restaurant (admin only).
+    Delete a restaurant (sysadmin only).
     Warning: This will cascade delete all related data!
     """
     db_restaurant = db.query(RestaurantModel).filter(RestaurantModel.id == restaurant_id).first()

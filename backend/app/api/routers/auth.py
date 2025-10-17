@@ -65,7 +65,9 @@ async def login_for_access_token(
         raise ValidationError("Account is inactive. Please contact support.")
     
     # Define scopes based on user role
-    if user.role == UserRole.ADMIN:
+    if user.role == UserRole.SYSADMIN:
+        scopes = ["read:items", "write:items", "read:orders", "write:orders", "admin", "sysadmin", "manage:restaurants"]
+    elif user.role == UserRole.ADMIN:
         scopes = ["read:items", "write:items", "read:orders", "write:orders", "admin"]
     elif user.role == UserRole.STAFF:
         scopes = ["read:items", "write:items", "read:orders", "write:orders"]

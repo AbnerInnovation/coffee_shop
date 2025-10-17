@@ -4,6 +4,7 @@ from pydantic import Field, validator
 from .base import PhoenixBaseModel as BaseModel
 from enum import Enum
 import json
+from ..core.validators import sanitize_text
 
 if TYPE_CHECKING:
     from .user import User
@@ -33,20 +34,30 @@ class ReportType(str, Enum):
     PAYMENT_BREAKDOWN = "payment_breakdown"
 
 class CashRegisterSessionBase(BaseModel):
-    opened_by_user_id: int
-    cashier_id: Optional[int] = None
-    initial_balance: float = Field(..., ge=0)
-    notes: Optional[str] = None
+    opened_by_user_id: int = Field(..., ge=1, description="User ID must be positive")
+    cashier_id: Optional[int] = Field(None, ge=1, description="Cashier ID must be positive")
+    initial_balance: float = Field(..., ge=0, le=999999999.99, description="Initial balance must be non-negative and reasonable")
+    notes: Optional[str] = Field(None, max_length=1000)
+    
+    @validator('notes')
+    def sanitize_notes(cls, v):
+        """Remove potentially dangerous characters from notes."""
+        return sanitize_text(v)
 
 class CashRegisterSessionCreate(CashRegisterSessionBase):
     pass
 
 class CashRegisterSessionUpdate(BaseModel):
     closed_at: Optional[datetime] = None
-    final_balance: Optional[float] = Field(None, ge=0)
-    actual_balance: Optional[float] = Field(None, ge=0)
+    final_balance: Optional[float] = Field(None, ge=0, le=999999999.99)
+    actual_balance: Optional[float] = Field(None, ge=0, le=999999999.99)
     status: Optional[SessionStatus] = None
-    notes: Optional[str] = None
+    notes: Optional[str] = Field(None, max_length=1000)
+    
+    @validator('notes')
+    def sanitize_notes(cls, v):
+        """Remove potentially dangerous characters from notes."""
+        return sanitize_text(v)
 
 class CashRegisterSessionInDBBase(CashRegisterSessionBase):
     id: int
@@ -63,21 +74,41 @@ class CashRegisterSessionInDBBase(CashRegisterSessionBase):
 
 class CashTransactionBase(BaseModel):
     transaction_type: TransactionType
-    amount: float = Field(..., description="Positive for inflows, negative for outflows")
-    description: Optional[str] = None
-    order_id: Optional[int] = None
-    created_by_user_id: int
+    amount: float = Field(..., ge=-999999999.99, le=999999999.99, description="Positive for inflows, negative for outflows")
+    description: Optional[str] = Field(None, max_length=500)
+    order_id: Optional[int] = Field(None, ge=1)
+    created_by_user_id: int = Field(..., ge=1)
     payment_method: Optional[PaymentMethod] = None
-    category: Optional[str] = None
+    category: Optional[str] = Field(None, max_length=100)
+    
+    @validator('description')
+    def sanitize_description(cls, v):
+        """Remove potentially dangerous characters from description."""
+        return sanitize_text(v)
+    
+    @validator('category')
+    def sanitize_category(cls, v):
+        """Remove potentially dangerous characters from category."""
+        return sanitize_text(v)
 
 class CashTransactionCreate(CashTransactionBase):
     session_id: int
 
 class CashTransactionUpdate(BaseModel):
-    amount: Optional[float] = None
-    description: Optional[str] = None
+    amount: Optional[float] = Field(None, ge=-999999999.99, le=999999999.99)
+    description: Optional[str] = Field(None, max_length=500)
     payment_method: Optional[PaymentMethod] = None
-    category: Optional[str] = None
+    category: Optional[str] = Field(None, max_length=100)
+    
+    @validator('description')
+    def sanitize_description(cls, v):
+        """Remove potentially dangerous characters from description."""
+        return sanitize_text(v)
+    
+    @validator('category')
+    def sanitize_category(cls, v):
+        """Remove potentially dangerous characters from category."""
+        return sanitize_text(v)
 
 class CashTransactionInDBBase(CashTransactionBase):
     id: int
@@ -135,11 +166,16 @@ class CashRegisterReport(CashRegisterReportInDBBase):
 
 # Additional models for reports
 class CashDifferenceReport(BaseModel):
-    session_id: int
-    expected_balance: float
-    actual_balance: float
-    difference: float
-    notes: Optional[str] = None
+    session_id: int = Field(..., ge=1)
+    expected_balance: float = Field(..., ge=-999999999.99, le=999999999.99)
+    actual_balance: float = Field(..., ge=-999999999.99, le=999999999.99)
+    difference: float = Field(..., ge=-999999999.99, le=999999999.99)
+    notes: Optional[str] = Field(None, max_length=1000)
+    
+    @validator('notes')
+    def sanitize_notes(cls, v):
+        """Remove potentially dangerous characters from notes."""
+        return sanitize_text(v)
 
 class DailySummaryReport(BaseModel):
     session_id: int
@@ -161,9 +197,19 @@ class PaymentBreakdownReport(BaseModel):
     other_payments: float
 
 class ExpenseCreate(BaseModel):
-    amount: float = Field(..., gt=0, description="Expense amount (always positive)")
-    description: str = Field(..., min_length=1, description="Description of the expense")
-    category: Optional[str] = Field(None, description="Expense category (e.g., supplies, utilities, maintenance)")
+    amount: float = Field(..., gt=0, le=999999999.99, description="Expense amount (always positive)")
+    description: str = Field(..., min_length=1, max_length=500, description="Description of the expense")
+    category: Optional[str] = Field(None, max_length=100, description="Expense category (e.g., supplies, utilities, maintenance)")
+    
+    @validator('description')
+    def sanitize_description(cls, v):
+        """Remove potentially dangerous characters from description."""
+        return sanitize_text(v)
+    
+    @validator('category')
+    def sanitize_category(cls, v):
+        """Remove potentially dangerous characters from category."""
+        return sanitize_text(v)
 
 # Denomination counting models
 class DenominationCount(BaseModel):
@@ -174,20 +220,20 @@ class DenominationCount(BaseModel):
     - Coins: $20, $10, $5, $2, $1, $0.50
     """
     # MXN Bills
-    bills_1000: int = Field(default=0, ge=0, description="$1000 MXN bills")
-    bills_500: int = Field(default=0, ge=0, description="$500 MXN bills")
-    bills_200: int = Field(default=0, ge=0, description="$200 MXN bills")
-    bills_100: int = Field(default=0, ge=0, description="$100 MXN bills")
-    bills_50: int = Field(default=0, ge=0, description="$50 MXN bills")
-    bills_20: int = Field(default=0, ge=0, description="$20 MXN bills")
+    bills_1000: int = Field(default=0, ge=0, le=10000, description="$1000 MXN bills")
+    bills_500: int = Field(default=0, ge=0, le=10000, description="$500 MXN bills")
+    bills_200: int = Field(default=0, ge=0, le=10000, description="$200 MXN bills")
+    bills_100: int = Field(default=0, ge=0, le=10000, description="$100 MXN bills")
+    bills_50: int = Field(default=0, ge=0, le=10000, description="$50 MXN bills")
+    bills_20: int = Field(default=0, ge=0, le=10000, description="$20 MXN bills")
     
     # MXN Coins
-    coins_20: int = Field(default=0, ge=0, description="$20 MXN coins")
-    coins_10: int = Field(default=0, ge=0, description="$10 MXN coins")
-    coins_5: int = Field(default=0, ge=0, description="$5 MXN coins")
-    coins_2: int = Field(default=0, ge=0, description="$2 MXN coins")
-    coins_1: int = Field(default=0, ge=0, description="$1 MXN coins")
-    coins_50_cent: int = Field(default=0, ge=0, description="$0.50 MXN coins")
+    coins_20: int = Field(default=0, ge=0, le=10000, description="$20 MXN coins")
+    coins_10: int = Field(default=0, ge=0, le=10000, description="$10 MXN coins")
+    coins_5: int = Field(default=0, ge=0, le=10000, description="$5 MXN coins")
+    coins_2: int = Field(default=0, ge=0, le=10000, description="$2 MXN coins")
+    coins_1: int = Field(default=0, ge=0, le=10000, description="$1 MXN coins")
+    coins_50_cent: int = Field(default=0, ge=0, le=10000, description="$0.50 MXN coins")
 
     def calculate_total(self) -> float:
         """Calculate total amount from MXN denominations."""

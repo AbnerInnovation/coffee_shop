@@ -1,5 +1,5 @@
 from .base import PhoenixBaseModel as BaseModel
-from pydantic import Field, ConfigDict
+from pydantic import Field, ConfigDict, validator
 from enum import Enum
 from typing import Optional, List, Union, Any
 from datetime import datetime
@@ -7,13 +7,24 @@ from ..models.menu import Category as CategoryModel
 from pydantic_core import core_schema
 from pydantic import GetJsonSchemaHandler
 from pydantic.json_schema import JsonSchemaValue
+from ..core.validators import sanitize_text, validate_url, validate_discount_price
 
 # ----------------------------
 # Category Schemas
 # ----------------------------
 class CategoryBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=50)
-    description: Optional[str] = None
+    description: Optional[str] = Field(None, max_length=500)
+    
+    @validator('name')
+    def sanitize_name(cls, v):
+        """Remove potentially dangerous characters from category name."""
+        return sanitize_text(v)
+    
+    @validator('description')
+    def sanitize_description(cls, v):
+        """Remove potentially dangerous characters from description."""
+        return sanitize_text(v)
 
 class CategoryCreate(CategoryBase):
     pass
@@ -95,18 +106,35 @@ class Category(str, Enum):
 # ----------------------------
 class MenuItemVariantBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=50)
-    price: float = Field(...)
-    discount_price: Optional[float] = None
+    price: float = Field(..., le=999999.99, description="Price must be positive and less than 1 million")
+    discount_price: Optional[float] = Field(None, ge=0, le=999999.99, description="Discount price must be non-negative")
     is_available: bool = True
+    
+    @validator('name')
+    def sanitize_name(cls, v):
+        """Remove potentially dangerous characters from variant name."""
+        return sanitize_text(v)
+    
+    @validator('discount_price')
+    def validate_discount_price_field(cls, v, values):
+        """Ensure discount price is less than regular price."""
+        if 'price' in values:
+            return validate_discount_price(v, values['price'])
+        return v
 
 class MenuItemVariantCreate(MenuItemVariantBase):
     pass
 
 class MenuItemVariantUpdate(BaseModel):
     name: Optional[str] = Field(None, min_length=1, max_length=50)
-    price: Optional[float] = Field(...)
-    discount_price: Optional[float] = None
+    price: Optional[float] = Field(None, le=999999.99)
+    discount_price: Optional[float] = Field(None, ge=0, le=999999.99)
     is_available: Optional[bool] = None
+    
+    @validator('name')
+    def sanitize_name(cls, v):
+        """Remove potentially dangerous characters from variant name."""
+        return sanitize_text(v)
 
 class MenuItemVariantInDBBase(MenuItemVariantBase):
     id: int
@@ -127,16 +155,38 @@ class MenuItemVariantInDB(MenuItemVariantInDBBase):
 # ----------------------------
 class MenuItemBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=100)
-    description: Optional[str] = None
-    price: float = Field(...)
-    discount_price: Optional[float] = None
+    description: Optional[str] = Field(None, max_length=1000)
+    price: float = Field(..., le=999999.99, description="Price must be positive and less than 1 million")
+    discount_price: Optional[float] = Field(None, ge=0, le=999999.99, description="Discount price must be non-negative")
     is_available: bool = True
-    image_url: Optional[str] = None
+    image_url: Optional[str] = Field(None, max_length=500)
 
     model_config = ConfigDict(
         use_enum_values=True,
         json_encoders={Category: lambda v: v.value if v else None}
     )
+    
+    @validator('name')
+    def sanitize_name(cls, v):
+        """Remove potentially dangerous characters from menu item name."""
+        return sanitize_text(v)
+    
+    @validator('description')
+    def sanitize_description(cls, v):
+        """Remove potentially dangerous characters from description."""
+        return sanitize_text(v)
+    
+    @validator('image_url')
+    def validate_image_url(cls, v):
+        """Validate image URL format."""
+        return validate_url(v, 'Image URL')
+    
+    @validator('discount_price')
+    def validate_discount_price_field(cls, v, values):
+        """Ensure discount price is less than regular price."""
+        if 'price' in values:
+            return validate_discount_price(v, values['price'])
+        return v
 
 class MenuItemCreate(MenuItemBase):
     category: str = Field(..., min_length=1, max_length=50)
@@ -144,14 +194,29 @@ class MenuItemCreate(MenuItemBase):
 
 class MenuItemUpdate(BaseModel):
     name: Optional[str] = Field(None, min_length=1, max_length=100)
-    description: Optional[str] = None
-    price: Optional[float] = Field(None)
-    discount_price: Optional[float] = None
-    category_id: Optional[int] = None
+    description: Optional[str] = Field(None, max_length=1000)
+    price: Optional[float] = Field(None, le=999999.99)
+    discount_price: Optional[float] = Field(None, ge=0, le=999999.99)
+    category_id: Optional[int] = Field(None, ge=1)
     category: Optional[str] = Field(None, min_length=1, max_length=50)
     is_available: Optional[bool] = None
-    image_url: Optional[str] = None
+    image_url: Optional[str] = Field(None, max_length=500)
     variants: List['MenuItemVariantCreate'] = []
+    
+    @validator('name')
+    def sanitize_name(cls, v):
+        """Remove potentially dangerous characters from menu item name."""
+        return sanitize_text(v)
+    
+    @validator('description')
+    def sanitize_description(cls, v):
+        """Remove potentially dangerous characters from description."""
+        return sanitize_text(v)
+    
+    @validator('image_url')
+    def validate_image_url(cls, v):
+        """Validate image URL format."""
+        return validate_url(v, 'Image URL')
 
 class MenuItemInDBBase(MenuItemBase):
     id: int

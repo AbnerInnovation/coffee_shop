@@ -29,7 +29,7 @@ class Restaurant(BaseModel):
     timezone: Mapped[str] = mapped_column(String(50), default="America/Los_Angeles", nullable=False)
     
     # Business settings
-    currency: Mapped[str] = mapped_column(String(3), default="USD", nullable=False)
+    currency: Mapped[str] = mapped_column(String(3), default="MXN", nullable=False)
     tax_rate: Mapped[Optional[float]] = mapped_column(nullable=True, default=0.0)
     
     # Relationships

@@ -3,7 +3,7 @@ from pydantic import Field, validator
 from datetime import datetime
 from typing import List, Optional
 from enum import Enum
-import re
+from ..core.validators import sanitize_text, validate_name
 
 class OrderStatus(str, Enum):
     PENDING = "pending"
@@ -28,11 +28,7 @@ class OrderItemBase(BaseModel):
     @validator('special_instructions')
     def sanitize_instructions(cls, v):
         """Remove potentially dangerous characters from special instructions."""
-        if v:
-            # Remove HTML tags and script content
-            v = re.sub(r'<[^>]*>', '', v)
-            v = re.sub(r'[<>]', '', v)
-        return v.strip() if v else v
+        return sanitize_text(v)
 
 class OrderItemCreate(OrderItemBase):
     pass
@@ -90,11 +86,7 @@ class OrderBase(BaseModel):
     @validator('notes')
     def sanitize_notes(cls, v):
         """Remove potentially dangerous characters from notes."""
-        if v:
-            # Remove HTML tags and script content
-            v = re.sub(r'<[^>]*>', '', v)
-            v = re.sub(r'[<>]', '', v)
-        return v.strip() if v else v
+        return sanitize_text(v)
 
 class OrderCreate(OrderBase):
     customer_name: Optional[str] = Field(None, max_length=100)
@@ -103,11 +95,7 @@ class OrderCreate(OrderBase):
     @validator('customer_name')
     def validate_customer_name(cls, v):
         """Validate customer name contains only allowed characters."""
-        if v:
-            # Allow letters, spaces, hyphens, apostrophes, and periods
-            if not re.match(r'^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s\-\'.]+$', v):
-                raise ValueError('Customer name contains invalid characters')
-        return v.strip() if v else v
+        return validate_name(v, 'Customer name') if v else v
 
 class OrderUpdate(BaseModel):
     table_id: Optional[int] = None

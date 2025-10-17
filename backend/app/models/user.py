@@ -10,6 +10,7 @@ if TYPE_CHECKING:
 
 # Define UserRole enum
 class UserRole(str, PyEnum):
+    SYSADMIN = "sysadmin"
     ADMIN = "admin"
     STAFF = "staff"
     CUSTOMER = "customer"
@@ -21,7 +22,7 @@ class User(BaseModel):
     hashed_password = Column(String(255), nullable=False)
     full_name = Column(String(100), nullable=False)
     role = Column(
-        SQLEnum(UserRole, name='user_role'), 
+        SQLEnum(UserRole, name='user_role', values_callable=lambda obj: [e.value for e in obj]), 
         default=UserRole.STAFF, 
         nullable=False
     )
