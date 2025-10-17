@@ -1,7 +1,7 @@
 {
   "name": "Cloud Restaurant Admin",
-  "short_name": "Restaurant",
-  "description": "Coffee Shop Administration System",
+  "short_name": "Cloud Restaurant",
+  "description": "Administra tu restaurante con Cloud Restaurant",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
@@ -67,9 +67,9 @@
   "screenshots": [],
   "shortcuts": [
     {
-      "name": "New Order",
-      "short_name": "Order",
-      "description": "Create a new order",
+      "name": "Nueva Orden",
+      "short_name": "Orden",
+      "description": "Crear una nueva orden",
       "url": "/orders?action=new",
       "icons": [
         {
@@ -79,10 +79,22 @@
       ]
     },
     {
-      "name": "Tables",
-      "short_name": "Tables",
-      "description": "View tables",
+      "name": "Mesas",
+      "short_name": "Mesas",
+      "description": "Ver mesas",
       "url": "/tables",
+      "icons": [
+        {
+          "src": "/icons/icon-96x96.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Caja",
+      "short_name": "Caja",
+      "description": "Ver caja",
+      "url": "/cash-register",
       "icons": [
         {
           "src": "/icons/icon-96x96.png",
