@@ -64,7 +64,7 @@
                   </div>
                   
                   <div v-if="item.special_instructions" class="mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded text-xs sm:text-sm text-blue-700 dark:text-blue-300">
-                    <span class="font-medium">{{ t('app.views.kitchen.note') }}</span> {{ item.special_instructions }}
+                     {{ item.special_instructions }}
                   </div>
                 </div>
                 

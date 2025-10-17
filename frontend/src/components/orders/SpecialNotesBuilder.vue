@@ -37,6 +37,8 @@ onMounted(() => {
       defaultSelections[option.name] = option.default;
     });
     selections.value.optionSelections = defaultSelections;
+    // Build the initial note with default selections
+    buildSpecialNote();
   }
 });
 
@@ -44,11 +46,11 @@ onMounted(() => {
 const buildSpecialNote = () => {
   const parts: string[] = [];
 
-  // Add option selections (only if different from default)
+  // Add option selections (always include, even if default)
   if (props.ingredients?.options) {
     props.ingredients.options.forEach(option => {
       const selected = selections.value.optionSelections[option.name];
-      if (selected && selected !== option.default) {
+      if (selected) {
         parts.push(`${option.name}: ${selected}`);
       }
     });
