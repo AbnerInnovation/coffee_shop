@@ -101,6 +101,18 @@
           "sizes": "96x96"
         }
       ]
+    },
+    {
+      "name": "Planes",
+      "short_name": "Planes",
+      "description": "Ver planes",
+      "url": "/plans",
+      "icons": [
+        {
+          "src": "/icons/icon-96x96.png",
+          "sizes": "96x96"
+        }
+      ]
     }
   ]
 }
