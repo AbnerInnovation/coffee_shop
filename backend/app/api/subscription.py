@@ -291,7 +291,7 @@ def upgrade_subscription(
                 db.refresh(subscription)
         else:
             # Create new subscription
-            subscription = service.create_subscription(
+            subscription = service.create_paid_subscription(
                 restaurant_id=restaurant.id,
                 plan_id=plan_id,
                 billing_cycle=billing_cycle
