@@ -156,7 +156,19 @@ async function saveCategory() {
     }
     categoryModalOpen.value = false;
   } catch (err: any) {
-    showError(err?.message || (t('app.messages.submit_failed') as string));
+    // Handle subscription limit errors (403)
+    if (err?.response?.status === 403) {
+      const message = err.response?.data?.detail || err.response?.data?.error?.message || 'Límite de suscripción alcanzado. Por favor mejora tu plan.';
+      showError(message);
+      // Don't close modal, let user see the error
+      return;
+    }
+    
+    const errorMessage = err?.response?.data?.detail || 
+                        err?.response?.data?.error?.message ||
+                        err?.message || 
+                        (t('app.messages.submit_failed') as string);
+    showError(errorMessage);
   }
 }
 

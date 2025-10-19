@@ -10,6 +10,7 @@ logger = logging.getLogger(__name__)
 from app.db.base import get_db
 from app.models.menu import MenuItem as MenuItemModel
 from app.schemas.menu import MenuItem, MenuItemCreate, MenuItemUpdate
+from app.middleware.subscription_limits import SubscriptionLimitsMiddleware
 from app.services.menu import (
     get_menu_items,
     get_menu_item,
@@ -93,6 +94,9 @@ async def create_menu_item(
     Requires admin privileges.
     """
     check_admin(current_user)
+    
+    # Check subscription limit for menu items
+    SubscriptionLimitsMiddleware.check_menu_item_limit(db, restaurant.id)
 
     if not menu_item.category:
         raise HTTPException(

@@ -8,6 +8,7 @@ if TYPE_CHECKING:
     from .menu import MenuItem, Category
     from .order import Order
     from .table import Table
+    from .restaurant_subscription import RestaurantSubscription
 
 class Restaurant(BaseModel):
     """
@@ -38,6 +39,7 @@ class Restaurant(BaseModel):
     categories: Mapped[List["Category"]] = relationship("Category", back_populates="restaurant", cascade="all, delete-orphan")
     orders: Mapped[List["Order"]] = relationship("Order", back_populates="restaurant", cascade="all, delete-orphan")
     tables: Mapped[List["Table"]] = relationship("Table", back_populates="restaurant", cascade="all, delete-orphan")
+    subscription: Mapped[Optional["RestaurantSubscription"]] = relationship("RestaurantSubscription", back_populates="restaurant", uselist=False)
     
     def __repr__(self) -> str:
         return f"<Restaurant(id={self.id}, name='{self.name}', subdomain='{self.subdomain}')>"

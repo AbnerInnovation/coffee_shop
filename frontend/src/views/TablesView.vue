@@ -234,6 +234,16 @@
       @close="showOrderModal = false"
       @order-created="handleOrderCreated"
     />
+
+    <!-- Limit Reached Modal -->
+    <LimitReachedModal
+      :is-open="showLimitModal"
+      :message="limitMessage"
+      :current-usage="currentUsage ?? undefined"
+      :max-limit="maxLimit ?? undefined"
+      resource-type="tables"
+      @close="showLimitModal = false"
+    />
     </div>
   </MainLayout>
 </template>
@@ -246,6 +256,7 @@ import PageHeader from '@/components/layout/PageHeader.vue';
 import { PlusIcon, XMarkIcon, XCircleIcon, PencilIcon, TrashIcon, CheckCircleIcon, XCircleIcon as XCircleIconOutline, ShoppingBagIcon } from '@heroicons/vue/24/outline';
 import tableService from '@/services/tableService';
 import NewOrderModal from '@/components/orders/NewOrderModal.vue';
+import LimitReachedModal from '@/components/subscription/LimitReachedModal.vue';
 import BaseButton from '@/components/ui/BaseButton.vue';
 import DropdownMenu from '@/components/ui/DropdownMenu.vue';
 import DropdownMenuItem from '@/components/ui/DropdownMenuItem.vue';
@@ -382,9 +393,30 @@ const saveTable = async () => {
     }
     await fetchTables();
     closeModal();
-  } catch (err) {
+  } catch (err: any) {
     console.error('Error saving table:', err);
-    error.value = `Failed to ${editingTable.value !== null ? 'update' : 'create'} table. Please try again.`;
+    
+    // Handle subscription limit errors (403)
+    if (err?.response?.status === 403) {
+      const errorDetail = err.response?.data?.detail || err.response?.data?.error?.message || 'Límite de suscripción alcanzado. Por favor mejora tu plan.';
+      
+      // Extract usage info if available
+      limitMessage.value = errorDetail;
+      
+      // Try to parse usage from error message (e.g., "Maximum 10 tables allowed")
+      const match = errorDetail.match(/Maximum (\d+)/);
+      if (match) {
+        maxLimit.value = parseInt(match[1]);
+        currentUsage.value = tables.value.length;
+      }
+      
+      showLimitModal.value = true;
+      closeModal();
+    } else {
+      error.value = err?.response?.data?.detail || 
+                   err?.response?.data?.error?.message ||
+                   `Failed to ${editingTable.value !== null ? 'update' : 'create'} table. Please try again.`;
+    }
   }
 };
 
@@ -397,6 +429,12 @@ const selectTable = (table) => {
 // Order modal state
 const showOrderModal = ref(false);
 const selectedTableForOrder = ref<Table | null>(null);
+
+// Limit reached modal state
+const showLimitModal = ref(false);
+const limitMessage = ref('');
+const currentUsage = ref<number | null>(null);
+const maxLimit = ref<number | null>(null);
 
 // Open order modal for a table (NewOrderModal)
 const openOrderModal = (table) => {

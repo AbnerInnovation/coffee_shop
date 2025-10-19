@@ -10,6 +10,7 @@ from ...services.user import get_current_active_user
 from ...services.menu import get_categories, get_category, create_category, update_category, delete_category
 from ...schemas.menu import CategoryCreate, CategoryUpdate, CategoryInDB
 from ...core.exceptions import ResourceNotFoundError, ValidationError, ConflictError
+from ...middleware.subscription_limits import SubscriptionLimitsMiddleware
 
 router = APIRouter(
     prefix="/categories",
@@ -37,6 +38,9 @@ async def create_menu_category(
     """
     Create a new menu category.
     """
+    # Check subscription limit for categories
+    SubscriptionLimitsMiddleware.check_category_limit(db, restaurant.id)
+    
     try:
         return create_category(db, category, restaurant_id=restaurant.id)
     except ValueError as e:

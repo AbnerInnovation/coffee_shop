@@ -12,6 +12,7 @@ from ...models.restaurant import Restaurant
 from ...core.dependencies import get_current_restaurant
 from ...services.user import get_current_active_user, UserRole
 from ...core.exceptions import ResourceNotFoundError, ConflictError, ValidationError
+from ...middleware.subscription_limits import SubscriptionLimitsMiddleware
 
 router = APIRouter(
     prefix="/tables",
@@ -56,6 +57,9 @@ async def create_table(
     Create a new table.
     Requires admin privileges.
     """
+    # Check subscription limit for tables
+    SubscriptionLimitsMiddleware.check_table_limit(db, restaurant.id)
+    
     db_table = table_service.get_table_by_number(db, number=table.number, restaurant_id=restaurant.id)
     if db_table:
         raise ConflictError(

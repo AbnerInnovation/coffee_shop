@@ -50,6 +50,17 @@
         </div>
       </div>
     </div>
+
+    <!-- Limit Reached Modal -->
+    <LimitReachedModal
+      :is-open="showLimitModal"
+      :message="limitModalData.message"
+      :current-usage="limitModalData.currentUsage"
+      :max-limit="limitModalData.maxLimit"
+      :current-plan="limitModalData.currentPlan"
+      limit-type="menu_items"
+      @close="showLimitModal = false"
+    />
   </MainLayout>
 </template>
 
@@ -62,6 +73,7 @@ import { useToast } from '@/composables/useToast';
 import MainLayout from '@/components/layout/MainLayout.vue';
 import MenuList from '@/components/menu/MenuList.vue';
 import MenuItemForm from '@/components/menu/MenuItemForm.vue';
+import LimitReachedModal from '@/components/subscription/LimitReachedModal.vue';
 import type { MenuItem } from '@/types/menu';
 import { ArrowLeftIcon } from '@heroicons/vue/20/solid';
 
@@ -78,6 +90,15 @@ const formLoading = ref<boolean>(false);
 const formErrors = ref<Record<string, string>>({});
 const currentItem = ref<MenuItem | null>(null);
 const selectedCategoryId = ref<number | null>(null);
+
+// Limit reached modal
+const showLimitModal = ref(false);
+const limitModalData = ref<{
+  message: string;
+  currentUsage?: number;
+  maxLimit?: number;
+  currentPlan?: string;
+}>({ message: '' });
 
 // Fetch menu items on component mount
 onMounted(async () => {
@@ -184,10 +205,32 @@ async function handleSubmit(formData: Omit<MenuItem, 'id'>) {
     currentItem.value = null;
   } catch (err: unknown) {
     const error = err as any;
+    
+    // Handle subscription limit errors (403)
+    if (error?.response?.status === 403) {
+      const message = error.response?.data?.detail || error.response?.data?.error?.message || 'Límite de suscripción alcanzado';
+      
+      // Extract usage info from error if available
+      const usageMatch = message.match(/(\d+)\s*\/\s*(\d+)/);
+      
+      limitModalData.value = {
+        message,
+        currentUsage: usageMatch ? parseInt(usageMatch[1]) : undefined,
+        maxLimit: usageMatch ? parseInt(usageMatch[2]) : undefined,
+        currentPlan: 'Starter' // TODO: Get from subscription API
+      };
+      
+      showLimitModal.value = true;
+      // Don't close the form, let user see the modal
+      return;
+    }
+    
     if (error?.response?.data?.errors) {
       formErrors.value = error.response.data.errors;
     } else {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to save menu item';
+      const errorMessage = error?.response?.data?.detail || 
+                          error?.response?.data?.error?.message ||
+                          (error instanceof Error ? error.message : 'Failed to save menu item');
       showError(errorMessage);
     }
   } finally {

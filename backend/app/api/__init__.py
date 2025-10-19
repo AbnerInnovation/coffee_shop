@@ -9,6 +9,8 @@ api_router = APIRouter()
 
 # Import and include all routers here
 from .routers import menu, auth, user, categories, tables, orders, cash_register, restaurants
+from . import admin
+from .subscription import router as subscription_router
 
 # Include all routers
 api_router.include_router(auth.router)
@@ -19,3 +21,5 @@ api_router.include_router(user.router)
 api_router.include_router(tables.router)
 api_router.include_router(orders.router)
 api_router.include_router(cash_register.router)  # New cash register router
+api_router.include_router(subscription_router)  # Subscription management
+api_router.include_router(admin.router)  # SysAdmin management

@@ -66,12 +66,27 @@ api.interceptors.response.use(
       }
     }
     
-    // If we've already tried to refresh or it's not a 401/403 error
-    if (error.response?.status === 401 || error.response?.status === 403) {
+    // If we've already tried to refresh or it's a 401 error
+    if (error.response?.status === 401) {
       // Clear auth and redirect to login
       authService.logout();
       window.location.href = '/login';
     }
+    
+    // For 403 errors, check if it's a subscription limit error
+    // Subscription limit errors should NOT logout the user
+    if (error.response?.status === 403) {
+      const responseData = error.response?.data as any;
+      const errorMessage = responseData?.detail || responseData?.error?.message || '';
+      
+      // Only logout if it's NOT a subscription limit error
+      if (!errorMessage.toLowerCase().includes('subscription') && 
+          !errorMessage.toLowerCase().includes('limit')) {
+        authService.logout();
+        window.location.href = '/login';
+      }
+    }
+    
     return Promise.reject(error);
   }
 );

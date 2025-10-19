@@ -114,7 +114,8 @@ export const useMenuStore = defineStore('menu', () => {
     } catch (err: any) {
       const message = err.response?.data?.message || err.message || 'Failed to create menu item';
       error.value = message;
-      throw new Error(message);
+      // Re-throw the original error to preserve status code and details
+      throw err;
     } finally {
       loading.value = false;
     }
@@ -154,7 +155,8 @@ export const useMenuStore = defineStore('menu', () => {
     } catch (err: any) {
       const message = err.response?.data?.message || err.message || `Failed to update menu item ${id}`;
       error.value = message;
-      throw new Error(message);
+      // Re-throw the original error to preserve status code and details
+      throw err;
     } finally {
       loading.value = false;
     }

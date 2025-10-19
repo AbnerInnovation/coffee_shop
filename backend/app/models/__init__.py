@@ -14,6 +14,11 @@ from .cash_register import (
     ReportType
 )
 from .special_note_stats import SpecialNoteStats
+from .subscription_plan import SubscriptionPlan, PlanTier
+from .subscription_addon import SubscriptionAddon, AddonType, AddonCategory
+from .restaurant_subscription import RestaurantSubscription, SubscriptionStatus, BillingCycle
+from .restaurant_addon import RestaurantAddon
+from .restaurant import Restaurant
 
 # Make models available for import from app.models
 __all__ = [
@@ -28,5 +33,10 @@ __all__ = [
     "SessionStatus",
     "TransactionType",
     "ReportType",
-    "SpecialNoteStats"
+    "SpecialNoteStats",
+    "Restaurant",
+    "SubscriptionPlan", "PlanTier",
+    "SubscriptionAddon", "AddonType", "AddonCategory",
+    "RestaurantSubscription", "SubscriptionStatus", "BillingCycle",
+    "RestaurantAddon"
 ]

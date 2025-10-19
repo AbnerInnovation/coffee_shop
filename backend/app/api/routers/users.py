@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
 from typing import List
 
@@ -6,6 +6,7 @@ from ...db.base import get_db
 from ...models.user import User as UserModel
 from ...schemas.user import User, UserCreate, UserUpdate
 from ...services import user as user_service
+from ...middleware.subscription_limits import SubscriptionLimitsMiddleware
 
 router = APIRouter(
     prefix="/users",
@@ -27,12 +28,18 @@ async def read_users(
 
 @router.post("/", response_model=User, status_code=status.HTTP_201_CREATED)
 async def create_user(
-    user: UserCreate, 
+    user: UserCreate,
+    request: Request,
     db: Session = Depends(get_db)
 ) -> User:
     """
     Create a new user.
     """
+    # Check subscription limit for this user role
+    restaurant_id = getattr(request.state, 'restaurant_id', None)
+    if restaurant_id:
+        SubscriptionLimitsMiddleware.check_user_limit(db, restaurant_id, user.role)
+    
     db_user = user_service.get_user_by_email(db, email=user.email)
     if db_user:
         raise HTTPException(

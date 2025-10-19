@@ -84,6 +84,7 @@ async def create_restaurant(
 ):
     """
     Create a new restaurant (sysadmin only).
+    Automatically creates a 14-day trial subscription.
     """
     # Check if subdomain already exists
     existing = db.query(RestaurantModel).filter(
@@ -101,6 +102,17 @@ async def create_restaurant(
     db.add(db_restaurant)
     db.commit()
     db.refresh(db_restaurant)
+    
+    # Automatically create trial subscription
+    try:
+        from app.services.subscription_service import SubscriptionService
+        subscription_service = SubscriptionService(db)
+        trial_subscription = subscription_service.create_trial_subscription(db_restaurant.id)
+        print(f"✅ Trial subscription created for restaurant '{db_restaurant.name}' (ID: {db_restaurant.id})")
+        print(f"   Trial expires: {trial_subscription.trial_end_date}")
+    except Exception as e:
+        # Log error but don't fail restaurant creation
+        print(f"⚠️ Warning: Could not create trial subscription for restaurant {db_restaurant.id}: {e}")
     
     return db_restaurant
 

@@ -10,6 +10,7 @@ import DropdownMenuItem from '@/components/ui/DropdownMenuItem.vue';
 import * as menuService from '@/services/menuService';
 import { useToast } from '@/composables/useToast';
 import { useI18n } from 'vue-i18n';
+import { subscriptionService } from '@/services/subscriptionService';
 
 const props = defineProps<{
   menuItem?: MenuItem;
@@ -33,6 +34,9 @@ const isDeleting = ref(false);
 const isSavingVariant = ref(false);
 const { t } = useI18n();
 
+// Check if ingredients module is available
+const hasIngredientsModule = ref(false);
+
 
 // Helper function to normalize category input
 const normalizeCategory = (category: string | CategoryForm | undefined): string => {
@@ -42,8 +46,21 @@ const normalizeCategory = (category: string | CategoryForm | undefined): string 
   return '';
 };
 
+// Check subscription features
+const checkSubscriptionFeatures = async () => {
+  try {
+    const usage = await subscriptionService.getUsage();
+    if (usage.has_subscription && usage.limits) {
+      hasIngredientsModule.value = usage.limits.has_ingredients_module || false;
+    }
+  } catch (error) {
+    console.error('Error checking subscription features:', error);
+  }
+};
+
 // Initialize categories on component mount
 onMounted(() => {
+  checkSubscriptionFeatures();
   if (menuStore.categories.length === 0) {
     menuStore.getCategories().catch((err: unknown) => {
       console.error('Failed to load categories:', err);
@@ -534,13 +551,43 @@ defineExpose({
         </label>
       </div>
 
-      <!-- Ingredients Section -->
-      <div class="border-t border-gray-200 dark:border-gray-700 pt-6 mt-6">
+      <!-- Ingredients Section (only if module is available) -->
+      <div v-if="hasIngredientsModule" class="border-t border-gray-200 dark:border-gray-700 pt-6 mt-6">
         <IngredientsManager 
           v-model="formData.ingredients"
           :category-id="categoryIdForIngredients"
           :current-item-id="props.menuItem?.id"
         />
+      </div>
+      
+      <!-- Ingredients Module Locked Message -->
+      <div v-else class="border-t border-gray-200 dark:border-gray-700 pt-6 mt-6">
+        <div class="bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+          <div class="flex items-start">
+            <div class="flex-shrink-0">
+              <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+            </div>
+            <div class="ml-3 flex-1">
+              <h3 class="text-sm font-medium text-gray-900 dark:text-white">
+                {{ t('app.subscription.ingredients_module') }}
+              </h3>
+              <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                {{ t('app.subscription.module_locked_message') }}
+              </p>
+              <router-link 
+                to="/subscription"
+                class="mt-3 inline-flex items-center text-sm font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
+              >
+                {{ t('app.subscription.upgrade') }}
+                <svg class="ml-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+              </router-link>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Variants Section -->

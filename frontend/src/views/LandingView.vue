@@ -65,6 +65,52 @@
             </div>
         </div>
 
+        <!-- Trial Banner -->
+        <div class="mb-16 relative overflow-hidden rounded-3xl bg-gradient-to-r from-indigo-600 to-purple-600 p-8 md:p-12 text-white shadow-2xl">
+            <div class="absolute top-0 right-0 -mt-4 -mr-4 w-72 h-72 bg-white/10 rounded-full blur-3xl"></div>
+            <div class="absolute bottom-0 left-0 -mb-4 -ml-4 w-72 h-72 bg-white/10 rounded-full blur-3xl"></div>
+            <div class="relative z-10 text-center max-w-3xl mx-auto">
+                <div class="inline-flex items-center justify-center px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full text-sm font-semibold mb-4">
+                    🎉 Prueba Gratuita Disponible
+                </div>
+                <h2 class="text-3xl md:text-4xl font-extrabold mb-4">
+                    14 Días Gratis - Sin Tarjeta de Crédito
+                </h2>
+                <p class="text-lg md:text-xl text-white/90 mb-6 max-w-2xl mx-auto">
+                    Acceso completo al Plan Pro durante 2 semanas. Configura tu restaurante, prueba todas las funciones y decide después.
+                </p>
+                <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                    <span to="/register" 
+                        class="inline-flex items-center px-8 py-4 bg-white text-indigo-600 font-bold rounded-xl hover:bg-gray-100 transition-all shadow-lg hover:shadow-xl hover:scale-105">
+                        Solicita Prueba Gratuita a traves del boton de whatsapp
+                        <!-- <svg class="ml-2 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+                        </svg> -->
+                    </span>
+                </div>
+                <div class="mt-6 flex flex-wrap justify-center gap-6 text-sm text-white/80">
+                    <div class="flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                        </svg>
+                        35 mesas
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                        </svg>
+                        400 productos
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                        </svg>
+                        Reportes avanzados
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="mb-12">
             <h2 class="sr-only">Vistas previas</h2>
             <div class="space-y-16">
@@ -139,13 +185,33 @@
             </p>
         </div>
 
-        <div class="mt-8">
-            <h3 class="font-semibold mb-2 text-slate-900 dark:text-slate-100">Notas</h3>
-            <ul class="text-sm text-gray-600 dark:text-slate-400 space-y-1">
-                <li>• Todos los precios son en moneda local y pueden ajustarse según integraciones adicionales.</li>
-                <li>• Soporte básico por WhatsApp incluido en todos los planes (primer mes gratis).</li>
-                <li>• Contratos anuales pueden negociarse con descuentos adicionales.</li>
-            </ul>
+        <div class="mt-8 space-y-6">
+            <div class="bg-indigo-50 dark:bg-indigo-950/30 p-6 rounded-2xl border border-indigo-200 dark:border-indigo-800">
+                <h3 class="font-bold text-indigo-900 dark:text-indigo-100 mb-3 flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                    </svg>
+                    Limitaciones de la Versión de Prueba (14 días)
+                </h3>
+                <ul class="text-sm text-indigo-800 dark:text-indigo-200 space-y-2">
+                    <li>• <strong>Duración:</strong> 14 días calendario desde el registro</li>
+                    <li>• <strong>Límites:</strong> 35 mesas, 400 productos, 9 usuarios totales</li>
+                    <li>• <strong>Funciones:</strong> Acceso completo a Plan Pro (ingredientes, reportes avanzados, cocina)</li>
+                    <li>• <strong>Datos:</strong> Se conservan al actualizar a plan de pago</li>
+                    <li>• <strong>Sin compromiso:</strong> No se requiere tarjeta de crédito</li>
+                </ul>
+            </div>
+
+            <div>
+                <h3 class="font-semibold mb-2 text-slate-900 dark:text-slate-100">Información Adicional</h3>
+                <ul class="text-sm text-gray-600 dark:text-slate-400 space-y-1">
+                    <li>• Todos los precios son en MXN y pueden ajustarse según integraciones adicionales</li>
+                    <li>• Soporte básico por WhatsApp incluido en todos los planes</li>
+                    <li>• <strong>Pago anual: 25% de descuento</strong> (3 meses gratis)</li>
+                    <li>• Descuentos por volumen disponibles para 3+ sucursales (15-35% off)</li>
+                    <li>• Upgrade/downgrade disponible en cualquier momento</li>
+                </ul>
+            </div>
         </div>
     </section>
 </template>
@@ -193,56 +259,69 @@ const highlights = [
 
 const plans = [
     {
+        name: 'starter',
+        title: 'Starter',
+        subtitle: 'Food trucks y cafeterías pequeñas',
+        price: '$399 / mes',
+        features: [
+            '1 admin + 2 meseros',
+            'Hasta 10 mesas',
+            '50 productos en menú',
+            'Módulos: Mesas, Pedidos, Menú, Caja',
+            'Reportes básicos (7 días)',
+        ],
+    },
+    {
         name: 'basic',
         title: 'Básico',
-        subtitle: 'Ideal para negocios pequeños',
-        price: '$600 / mes',
+        subtitle: 'Taquerías y restaurantes pequeños',
+        price: '$699 / mes',
         features: [
-            '1 usuario administrador',
-            '1 usuario mesero',
-            'Módulos: Mesas, Pedidos, Menú, Caja, Cocina',
-            'Reportes básicos',
+            '1 admin + 3 meseros + 1 cocina',
+            'Hasta 20 mesas',
+            '150 productos en menú',
+            'Módulo de Ingredientes incluido 🎁',
+            'Reportes básicos (15 días)',
         ],
     },
     {
         name: 'pro',
         title: 'Pro',
-        subtitle: 'Restaurantes familiares y con crecimiento',
-        price: '$900 / mes',
+        subtitle: 'Restaurantes familiares en crecimiento',
+        price: '$999 / mes',
         highlight: true,
         features: [
-            '1 usuario administrador',
-            '3 usuarios mesero',
-            '1 usuario cajero',
-            '1 usuario cocina',
-            'Módulos básicos + reportes de ventas diarios',
+            '1 admin + 4 meseros + 2 cajeros + 2 cocina',
+            'Hasta 35 mesas',
+            '400 productos en menú',
+            'Ingredientes + Reportes Avanzados incluidos 🎁',
+            '30 min soporte mensual',
         ],
     },
     {
         name: 'business',
         title: 'Business',
-        subtitle: 'Restaurantes con mayor operación',
-        price: '$1,300 / mes',
+        subtitle: 'Restaurantes establecidos',
+        price: '$1,499 / mes',
         features: [
-            '2 usuarios administrador',
-            '6 usuarios mesero',
-            '2 usuarios cocina',
-            '2 usuarios cajero',
-            'Soporte mensual (1h)',
+            '2 admin + 8 meseros + 3 cajeros + 3 cocina',
+            'Hasta 60 mesas',
+            '800 productos en menú',
+            'Todos los módulos incluidos 🎁',
+            '1.5h soporte + prioridad',
         ],
     },
     {
         name: 'enterprise',
         title: 'Enterprise',
-        subtitle: 'Cadenas, franquicias y operaciones grandes',
-        price: '$1,800 / mes',
+        subtitle: 'Cadenas y franquicias',
+        price: '$2,199 / mes',
         features: [
-            '1 usuario dueño',
-            '3 usuarios admin',
-            '9 usuarios mesero',
-            '3 usuarios cocina',
-            '3 usuarios cajero',
-            'Superusuario con visión multi-sucursal',
+            '1 dueño + 4 admin + 15 meseros + 5 cajeros + 5 cocina',
+            'Hasta 150 mesas',
+            'Productos ilimitados',
+            'Multi-sucursal + Gerente de cuenta',
+            '3h soporte prioritario 24/7',
         ],
     },
 ]
@@ -288,27 +367,32 @@ const previewSlides = [
 
 const addons = [
     {
-        title: 'Capacitación',
-        description: 'Sesiones en vivo y materiales.',
+        title: 'Módulos Extra',
+        description: 'Agrega funcionalidades adicionales',
         items: [
-            'Small: $900 (sesión de setup)',
-            'Medium: $1,300',
-            'Large: $1,800',
+            'Inventario: $199/mes',
+            'Reportes Avanzados: $149/mes',
+            'Módulo de Cocina (solo Starter): $99/mes',
         ],
     },
     {
-        title: 'Carga inicial de menú',
-        description: 'Importación y configuración inicial.',
-        price: '$300 (una vez)',
+        title: 'Recursos Adicionales',
+        description: 'Incrementa los límites de tu plan',
+        items: [
+            'Usuario Extra: $79/mes',
+            '10 Mesas Extra: $39/mes',
+            '100 Productos Extra: $79/mes',
+        ],
     },
     {
-        title: 'Módulos extra (mensual)',
-        description: '',
+        title: 'Servicios One-Time',
+        description: 'Pago único',
         items: [
-            'Reportes avanzados: $200 / mes',
-            'Inventario: $300 / mes',
-            'Usuarios extra: $100 / usuario / mes',
-            'Diseño personalizado: $400 / mes (o $700 setup + $100/mes mantenimiento)',
+            'Capacitación Small: $900',
+            'Capacitación Medium: $1,300',
+            'Capacitación Large: $1,800',
+            'Carga de Menú: $300',
+            'Diseño Personalizado: desde $400/mes',
         ],
     },
 ]

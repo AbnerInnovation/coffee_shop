@@ -216,6 +216,7 @@ import NewOrderModal from '@/components/orders/NewOrderModal.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import { useI18n } from 'vue-i18n';
 import { useTheme } from '@/composables/useTheme';
+import { subscriptionService } from '@/services/subscriptionService';
 
 const authStore = useAuthStore();
 const route = useRoute();
@@ -224,15 +225,45 @@ const { showSuccess } = useToast();
 const { t } = useI18n();
 const { isDark, toggleTheme } = useTheme();
 
-const navigation = ref([
-  { name: 'dashboard', labelKey: 'app.nav.dashboard', to: '/', current: false },
-  { name: 'menu', labelKey: 'app.nav.menu', to: '/menu', current: false },
-  { name: 'categories', labelKey: 'app.nav.categories', to: '/categories', current: false },
-  { name: 'orders', labelKey: 'app.nav.orders', to: '/orders', current: false },
-  { name: 'kitchen', labelKey: 'app.nav.kitchen', to: '/kitchen', current: false },
-  { name: 'tables', labelKey: 'app.nav.tables', to: '/tables', current: false },
-  { name: 'cash-register', labelKey: 'app.nav.cash_register', to: '/cash-register', current: false },
-]);
+// Subscription features
+const subscriptionFeatures = ref({
+  has_kitchen_module: false,
+  has_ingredients_module: false,
+  has_inventory_module: false,
+  has_advanced_reports: false
+});
+
+const navigation = computed(() => {
+  const path = route.path;
+  const baseNav = [
+    { name: 'dashboard', labelKey: 'app.nav.dashboard', to: '/', current: false },
+    { name: 'menu', labelKey: 'app.nav.menu', to: '/menu', current: false },
+    { name: 'categories', labelKey: 'app.nav.categories', to: '/categories', current: false },
+    { name: 'orders', labelKey: 'app.nav.orders', to: '/orders', current: false },
+    { name: 'tables', labelKey: 'app.nav.tables', to: '/tables', current: false },
+    { name: 'cash-register', labelKey: 'app.nav.cash_register', to: '/cash-register', current: false },
+    { name: 'subscription', labelKey: 'app.nav.subscription', to: '/subscription', current: false },
+  ];
+  
+  // Add kitchen module only if subscription allows it
+  if (subscriptionFeatures.value.has_kitchen_module) {
+    baseNav.splice(4, 0, { name: 'kitchen', labelKey: 'app.nav.kitchen', to: '/kitchen', current: false });
+  }
+  
+  // Add SysAdmin link if user is sysadmin
+  if (authStore.user?.role === 'sysadmin') {
+    baseNav.push({ name: 'sysadmin', labelKey: 'app.nav.sysadmin', to: '/sysadmin', current: false });
+  }
+  
+  // Update current state based on route
+  return baseNav.map(item => ({
+    ...item,
+    current: item.to === path || 
+             (item.to === '/' && path === '') ||
+             (item.to !== '/' && path.startsWith(item.to) && 
+              (path === item.to || path.startsWith(`${item.to}/`)))
+  }));
+});
 
 const isMobileMenuOpen = ref(false);
 const isProfileMenuOpen = ref(false);
@@ -245,14 +276,8 @@ const showNavbar = computed(() => {
 
 // Update current route in navigation
 const updateCurrentRoute = (path) => {
-  navigation.value = navigation.value.map(item => ({
-    ...item,
-    // Match exact paths or subpaths for non-root routes
-    current: item.to === path || 
-             (item.to === '/' && path === '') ||
-             (item.to !== '/' && path.startsWith(item.to) && 
-              (path === item.to || path.startsWith(`${item.to}/`)))
-  }));
+  // Since navigation is now computed, we don't need to update it
+  // The current state will be handled by the route watcher
 };
 
 // Initialize current route
@@ -324,6 +349,28 @@ function handleOrderCreated(order) {
   }
 }
 
+// Load subscription features
+const loadSubscriptionFeatures = async () => {
+  // Only load if user is authenticated
+  if (!authStore.isAuthenticated) {
+    return;
+  }
+  
+  try {
+    const usage = await subscriptionService.getUsage();
+    if (usage.has_subscription && usage.limits) {
+      subscriptionFeatures.value = {
+        has_kitchen_module: usage.limits.has_kitchen_module || false,
+        has_ingredients_module: usage.limits.has_ingredients_module || false,
+        has_inventory_module: usage.limits.has_inventory_module || false,
+        has_advanced_reports: usage.limits.has_advanced_reports || false
+      };
+    }
+  } catch (error) {
+    console.error('Error loading subscription features:', error);
+  }
+};
+
 // Listen for custom event to open modal from other components
 const handleOpenModalEvent = () => {
   showNewOrderModal.value = true;
@@ -331,6 +378,10 @@ const handleOpenModalEvent = () => {
 
 onMounted(() => {
   window.addEventListener('open-new-order-modal', handleOpenModalEvent);
+  // Load subscription features only if authenticated
+  if (authStore.isAuthenticated) {
+    loadSubscriptionFeatures();
+  }
 });
 
 onUnmounted(() => {

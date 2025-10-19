@@ -42,6 +42,18 @@ export const routes: RouteRecordRaw[] = [
     path: '/kitchen',
     name: 'Kitchen',
     component: () => import('./views/KitchenView.vue'),
+    meta: { requiresAuth: true, requiresKitchenModule: true }
+  },
+  {
+    path: '/sysadmin',
+    name: 'SysAdmin',
+    component: () => import('./views/SysAdminView.vue'),
+    meta: { requiresAuth: true, requiresSysAdmin: true }
+  },
+  {
+    path: '/subscription',
+    name: 'Subscription',
+    component: () => import('./views/SubscriptionView.vue'),
     meta: { requiresAuth: true }
   },
 
