@@ -32,13 +32,18 @@ from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 # Configure logging
 from logging.handlers import RotatingFileHandler
 import os
+from pathlib import Path
+
+# Get the backend directory (parent of app directory)
+BACKEND_DIR = Path(__file__).parent.parent
+LOGS_DIR = BACKEND_DIR / 'logs'
 
 # Create logs directory if it doesn't exist
-os.makedirs('logs', exist_ok=True)
+LOGS_DIR.mkdir(exist_ok=True)
 
 # Configure rotating file handler (10MB per file, keep 5 backups)
 file_handler = RotatingFileHandler(
-    'logs/app.log',
+    str(LOGS_DIR / 'app.log'),
     maxBytes=10*1024*1024,  # 10MB
     backupCount=5
 )
