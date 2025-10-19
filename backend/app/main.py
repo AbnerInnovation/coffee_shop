@@ -54,14 +54,25 @@ console_handler.setFormatter(logging.Formatter(
     '%(asctime)s - %(levelname)s - %(message)s'
 ))
 
-# Configure root logger
-logging.basicConfig(
-    level=logging.DEBUG,
-    handlers=[console_handler, file_handler]
-)
+# Configure root logger directly (bypassing basicConfig)
+root_logger = logging.getLogger()
+root_logger.setLevel(logging.DEBUG)
+
+# Remove any existing handlers to avoid duplicates
+root_logger.handlers.clear()
+
+# Add our handlers
+root_logger.addHandler(console_handler)
+root_logger.addHandler(file_handler)
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
+
+# Log startup message to verify logging is working
+logger.info("=" * 50)
+logger.info("Application starting - Logging initialized")
+logger.info(f"Log file location: {LOGS_DIR / 'app.log'}")
+logger.info("=" * 50)
 
 # Import models to ensure they are registered with SQLAlchemy
 from .models.restaurant import Restaurant
