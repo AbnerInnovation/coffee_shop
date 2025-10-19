@@ -30,14 +30,36 @@ from fastapi.exceptions import RequestValidationError
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 
 # Configure logging
+from logging.handlers import RotatingFileHandler
+import os
+
+# Create logs directory if it doesn't exist
+os.makedirs('logs', exist_ok=True)
+
+# Configure rotating file handler (10MB per file, keep 5 backups)
+file_handler = RotatingFileHandler(
+    'logs/app.log',
+    maxBytes=10*1024*1024,  # 10MB
+    backupCount=5
+)
+file_handler.setLevel(logging.DEBUG)
+file_handler.setFormatter(logging.Formatter(
+    '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+))
+
+# Console handler
+console_handler = logging.StreamHandler()
+console_handler.setLevel(logging.INFO)
+console_handler.setFormatter(logging.Formatter(
+    '%(asctime)s - %(levelname)s - %(message)s'
+))
+
+# Configure root logger
 logging.basicConfig(
     level=logging.DEBUG,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.StreamHandler(),
-        logging.FileHandler('app.log')
-    ]
+    handlers=[console_handler, file_handler]
 )
+
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
