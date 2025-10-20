@@ -28,9 +28,16 @@
               v-model="form.full_name"
               type="text"
               required
-              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white"
+              @input="fullNameTouched = true; fullNameError = ''"
+              :class="[
+                'w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white',
+                fullNameError && fullNameTouched ? 'border-red-500 dark:border-red-500' : 'border-gray-300 dark:border-gray-600'
+              ]"
               :placeholder="t('app.users.modal.full_name_placeholder')"
             />
+            <p v-if="fullNameError && fullNameTouched" class="mt-1 text-xs text-red-600 dark:text-red-400">
+              {{ fullNameError }}
+            </p>
           </div>
 
           <!-- Email -->
@@ -140,8 +147,15 @@
             </label>
           </div>
 
-          <!-- Error Message -->
-          <div v-if="errorMessage" class="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+          <!-- Subscription Limit Alert -->
+          <SubscriptionLimitAlert
+            v-if="subscriptionLimitError"
+            :message="subscriptionLimitError"
+            :dismissible="false"
+          />
+          
+          <!-- Generic Error Message -->
+          <div v-else-if="errorMessage" class="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
             <p class="text-sm text-red-600 dark:text-red-400">{{ errorMessage }}</p>
           </div>
 
@@ -172,6 +186,7 @@
 import { ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import restaurantUsersService, { type RestaurantUser, type CreateRestaurantUser, type UpdateRestaurantUser } from '@/services/restaurantUsersService';
+import SubscriptionLimitAlert from '@/components/subscription/SubscriptionLimitAlert.vue';
 
 const { t } = useI18n();
 
@@ -198,10 +213,13 @@ const form = ref<CreateRestaurantUser & { id?: number }>({
 
 const saving = ref(false);
 const errorMessage = ref('');
+const subscriptionLimitError = ref('');
 const passwordErrors = ref<string[]>([]);
 const passwordTouched = ref(false);
 const emailError = ref('');
 const emailTouched = ref(false);
+const fullNameError = ref('');
+const fullNameTouched = ref(false);
 
 // Watch for user changes to populate form in edit mode
 watch(() => props.user, (newUser) => {
@@ -227,10 +245,13 @@ watch(() => props.user, (newUser) => {
     };
   }
   errorMessage.value = '';
+  subscriptionLimitError.value = '';
   passwordErrors.value = [];
   passwordTouched.value = false;
   emailError.value = '';
   emailTouched.value = false;
+  fullNameError.value = '';
+  fullNameTouched.value = false;
 }, { immediate: true });
 
 function validateEmail() {
@@ -308,8 +329,15 @@ function validatePassword() {
 async function handleSubmit() {
   saving.value = true;
   errorMessage.value = '';
+  subscriptionLimitError.value = '';
   passwordTouched.value = true;
   emailTouched.value = true;
+  fullNameTouched.value = true;
+  
+  // Clear previous field errors
+  fullNameError.value = '';
+  emailError.value = '';
+  passwordErrors.value = [];
   
   // Validate email
   if (!validateEmail()) {
@@ -348,7 +376,55 @@ async function handleSubmit() {
     emit('saved');
   } catch (error: any) {
     console.error('Error saving user:', error);
-    errorMessage.value = error.response?.data?.detail || t('users.errors.save_failed');
+    
+    // Handle subscription limit errors (403)
+    if (error.response?.status === 403) {
+      const message = error.response?.data?.detail || 
+                     error.response?.data?.error?.message || 
+                     'Límite de suscripción alcanzado. Por favor mejora tu plan.';
+      subscriptionLimitError.value = message;
+      return;
+    }
+    
+    // Handle backend validation errors
+    if (error.response?.data?.error?.validation_errors) {
+      const validationErrors = error.response.data.error.validation_errors;
+      
+      // Map backend field names to frontend error refs
+      validationErrors.forEach((err: any) => {
+        const field = err.field.replace('body.', ''); // Remove 'body.' prefix
+        
+        switch (field) {
+          case 'full_name':
+            fullNameError.value = err.message;
+            break;
+          case 'email':
+            emailError.value = err.message;
+            break;
+          case 'password':
+            passwordErrors.value = [err.message];
+            break;
+          default:
+            // For fields without specific error refs, show in general error
+            if (!errorMessage.value) {
+              errorMessage.value = err.message;
+            }
+        }
+      });
+      
+      // Show general message if we have validation errors
+      if (!errorMessage.value) {
+        errorMessage.value = 'Por favor corrige los errores de validación';
+      }
+    } else if (error.response?.data?.error?.message) {
+      // Handle other error types (like subscription limits)
+      errorMessage.value = error.response.data.error.message;
+    } else if (error.response?.data?.detail) {
+      // Handle HTTPException detail format
+      errorMessage.value = error.response.data.detail;
+    } else {
+      errorMessage.value = t('users.errors.save_failed');
+    }
   } finally {
     saving.value = false;
   }

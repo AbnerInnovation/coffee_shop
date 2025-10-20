@@ -48,15 +48,15 @@
                   @click="selectedPlanId = plan.id"
                 >
                   <!-- Current Plan Badge -->
-                  <div v-if="plan.id === currentPlanId" class="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                    <span class="bg-green-600 text-white text-xs font-semibold px-3 py-1 rounded-full">
+                  <div v-if="plan.id === currentPlanId" class="absolute -top-2 -right-2">
+                    <span class="bg-green-600 text-white text-xs font-semibold px-3 py-1 rounded-full shadow-lg">
                       {{ t('app.subscription.current_plan') }}
                     </span>
                   </div>
                   
                   <!-- Popular Badge (only if not current plan) -->
-                  <div v-else-if="plan.is_popular" class="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                    <span class="bg-indigo-600 text-white text-xs font-semibold px-3 py-1 rounded-full">
+                  <div v-else-if="plan.is_popular" class="absolute -top-2 -right-2">
+                    <span class="bg-indigo-600 text-white text-xs font-semibold px-3 py-1 rounded-full shadow-lg">
                       {{ t('app.subscription.popular') }}
                     </span>
                   </div>
@@ -104,6 +104,26 @@
                       <CheckIcon class="h-4 w-4 text-green-500 mr-2" />
                       <span class="text-gray-700 dark:text-gray-300">
                         {{ plan.limits.max_admin_users === -1 ? t('app.subscription.unlimited') : plan.limits.max_admin_users }} {{ t('app.subscription.admin_users') }}
+                      </span>
+                    </div>
+                    
+                    <!-- Staff Sub-roles -->
+                    <div v-if="plan.limits.max_waiter_users" class="flex items-center text-sm">
+                      <CheckIcon class="h-4 w-4 text-green-500 mr-2" />
+                      <span class="text-gray-700 dark:text-gray-300">
+                        {{ plan.limits.max_waiter_users === -1 ? t('app.subscription.unlimited') : plan.limits.max_waiter_users }} {{ t('app.subscription.waiter_users') }}
+                      </span>
+                    </div>
+                    <div v-if="plan.limits.max_cashier_users" class="flex items-center text-sm">
+                      <CheckIcon class="h-4 w-4 text-green-500 mr-2" />
+                      <span class="text-gray-700 dark:text-gray-300">
+                        {{ plan.limits.max_cashier_users === -1 ? t('app.subscription.unlimited') : plan.limits.max_cashier_users }} {{ t('app.subscription.cashier_users') }}
+                      </span>
+                    </div>
+                    <div v-if="plan.limits.max_kitchen_users" class="flex items-center text-sm">
+                      <CheckIcon class="h-4 w-4 text-green-500 mr-2" />
+                      <span class="text-gray-700 dark:text-gray-300">
+                        {{ plan.limits.max_kitchen_users === -1 ? t('app.subscription.unlimited') : plan.limits.max_kitchen_users }} {{ t('app.subscription.kitchen_users') }}
                       </span>
                     </div>
                   </div>
@@ -244,7 +264,10 @@ const loadPlans = async () => {
 };
 
 const formatMoney = (amount: number) => {
-  return amount.toFixed(2);
+  return amount.toLocaleString('es-MX', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
 };
 
 const closeModal = () => {

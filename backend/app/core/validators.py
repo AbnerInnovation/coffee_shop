@@ -66,7 +66,7 @@ def validate_alphanumeric_with_spaces(
         pattern += r']+$'
         
         if not re.match(pattern, value):
-            raise ValueError(f'{field_name} contains invalid characters')
+            raise ValueError(f'{field_name} contiene caracteres inválidos')
     
     return value
 
@@ -93,11 +93,11 @@ def validate_name(value: Optional[str], field_name: str = "Name") -> Optional[st
         
         # Allow letters (including Spanish), spaces, hyphens, apostrophes, periods
         if not re.match(r'^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s\-\'.]+$', value):
-            raise ValueError(f'{field_name} contains invalid characters')
+            raise ValueError(f'{field_name} contiene caracteres inválidos')
         
         # Ensure not just whitespace
         if not value.strip():
-            raise ValueError(f'{field_name} cannot be empty')
+            raise ValueError(f'{field_name} no puede estar vacío')
     
     return value
 
@@ -124,7 +124,7 @@ def validate_url(value: Optional[str], field_name: str = "URL") -> Optional[str]
         
         # Check URL format
         if not re.match(r'^https?://', value):
-            raise ValueError(f'{field_name} must start with http:// or https://')
+            raise ValueError(f'{field_name} debe comenzar con http:// o https://')
         
         return value.strip()
     return value
@@ -152,7 +152,7 @@ def validate_email(value: Optional[str], field_name: str = "Email") -> Optional[
         
         # Basic email validation
         if '@' not in value or '.' not in value.split('@')[1]:
-            raise ValueError(f'Invalid {field_name.lower()} format')
+            raise ValueError(f'Formato de {field_name.lower()} inválido')
         
         return value.strip()
     return value
@@ -181,12 +181,12 @@ def validate_phone(value: Optional[str], field_name: str = "Phone") -> Optional[
         
         # Check if it contains only digits and optional + prefix
         if not re.match(r'^\+?[0-9]+$', cleaned):
-            raise ValueError(f'{field_name} must contain only digits and optional + prefix')
+            raise ValueError(f'{field_name} debe contener solo dígitos y prefijo + opcional')
         
         # Check length (10-15 digits)
         digit_count = len(cleaned.replace('+', ''))
         if digit_count < 10 or digit_count > 15:
-            raise ValueError(f'{field_name} must be between 10 and 15 digits')
+            raise ValueError(f'{field_name} debe tener entre 10 y 15 dígitos')
         
         return value
     return value
@@ -214,7 +214,7 @@ def validate_currency_code(value: Optional[str], field_name: str = "Currency") -
         
         # Validate 3-letter code
         if not re.match(r'^[A-Z]{3}$', value):
-            raise ValueError(f'{field_name} must be a 3-letter ISO code (e.g., USD, EUR, MXN)')
+            raise ValueError(f'{field_name} debe ser un código ISO de 3 letras (ej: USD, EUR, MXN)')
         
         return value
     return value
@@ -238,13 +238,13 @@ def validate_subdomain(value: str, field_name: str = "Subdomain") -> str:
         ValueError: If subdomain format is invalid
     """
     if not re.match(r'^[a-z0-9-]+$', value):
-        raise ValueError(f'{field_name} must contain only lowercase letters, numbers, and hyphens')
+        raise ValueError(f'{field_name} debe contener solo letras minúsculas, números y guiones')
     
     if value.startswith('-') or value.endswith('-'):
-        raise ValueError(f'{field_name} cannot start or end with a hyphen')
+        raise ValueError(f'{field_name} no puede comenzar o terminar con un guion')
     
     if len(value) < 3:
-        raise ValueError(f'{field_name} must be at least 3 characters long')
+        raise ValueError(f'{field_name} debe tener al menos 3 caracteres')
     
     return value
 
@@ -270,16 +270,16 @@ def validate_password_strength(value: str, field_name: str = "Password") -> str:
         ValueError: If password doesn't meet strength requirements
     """
     if not re.search(r'[A-Z]', value):
-        raise ValueError(f'{field_name} must contain at least one uppercase letter')
+        raise ValueError(f'{field_name} debe contener al menos una letra mayúscula')
     
     if not re.search(r'[a-z]', value):
-        raise ValueError(f'{field_name} must contain at least one lowercase letter')
+        raise ValueError(f'{field_name} debe contener al menos una letra minúscula')
     
     if not re.search(r'\d', value):
-        raise ValueError(f'{field_name} must contain at least one digit')
+        raise ValueError(f'{field_name} debe contener al menos un dígito')
     
     if not re.search(r'[!@#$%^&*(),.?":{}|<>]', value):
-        raise ValueError(f'{field_name} must contain at least one special character')
+        raise ValueError(f'{field_name} debe contener al menos un carácter especial')
     
     return value
 
@@ -299,6 +299,6 @@ def validate_discount_price(discount: Optional[float], regular_price: float) -> 
         ValueError: If discount price is >= regular price
     """
     if discount is not None and discount >= regular_price:
-        raise ValueError('Discount price must be less than regular price')
+        raise ValueError('El precio de descuento debe ser menor que el precio regular')
     
     return discount

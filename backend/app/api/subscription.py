@@ -92,22 +92,20 @@ def get_subscription_usage(
             ).count(),
             "waiter": db.query(User).filter(
                 User.restaurant_id == restaurant.id,
-                User.role == "waiter",
+                User.role == "staff",
+                User.staff_type == "waiter",
                 User.deleted_at.is_(None)
             ).count(),
             "cashier": db.query(User).filter(
                 User.restaurant_id == restaurant.id,
-                User.role == "cashier",
+                User.role == "staff",
+                User.staff_type == "cashier",
                 User.deleted_at.is_(None)
             ).count(),
             "kitchen": db.query(User).filter(
                 User.restaurant_id == restaurant.id,
-                User.role == "kitchen",
-                User.deleted_at.is_(None)
-            ).count(),
-            "owner": db.query(User).filter(
-                User.restaurant_id == restaurant.id,
-                User.role == "owner",
+                User.role == "staff",
+                User.staff_type == "kitchen",
                 User.deleted_at.is_(None)
             ).count(),
         },
@@ -142,7 +140,6 @@ def get_subscription_usage(
             "waiter_users": calc_percentage(usage["users"]["waiter"], limits.get("max_waiter_users", -1)),
             "cashier_users": calc_percentage(usage["users"]["cashier"], limits.get("max_cashier_users", -1)),
             "kitchen_users": calc_percentage(usage["users"]["kitchen"], limits.get("max_kitchen_users", -1)),
-            "owner_users": calc_percentage(usage["users"]["owner"], limits.get("max_owner_users", -1)),
             "tables": calc_percentage(usage["tables"], limits.get("max_tables", -1)),
             "menu_items": calc_percentage(usage["menu_items"], limits.get("max_menu_items", -1)),
             "categories": calc_percentage(usage["categories"], limits.get("max_categories", -1))

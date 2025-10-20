@@ -752,6 +752,7 @@
       "current_usage": "Uso Actual",
       "your_current_plan": "Tu plan actual",
       "upgrade_plan": "Mejorar Plan",
+      "limit_reached": "Límite de Suscripción Alcanzado",
       "view_addons": "Ver Complementos",
       "tabs": {
         "overview": "Resumen",

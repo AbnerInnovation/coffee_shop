@@ -76,6 +76,15 @@
             <input v-model="categoryFormName" type="text" class="w-full rounded-md border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mt-4 mb-1">{{ t('app.forms.description') || 'Description' }}</label>
             <textarea v-model="categoryFormDescription" rows="3" class="w-full rounded-md border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+            
+            <!-- Subscription Limit Alert -->
+            <SubscriptionLimitAlert
+              v-if="subscriptionLimitError"
+              :message="subscriptionLimitError"
+              :dismissible="false"
+              class="mt-4"
+            />
+            
             <div class="mt-6 flex justify-end space-x-3">
               <button type="button" class="px-4 py-2 rounded-md border border-gray-300 dark:border-gray-700 text-sm" @click="categoryModalOpen = false">{{ t('app.actions.cancel') || 'Cancel' }}</button>
               <button type="button" class="px-4 py-2 rounded-md bg-indigo-600 text-white text-sm hover:bg-indigo-500" @click="saveCategory">{{ t('app.actions.save') || 'Save' }}</button>
@@ -97,6 +106,7 @@ import PageHeader from '@/components/layout/PageHeader.vue';
 import DropdownMenu from '@/components/ui/DropdownMenu.vue';
 import DropdownMenuItem from '@/components/ui/DropdownMenuItem.vue';
 import DropdownMenuDivider from '@/components/ui/DropdownMenuDivider.vue';
+import SubscriptionLimitAlert from '@/components/subscription/SubscriptionLimitAlert.vue';
 import { PencilIcon, TrashIcon } from '@heroicons/vue/24/outline';
 import type { MenuCategory } from '@/types/menu';
 
@@ -113,6 +123,7 @@ const categoryModalOpen = ref<boolean>(false);
 const categoryFormName = ref<string>('');
 const categoryFormDescription = ref<string>('');
 const categoryEditingId = ref<string | number | null>(null);
+const subscriptionLimitError = ref<string>('');
 const menuCategoriesDetailed = computed(() => menuStore.categoriesDetailed);
 
 onMounted(async () => {
@@ -131,16 +142,17 @@ async function loadCategories() {
   }
 }
 
-function openCategoryModal(existing?: Partial<MenuCategory>) {
-  if (existing && typeof existing === 'object') {
-    categoryEditingId.value = existing.id ?? null;
-    categoryFormName.value = existing.name ?? '';
-    categoryFormDescription.value = existing.description ?? '';
+function openCategoryModal(cat?: MenuCategory) {
+  if (cat && cat.id) {
+    categoryEditingId.value = cat.id;
+    categoryFormName.value = cat.name;
+    categoryFormDescription.value = cat.description || '';
   } else {
     categoryEditingId.value = null;
     categoryFormName.value = '';
     categoryFormDescription.value = '';
   }
+  subscriptionLimitError.value = '';
   categoryModalOpen.value = true;
 }
 
@@ -163,8 +175,8 @@ async function saveCategory() {
     // Handle subscription limit errors (403)
     if (err?.response?.status === 403) {
       const message = err.response?.data?.detail || err.response?.data?.error?.message || 'Límite de suscripción alcanzado. Por favor mejora tu plan.';
-      showError(message);
-      // Don't close modal, let user see the error
+      subscriptionLimitError.value = message;
+      // Don't close modal, let user see the error and upgrade button
       return;
     }
     

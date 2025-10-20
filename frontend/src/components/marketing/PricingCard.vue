@@ -1,22 +1,22 @@
 <template>
   <article
     :class="[
-      'group border rounded-2xl p-6 flex flex-col h-full transition-all duration-200 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700',
+      'group relative border rounded-2xl p-6 flex flex-col h-full transition-all duration-200 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700',
       highlight
         ? 'border-2 border-indigo-200 dark:border-indigo-700 bg-indigo-50/60 dark:bg-indigo-900/30 shadow-sm'
         : 'hover:shadow-md hover:-translate-y-0.5',
     ]"
   >
+    <!-- Popular Badge (Floating) -->
+    <span
+      v-if="highlight"
+      class="absolute -top-2 -right-2 text-xs px-3 py-1 rounded-full bg-indigo-600 text-white shadow-lg font-semibold"
+    >Popular</span>
+    
     <div class="flex-1">
-      <div class="flex items-start justify-between gap-3">
-        <div>
-          <h2 class="text-xl font-semibold text-slate-900 dark:text-slate-100">{{ title }}</h2>
-          <p class="text-sm text-gray-500 dark:text-slate-400">{{ subtitle }}</p>
-        </div>
-        <span
-          v-if="highlight"
-          class="text-xs px-2 py-1 rounded-full bg-indigo-600 text-white shadow-sm"
-        >Popular</span>
+      <div>
+        <h2 class="text-xl font-semibold text-slate-900 dark:text-slate-100">{{ title }}</h2>
+        <p class="text-sm text-gray-500 dark:text-slate-400">{{ subtitle }}</p>
       </div>
 
       <div class="mt-6">

@@ -112,9 +112,16 @@ async def create_restaurant_user(
             detail="Only system administrators can create sysadmin users"
         )
     
-    # Check subscription limit for this user role
+    # Check subscription limit for this user role/staff_type
     if user.role != UserRole.SYSADMIN:
-        SubscriptionLimitsMiddleware.check_user_limit(db, restaurant.id, user.role.value)
+        # For staff users, pass the staff_type to check specific limits
+        staff_type_value = user.staff_type.value if user.staff_type else None
+        SubscriptionLimitsMiddleware.check_user_limit(
+            db, 
+            restaurant.id, 
+            user.role.value,
+            staff_type_value
+        )
     
     # Check if user with this email already exists
     db_user = user_service.get_user_by_email(db, email=user.email)

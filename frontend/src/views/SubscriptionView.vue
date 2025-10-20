@@ -358,7 +358,10 @@ const loadData = async () => {
 };
 
 const formatMoney = (amount: number) => {
-  return amount.toFixed(2);
+  return amount.toLocaleString('es-MX', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
 };
 
 const getStatusClass = (status: string) => {
@@ -386,5 +389,12 @@ const handleAddAddon = (addon: SubscriptionAddon) => {
 // Lifecycle
 onMounted(() => {
   loadData();
+  
+  // Check if we should open the upgrade modal automatically
+  if (route.query.openModal === 'true') {
+    showUpgradeModal.value = true;
+    // Clean up the query parameter
+    router.replace({ query: { ...route.query, openModal: undefined } });
+  }
 });
 </script>

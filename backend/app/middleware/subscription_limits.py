@@ -14,50 +14,65 @@ class SubscriptionLimitsMiddleware:
     """Middleware to enforce subscription limits"""
     
     @staticmethod
-    def check_user_limit(db: Session, restaurant_id: int, role: str) -> None:
-        """Check if restaurant can add more users of this role"""
+    def check_user_limit(db: Session, restaurant_id: int, role: str, staff_type: str = None) -> None:
+        """Check if restaurant can add more users of this role/staff_type"""
         service = SubscriptionService(db)
         limits = service.get_subscription_limits(restaurant_id)
         
-        # Count current users by role
-        current_count = db.query(User).filter(
-            User.restaurant_id == restaurant_id,
-            User.role == role,
-            User.deleted_at.is_(None)
-        ).count()
+        # Determine which type of user we're checking
+        # For staff users, we check by staff_type (waiter, cashier, kitchen)
+        # For other roles, we check by role (admin, customer, etc.)
+        check_type = staff_type if staff_type and role == 'staff' else role
         
-        # Map role to limit key
+        # Count current users
+        if staff_type and role == 'staff':
+            # Count staff users by staff_type
+            current_count = db.query(User).filter(
+                User.restaurant_id == restaurant_id,
+                User.role == 'staff',
+                User.staff_type == staff_type,
+                User.deleted_at.is_(None)
+            ).count()
+        else:
+            # Count users by role
+            current_count = db.query(User).filter(
+                User.restaurant_id == restaurant_id,
+                User.role == role,
+                User.deleted_at.is_(None)
+            ).count()
+        
+        # Map role/staff_type to limit key
         limit_map = {
             'admin': 'max_admin_users',
             'waiter': 'max_waiter_users',
             'cashier': 'max_cashier_users',
             'kitchen': 'max_kitchen_users',
-            'owner': 'max_owner_users'
+            'customer': -1  # Usually unlimited
         }
         
-        limit_key = limit_map.get(role)
+        limit_key = limit_map.get(check_type)
         if not limit_key:
-            return  # Unknown role, allow
+            return  # Unknown type, allow
         
-        max_allowed = limits.get(limit_key, -1)
+        max_allowed = limits.get(limit_key, -1) if isinstance(limit_key, str) else limit_key
         
         # -1 means unlimited
         if max_allowed == -1:
             return
         
         if current_count >= max_allowed:
-            # Translate role names
-            role_names = {
+            # Translate role/staff_type names
+            type_names = {
                 'admin': 'administradores',
                 'waiter': 'meseros',
                 'cashier': 'cajeros',
                 'kitchen': 'usuarios de cocina',
-                'owner': 'dueños'
+                'customer': 'clientes'
             }
-            role_es = role_names.get(role, role)
+            type_es = type_names.get(check_type, check_type)
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Límite de suscripción alcanzado: Máximo {max_allowed} {role_es} permitidos. Por favor mejora tu plan."
+                detail=f"Límite de suscripción alcanzado: Máximo {max_allowed} {type_es} permitidos. Por favor mejora tu plan."
             )
     
     @staticmethod
