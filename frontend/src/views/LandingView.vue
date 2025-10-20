@@ -294,8 +294,7 @@ const plans = [
             '1 admin + 4 meseros + 2 cajeros + 2 cocina',
             'Hasta 35 mesas',
             '400 productos en menú',
-            'Ingredientes + Reportes Avanzados incluidos 🎁',
-            '30 min soporte mensual',
+            'Ingredientes + Reportes Avanzados incluidos 🎁'
         ],
     },
     {
@@ -308,7 +307,6 @@ const plans = [
             'Hasta 60 mesas',
             '800 productos en menú',
             'Todos los módulos incluidos 🎁',
-            '1.5h soporte + prioridad',
         ],
     },
     {
@@ -321,7 +319,6 @@ const plans = [
             'Hasta 150 mesas',
             'Productos ilimitados',
             'Multi-sucursal + Gerente de cuenta',
-            '3h soporte prioritario 24/7',
         ],
     },
 ]

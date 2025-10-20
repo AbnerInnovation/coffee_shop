@@ -92,7 +92,6 @@ def seed_plans(db):
                 "included": [
                     "Módulos básicos: Mesas, Pedidos, Menú, Caja",
                     "Reportes básicos (7 días)",
-                    "Soporte por WhatsApp"
                 ],
                 "not_included": [
                     "Módulo de Cocina",
@@ -135,7 +134,6 @@ def seed_plans(db):
                     "Todos los módulos básicos + Cocina",
                     "Módulo de Ingredientes incluido",
                     "Reportes básicos (15 días)",
-                    "Soporte por WhatsApp"
                 ],
                 "value_added": "Módulo de ingredientes ($199 valor)"
             }
@@ -173,7 +171,6 @@ def seed_plans(db):
                     "Todos los módulos básicos",
                     "Módulo de Ingredientes incluido",
                     "Reportes Avanzados incluidos",
-                    "30 minutos de soporte mensual",
                     "Reportes (60 días)"
                 ],
                 "value_added": "Ingredientes + Reportes Avanzados ($348 valor)"
@@ -211,8 +208,6 @@ def seed_plans(db):
                 "included": [
                     "Todos los módulos incluidos",
                     "Inventario incluido",
-                    "1.5 horas de soporte mensual",
-                    "Prioridad en soporte",
                     "Reportes históricos (180 días)"
                 ],
                 "value_added": "Todos los módulos ($499 valor)"
@@ -251,8 +246,6 @@ def seed_plans(db):
                     "Todos los módulos incluidos",
                     "Productos ilimitados",
                     "Reportes históricos ilimitados",
-                    "3 horas de soporte mensual",
-                    "Soporte prioritario 24/7",
                     "Visión multi-sucursal",
                     "Gerente de cuenta dedicado"
                 ],
