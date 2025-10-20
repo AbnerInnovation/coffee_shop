@@ -11,7 +11,8 @@
       "cash_register": "Caja Registradora",
       "new_order": "Nueva Orden",
       "sysadmin": "Administración",
-      "subscription": "Suscripción"
+      "subscription": "Suscripción",
+      "users": "Usuarios"
     },
     "actions": {
       "sign_out": "Cerrar sesión",
@@ -500,7 +501,11 @@
           "register_prompt": "¿No tienes cuenta? Regístrate",
           "errors": {
             "failed": "Inicio de sesión fallido",
-            "generic": "Ocurrió un error durante el inicio de sesión"
+            "generic": "Ocurrió un error durante el inicio de sesión",
+            "invalid_credentials": "Correo electrónico o contraseña incorrectos",
+            "account_inactive": "Tu cuenta está inactiva. Por favor contacta a soporte",
+            "wrong_subdomain": "No tienes acceso a este restaurante. Por favor inicia sesión usando el subdominio de tu restaurante",
+            "subdomain_required": "Por favor accede al sistema usando el subdominio de tu restaurante"
           }
         },
         "register": {
@@ -721,6 +726,7 @@
       "resources": "Recursos",
       "features": "Características",
       "admin_users": "Administradores",
+      "customer_users": "Clientes",
       "waiter_users": "Meseros",
       "cashier_users": "Cajeros",
       "kitchen_users": "Cocina",
@@ -759,6 +765,64 @@
         "active": "Activo",
         "cancelled": "Cancelado",
         "expired": "Expirado"
+      },
+      "staff_users": "Personal"
+    },
+    "users": {
+      "title": "Gestión de Usuarios",
+      "subtitle": "Administra los usuarios de tu restaurante",
+      "usage_limits": "Límites de Uso",
+      "create_user": "Crear Usuario",
+      "filter_all": "Todos",
+      "filter_admin": "Administradores",
+      "filter_staff": "Personal",
+      "filter_customer": "Clientes",
+      "empty_state": "No hay usuarios registrados",
+      "confirm_delete": "¿Estás seguro de eliminar a {name}?",
+      "table": {
+        "name": "Nombre",
+        "email": "Correo",
+        "role": "Rol",
+        "status": "Estado",
+        "actions": "Acciones"
+      },
+      "roles": {
+        "sysadmin": "Super Admin",
+        "admin": "Administrador",
+        "staff": "Personal",
+        "customer": "Cliente"
+      },
+      "status": {
+        "active": "Activo",
+        "inactive": "Inactivo"
+      },
+      "actions": {
+        "edit": "Editar",
+        "delete": "Eliminar",
+        "activate": "Activar",
+        "deactivate": "Desactivar"
+      },
+      "modal": {
+        "create_title": "Crear Usuario",
+        "edit_title": "Editar Usuario",
+        "full_name": "Nombre Completo",
+        "full_name_placeholder": "Ej: Juan Pérez",
+        "email": "Correo Electrónico",
+        "email_placeholder": "usuario@ejemplo.com",
+        "password": "Contraseña",
+        "password_placeholder": "Mínimo 8 caracteres",
+        "password_optional": "dejar en blanco para no cambiar",
+        "password_hint": "Debe tener al menos 8 caracteres, incluir mayúsculas, minúsculas y números y al menos un carácter especial",
+        "role": "Rol",
+        "is_active": "Usuario activo",
+        "cancel": "Cancelar",
+        "save": "Guardar",
+        "saving": "Guardando..."
+      },
+      "errors": {
+        "save_failed": "Error al guardar el usuario",
+        "delete_failed": "Error al eliminar el usuario",
+        "toggle_status_failed": "Error al cambiar el estado del usuario"
       }
     }
   }

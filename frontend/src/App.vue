@@ -5,22 +5,22 @@
       <div class="mx-auto max-w-7xl px-3 sm:px-4 lg:px-8 w-full">
         <div class="flex h-14 sm:h-16 items-center justify-between">
           <div class="flex items-center">
-            <div class="flex-shrink-0">
+            <router-link to="/" class="flex-shrink-0">
               <!-- Logo for dark mode -->
               <img 
                 v-if="isDark" 
                 src="@/assets/DarkModeLogo.png" 
                 alt="Logo" 
-                class="h-8 sm:h-12 w-auto"
+                class="h-8 sm:h-12 w-auto cursor-pointer hover:opacity-80 transition-opacity"
               />
               <!-- Logo for light mode -->
               <img 
                 v-else 
                 src="@/assets/Logo.png" 
                 alt="Logo" 
-                class="h-8 sm:h-12 w-auto"
+                class="h-8 sm:h-12 w-auto cursor-pointer hover:opacity-80 transition-opacity"
               />
-            </div>
+            </router-link>
             <div class="hidden md:block">
               <div class="ml-10 flex items-baseline space-x-4">
                 <router-link
@@ -86,6 +86,16 @@
                     aria-labelledby="user-menu-button"
                     tabindex="-1"
                   >
+                    <router-link
+                      v-if="authStore.user?.role === 'admin' || authStore.user?.role === 'sysadmin'"
+                      to="/subscription"
+                      class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700/60"
+                      role="menuitem"
+                      tabindex="-1"
+                      @click="isProfileMenuOpen = false"
+                    >
+                      {{ t('app.nav.subscription') }}
+                    </router-link>
                     <a
                       href="#"
                       class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700/60"
@@ -159,6 +169,14 @@
             </div>
           </div>
           <div class="mt-3 space-y-1 px-2">
+            <router-link
+              v-if="authStore.user?.role === 'admin' || authStore.user?.role === 'sysadmin'"
+              to="/subscription"
+              class="block rounded-md px-3 py-2 text-base font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white"
+              @click="isMobileMenuOpen = false"
+            >
+              {{ $t('app.nav.subscription') }}
+            </router-link>
             <a
               href="#"
               class="block rounded-md px-3 py-2 text-base font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white"
@@ -211,6 +229,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { Bars3Icon, XMarkIcon, MoonIcon, SunIcon, PlusIcon } from '@heroicons/vue/24/outline';
 import { useAuthStore } from '@/stores/auth';
 import { useToast } from '@/composables/useToast';
+import { hasRestaurantContext } from '@/utils/subdomain';
 import ConfirmDialog from '@/components/ui/ConfirmationDialog.vue'
 import NewOrderModal from '@/components/orders/NewOrderModal.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
@@ -236,13 +255,11 @@ const subscriptionFeatures = ref({
 const navigation = computed(() => {
   const path = route.path;
   const baseNav = [
-    { name: 'dashboard', labelKey: 'app.nav.dashboard', to: '/', current: false },
     { name: 'menu', labelKey: 'app.nav.menu', to: '/menu', current: false },
     { name: 'categories', labelKey: 'app.nav.categories', to: '/categories', current: false },
     { name: 'orders', labelKey: 'app.nav.orders', to: '/orders', current: false },
     { name: 'tables', labelKey: 'app.nav.tables', to: '/tables', current: false },
     { name: 'cash-register', labelKey: 'app.nav.cash_register', to: '/cash-register', current: false },
-    { name: 'subscription', labelKey: 'app.nav.subscription', to: '/subscription', current: false },
   ];
   
   // Add kitchen module only if subscription allows it
@@ -250,7 +267,11 @@ const navigation = computed(() => {
     baseNav.splice(4, 0, { name: 'kitchen', labelKey: 'app.nav.kitchen', to: '/kitchen', current: false });
   }
   
-  // Add SysAdmin link if user is sysadmin
+  // Add Users management link if user is admin or sysadmin
+  if (authStore.user?.role === 'admin' || authStore.user?.role === 'sysadmin') {
+    baseNav.push({ name: 'users', labelKey: 'app.nav.users', to: '/users', current: false });
+  }
+  
   if (authStore.user?.role === 'sysadmin') {
     baseNav.push({ name: 'sysadmin', labelKey: 'app.nav.sysadmin', to: '/sysadmin', current: false });
   }

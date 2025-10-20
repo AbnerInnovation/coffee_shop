@@ -3,7 +3,10 @@ from sqlalchemy.orm import Session
 from typing import Optional
 
 from ..models.restaurant import Restaurant
+from ..models.user import User, UserRole
 from ..middleware.restaurant import get_restaurant_from_request
+from ..services.user import get_current_active_user
+from ..db.base import get_db
 
 
 async def get_current_restaurant(request: Request) -> Restaurant:
@@ -28,3 +31,58 @@ async def get_optional_restaurant(request: Request) -> Optional[Restaurant]:
     Returns None if no restaurant found (doesn't raise exception).
     """
     return await get_restaurant_from_request(request)
+
+
+async def get_current_user_with_restaurant(
+    current_user: User = Depends(get_current_active_user),
+    restaurant: Restaurant = Depends(get_current_restaurant)
+) -> User:
+    """
+    Dependency to get current user and validate they have access to the current restaurant.
+    
+    - SYSADMIN: Can access any restaurant
+    - Other roles: Must belong to the current restaurant (or have multi-branch access in future)
+    
+    Raises HTTPException if user doesn't have access.
+    """
+    # SYSADMIN can access any restaurant
+    if current_user.role == UserRole.SYSADMIN:
+        return current_user
+    
+    # Other roles must belong to the current restaurant
+    if current_user.restaurant_id != restaurant.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You don't have access to this restaurant"
+        )
+    
+    return current_user
+
+
+def require_admin_or_sysadmin(
+    current_user: User = Depends(get_current_user_with_restaurant)
+) -> User:
+    """
+    Dependency to ensure user is ADMIN or SYSADMIN.
+    Already validates restaurant access via get_current_user_with_restaurant.
+    """
+    if current_user.role not in [UserRole.ADMIN, UserRole.SYSADMIN]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only administrators can perform this action"
+        )
+    return current_user
+
+
+def require_sysadmin(
+    current_user: User = Depends(get_current_active_user)
+) -> User:
+    """
+    Dependency to ensure user is SYSADMIN.
+    """
+    if current_user.role != UserRole.SYSADMIN:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only system administrators can perform this action"
+        )
+    return current_user

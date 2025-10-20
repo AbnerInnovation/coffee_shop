@@ -4,6 +4,7 @@ import { XCircleIcon } from '@heroicons/vue/20/solid';
 import { FunnelIcon, PencilIcon, TrashIcon, CheckCircleIcon, XCircleIcon as XCircleIconOutline } from '@heroicons/vue/24/outline';
 import type { MenuItem, MenuItemVariant, MenuCategory } from '@/types/menu';
 import { useI18n } from 'vue-i18n';
+import { usePermissions } from '@/composables/usePermissions';
 import PageHeader from '@/components/layout/PageHeader.vue';
 import DropdownMenu from '@/components/ui/DropdownMenu.vue';
 import DropdownMenuItem from '@/components/ui/DropdownMenuItem.vue';
@@ -28,6 +29,7 @@ interface Emits {
 const props = defineProps<Props>();
 const emit = defineEmits<Emits>();
 const { t } = useI18n();
+const { canEditMenu } = usePermissions();
 
 // Menu states for dropdowns
 const menuStates = ref<Record<string | number, boolean>>({});
@@ -66,6 +68,7 @@ function isItemAvailable(item: MenuItem): boolean {
     >
       <template #actions>
         <button
+          v-if="canEditMenu"
           type="button"
           @click="$emit('add-item')"
           class="block rounded-md bg-indigo-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
@@ -127,8 +130,8 @@ function isItemAvailable(item: MenuItem): boolean {
                 :data-dropdown-container="`menu-item-${item.id}`"
                 class="bg-white dark:bg-gray-900 rounded-lg shadow border border-gray-200 dark:border-gray-800 p-4 relative"
               >
-                <!-- Three Dots Menu -->
-                <div v-if="item.id" class="absolute top-3 right-3 z-30" @click.stop>
+                <!-- Three Dots Menu (only for admin/sysadmin) -->
+                <div v-if="item.id && canEditMenu" class="absolute top-3 right-3 z-30" @click.stop>
                   <DropdownMenu
                     :id="`menu-item-${item.id}`"
                     button-label="Menu item actions"
@@ -338,7 +341,7 @@ function isItemAvailable(item: MenuItem): boolean {
                     </span>
                   </td>
                   <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6 dark:text-gray-400">
-                    <div v-if="item.id" class="flex justify-end" @click.stop>
+                    <div v-if="item.id && canEditMenu" class="flex justify-end" @click.stop>
                       <DropdownMenu
                         :id="`menu-item-desktop-${item.id}`"
                         button-label="Menu item actions"

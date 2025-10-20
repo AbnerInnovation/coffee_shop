@@ -25,8 +25,9 @@ class Category(BaseModel):
         cascade="all, delete-orphan"
     )
     
-    def __init__(self, name: str, description: Optional[str] = None):
+    def __init__(self, name: str, restaurant_id: int, description: Optional[str] = None):
         self.name = name.upper()  # Store category names in uppercase for consistency
+        self.restaurant_id = restaurant_id
         self.description = description
         
     def __repr__(self) -> str:

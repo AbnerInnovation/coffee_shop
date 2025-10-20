@@ -62,9 +62,6 @@
           </button>
         </div>
         
-        <div v-if="error" class="text-red-500 text-sm text-center">
-          {{ error || t('app.views.auth.login.errors.failed') }}
-        </div>
       </form>
     </div>
   </div>
@@ -75,19 +72,19 @@ import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { useI18n } from 'vue-i18n';
+import { useToast } from '@/composables/useToast';
 
 const email = ref('');
 const password = ref('');
 const rememberMe = ref(true);
-const error = ref('');
 const loading = ref(false);
 const router = useRouter();
 const authStore = useAuthStore();
 const { t } = useI18n();
+const { showError } = useToast();
 
 const handleLogin = async () => {
   try {
-    error.value = '';
     loading.value = true;
     
     const success = await authStore.login({
@@ -98,10 +95,38 @@ const handleLogin = async () => {
     if (success) {
       router.push('/menu');
     } else {
-      error.value = authStore.error || (t('app.views.auth.login.errors.failed') as string);
+      // Map backend error messages to translation keys
+      const errorMessage = authStore.error || '';
+      let translationKey = 'app.views.auth.login.errors.failed';
+      
+      if (errorMessage.includes('Incorrect email or password')) {
+        translationKey = 'app.views.auth.login.errors.invalid_credentials';
+      } else if (errorMessage.includes('Account is inactive')) {
+        translationKey = 'app.views.auth.login.errors.account_inactive';
+      } else if (errorMessage.includes("don't have access to this restaurant")) {
+        translationKey = 'app.views.auth.login.errors.wrong_subdomain';
+      } else if (errorMessage.includes('using your restaurant\'s subdomain')) {
+        translationKey = 'app.views.auth.login.errors.subdomain_required';
+      }
+      
+      showError(t(translationKey) as string, 6000);
     }
-  } catch (err) {
-    error.value = t('app.views.auth.login.errors.generic') as string;
+  } catch (err: any) {
+    // Handle network or unexpected errors
+    const errorMsg = err?.response?.data?.error?.message || err?.message || '';
+    let translationKey = 'app.views.auth.login.errors.generic';
+    
+    if (errorMsg.includes('Incorrect email or password')) {
+      translationKey = 'app.views.auth.login.errors.invalid_credentials';
+    } else if (errorMsg.includes('Account is inactive')) {
+      translationKey = 'app.views.auth.login.errors.account_inactive';
+    } else if (errorMsg.includes("don't have access to this restaurant")) {
+      translationKey = 'app.views.auth.login.errors.wrong_subdomain';
+    } else if (errorMsg.includes('using your restaurant\'s subdomain')) {
+      translationKey = 'app.views.auth.login.errors.subdomain_required';
+    }
+    
+    showError(t(translationKey) as string, 6000);
     console.error('Login error:', err);
   } finally {
     loading.value = false;

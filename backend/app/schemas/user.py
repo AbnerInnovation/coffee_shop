@@ -16,6 +16,7 @@ class UserBase(BaseModel):
     full_name: str = Field(..., min_length=1, max_length=100)
     role: UserRole = UserRole.STAFF
     is_active: bool = True
+    restaurant_id: Optional[int] = None
     
     @validator('full_name')
     def validate_full_name(cls, v):

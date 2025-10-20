@@ -1,18 +1,20 @@
 from datetime import timedelta
 from typing import Optional
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, Request
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
 from ...db.base import get_db
 from ...models.user import User as UserModel, UserRole
+from ...models.restaurant import Restaurant
 from ...schemas.token import Token, TokenRefreshRequest
 from ...schemas.user import UserCreate, User as UserSchema
 from ...core.security import create_access_token, create_refresh_token, decode_token
 from ...core.config import settings
 from ...services import user as user_service
 from ...core.exceptions import ValidationError, UnauthorizedError, ConflictError
+from ...middleware.restaurant import get_restaurant_from_request
 
 router = APIRouter(
     prefix="/auth",
@@ -46,11 +48,13 @@ async def register_user(
 
 @router.post("/token", response_model=Token)
 async def login_for_access_token(
+    request: Request,
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db)
 ) -> dict[str, str]:
     """
     OAuth2 compatible token login, get an access token for future requests.
+    Validates that the user belongs to the restaurant subdomain.
     """
     user = user_service.authenticate_user(
         db, 
@@ -63,6 +67,23 @@ async def login_for_access_token(
     
     if not user.is_active:
         raise ValidationError("Account is inactive. Please contact support.")
+    
+    # Validate subdomain access (except for SYSADMIN)
+    if user.role != UserRole.SYSADMIN:
+        restaurant = await get_restaurant_from_request(request)
+        
+        # If there's a subdomain, validate user belongs to that restaurant
+        if restaurant:
+            if user.restaurant_id != restaurant.id:
+                raise UnauthorizedError(
+                    "You don't have access to this restaurant. "
+                    "Please login using your restaurant's subdomain."
+                )
+        # If no subdomain but user has restaurant_id, they should use their subdomain
+        elif user.restaurant_id:
+            raise ValidationError(
+                "Please access the system using your restaurant's subdomain."
+            )
     
     # Define scopes based on user role
     if user.role == UserRole.SYSADMIN:

@@ -96,7 +96,8 @@ export const useAuthStore = defineStore('auth', () => {
         return false;
       }
     } catch (err: any) {
-      error.value = err.response?.data?.detail || 'Login failed';
+      // Extract error message from new centralized error format
+      error.value = err.response?.data?.error?.message || err.response?.data?.detail || 'Login failed';
       return false;
     } finally {
       loading.value = false;
@@ -122,7 +123,8 @@ export const useAuthStore = defineStore('auth', () => {
         password: registerData.password
       });
     } catch (err: any) {
-      error.value = err.response?.data?.detail || 'Registration failed';
+      // Extract error message from new centralized error format
+      error.value = err.response?.data?.error?.message || err.response?.data?.detail || 'Registration failed';
       return false;
     } finally {
       loading.value = false;

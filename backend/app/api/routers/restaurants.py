@@ -84,7 +84,9 @@ async def create_restaurant(
 ):
     """
     Create a new restaurant (sysadmin only).
-    Automatically creates a 14-day trial subscription.
+    Automatically creates:
+    1. A 14-day trial subscription
+    2. An admin user with email: admin-{subdomain}@shopacoffee.com
     """
     # Check if subdomain already exists
     existing = db.query(RestaurantModel).filter(
@@ -113,6 +115,42 @@ async def create_restaurant(
     except Exception as e:
         # Log error but don't fail restaurant creation
         print(f"⚠️ Warning: Could not create trial subscription for restaurant {db_restaurant.id}: {e}")
+    
+    # Automatically create admin user for the restaurant
+    try:
+        import secrets
+        from app.core.security import get_password_hash
+        
+        admin_email = f"admin-{db_restaurant.subdomain}@shopacoffee.com"
+        admin_password = secrets.token_urlsafe(16)  # Generate secure random password
+        
+        # Check if admin user already exists
+        from app.services.user import get_user_by_email
+        existing_admin = get_user_by_email(db, email=admin_email)
+        
+        if not existing_admin:
+            admin_user = UserModel(
+                email=admin_email,
+                hashed_password=get_password_hash(admin_password),
+                full_name=f"Admin {db_restaurant.name}",
+                role=UserRole.ADMIN,
+                is_active=True,
+                restaurant_id=db_restaurant.id
+            )
+            db.add(admin_user)
+            db.commit()
+            db.refresh(admin_user)
+            
+            print(f"✅ Admin user created for restaurant '{db_restaurant.name}'")
+            print(f"   Email: {admin_email}")
+            print(f"   Password: {admin_password}")
+            print(f"   ⚠️  IMPORTANT: Save this password! It won't be shown again.")
+        else:
+            print(f"⚠️ Admin user already exists: {admin_email}")
+            
+    except Exception as e:
+        # Log error but don't fail restaurant creation
+        print(f"⚠️ Warning: Could not create admin user for restaurant {db_restaurant.id}: {e}")
     
     return db_restaurant
 

@@ -36,3 +36,7 @@ tmp/
 *.njsproj
 *.sln
 *.sw?
+
+# Backend logs
+logs/app.log
+dev-dist

@@ -224,15 +224,7 @@ export const useMenuStore = defineStore('menu', () => {
         categoriesDetailed.value = categoryData;
         categories.value = categoryData.map(c => c.name);
       } else {
-        const defaults: MenuCategory[] = [
-          { id: 1, name: 'Coffee', description: '' },
-          { id: 2, name: 'Tea', description: '' },
-          { id: 3, name: 'Pastries', description: '' },
-          { id: 4, name: 'Breakfast', description: '' },
-          { id: 5, name: 'Lunch', description: '' },
-          { id: 6, name: 'Drinks', description: '' },
-          { id: 7, name: 'Specials', description: '' },
-        ];
+        const defaults: MenuCategory[] = [];
         categoriesDetailed.value = defaults;
         categories.value = defaults.map(c => c.name);
       }

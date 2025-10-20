@@ -136,7 +136,8 @@ def create_user(db: Session, user: UserCreate) -> UserModel:
         hashed_password=hashed_password,
         full_name=user.full_name,
         role=user.role,
-        is_active=user.is_active if hasattr(user, 'is_active') else True
+        is_active=user.is_active if hasattr(user, 'is_active') else True,
+        restaurant_id=user.restaurant_id if hasattr(user, 'restaurant_id') else None
     )
     db.add(db_user)
     db.commit()

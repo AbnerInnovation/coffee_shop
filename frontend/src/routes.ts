@@ -1,4 +1,8 @@
 import type { RouteRecordRaw } from 'vue-router';
+import type { User } from '@/stores/auth';
+
+// Permission check function type
+export type PermissionCheck = (user: User | null) => boolean;
 
 export const routes: RouteRecordRaw[] = [
   // Protected routes
@@ -12,7 +16,10 @@ export const routes: RouteRecordRaw[] = [
     path: '/tables',
     name: 'Tables',
     component: () => import('./views/TablesView.vue'),
-    meta: { requiresAuth: true }
+    meta: { 
+      requiresAuth: true,
+      permissionCheck: 'canManageTables' // Admin only for management
+    }
   },
   {
     path: '/menu',
@@ -24,13 +31,19 @@ export const routes: RouteRecordRaw[] = [
     path: '/categories',
     name: 'Categories',
     component: () => import('./views/CategoriesView.vue'),
-    meta: { requiresAuth: true }
+    meta: { 
+      requiresAuth: true,
+      permissionCheck: 'canEditCategories' // Admin only
+    }
   },
   {
     path: '/cash-register',
     name: 'CashRegister',
     component: () => import('./views/CashRegisterView.vue'),
-    meta: { requiresAuth: true }
+    meta: { 
+      requiresAuth: true,
+      permissionCheck: 'canAccessCashRegister' // Admin + Cashier
+    }
   },
   {
     path: '/orders',
@@ -42,19 +55,38 @@ export const routes: RouteRecordRaw[] = [
     path: '/kitchen',
     name: 'Kitchen',
     component: () => import('./views/KitchenView.vue'),
-    meta: { requiresAuth: true, requiresKitchenModule: true }
+    meta: { 
+      requiresAuth: true,
+      requiresKitchenModule: true,
+      permissionCheck: 'canAccessKitchen' // Admin + Kitchen staff
+    }
   },
   {
     path: '/sysadmin',
     name: 'SysAdmin',
     component: () => import('./views/SysAdminView.vue'),
-    meta: { requiresAuth: true, requiresSysAdmin: true }
+    meta: { 
+      requiresAuth: true,
+      permissionCheck: 'isSysAdmin' // SysAdmin only
+    }
   },
   {
     path: '/subscription',
     name: 'Subscription',
     component: () => import('./views/SubscriptionView.vue'),
-    meta: { requiresAuth: true }
+    meta: { 
+      requiresAuth: true,
+      permissionCheck: 'canViewSubscription' // Admin + SysAdmin
+    }
+  },
+  {
+    path: '/users',
+    name: 'Users',
+    component: () => import('./views/UsersManagementView.vue'),
+    meta: { 
+      requiresAuth: true,
+      permissionCheck: 'canManageUsers' // Admin + SysAdmin
+    }
   },
 
   // Public routes
