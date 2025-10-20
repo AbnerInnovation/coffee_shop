@@ -32,7 +32,7 @@ from app.schemas.menu import (
 from app.models.user import User, UserRole
 from app.models.restaurant import Restaurant
 from app.services.user import get_current_active_user
-from app.core.dependencies import get_current_restaurant
+from app.core.dependencies import get_current_restaurant, require_admin_or_sysadmin, get_current_user_with_restaurant
 
 # Create a router for menu endpoints
 router = APIRouter(
@@ -43,12 +43,6 @@ router = APIRouter(
 # Create a sub-router for menu items
 items_router = APIRouter()
 
-def check_admin(user: User):
-    if user.role != UserRole.ADMIN:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not enough permissions"
-        )
 
 @items_router.get("/", response_model=List[MenuItem])
 async def read_menu_items(
@@ -86,14 +80,13 @@ async def create_menu_item(
     request: Request,
     menu_item: MenuItemCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(require_admin_or_sysadmin),
     restaurant: Restaurant = Depends(get_current_restaurant)
 ) -> MenuItem:
     """
     Create a new menu item with variants.
-    Requires admin privileges.
+    Requires admin or sysadmin privileges.
     """
-    check_admin(current_user)
     
     # Check subscription limit for menu items
     SubscriptionLimitsMiddleware.check_menu_item_limit(db, restaurant.id)
@@ -146,14 +139,13 @@ async def update_menu_item_availability(
     item_id: int,
     availability: AvailabilityUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(require_admin_or_sysadmin),
     restaurant: Restaurant = Depends(get_current_restaurant)
 ) -> MenuItem:
     """
     Update only the availability flag of a menu item.
-    Requires admin privileges.
+    Requires admin or sysadmin privileges.
     """
-    check_admin(current_user)
     db_item = get_menu_item(db, item_id=item_id, restaurant_id=restaurant.id)
     if db_item is None:
         raise HTTPException(
@@ -179,14 +171,13 @@ async def update_menu_item(
     item_id: int,
     menu_item: MenuItemUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(require_admin_or_sysadmin),
     restaurant: Restaurant = Depends(get_current_restaurant)
 ) -> MenuItem:
     """
     Update a menu item and its variants.
-    Requires admin privileges.
+    Requires admin or sysadmin privileges.
     """
-    check_admin(current_user)
     db_item = get_menu_item(db, item_id=item_id, restaurant_id=restaurant.id)
     if db_item is None:
         raise HTTPException(
@@ -222,14 +213,13 @@ async def update_menu_item(
 async def delete_menu_item(
     item_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(require_admin_or_sysadmin),
     restaurant: Restaurant = Depends(get_current_restaurant)
 ):
     """
     Delete a menu item.
-    Requires admin privileges.
+    Requires admin or sysadmin privileges.
     """
-    check_admin(current_user)
     db_item = get_menu_item(db, item_id=item_id, restaurant_id=restaurant.id)
     if db_item is None:
         raise HTTPException(status_code=404, detail="Menu item not found")

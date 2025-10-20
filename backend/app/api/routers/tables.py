@@ -9,7 +9,7 @@ from ...schemas.table import Table, TableCreate, TableUpdate
 from ...services import table as table_service
 from ...models.user import User
 from ...models.restaurant import Restaurant
-from ...core.dependencies import get_current_restaurant
+from ...core.dependencies import get_current_restaurant, require_admin_or_sysadmin, require_staff_or_admin
 from ...services.user import get_current_active_user, UserRole
 from ...core.exceptions import ResourceNotFoundError, ConflictError, ValidationError
 from ...middleware.subscription_limits import SubscriptionLimitsMiddleware
@@ -45,17 +45,17 @@ async def read_tables(
 @router.post(
     "/", 
     response_model=Table, 
-    status_code=status.HTTP_201_CREATED,
-    dependencies=[Depends(get_current_active_user)]
+    status_code=status.HTTP_201_CREATED
 )
 async def create_table(
     table: TableCreate, 
     db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin_or_sysadmin),
     restaurant: Restaurant = Depends(get_current_restaurant)
 ) -> Table:
     """
     Create a new table.
-    Requires admin privileges.
+    Requires admin or sysadmin privileges.
     """
     # Check subscription limit for tables
     SubscriptionLimitsMiddleware.check_table_limit(db, restaurant.id)
@@ -90,10 +90,12 @@ async def update_table_occupancy(
     table_id: int,
     occupancy_data: TableOccupancyUpdate,
     db: Session = Depends(get_db),
+    current_user: User = Depends(require_staff_or_admin),
     restaurant: Restaurant = Depends(get_current_restaurant)
 ) -> Table:
     """
     Update a table's occupancy status.
+    Requires staff, admin, or sysadmin privileges.
     """
     is_occupied = occupancy_data.is_occupied
     db_table = table_service.get_table(db, table_id=table_id, restaurant_id=restaurant.id)
@@ -111,12 +113,12 @@ async def update_table(
     table_id: int, 
     table: TableUpdate, 
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(require_admin_or_sysadmin),
     restaurant: Restaurant = Depends(get_current_restaurant)
 ) -> Table:
     """
     Update a table.
-    Requires admin privileges.
+    Requires admin or sysadmin privileges.
     """
     db_table = table_service.get_table(db, table_id=table_id, restaurant_id=restaurant.id)
     if db_table is None:
@@ -138,17 +140,17 @@ async def update_table(
 
 @router.delete(
     "/{table_id}", 
-    status_code=status.HTTP_204_NO_CONTENT,
-    dependencies=[Depends(get_current_active_user)]
+    status_code=status.HTTP_204_NO_CONTENT
 )
 async def delete_table(
     table_id: int, 
     db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin_or_sysadmin),
     restaurant: Restaurant = Depends(get_current_restaurant)
 ) -> None:
     """
     Delete a table.
-    Requires admin privileges.
+    Requires admin or sysadmin privileges.
     """
     db_table = table_service.get_table(db, table_id=table_id)
     if db_table is None:

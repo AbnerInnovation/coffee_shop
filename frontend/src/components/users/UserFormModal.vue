@@ -106,6 +106,27 @@
             </select>
           </div>
 
+          <!-- Staff Type (only show if role is staff) -->
+          <div v-if="form.role === 'staff'">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              {{ t('app.users.modal.staff_type') }}
+            </label>
+            <select
+              v-model="form.staff_type"
+              required
+              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white"
+            >
+              <option value="">{{ t('app.users.modal.select_staff_type') }}</option>
+              <option value="waiter">{{ t('app.users.staff_types.waiter') }}</option>
+              <option value="cashier">{{ t('app.users.staff_types.cashier') }}</option>
+              <option value="kitchen">{{ t('app.users.staff_types.kitchen') }}</option>
+              <option value="general">{{ t('app.users.staff_types.general') }}</option>
+            </select>
+            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              {{ t('app.users.modal.staff_type_hint') }}
+            </p>
+          </div>
+
           <!-- Active Status -->
           <div class="flex items-center">
             <input
@@ -171,6 +192,7 @@ const form = ref<CreateRestaurantUser & { id?: number }>({
   full_name: '',
   password: '',
   role: 'staff',
+  staff_type: null,
   is_active: true
 });
 
@@ -190,6 +212,7 @@ watch(() => props.user, (newUser) => {
       full_name: newUser.full_name,
       password: '',
       role: newUser.role as 'admin' | 'staff' | 'customer',
+      staff_type: newUser.staff_type || null,
       is_active: newUser.is_active
     };
   } else {
@@ -199,6 +222,7 @@ watch(() => props.user, (newUser) => {
       full_name: '',
       password: '',
       role: 'staff',
+      staff_type: null,
       is_active: true
     };
   }
@@ -309,6 +333,7 @@ async function handleSubmit() {
         email: form.value.email,
         full_name: form.value.full_name,
         role: form.value.role,
+        staff_type: form.value.staff_type,
         is_active: form.value.is_active
       };
       

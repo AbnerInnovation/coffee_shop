@@ -136,6 +136,7 @@ def create_user(db: Session, user: UserCreate) -> UserModel:
         hashed_password=hashed_password,
         full_name=user.full_name,
         role=user.role,
+        staff_type=user.staff_type if hasattr(user, 'staff_type') else None,
         is_active=user.is_active if hasattr(user, 'is_active') else True,
         restaurant_id=user.restaurant_id if hasattr(user, 'restaurant_id') else None
     )

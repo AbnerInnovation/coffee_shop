@@ -92,6 +92,10 @@ def get_sessions(
     current_user: User = Depends(get_current_active_user)
 ) -> List[CashRegisterSession]:
     try:
+        # If user is a cashier (staff with cashier type), only show their own sessions
+        if current_user.role == "staff" and current_user.staff_type == "cashier":
+            cashier_id = current_user.id
+        
         return cash_register_service.get_sessions(
             db, status=status, cashier_id=cashier_id, skip=skip, limit=limit
         )
@@ -164,9 +168,46 @@ def get_reports(
     current_user: User = Depends(get_current_active_user)
 ) -> List[CashRegisterReport]:
     try:
+        # If user is a cashier, filter reports to only their sessions
+        if current_user.role == "staff" and current_user.staff_type == "cashier":
+            # Get all session IDs for this cashier
+            cashier_sessions = cash_register_service.get_sessions(
+                db, cashier_id=current_user.id, skip=0, limit=1000
+            )
+            cashier_session_ids = [s.id for s in cashier_sessions]
+            
+            # If a specific session_id is requested, verify it belongs to this cashier
+            if session_id:
+                if session_id not in cashier_session_ids:
+                    raise HTTPException(
+                        status_code=403, 
+                        detail="No tienes permiso para ver reportes de esta sesión"
+                    )
+                # Session belongs to cashier, return reports for that session
+                return cash_register_service.get_reports(
+                    db, session_id=session_id, report_type=report_type, skip=skip, limit=limit
+                )
+            
+            # No session_id specified, get reports from all cashier's sessions
+            # If cashier has no sessions, return empty list
+            if not cashier_session_ids:
+                return []
+            
+            # Get reports for all cashier sessions
+            all_reports = []
+            for sid in cashier_session_ids:
+                reports = cash_register_service.get_reports(
+                    db, session_id=sid, report_type=report_type, skip=0, limit=limit
+                )
+                all_reports.extend(reports)
+            return all_reports[:limit]  # Apply limit to combined results
+        
+        # Admin/SysAdmin - return all reports
         return cash_register_service.get_reports(
             db, session_id=session_id, report_type=report_type, skip=skip, limit=limit
         )
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error retrieving reports: {str(e)}")
 
@@ -178,7 +219,18 @@ def get_session_reports(
 ) -> List[CashRegisterReport]:
     """Get all reports for a specific session."""
     try:
+        # If user is a cashier, verify the session belongs to them
+        if current_user.role == "staff" and current_user.staff_type == "cashier":
+            session = cash_register_service.get_session(db, session_id)
+            if not session or session.cashier_id != current_user.id:
+                raise HTTPException(
+                    status_code=403,
+                    detail="No tienes permiso para ver reportes de esta sesión"
+                )
+        
         return cash_register_service.get_reports(db, session_id=session_id)
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error retrieving session reports: {str(e)}")
 
@@ -260,8 +312,13 @@ def get_daily_summaries(
         if end_date:
             end_datetime = datetime.strptime(end_date, "%Y-%m-%d").replace(hour=23, minute=59, second=59, microsecond=999999)
         
+        # If user is a cashier, filter to only their sessions
+        cashier_id = None
+        if current_user.role == "staff" and current_user.staff_type == "cashier":
+            cashier_id = current_user.id
+        
         return cash_register_service.get_daily_summary_reports(
-            db, start_date=start_datetime, end_date=end_datetime, skip=skip, limit=limit
+            db, start_date=start_datetime, end_date=end_datetime, cashier_id=cashier_id, skip=skip, limit=limit
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=f"Invalid date format. Use YYYY-MM-DD: {str(e)}")

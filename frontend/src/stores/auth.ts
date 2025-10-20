@@ -19,6 +19,7 @@ export interface User {
   email: string;
   full_name: string;
   role: string;
+  staff_type?: string | null;
   is_active: boolean;
 }
 
@@ -65,12 +66,12 @@ export const useAuthStore = defineStore('auth', () => {
         throw new Error('No access token received');
       }
       
-      // Choose storage based on remember flag
-      const storage = remember ? localStorage : sessionStorage;
-      // Store tokens
-      storage.setItem('access_token', access_token);
+      // ALWAYS use localStorage for tokens to ensure they persist across refreshes
+      // sessionStorage can be cleared by browsers/extensions
+      localStorage.setItem('access_token', access_token);
+      
       if (refresh_token) {
-        storage.setItem('refresh_token', refresh_token);
+        localStorage.setItem('refresh_token', refresh_token);
       }
       
       try {
@@ -82,7 +83,7 @@ export const useAuthStore = defineStore('auth', () => {
         if (userResponse.data) {
           // Update store state
           user.value = userResponse.data;
-          storage.setItem('user', JSON.stringify(user.value));
+          localStorage.setItem('user', JSON.stringify(user.value));
           
           // Navigate to menu if router is available
           if (router) {
@@ -156,7 +157,7 @@ export const useAuthStore = defineStore('auth', () => {
   async function checkAuth() {
     try {
       loading.value = true;
-      const token = sessionStorage.getItem('access_token') || localStorage.getItem('access_token');
+      const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
       
       if (!token) {
         // No token means not authenticated
@@ -190,9 +191,25 @@ export const useAuthStore = defineStore('auth', () => {
       localStorage.removeItem('access_token');
       sessionStorage.removeItem('access_token');
       return false;
-    } catch (err) {
+    } catch (err: any) {
       console.error('Auth check failed:', err);
-      logout();
+      
+      // Only clear tokens if it's a 401 (unauthorized) error
+      // Don't clear on network errors or other temporary issues
+      if (err.response?.status === 401) {
+        user.value = null;
+        localStorage.removeItem('user');
+        sessionStorage.removeItem('user');
+        localStorage.removeItem('access_token');
+        sessionStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
+        sessionStorage.removeItem('refresh_token');
+      } else {
+        // For other errors (network, 500, etc), keep the token
+        // Just clear the user from memory
+        user.value = null;
+      }
+      
       return false;
     } finally {
       loading.value = false;
@@ -201,16 +218,17 @@ export const useAuthStore = defineStore('auth', () => {
   
   // Initialize the store
   function init() {
-    // Prefer sessionStorage
-    const token = sessionStorage.getItem('access_token') || localStorage.getItem('access_token');
-    const refreshToken = sessionStorage.getItem('refresh_token') || localStorage.getItem('refresh_token');
-    const storedUser = sessionStorage.getItem('user') || localStorage.getItem('user');
+    // Prefer localStorage (more reliable across refreshes)
+    const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
+    const refreshToken = localStorage.getItem('refresh_token') || sessionStorage.getItem('refresh_token');
+    const storedUser = localStorage.getItem('user') || sessionStorage.getItem('user');
     
     if (token && storedUser) {
       try {
         user.value = JSON.parse(storedUser);
-        // Verify token is still valid
-        checkAuth();
+        // DON'T verify token here - let the router guard do it when needed
+        // This prevents clearing tokens on every page load
+        // checkAuth() will be called by router guard when navigating
       } catch (err) {
         console.error('Failed to parse stored user data:', err);
         logout();

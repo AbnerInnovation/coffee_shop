@@ -447,6 +447,7 @@ def get_daily_summary_reports(
     db: Session,
     start_date: Optional[datetime] = None,
     end_date: Optional[datetime] = None,
+    cashier_id: Optional[int] = None,
     skip: int = 0,
     limit: int = 100
 ) -> List[DailySummaryReport]:
@@ -458,6 +459,7 @@ def get_daily_summary_reports(
         db: Database session
         start_date: Optional start date filter
         end_date: Optional end date filter
+        cashier_id: Optional cashier ID filter (for staff users)
         skip: Number of records to skip
         limit: Maximum number of records to return
     
@@ -474,6 +476,8 @@ def get_daily_summary_reports(
             query = query.filter(CashRegisterSessionModel.closed_at >= start_date)
         if end_date:
             query = query.filter(CashRegisterSessionModel.closed_at <= end_date)
+        if cashier_id:
+            query = query.filter(CashRegisterSessionModel.cashier_id == cashier_id)
         
         sessions = query.order_by(CashRegisterSessionModel.closed_at.desc()).offset(skip).limit(limit).all()
         

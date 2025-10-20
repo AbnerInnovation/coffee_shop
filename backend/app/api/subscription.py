@@ -12,18 +12,19 @@ from app.models import (
     MenuItem, Table, Category, SubscriptionStatus
 )
 from app.services.subscription_service import SubscriptionService
-from app.api.deps import get_current_user, get_current_restaurant
+from app.api.deps import get_current_user, get_current_restaurant, require_admin_or_sysadmin
+from app.services.user import get_current_active_user
 
 router = APIRouter(prefix="/subscriptions", tags=["subscriptions"])
 
 
 @router.get("/my-subscription")
 def get_my_subscription(
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_admin_or_sysadmin),
     restaurant: Restaurant = Depends(get_current_restaurant),
     db: Session = Depends(get_db)
 ):
-    """Get current restaurant's subscription details"""
+    """Get current restaurant's subscription details. Requires admin or sysadmin privileges."""
     
     subscription = db.query(RestaurantSubscription).filter(
         RestaurantSubscription.restaurant_id == restaurant.id,
@@ -60,11 +61,11 @@ def get_my_subscription(
 
 @router.get("/usage")
 def get_subscription_usage(
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_active_user),
     restaurant: Restaurant = Depends(get_current_restaurant),
     db: Session = Depends(get_db)
 ):
-    """Get current usage vs limits for the restaurant"""
+    """Get current usage vs limits for the restaurant. Available to all authenticated users."""
     
     # Check if restaurant has an active subscription
     subscription = db.query(RestaurantSubscription).filter(
@@ -191,11 +192,11 @@ def get_available_plans(
 
 @router.get("/addons")
 def get_available_addons(
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_admin_or_sysadmin),
     restaurant: Restaurant = Depends(get_current_restaurant),
     db: Session = Depends(get_db)
 ):
-    """Get available add-ons for current plan"""
+    """Get available add-ons for current plan. Requires admin or sysadmin privileges."""
     
     subscription = db.query(RestaurantSubscription).filter(
         RestaurantSubscription.restaurant_id == restaurant.id,
@@ -232,7 +233,7 @@ def get_available_addons(
 def upgrade_subscription(
     plan_id: int,
     billing_cycle: str,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_admin_or_sysadmin),
     restaurant: Restaurant = Depends(get_current_restaurant),
     db: Session = Depends(get_db)
 ):
@@ -240,6 +241,7 @@ def upgrade_subscription(
     Upgrade or change subscription plan for the restaurant.
     Creates new subscription if none exists.
     Validates downgrade limits before allowing the change.
+    Requires admin or sysadmin privileges.
     """
     from app.services.subscription_service import SubscriptionService
     from app.core.exceptions import ValidationError, ResourceNotFoundError

@@ -86,3 +86,41 @@ def require_sysadmin(
             detail="Only system administrators can perform this action"
         )
     return current_user
+
+
+def require_staff_or_admin(
+    current_user: User = Depends(get_current_user_with_restaurant)
+) -> User:
+    """
+    Dependency to ensure user is STAFF, ADMIN, or SYSADMIN.
+    Already validates restaurant access via get_current_user_with_restaurant.
+    """
+    if current_user.role not in [UserRole.STAFF, UserRole.ADMIN, UserRole.SYSADMIN]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Insufficient permissions to perform this action"
+        )
+    return current_user
+
+
+def require_role(*allowed_roles: UserRole):
+    """
+    Factory function to create a dependency that requires specific roles.
+    
+    Usage:
+        @router.post("/items/")
+        async def create_item(
+            current_user: User = Depends(require_role(UserRole.ADMIN, UserRole.SYSADMIN))
+        ):
+            ...
+    """
+    def role_checker(
+        current_user: User = Depends(get_current_user_with_restaurant)
+    ) -> User:
+        if current_user.role not in allowed_roles:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Insufficient permissions. Required roles: {', '.join([r.value for r in allowed_roles])}"
+            )
+        return current_user
+    return role_checker

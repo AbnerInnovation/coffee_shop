@@ -7,6 +7,7 @@
     >
       <template #actions>
         <BaseButton
+          v-if="canManageTables"
           variant="primary"
           @click="openAddTableModal"
         >
@@ -43,7 +44,7 @@
       </svg>
       <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">{{ t('app.views.tables.no_tables') }}</h3>
       <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ t('app.views.tables.no_tables_description') }}</p>
-      <div class="mt-6">
+      <div v-if="canManageTables" class="mt-6">
         <BaseButton variant="primary" @click="openAddTableModal">
           <template #icon>
             <PlusIcon class="h-5 w-5" aria-hidden="true" />
@@ -75,9 +76,9 @@
             button-label="Table actions"
             width="md"
           >
-            <!-- Order Actions -->
+            <!-- Order Actions (only for users who can create orders) -->
             <DropdownMenuItem
-              v-if="!hasOpenOrder(table.id)"
+              v-if="canCreateOrders && !hasOpenOrder(table.id)"
               :icon="PlusIcon"
               variant="primary"
               @click="openOrderModalFromMenu(table)"
@@ -85,7 +86,7 @@
               {{ t('app.views.orders.new_order') || 'New Order' }}
             </DropdownMenuItem>
             <DropdownMenuItem
-              v-else
+              v-else-if="canCreateOrders && hasOpenOrder(table.id)"
               :icon="ShoppingBagIcon"
               variant="warning"
               @click="goToEditOrderFromMenu(table)"
@@ -93,10 +94,11 @@
               {{ t('app.views.orders.edit_order') || 'Edit Order' }}
             </DropdownMenuItem>
             
-            <DropdownMenuDivider />
+            <DropdownMenuDivider v-if="canCreateOrders || canManageTables" />
             
-            <!-- Table Actions -->
+            <!-- Table Actions (only for users who can manage tables) -->
             <DropdownMenuItem
+              v-if="canManageTables"
               :icon="table.is_occupied ? CheckCircleIcon : XCircleIconOutline"
               :variant="table.is_occupied ? 'success' : 'warning'"
               @click="toggleOccupancyFromMenu(table)"
@@ -104,6 +106,7 @@
               {{ table.is_occupied ? t('app.views.tables.mark_available') : t('app.views.tables.mark_occupied') }}
             </DropdownMenuItem>
             <DropdownMenuItem
+              v-if="canManageTables"
               :icon="PencilIcon"
               variant="default"
               @click="editTableFromMenu(table)"
@@ -111,6 +114,7 @@
               {{ t('app.views.tables.edit') }}
             </DropdownMenuItem>
             <DropdownMenuItem
+              v-if="canManageTables"
               :icon="TrashIcon"
               variant="danger"
               @click="confirmDeleteTable(table)"
@@ -251,6 +255,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { usePermissions } from '@/composables/usePermissions';
 import MainLayout from '@/components/layout/MainLayout.vue';
 import PageHeader from '@/components/layout/PageHeader.vue';
 import { PlusIcon, XMarkIcon, XCircleIcon, PencilIcon, TrashIcon, CheckCircleIcon, XCircleIcon as XCircleIconOutline, ShoppingBagIcon } from '@heroicons/vue/24/outline';
@@ -269,6 +274,7 @@ import type { Table } from '@/services/tableService';
 
 const { t } = useI18n();
 const router = useRouter();
+const { canManageTables, canCreateOrders } = usePermissions();
 const tables = ref<Table[]>([]);
 const loading = ref(false);
 const error = ref('');

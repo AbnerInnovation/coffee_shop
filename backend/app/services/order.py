@@ -88,6 +88,9 @@ def apply_filters(query, filters: Dict[str, Any]):
 
     if filters.get("table_id") is not None:
         query = query.filter(OrderModel.table_id == filters["table_id"])
+    
+    if filters.get("waiter_id") is not None:
+        query = query.filter(OrderModel.user_id == filters["waiter_id"])
 
     if not filters.get("include_deleted", False):
         query = query.filter(OrderModel.deleted_at.is_(None))
@@ -155,7 +158,7 @@ def get_order(db: Session, order_id: int, restaurant_id: int, include_deleted: b
 # CRUD
 # -----------------------------
 
-def create_order_with_items(db: Session, order: OrderCreate, restaurant_id: int) -> dict:
+def create_order_with_items(db: Session, order: OrderCreate, restaurant_id: int, user_id: int = None) -> dict:
     # Set order_type based on whether table_id is provided
     order_type = "dine_in" if order.table_id is not None else "delivery"
 
@@ -166,6 +169,7 @@ def create_order_with_items(db: Session, order: OrderCreate, restaurant_id: int)
         notes=order.notes,
         status=OrderStatus.PENDING,
         restaurant_id=restaurant_id,
+        user_id=user_id,  # Set the user who created the order
         created_at=datetime.now(timezone.utc),
         updated_at=datetime.now(timezone.utc),
     )

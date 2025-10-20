@@ -783,9 +783,11 @@
         "name": "Nombre",
         "email": "Correo",
         "role": "Rol",
+        "staff_type": "Tipo de Personal",
         "status": "Estado",
         "actions": "Acciones"
       },
+      "no_staff_type": "Sin asignar",
       "roles": {
         "sysadmin": "Super Admin",
         "admin": "Administrador",
@@ -802,6 +804,12 @@
         "activate": "Activar",
         "deactivate": "Desactivar"
       },
+      "staff_types": {
+        "waiter": "Mesero",
+        "cashier": "Cajero",
+        "kitchen": "Cocina",
+        "general": "General"
+      },
       "modal": {
         "create_title": "Crear Usuario",
         "edit_title": "Editar Usuario",
@@ -814,6 +822,9 @@
         "password_optional": "dejar en blanco para no cambiar",
         "password_hint": "Debe tener al menos 8 caracteres, incluir mayúsculas, minúsculas y números y al menos un carácter especial",
         "role": "Rol",
+        "staff_type": "Tipo de Personal",
+        "select_staff_type": "Selecciona un tipo...",
+        "staff_type_hint": "Define las responsabilidades específicas del personal",
         "is_active": "Usuario activo",
         "cancel": "Cancelar",
         "save": "Guardar",

@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from ...db.base import get_db
 from ...models.user import User
 from ...models.restaurant import Restaurant
-from ...core.dependencies import get_current_restaurant
+from ...core.dependencies import get_current_restaurant, require_admin_or_sysadmin
 from ...services.user import get_current_active_user
 from ...services.menu import get_categories, get_category, create_category, update_category, delete_category
 from ...schemas.menu import CategoryCreate, CategoryUpdate, CategoryInDB
@@ -32,11 +32,12 @@ async def get_menu_categories(
 async def create_menu_category(
     category: CategoryCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(require_admin_or_sysadmin),
     restaurant: Restaurant = Depends(get_current_restaurant)
 ):
     """
     Create a new menu category.
+    Requires admin or sysadmin privileges.
     """
     # Check subscription limit for categories
     SubscriptionLimitsMiddleware.check_category_limit(db, restaurant.id)
@@ -69,11 +70,12 @@ async def update_menu_category(
     category_id: int,
     category_update: CategoryUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(require_admin_or_sysadmin),
     restaurant: Restaurant = Depends(get_current_restaurant)
 ):
     """
     Update a menu category.
+    Requires admin or sysadmin privileges.
     """
     try:
         db_category = update_category(db, category_id, category_update, restaurant_id=restaurant.id)
@@ -90,11 +92,12 @@ async def update_menu_category(
 async def delete_menu_category(
     category_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(require_admin_or_sysadmin),
     restaurant: Restaurant = Depends(get_current_restaurant)
 ):
     """
     Delete a menu category.
+    Requires admin or sysadmin privileges.
     """
     try:
         deleted = delete_category(db, category_id, restaurant_id=restaurant.id)

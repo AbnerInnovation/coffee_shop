@@ -229,6 +229,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { Bars3Icon, XMarkIcon, MoonIcon, SunIcon, PlusIcon } from '@heroicons/vue/24/outline';
 import { useAuthStore } from '@/stores/auth';
 import { useToast } from '@/composables/useToast';
+import { usePermissions } from '@/composables/usePermissions';
 import { hasRestaurantContext } from '@/utils/subdomain';
 import ConfirmDialog from '@/components/ui/ConfirmationDialog.vue'
 import NewOrderModal from '@/components/orders/NewOrderModal.vue'
@@ -239,6 +240,14 @@ import { subscriptionService } from '@/services/subscriptionService';
 
 const authStore = useAuthStore();
 const route = useRoute();
+const { 
+  canEditCategories, 
+  canManageTables, 
+  canAccessCashRegister, 
+  canAccessKitchen, 
+  canManageUsers, 
+  isSysAdmin 
+} = usePermissions();
 const router = useRouter();
 const { showSuccess } = useToast();
 const { t } = useI18n();
@@ -255,35 +264,38 @@ const subscriptionFeatures = ref({
 const navigation = computed(() => {
   const path = route.path;
   const baseNav = [
-    { name: 'menu', labelKey: 'app.nav.menu', to: '/menu', current: false },
-    { name: 'categories', labelKey: 'app.nav.categories', to: '/categories', current: false },
-    { name: 'orders', labelKey: 'app.nav.orders', to: '/orders', current: false },
-    { name: 'tables', labelKey: 'app.nav.tables', to: '/tables', current: false },
-    { name: 'cash-register', labelKey: 'app.nav.cash_register', to: '/cash-register', current: false },
+    { name: 'menu', labelKey: 'app.nav.menu', to: '/menu', current: false, show: true },
+    { name: 'categories', labelKey: 'app.nav.categories', to: '/categories', current: false, show: canEditCategories.value },
+    { name: 'orders', labelKey: 'app.nav.orders', to: '/orders', current: false, show: true },
+    { name: 'tables', labelKey: 'app.nav.tables', to: '/tables', current: false, show: canManageTables.value },
+    { name: 'cash-register', labelKey: 'app.nav.cash_register', to: '/cash-register', current: false, show: canAccessCashRegister.value },
   ];
   
-  // Add kitchen module only if subscription allows it
-  if (subscriptionFeatures.value.has_kitchen_module) {
-    baseNav.splice(4, 0, { name: 'kitchen', labelKey: 'app.nav.kitchen', to: '/kitchen', current: false });
+  // Add kitchen module if subscription allows it AND user has permission
+  if (subscriptionFeatures.value.has_kitchen_module && canAccessKitchen.value) {
+    baseNav.splice(4, 0, { name: 'kitchen', labelKey: 'app.nav.kitchen', to: '/kitchen', current: false, show: true });
   }
   
-  // Add Users management link if user is admin or sysadmin
-  if (authStore.user?.role === 'admin' || authStore.user?.role === 'sysadmin') {
-    baseNav.push({ name: 'users', labelKey: 'app.nav.users', to: '/users', current: false });
+  // Add Users management link if user has permission
+  if (canManageUsers.value) {
+    baseNav.push({ name: 'users', labelKey: 'app.nav.users', to: '/users', current: false, show: true });
   }
   
-  if (authStore.user?.role === 'sysadmin') {
-    baseNav.push({ name: 'sysadmin', labelKey: 'app.nav.sysadmin', to: '/sysadmin', current: false });
+  // Add SysAdmin link only on main domain (not subdomains)
+  if (isSysAdmin.value && !hasRestaurantContext()) {
+    baseNav.push({ name: 'sysadmin', labelKey: 'app.nav.sysadmin', to: '/sysadmin', current: false, show: true });
   }
   
-  // Update current state based on route
-  return baseNav.map(item => ({
-    ...item,
-    current: item.to === path || 
-             (item.to === '/' && path === '') ||
-             (item.to !== '/' && path.startsWith(item.to) && 
-              (path === item.to || path.startsWith(`${item.to}/`)))
-  }));
+  // Filter by show property and update current state based on route
+  return baseNav
+    .filter(item => item.show)
+    .map(item => ({
+      ...item,
+      current: item.to === path || 
+               (item.to === '/' && path === '') ||
+               (item.to !== '/' && path.startsWith(item.to) && 
+                (path === item.to || path.startsWith(`${item.to}/`)))
+    }));
 });
 
 const isMobileMenuOpen = ref(false);
@@ -343,6 +355,9 @@ function toggleProfileMenu() {
 
 async function handleLogout() {
   try {
+    // Close the profile menu
+    isProfileMenuOpen.value = false;
+    
     await authStore.logout();
     showSuccess(t('app.messages.logout_success'));
     router.push('/login');
@@ -372,7 +387,8 @@ function handleOrderCreated(order) {
 
 // Load subscription features
 const loadSubscriptionFeatures = async () => {
-  // Only load if user is authenticated
+  // Load subscription features for all authenticated users
+  // This determines which modules are available in the navigation
   if (!authStore.isAuthenticated) {
     return;
   }

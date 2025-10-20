@@ -15,6 +15,13 @@ class UserRole(str, PyEnum):
     STAFF = "staff"
     CUSTOMER = "customer"
 
+# Define StaffType enum for staff sub-roles
+class StaffType(str, PyEnum):
+    WAITER = "waiter"      # Mesero: Crear/editar pedidos, gestionar mesas
+    CASHIER = "cashier"    # Cajero: Procesar pagos, acceder a caja registradora
+    KITCHEN = "kitchen"    # Cocina: Ver pedidos de cocina, marcar items preparados
+    GENERAL = "general"    # General: Solo lectura
+
 class User(BaseModel):
     __tablename__ = "users"
     
@@ -25,6 +32,11 @@ class User(BaseModel):
         SQLEnum(UserRole, name='user_role', values_callable=lambda obj: [e.value for e in obj]), 
         default=UserRole.STAFF, 
         nullable=False
+    )
+    staff_type: Mapped[Optional[str]] = mapped_column(
+        SQLEnum(StaffType, name='staff_type', values_callable=lambda obj: [e.value for e in obj]),
+        nullable=True,
+        comment="Sub-role for STAFF users (waiter, cashier, kitchen, general)"
     )
     is_active = Column(Boolean, default=True, nullable=False)
     

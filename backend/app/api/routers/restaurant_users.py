@@ -191,7 +191,7 @@ async def update_restaurant_user(
             )
     
     # Prevent changing restaurant_id (unless sysadmin)
-    if user.restaurant_id is not None and current_user.role != UserRole.SYSADMIN:
+    if hasattr(user, 'restaurant_id') and user.restaurant_id is not None and current_user.role != UserRole.SYSADMIN:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only system administrators can change user's restaurant"

@@ -110,9 +110,8 @@ export function canViewSubscription(user: User | null | undefined): boolean {
 export function canCreateOrders(user: User | null | undefined): boolean {
   if (isAdminOrSysAdmin(user)) return true;
   if (isStaff(user)) {
-    // TODO: Check staff_type when implemented
-    // For now, all staff can create orders
-    return true;
+    // Waiters can create orders
+    return user?.staff_type === StaffType.WAITER;
   }
   return false;
 }
@@ -124,9 +123,8 @@ export function canCreateOrders(user: User | null | undefined): boolean {
 export function canAccessCashRegister(user: User | null | undefined): boolean {
   if (isAdminOrSysAdmin(user)) return true;
   if (isStaff(user)) {
-    // TODO: Check staff_type === 'cashier' when implemented
-    // For now, all staff can access
-    return true;
+    // Only cashiers can access cash register
+    return user?.staff_type === StaffType.CASHIER;
   }
   return false;
 }
@@ -138,9 +136,8 @@ export function canAccessCashRegister(user: User | null | undefined): boolean {
 export function canAccessKitchen(user: User | null | undefined): boolean {
   if (isAdminOrSysAdmin(user)) return true;
   if (isStaff(user)) {
-    // TODO: Check staff_type === 'kitchen' when implemented
-    // For now, all staff can access if subscription allows
-    return true;
+    // Only kitchen staff can access kitchen module
+    return user?.staff_type === StaffType.KITCHEN;
   }
   return false;
 }
@@ -160,8 +157,8 @@ export function canViewReports(user: User | null | undefined): boolean {
 export function canEditOrders(user: User | null | undefined): boolean {
   if (isAdminOrSysAdmin(user)) return true;
   if (isStaff(user)) {
-    // TODO: Check staff_type === 'waiter' when implemented
-    return true;
+    // Only waiters can edit orders
+    return user?.staff_type === StaffType.WAITER;
   }
   return false;
 }
@@ -181,8 +178,8 @@ export function canDeleteOrders(user: User | null | undefined): boolean {
 export function canProcessPayments(user: User | null | undefined): boolean {
   if (isAdminOrSysAdmin(user)) return true;
   if (isStaff(user)) {
-    // TODO: Check staff_type === 'cashier' when implemented
-    return true;
+    // Only cashiers can process payments
+    return user?.staff_type === StaffType.CASHIER;
   }
   return false;
 }

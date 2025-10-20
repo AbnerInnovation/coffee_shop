@@ -5,6 +5,7 @@ export interface RestaurantUser {
   email: string;
   full_name: string;
   role: 'sysadmin' | 'admin' | 'staff' | 'customer';
+  staff_type?: 'waiter' | 'cashier' | 'kitchen' | 'general' | null;
   is_active: boolean;
   restaurant_id: number | null;
   created_at: string;
@@ -16,6 +17,7 @@ export interface CreateRestaurantUser {
   full_name: string;
   password: string;
   role: 'admin' | 'staff' | 'customer';
+  staff_type?: 'waiter' | 'cashier' | 'kitchen' | 'general' | null;
   is_active?: boolean;
 }
 
@@ -24,6 +26,7 @@ export interface UpdateRestaurantUser {
   full_name?: string;
   password?: string;
   role?: 'admin' | 'staff' | 'customer';
+  staff_type?: 'waiter' | 'cashier' | 'kitchen' | 'general' | null;
   is_active?: boolean;
 }
 

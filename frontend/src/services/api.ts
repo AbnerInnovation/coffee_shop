@@ -73,19 +73,9 @@ api.interceptors.response.use(
       window.location.href = '/login';
     }
     
-    // For 403 errors, check if it's a subscription limit error
-    // Subscription limit errors should NOT logout the user
-    if (error.response?.status === 403) {
-      const responseData = error.response?.data as any;
-      const errorMessage = responseData?.detail || responseData?.error?.message || '';
-      
-      // Only logout if it's NOT a subscription limit error
-      if (!errorMessage.toLowerCase().includes('subscription') && 
-          !errorMessage.toLowerCase().includes('limit')) {
-        authService.logout();
-        window.location.href = '/login';
-      }
-    }
+    // For 403 errors, DON'T logout users
+    // Permission errors are not authentication errors
+    // User is authenticated, just lacks permission for this resource
     
     return Promise.reject(error);
   }

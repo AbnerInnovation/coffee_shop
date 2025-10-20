@@ -8,6 +8,7 @@ from ...models.order_item import OrderItem as OrderItemModel
 from ...models.table import Table as TableModel
 from ...models.menu import MenuItem as MenuItemModel
 from ...models.restaurant import Restaurant
+from ...models.user import User
 from ...schemas.order import Order, OrderCreate, OrderUpdate, OrderItemCreate, OrderItemUpdate, OrderItem
 from ...services import order as order_service
 from ...services.order import serialize_order_item
@@ -33,19 +34,27 @@ async def read_orders(
     status: Optional[OrderStatus] = None,
     table_id: Optional[int] = None,
     db: Session = Depends(get_db),
-    restaurant: Restaurant = Depends(get_current_restaurant)
+    restaurant: Restaurant = Depends(get_current_restaurant),
+    current_user: User = Depends(get_current_active_user)
 ) -> List[Order]:
     """
     Retrieve orders with optional filtering (filtered by restaurant).
+    Waiters only see their own orders.
     """
     try:
+        # If user is a waiter, filter to only their orders
+        waiter_id = None
+        if current_user.role == "staff" and current_user.staff_type == "waiter":
+            waiter_id = current_user.id
+        
         return order_service.get_orders(
             db,
             restaurant_id=restaurant.id,
             skip=skip,
             limit=limit,
             status=status,
-            table_id=table_id
+            table_id=table_id,
+            waiter_id=waiter_id
         )
     except Exception as e:
         raise DatabaseError(f"Error retrieving orders: {str(e)}", operation="select")
@@ -58,7 +67,8 @@ async def create_order(
     order: OrderCreate, 
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
-    restaurant: Restaurant = Depends(get_current_restaurant)
+    restaurant: Restaurant = Depends(get_current_restaurant),
+    current_user: User = Depends(get_current_active_user)
 ) -> Order:
     """
     Create a new order.
@@ -74,7 +84,7 @@ async def create_order(
         if not db_item:
             raise ResourceNotFoundError("MenuItem", item.menu_item_id)
     
-    return order_service.create_order_with_items(db=db, order=order, restaurant_id=restaurant.id)
+    return order_service.create_order_with_items(db=db, order=order, restaurant_id=restaurant.id, user_id=current_user.id)
 
 
 @router.get("/{order_id}", response_model=Order)

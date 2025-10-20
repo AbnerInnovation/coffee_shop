@@ -82,6 +82,9 @@
                 {{ t('app.users.table.role') }}
               </th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                {{ t('app.users.table.staff_type') }}
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                 {{ t('app.users.table.status') }}
               </th>
               <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
@@ -105,6 +108,15 @@
                 <span :class="getRoleBadgeClass(user.role)" class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full">
                   {{ t(`app.users.roles.${user.role}`) }}
                 </span>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span v-if="user.role === 'staff' && user.staff_type" class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                  {{ t(`app.users.staff_types.${user.staff_type}`) }}
+                </span>
+                <span v-else-if="user.role === 'staff'" class="text-xs text-gray-400 dark:text-gray-500 italic">
+                  {{ t('app.users.no_staff_type') }}
+                </span>
+                <span v-else class="text-xs text-gray-400 dark:text-gray-500">—</span>
               </td>
               <td class="px-6 py-4 whitespace-nowrap">
                 <span :class="user.is_active ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'" class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full">

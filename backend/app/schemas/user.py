@@ -11,10 +11,17 @@ class UserRole(str, Enum):
     STAFF = "staff"
     CUSTOMER = "customer"
 
+class StaffType(str, Enum):
+    WAITER = "waiter"      # Mesero: Crear/editar pedidos, gestionar mesas
+    CASHIER = "cashier"    # Cajero: Procesar pagos, acceder a caja registradora
+    KITCHEN = "kitchen"    # Cocina: Ver pedidos de cocina, marcar items preparados
+    GENERAL = "general"    # General: Solo lectura
+
 class UserBase(BaseModel):
     email: EmailStr
     full_name: str = Field(..., min_length=1, max_length=100)
     role: UserRole = UserRole.STAFF
+    staff_type: Optional[StaffType] = None
     is_active: bool = True
     restaurant_id: Optional[int] = None
     
@@ -37,6 +44,7 @@ class UserUpdate(BaseModel):
     email: Optional[EmailStr] = None
     full_name: Optional[str] = Field(None, min_length=1, max_length=100)
     role: Optional[UserRole] = None
+    staff_type: Optional[StaffType] = None
     is_active: Optional[bool] = None
     password: Optional[str] = Field(None, min_length=8, max_length=100)
     

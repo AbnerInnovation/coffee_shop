@@ -18,6 +18,24 @@ const router = createRouter({
  */
 router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore();
+  
+  // Wait for auth check to complete if there's a token but no user yet
+  const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
+  
+  if (token && !authStore.user) {
+    // Give the store a moment to initialize
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    // If still no user after wait, try to check auth
+    if (!authStore.user && !authStore.loading) {
+      try {
+        await authStore.checkAuth();
+      } catch (error) {
+        console.error('Auth check failed in router guard:', error);
+      }
+    }
+  }
+  
   const user = authStore.user;
 
   // 1. Check authentication requirement

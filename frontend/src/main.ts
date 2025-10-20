@@ -10,13 +10,44 @@ import 'vue-toastification/dist/index.css';
 
 // Configure axios
 axios.defaults.baseURL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
+// Request interceptor - add auth token
 axios.interceptors.request.use(
   (config) => {
     const token = sessionStorage.getItem('access_token') || localStorage.getItem('access_token');
-    if (token) config.headers.Authorization = `Bearer ${token}`;
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
     return config;
   },
   (error) => Promise.reject(error)
+);
+
+// Response interceptor - handle 401 errors
+axios.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+    
+    // Only clear tokens if we get a 401 response from the server
+    // Don't clear on network errors or other issues
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+      
+      // Clear invalid token and redirect to login
+      sessionStorage.removeItem('access_token');
+      sessionStorage.removeItem('refresh_token');
+      sessionStorage.removeItem('user');
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
+      localStorage.removeItem('user');
+      
+      // Redirect to login
+      window.location.href = '/login';
+    }
+    
+    return Promise.reject(error);
+  }
 );
 
 const pinia = createPinia();

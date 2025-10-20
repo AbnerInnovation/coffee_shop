@@ -6,6 +6,7 @@
     >
       <template #actions>
         <button
+          v-if="canEditCategories"
           type="button"
           @click="openCategoryModal()"
           class="block rounded-md bg-indigo-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
@@ -32,7 +33,7 @@
                     <p class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ cat.name }}</p>
                     <p v-if="cat.description" class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{ cat.description }}</p>
                   </div>
-                  <div v-if="cat.id" class="absolute top-4 right-4" @click.stop>
+                  <div v-if="cat.id && canEditCategories" class="absolute top-4 right-4" @click.stop>
                     <DropdownMenu
                       :id="`category-${cat.id}`"
                       button-label="Category actions"
@@ -90,6 +91,7 @@ import { useI18n } from 'vue-i18n';
 import { useMenuStore } from '@/stores/menu';
 import { useToast } from '@/composables/useToast';
 import { useConfirm } from '@/composables/useConfirm';
+import { usePermissions } from '@/composables/usePermissions';
 import MainLayout from '@/components/layout/MainLayout.vue';
 import PageHeader from '@/components/layout/PageHeader.vue';
 import DropdownMenu from '@/components/ui/DropdownMenu.vue';
@@ -97,6 +99,8 @@ import DropdownMenuItem from '@/components/ui/DropdownMenuItem.vue';
 import DropdownMenuDivider from '@/components/ui/DropdownMenuDivider.vue';
 import { PencilIcon, TrashIcon } from '@heroicons/vue/24/outline';
 import type { MenuCategory } from '@/types/menu';
+
+const { canEditCategories } = usePermissions();
 
 const menuStore = useMenuStore();
 const { showSuccess, showError } = useToast();
