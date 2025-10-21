@@ -147,7 +147,11 @@
                   </span>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  <DropdownMenu v-model="openMenus[user.id]" button-label="Actions" width="sm">
+                  <DropdownMenu 
+                    :id="`user-menu-${user.id}`"
+                    button-label="Actions" 
+                    width="sm"
+                  >
                     <DropdownMenuItem
                       :icon="PencilIcon"
                       variant="primary"
@@ -197,7 +201,11 @@
           >
             <!-- Actions Menu - Top Right -->
             <div class="absolute top-3 right-3">
-              <DropdownMenu v-model="openMenus[user.id]" button-label="Actions" width="sm">
+              <DropdownMenu 
+                :id="`user-menu-mobile-${user.id}`"
+                button-label="Actions" 
+                width="sm"
+              >
                 <DropdownMenuItem
                   :icon="PencilIcon"
                   variant="primary"
@@ -299,7 +307,6 @@ const users = ref<RestaurantUser[]>([]);
 const usage = ref<SubscriptionUsage | null>(null);
 const loading = ref(false);
 const currentFilter = ref('all');
-const openMenus = reactive<Record<number, boolean>>({});
 
 const isModalOpen = ref(false);
 const modalMode = ref<'create' | 'edit'>('create');

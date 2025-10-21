@@ -221,6 +221,26 @@ const emailTouched = ref(false);
 const fullNameError = ref('');
 const fullNameTouched = ref(false);
 
+// Function to reset form to initial state
+function resetForm() {
+  form.value = {
+    email: '',
+    full_name: '',
+    password: '',
+    role: 'staff',
+    staff_type: null,
+    is_active: true
+  };
+  errorMessage.value = '';
+  subscriptionLimitError.value = '';
+  passwordErrors.value = [];
+  passwordTouched.value = false;
+  emailError.value = '';
+  emailTouched.value = false;
+  fullNameError.value = '';
+  fullNameTouched.value = false;
+}
+
 // Watch for user changes to populate form in edit mode
 watch(() => props.user, (newUser) => {
   if (newUser && props.mode === 'edit') {
@@ -233,26 +253,30 @@ watch(() => props.user, (newUser) => {
       staff_type: newUser.staff_type || null,
       is_active: newUser.is_active
     };
-  } else {
+    // Clear errors
+    errorMessage.value = '';
+    subscriptionLimitError.value = '';
+    passwordErrors.value = [];
+    passwordTouched.value = false;
+    emailError.value = '';
+    emailTouched.value = false;
+    fullNameError.value = '';
+    fullNameTouched.value = false;
+  } else if (props.mode === 'create') {
     // Reset form for create mode
-    form.value = {
-      email: '',
-      full_name: '',
-      password: '',
-      role: 'staff',
-      staff_type: null,
-      is_active: true
-    };
+    resetForm();
   }
-  errorMessage.value = '';
-  subscriptionLimitError.value = '';
-  passwordErrors.value = [];
-  passwordTouched.value = false;
-  emailError.value = '';
-  emailTouched.value = false;
-  fullNameError.value = '';
-  fullNameTouched.value = false;
 }, { immediate: true });
+
+// Watch for modal close to reset form
+watch(() => props.isOpen, (isOpen) => {
+  if (!isOpen) {
+    // Reset form when modal closes
+    setTimeout(() => {
+      resetForm();
+    }, 300); // Wait for modal close animation
+  }
+});
 
 function validateEmail() {
   const email = form.value.email;
