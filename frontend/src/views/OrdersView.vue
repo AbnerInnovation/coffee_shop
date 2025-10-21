@@ -108,26 +108,8 @@
                     {{ t('app.actions.edit') }}
                   </DropdownMenuItem>
                   
-                  <DropdownMenuDivider v-if="order.status !== 'completed' && order.status !== 'cancelled'" />
-                  
-                  <!-- Status Actions -->
-                  <DropdownMenuItem
-                    v-if="order.status === 'pending'"
-                    :icon="PlayIcon"
-                    variant="primary"
-                    @click="closeMenuAndExecute(order.id, () => updateOrderStatus(order.id, 'preparing'))"
-                  >
-                    {{ t('app.views.orders.status_menu.mark_preparing') || 'Mark as Preparing' }}
-                  </DropdownMenuItem>
-                  
-                  <DropdownMenuItem
-                    v-if="order.status === 'preparing'"
-                    :icon="CheckIcon"
-                    variant="success"
-                    @click="closeMenuAndExecute(order.id, () => updateOrderStatus(order.id, 'ready'))"
-                  >
-                    {{ t('app.views.orders.buttons.ready') }}
-                  </DropdownMenuItem>
+                  <!-- Status Actions (only complete for ready orders) -->
+                  <DropdownMenuDivider v-if="order.status === 'ready' || canCancelOrder(order)" />
                   
                   <DropdownMenuItem
                     v-if="order.status === 'ready'"
@@ -138,11 +120,11 @@
                     {{ t('app.views.orders.buttons.complete') }}
                   </DropdownMenuItem>
                   
-                  <DropdownMenuDivider v-if="order.status !== 'cancelled' && order.status !== 'completed'" />
+                  <DropdownMenuDivider v-if="order.status === 'ready' && canCancelOrder(order)" />
                   
                   <!-- Cancel Order -->
                   <DropdownMenuItem
-                    v-if="order.status !== 'cancelled' && order.status !== 'completed'"
+                    v-if="canCancelOrder(order)"
                     :icon="XMarkIcon"
                     variant="danger"
                     @click="closeMenuAndExecute(order.id, () => cancelOrder(order.id))"
@@ -239,8 +221,7 @@ import {
   ClockIcon,
   ChevronDownIcon,
   CheckCircleIcon,
-  PencilIcon,
-  PlayIcon
+  PencilIcon
 } from '@heroicons/vue/24/outline';
 import OrderDetails from '@/components/orders/OrderDetailsModal.vue';
 import NewOrderModal from '@/components/orders/NewOrderModal.vue';
@@ -347,6 +328,7 @@ interface OrderItemLocal {
   variant_id?: number | null;
   variant_price_adjustment?: number | null;
   price?: number;
+  status?: string;
   variant?: {
     id: number;
     name: string;
@@ -727,8 +709,39 @@ const updateOrderStatus = async (orderId: number, newStatus: BackendOrderStatus)
   }
 };
 
+// Check if order can be cancelled
+const canCancelOrder = (order: OrderWithLocalFields): boolean => {
+  // Can only cancel if order status is pending
+  if (order.status !== 'pending') {
+    return false;
+  }
+  
+  // If no items or items don't have status, allow cancellation (pending order with no preparation started)
+  if (!order.items || order.items.length === 0) {
+    return true;
+  }
+  
+  // Can only cancel if ALL items are pending or don't have status (none started preparing)
+  const allItemsPending = order.items.every(item => !item.status || item.status === 'pending');
+  return allItemsPending;
+};
+
 // Cancel order
 const cancelOrder = async (orderId: number) => {
+  // Find the order to validate
+  const order = orders.value.find(o => o.id === orderId);
+  
+  if (!order) {
+    showError(t('app.views.orders.messages.order_not_found') as string);
+    return;
+  }
+  
+  // Validate if order can be cancelled
+  if (!canCancelOrder(order)) {
+    showError('No se puede cancelar una orden que ya está en preparación o lista. Solo se pueden cancelar órdenes pendientes con todos sus items pendientes.');
+    return;
+  }
+  
   const confirmed = await confirmCancelOrder();
 
   if (!confirmed) return;
