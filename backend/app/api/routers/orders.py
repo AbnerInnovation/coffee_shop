@@ -178,7 +178,76 @@ async def add_order_item(order_id: int, item: OrderItemCreate, db: Session = Dep
     if not db_menu_item:
         raise ResourceNotFoundError("MenuItem", item.menu_item_id)
     
-    return order_service.add_order_item(db=db, db_order=db_order, item=item, unit_price=db_menu_item.price)
+    # If order was preparing or ready, change it back to pending since there's a new item
+    if db_order.status in [OrderStatus.PREPARING, OrderStatus.READY]:
+        db_order.status = OrderStatus.PENDING
+    
+    # Set sort to 1 to give priority (items added to existing order)
+    db_order.sort = 1
+    
+    # Always update updated_at when adding items to track latest activity
+    from datetime import datetime, timezone
+    db_order.updated_at = datetime.now(timezone.utc)
+    db.commit()
+    
+    # Add the item (will be created with status=PENDING)
+    result = order_service.add_order_item(db=db, db_order=db_order, item=item, unit_price=db_menu_item.price)
+    
+    return result
+
+
+@router.post("/{order_id}/items/bulk", response_model=Order, status_code=status.HTTP_201_CREATED)
+async def add_multiple_items_to_order(
+    order_id: int, 
+    items: List[OrderItemCreate], 
+    db: Session = Depends(get_db),
+    restaurant: Restaurant = Depends(get_current_restaurant)
+) -> Order:
+    """
+    Add multiple items to an existing order at once.
+    This is useful when customers order additional items after their initial order.
+    """
+    # Validate order exists and is not deleted
+    db_order = db.query(OrderModel).filter(
+        OrderModel.id == order_id, 
+        OrderModel.deleted_at.is_(None),
+        OrderModel.restaurant_id == restaurant.id
+    ).first()
+    if not db_order:
+        raise ResourceNotFoundError("Order", order_id)
+    
+    # Validate order is still open (not completed or cancelled)
+    if db_order.status in [OrderStatus.COMPLETED, OrderStatus.CANCELLED]:
+        raise ConflictError(
+            f"Cannot add items to a {db_order.status.value} order",
+            resource="Order"
+        )
+    
+    # Validate all menu items exist
+    for item in items:
+        db_menu_item = db.query(MenuItemModel).filter(MenuItemModel.id == item.menu_item_id).first()
+        if not db_menu_item:
+            raise ResourceNotFoundError("MenuItem", item.menu_item_id)
+    
+    # Add all items (they will be created with status=PENDING)
+    for item in items:
+        db_menu_item = db.query(MenuItemModel).filter(MenuItemModel.id == item.menu_item_id).first()
+        order_service.add_order_item(db=db, db_order=db_order, item=item, unit_price=db_menu_item.price)
+    
+    # If order was preparing or ready, change it back to pending since there are new items
+    if db_order.status in [OrderStatus.PREPARING, OrderStatus.READY]:
+        db_order.status = OrderStatus.PENDING
+    
+    # Set sort to 1 to give priority (items added to existing order)
+    db_order.sort = 1
+    
+    # Always update updated_at when adding items to track latest activity
+    from datetime import datetime, timezone
+    db_order.updated_at = datetime.now(timezone.utc)
+    db.commit()
+    
+    # Return updated order with all items
+    return order_service.get_order(db, order_id=order_id, restaurant_id=restaurant.id)
 
 
 @router.put("/{order_id}/items/{item_id}", response_model=OrderItem)

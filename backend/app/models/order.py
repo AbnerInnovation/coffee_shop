@@ -46,6 +46,7 @@ class Order(BaseModel):
         SQLEnum(PaymentMethod, name='payment_method'),
         nullable=True
     )
+    sort: Mapped[int] = mapped_column(Integer, default=50, nullable=False)
     deleted_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     
     # Multi-tenant support

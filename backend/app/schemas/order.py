@@ -113,6 +113,7 @@ class OrderInDBBase(OrderBase):
     customer_name: Optional[str] = None
     user_id: Optional[int] = None
     order_type: Optional[str] = None
+    sort: int = 50
     deleted_at: Optional[datetime] = None
     items: List[OrderItem] = []
 

@@ -85,14 +85,22 @@
             >
               {{ t('app.views.orders.new_order') || 'New Order' }}
             </DropdownMenuItem>
-            <DropdownMenuItem
-              v-else-if="canCreateOrders && hasOpenOrder(table.id)"
-              :icon="ShoppingBagIcon"
-              variant="warning"
-              @click="goToEditOrderFromMenu(table)"
-            >
-              {{ t('app.views.orders.edit_order') || 'Edit Order' }}
-            </DropdownMenuItem>
+            <template v-else-if="canCreateOrders && hasOpenOrder(table.id)">
+              <DropdownMenuItem
+                :icon="ShoppingBagIcon"
+                variant="warning"
+                @click="goToEditOrderFromMenu(table)"
+              >
+                {{ t('app.views.orders.edit_order') || 'Edit Order' }}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                :icon="PlusIcon"
+                variant="info"
+                @click="openAddItemsModal(table)"
+              >
+                {{ t('app.views.orders.add_items') || 'Add Items' }}
+              </DropdownMenuItem>
+            </template>
             
             <DropdownMenuDivider v-if="canCreateOrders || canManageTables" />
             
@@ -235,8 +243,20 @@
       v-if="showOrderModal"
       :open="showOrderModal"
       :table-id="selectedTableForOrder ? selectedTableForOrder.id : null"
-      @close="showOrderModal = false"
+      :mode="orderModalMode"
+      :order-to-edit="orderToEdit"
+      @close="closeOrderModal"
       @order-created="handleOrderCreated"
+    />
+
+    <!-- Add Items Modal -->
+    <AddItemsModal
+      v-if="showAddItemsModal"
+      :open="showAddItemsModal"
+      :order-id="selectedOrderId!"
+      :table-number="selectedTableForAddItems?.number ?? 0"
+      @close="showAddItemsModal = false"
+      @success="handleItemsAdded"
     />
 
     <!-- Limit Reached Modal -->
@@ -261,6 +281,7 @@ import PageHeader from '@/components/layout/PageHeader.vue';
 import { PlusIcon, XMarkIcon, XCircleIcon, PencilIcon, TrashIcon, CheckCircleIcon, XCircleIcon as XCircleIconOutline, ShoppingBagIcon } from '@heroicons/vue/24/outline';
 import tableService from '@/services/tableService';
 import NewOrderModal from '@/components/orders/NewOrderModal.vue';
+import AddItemsModal from '@/components/orders/AddItemsModal.vue';
 import LimitReachedModal from '@/components/subscription/LimitReachedModal.vue';
 import BaseButton from '@/components/ui/BaseButton.vue';
 import DropdownMenu from '@/components/ui/DropdownMenu.vue';
@@ -435,6 +456,13 @@ const selectTable = (table) => {
 // Order modal state
 const showOrderModal = ref(false);
 const selectedTableForOrder = ref<Table | null>(null);
+const orderModalMode = ref<'create' | 'edit'>('create');
+const orderToEdit = ref<any>(null);
+
+// Add items modal state
+const showAddItemsModal = ref(false);
+const selectedTableForAddItems = ref<Table | null>(null);
+const selectedOrderId = ref<number | null>(null);
 
 // Limit reached modal state
 const showLimitModal = ref(false);
@@ -445,7 +473,16 @@ const maxLimit = ref<number | null>(null);
 // Open order modal for a table (NewOrderModal)
 const openOrderModal = (table) => {
   selectedTableForOrder.value = table;
+  orderModalMode.value = 'create';
+  orderToEdit.value = null;
   showOrderModal.value = true;
+};
+
+// Close order modal and reset state
+const closeOrderModal = () => {
+  showOrderModal.value = false;
+  orderModalMode.value = 'create';
+  orderToEdit.value = null;
 };
 
 // Handle order created event
@@ -455,13 +492,24 @@ const handleOrderCreated = (order) => {
   refreshOpenOrders();
 };
 
-// Go to orders page filtered by this table to edit the open order
+// Open edit order modal
 const goToEditOrder = async (table: Table) => {
   try {
-    // Navigate to Orders with table filter so user can edit
-    await router.push({ path: '/orders', query: { table_id: String(table.id) } });
-  } catch (e) {
-    console.error('Failed to navigate to orders view:', e);
+    // Get the open order for this table
+    const orders = await orderService.getActiveOrders(undefined, table.id);
+    const openOrder = orders.find(o => o.table_id === table.id && o.status !== 'completed' && o.status !== 'cancelled' && !o.is_paid);
+    
+    if (openOrder) {
+      selectedTableForOrder.value = table;
+      orderModalMode.value = 'edit';
+      orderToEdit.value = openOrder;
+      showOrderModal.value = true;
+    } else {
+      error.value = t('app.views.orders.errors.no_open_order') || 'No open order found for this table.';
+    }
+  } catch (err) {
+    console.error('Error fetching order for table:', err);
+    error.value = t('app.views.orders.errors.fetch_failed') || 'Failed to fetch order. Please try again.';
   }
 };
 
@@ -516,6 +564,34 @@ const confirmDeleteTable = async (table: Table) => {
     console.error('Error deleting table:', err);
     error.value = t('app.views.tables.errors.delete_failed') || 'Failed to delete table. Please try again.';
   }
+};
+
+// Open add items modal
+const openAddItemsModal = async (table: Table) => {
+  closeMenu(table.id);
+  
+  try {
+    // Get the open order for this table
+    const orders = await orderService.getActiveOrders(undefined, table.id);
+    const openOrder = orders.find(o => o.table_id === table.id && o.status !== 'completed' && o.status !== 'cancelled' && !o.is_paid);
+    
+    if (openOrder) {
+      selectedTableForAddItems.value = table;
+      selectedOrderId.value = openOrder.id;
+      showAddItemsModal.value = true;
+    } else {
+      error.value = t('app.views.orders.errors.no_open_order') || 'No open order found for this table.';
+    }
+  } catch (err) {
+    console.error('Error fetching order for table:', err);
+    error.value = t('app.views.orders.errors.fetch_failed') || 'Failed to fetch order. Please try again.';
+  }
+};
+
+// Handle items added successfully
+const handleItemsAdded = () => {
+  fetchTables();
+  refreshOpenOrders();
 };
 
 // Initialize component

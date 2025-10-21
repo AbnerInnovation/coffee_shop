@@ -23,6 +23,7 @@
       "view_inventory": "Ver inventario",
       "refresh": "Actualizar",
       "add": "Agregar",
+      "adding": "Agregando...",
       "edit": "Editar",
       "cancel": "Cancelar",
       "save": "Guardar",
@@ -271,8 +272,22 @@
         "try_again": "Intentar de nuevo",
         "new_order": "Nueva orden",
         "edit_order": "Editar orden",
+        "add_items": "Agregar Items",
         "no_orders": "No se encontraron órdenes",
         "no_orders_description": "Comienza creando una nueva orden",
+        "add_items_modal": {
+          "title": "Agregar Items - Mesa {tableNumber} (Orden #{orderId})",
+          "info": "Los nuevos items se agregarán a la orden existente y se enviarán a cocina con estado 'pendiente'.",
+          "select_items": "Selecciona los items a agregar",
+          "items_to_add": "Items a agregar",
+          "total": "Total",
+          "add_items_button": "Agregar Items",
+          "error_adding": "Error al agregar items a la orden"
+        },
+        "errors": {
+          "no_open_order": "No se encontró una orden abierta para esta mesa",
+          "fetch_failed": "Error al obtener la orden. Inténtalo de nuevo."
+        },
         "tabs": {
           "all": "Todas",
           "pending": "Pendiente",
@@ -356,6 +371,7 @@
             "variants": "Variantes",
             "base_item": "Artículo base",
             "item_description_placeholder": "Ej.: sin cebolla, salsa extra, etc.",
+            "item_locked": "Este item ya está en preparación y no puede modificarse",
             "errors": {
               "add_one_item": "Agrega al menos un artículo a la orden",
               "create_failed": "Error al crear la orden"
@@ -481,9 +497,17 @@
         "order": "Orden #{id}",
         "table": "Mesa {number}",
         "note": "Nota:",
+        "tabs": {
+          "all": "Todas",
+          "pending": "Pendientes",
+          "preparing": "En Proceso"
+        },
         "actions": {
           "order_ready": "Orden lista para recoger",
-          "start_preparing": "Comenzar a preparar"
+          "start_preparing": "Comenzar a preparar",
+          "item_ready": "Listo",
+          "start_preparing_all": "Comenzar a preparar todo",
+          "all_items_ready": "Todos los items listos"
         },
         "time": {
           "just_now": "Justo ahora",

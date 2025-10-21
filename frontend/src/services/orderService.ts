@@ -104,9 +104,8 @@ export interface MenuItem {
 const orderService = {
   async createOrder(orderData: CreateOrderData): Promise<Order> {
     try {
-      const res = await api.post<Order>('/orders', orderData);
-      
-      return res.data;
+      // El interceptor de axios ya devuelve response.data automáticamente
+      return await api.post('/orders', orderData) as Order;
     } catch (error: any) {
       if (error.response) {
         throw new Error(error.response.data?.detail || 'Failed to create order');
@@ -119,19 +118,18 @@ const orderService = {
   },
 
   async getOrder(orderId: number): Promise<Order> {
-    const { data } = await api.get<Order>(`/orders/${orderId}`);
-
-    return data;
+    // El interceptor de axios ya devuelve response.data automáticamente
+    return await api.get(`/orders/${orderId}`) as Order;
   },
 
   async updateOrder(orderId: number, data: { status?: OrderStatus; [key: string]: any }): Promise<Order> {
-    const { data: responseData } = await api.put<Order>(`/orders/${orderId}`, data);
-    return responseData;
+    // El interceptor de axios ya devuelve response.data automáticamente
+    return await api.put(`/orders/${orderId}`, data) as Order;
   },
 
   async getTableOrders(tableId: number): Promise<Order[]> {
-    const { data } = await api.get<Order[]>(`/tables/${tableId}/orders`);
-    return data;
+    // El interceptor de axios ya devuelve response.data automáticamente
+    return await api.get(`/tables/${tableId}/orders`) as Order[];
   },
 
   async getActiveOrders(status?: OrderStatus, tableId?: number): Promise<Order[]> {
@@ -161,20 +159,35 @@ const orderService = {
   },
 
   async markOrderPaid(orderId: number, paymentMethod: 'cash' | 'card' | 'digital' | 'other' = 'cash'): Promise<Order> {
-    const { data } = await api.patch<Order>(`/orders/${orderId}/pay`, null, {
+    // El interceptor de axios ya devuelve response.data automáticamente
+    return await api.patch(`/orders/${orderId}/pay`, null, {
       params: { payment_method: paymentMethod }
-    });
-    return data;
+    }) as Order;
   },
 
   async addOrderItem(orderId: number, item: { menu_item_id: number; variant_id?: number | null; quantity: number; special_instructions?: string | null; unit_price?: number }): Promise<any> {
-    const { data } = await api.post(`/orders/${orderId}/items`, item);
-    return data;
+    // El interceptor de axios ya devuelve response.data automáticamente
+    return await api.post(`/orders/${orderId}/items`, item);
+  },
+
+  async addMultipleItemsToOrder(orderId: number, items: CreateOrderItemData[]): Promise<Order> {
+    try {
+      // El interceptor de axios ya devuelve response.data automáticamente
+      return await api.post(`/orders/${orderId}/items/bulk`, items) as Order;
+    } catch (error: any) {
+      if (error.response) {
+        throw new Error(error.response.data?.detail || 'Failed to add items to order');
+      } else if (error.request) {
+        throw new Error('No response received from the server');
+      } else {
+        throw error;
+      }
+    }
   },
 
   async updateOrderItem(orderId: number, itemId: number, item: { quantity?: number; unit_price?: number; special_instructions?: string | null; variant_id?: number | null }): Promise<any> {
-    const { data } = await api.put(`/orders/${orderId}/items/${itemId}`, item);
-    return data;
+    // El interceptor de axios ya devuelve response.data automáticamente
+    return await api.put(`/orders/${orderId}/items/${itemId}`, item);
   },
 
   async deleteOrderItem(orderId: number, itemId: number): Promise<void> {
@@ -183,8 +196,8 @@ const orderService = {
 
   async getMenuItems(): Promise<MenuItem[]> {
     try {
-      const { data } = await api.get<MenuItem[]>('/menu/items');
-      return data;
+      // El interceptor de axios ya devuelve response.data automáticamente
+      return await api.get('/menu/items') as MenuItem[];
     } catch (error) {
       console.error('Error fetching menu items:', error);
       throw error;
@@ -193,8 +206,9 @@ const orderService = {
 
   async updateOrderItemStatus(orderId: number, itemId: number, status: string): Promise<OrderItem> {
     try {
-      const { data } = await api.patch<OrderItem>(`/orders/${orderId}/items/${itemId}`, { status });
-      return data;
+      // El interceptor de axios ya devuelve response.data automáticamente
+      // Status va como query parameter, no en el body
+      return await api.patch(`/orders/${orderId}/items/${itemId}/status?status=${status}`) as OrderItem;
     } catch (error) {
       console.error('Error updating order item status:', error);
       throw error;

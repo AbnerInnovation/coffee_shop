@@ -247,25 +247,43 @@
                   <div class="space-y-3">
                     <div v-for="item in selectedItems" :key="item.id" class="flex justify-between items-start">
                       <div class="flex-1">
-                        <p class="text-sm font-medium text-gray-900 dark:text-gray-100">
-                          {{ item.name }}
-                          <span v-if="item.variant_name" class="text-xs text-gray-500 ml-1">({{ item.variant_name }})</span>
-                        </p>
+                        <div class="flex items-center gap-2">
+                          <p class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                            {{ item.name }}
+                            <span v-if="item.variant_name" class="text-xs text-gray-500 ml-1">({{ item.variant_name }})</span>
+                          </p>
+                          <!-- Status badge for items in preparation or ready -->
+                          <span v-if="isItemLocked(item)" 
+                            class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
+                            :class="{
+                              'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200': item.status === 'preparing',
+                              'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200': item.status === 'ready'
+                            }">
+                            {{ t(`app.status.${item.status}`) }}
+                          </span>
+                        </div>
                         <div v-if="item.category" class="mt-1">
                           <span class="inline-flex items-center rounded-full bg-gray-100 dark:bg-gray-700 px-2 py-0.5 text-xs font-medium text-gray-600 dark:text-gray-300">
                             {{ item.category }}
                           </span>
                         </div>
                         <p v-if="item.notes" class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ item.notes }}</p>
+                        <p v-if="isItemLocked(item)" class="text-xs text-orange-600 dark:text-orange-400 mt-1">
+                          {{ t('app.views.orders.modals.new_order.item_locked') }}
+                        </p>
                       </div>
                       <div class="flex items-center space-x-4 ml-4">
                         <div class="flex items-center space-x-2">
-                          <button type="button" class="p-1 text-gray-500 hover:text-indigo-600 focus:outline-none"
+                          <button type="button" 
+                            class="p-1 text-gray-500 hover:text-indigo-600 focus:outline-none disabled:opacity-30 disabled:cursor-not-allowed"
+                            :disabled="isItemLocked(item)"
                             @click.stop="decreaseQuantity(item)">
                             <MinusIcon class="h-4 w-4" />
                           </button>
                           <span class="text-sm text-gray-700 dark:text-gray-200 w-6 text-center">{{ item.quantity }}</span>
-                          <button type="button" class="p-1 text-gray-500 hover:text-indigo-600 focus:outline-none"
+                          <button type="button" 
+                            class="p-1 text-gray-500 hover:text-indigo-600 focus:outline-none disabled:opacity-30 disabled:cursor-not-allowed"
+                            :disabled="isItemLocked(item)"
                             @click.stop="increaseQuantity(item)">
                             <PlusIcon class="h-4 w-4" />
                           </button>
@@ -693,11 +711,14 @@ const fetchAvailableTables = async () => {
 
 // Hydrate form from existing order in edit mode
 function loadOrderIntoForm(order: OrderType) {
+  console.log('🔄 Loading order into form:', order);
+  
   // Set order type
   form.value.type = order.table_id ? 'Dine-in' : 'Takeaway';
   form.value.tableId = order.table_id ?? null;
   form.value.customerName = order.customer_name || '';
   form.value.notes = order.notes || '';
+  
   // Build items list
   form.value.items = (order.items || []).map((it) => ({
     menu_item_id: it.menu_item_id,
@@ -706,7 +727,16 @@ function loadOrderIntoForm(order: OrderType) {
     notes: it.special_instructions || undefined,
     special_instructions: it.special_instructions || undefined,
     unit_price: it.unit_price || it.menu_item?.price || 0,
+    status: it.status || 'pending', // Guardar el status del item
   }));
+  
+  console.log('✅ Form loaded with items:', form.value.items.length, 'items');
+  console.log('📋 Form state:', {
+    type: form.value.type,
+    tableId: form.value.tableId,
+    notes: form.value.notes,
+    itemsCount: form.value.items.length
+  });
 }
 
 // Computed properties
@@ -1040,6 +1070,13 @@ onMounted(async () => {
   }
 
   // If opened directly in edit mode with an order, hydrate immediately so items/totals render
+  console.log('🚀 onMounted - Edit mode check:', {
+    isEditMode: isEditMode.value,
+    hasOrderToEdit: !!props.orderToEdit,
+    mode: props.mode,
+    orderId: props.orderToEdit?.id
+  });
+  
   if (isEditMode.value && props.orderToEdit) {
     loadOrderIntoForm(props.orderToEdit);
   }
@@ -1047,6 +1084,13 @@ onMounted(async () => {
 
 // If the full order data arrives after the modal is already open, hydrate then
 watch(() => props.orderToEdit, (newOrder) => {
+  console.log('👀 Watch orderToEdit changed:', {
+    isEditMode: isEditMode.value,
+    hasOrder: !!newOrder,
+    isOpen: props.open,
+    orderId: newOrder?.id
+  });
+  
   if (isEditMode.value && newOrder && props.open) {
     loadOrderIntoForm(newOrder);
   }
@@ -1086,6 +1130,15 @@ function getEffectivePrice(price: number, discount_price?: number): number {
     return discount_price;
   }
   return price;
+}
+
+// Helper: check if item is locked (cannot be edited because it's in preparation or ready)
+function isItemLocked(item: OrderItemWithDetails): boolean {
+  // In edit mode, items that are preparing or ready cannot be removed/modified
+  if (!isEditMode.value) return false;
+  
+  const status = (item as any).status;
+  return status === 'preparing' || status === 'ready' || status === 'delivered';
 }
 
 // Helper: compute variant price (prefer absolute variant.price; fallback to base + adjustment)

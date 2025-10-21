@@ -211,8 +211,8 @@
         v-if="isNewOrderModalOpen"
         :open="isNewOrderModalOpen"
         :mode="newOrderMode"
-        :orderToEdit="newOrderMode === 'edit' ? selectedOrderForEdit : null"
-        :tableId="newOrderMode === 'create' ? undefined : (selectedOrderForEdit?.table_id ?? undefined)"
+        :order-to-edit="newOrderMode === 'edit' ? selectedOrderForEdit : null"
+        :table-id="newOrderMode === 'create' ? undefined : (selectedOrderForEdit?.table_id ?? undefined)"
         @close="closeNewOrderModal"
         @order-created="handleNewOrder"
         @order-updated="handleOrderUpdated" />

@@ -67,6 +67,7 @@ def serialize_order(order: OrderModel) -> dict:
         "order_type": order.order_type,
         "is_paid": order.is_paid,
         "payment_method": order.payment_method,
+        "sort": order.sort if hasattr(order, 'sort') else 50,
         "deleted_at": order.deleted_at,
         "items": [serialize_order_item(item) for item in getattr(order, "items", [])],
     }
@@ -126,7 +127,22 @@ def get_orders(
         )
 
         query = apply_filters(query, filters or {})
-        orders = query.order_by(OrderModel.created_at.desc()).offset(skip).limit(limit).all()
+        
+        # Order by:
+        # 1. Status (pending before preparing)
+        # 2. Sort ASC (1 = items added to existing order, 2 = new order)
+        # 3. Created_at ASC (oldest first - FIFO)
+        from sqlalchemy import case
+        status_order = case(
+            (OrderModel.status == OrderStatus.PENDING, 0),
+            (OrderModel.status == OrderStatus.PREPARING, 1),
+            else_=2
+        )
+        orders = query.order_by(
+            status_order,
+            OrderModel.sort.asc(),
+            OrderModel.created_at.asc()
+        ).offset(skip).limit(limit).all()
 
         return [serialize_order(order) for order in orders]
     except Exception as e:
