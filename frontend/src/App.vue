@@ -360,9 +360,11 @@ async function handleLogout() {
     
     await authStore.logout();
     showSuccess(t('app.messages.logout_success'));
-    router.push('/login');
+    // No need to push to login - authStore.logout() already handles navigation
   } catch (error) {
     console.error('Logout failed:', error);
+    // If logout fails, try to navigate anyway
+    router.push('/login');
   }
 }
 

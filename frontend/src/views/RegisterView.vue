@@ -125,7 +125,8 @@ const handleRegister = async () => {
     });
     
     if (success) {
-      router.push('/menu');
+      // authStore.register() calls login() which handles navigation based on user role
+      // No need to navigate here
     } else {
       error.value = authStore.error || (t('app.views.auth.register.errors.failed') as string);
     }

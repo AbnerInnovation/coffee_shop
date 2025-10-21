@@ -23,15 +23,24 @@ router.beforeEach(async (to, from, next) => {
   const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
   
   if (token && !authStore.user) {
-    // Give the store a moment to initialize
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
-    // If still no user after wait, try to check auth
-    if (!authStore.user && !authStore.loading) {
+    // If there's a token but no user, we need to load the user
+    if (!authStore.loading) {
       try {
         await authStore.checkAuth();
       } catch (error) {
         console.error('Auth check failed in router guard:', error);
+        // If auth check fails, clear token and redirect to login
+        if (to.meta.requiresAuth) {
+          next({ name: 'Login', query: { redirect: to.fullPath } });
+          return;
+        }
+      }
+    } else {
+      // If already loading, wait for it to complete (max 2 seconds)
+      let attempts = 0;
+      while (authStore.loading && attempts < 20) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        attempts++;
       }
     }
   }
@@ -58,8 +67,9 @@ router.beforeEach(async (to, from, next) => {
       const hasPermission = permissionFn(user);
       
       if (!hasPermission) {
-        console.warn(`User lacks permission: ${to.meta.permissionCheck} for route: ${to.path}`);
-        next({ name: 'Dashboard' });
+        console.warn(`❌ User lacks permission: ${to.meta.permissionCheck} for route: ${to.path}`);
+        console.warn('User data:', { role: user?.role, staff_type: user?.staff_type });
+        next({ name: 'Menu' });
         return;
       }
     }
@@ -76,7 +86,7 @@ router.beforeEach(async (to, from, next) => {
       const usage = await subscriptionService.getUsage();
       
       if (!usage.has_subscription || !usage.limits?.has_kitchen_module) {
-        console.warn('Kitchen module not available in subscription');
+        console.warn('❌ Kitchen module not available in subscription');
         next({ name: 'Subscription' });
         return;
       }

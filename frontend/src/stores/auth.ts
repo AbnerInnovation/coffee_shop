@@ -82,12 +82,34 @@ export const useAuthStore = defineStore('auth', () => {
         
         if (userResponse.data) {
           // Update store state
-          user.value = userResponse.data;
-          localStorage.setItem('user', JSON.stringify(user.value));
+          const userData = userResponse.data;
+          user.value = userData;
+          localStorage.setItem('user', JSON.stringify(userData));
           
-          // Navigate to menu if router is available
+          // Navigate based on user role and staff type
           if (router) {
-            await router.push({ name: 'Menu' });
+            let redirectRoute = 'Menu'; // Default route
+            
+            // Redirect based on role and staff_type
+            if (userData.role === 'staff' && userData.staff_type) {
+              switch (userData.staff_type) {
+                case 'cashier':
+                  redirectRoute = 'CashRegister';
+                  break;
+                case 'waiter':
+                  redirectRoute = 'Orders';
+                  break;
+                case 'kitchen':
+                  redirectRoute = 'Kitchen';
+                  break;
+                default:
+                  redirectRoute = 'Menu';
+              }
+            } else if (userData.role === 'admin' || userData.role === 'sysadmin') {
+              redirectRoute = 'Dashboard';
+            }
+            
+            await router.push({ name: redirectRoute });
           }
           return true;
         }
@@ -135,6 +157,10 @@ export const useAuthStore = defineStore('auth', () => {
   async function logout() {
     try {
       loading.value = true;
+      
+      // Clear user state FIRST
+      user.value = null;
+      
       // Clear from both storages
       localStorage.removeItem('access_token');
       localStorage.removeItem('refresh_token');
@@ -142,13 +168,17 @@ export const useAuthStore = defineStore('auth', () => {
       sessionStorage.removeItem('access_token');
       sessionStorage.removeItem('refresh_token');
       sessionStorage.removeItem('user');
-      user.value = null;
+      
+      // Wait a moment to ensure state is cleared
+      await new Promise(resolve => setTimeout(resolve, 50));
       
       // Navigate to login page
       await router.push({ name: 'Login' });
     } catch (error) {
       console.error('Error during logout:', error);
-      throw error; // Re-throw to be handled by the caller
+      // Even if navigation fails, ensure we're logged out
+      user.value = null;
+      throw error;
     } finally {
       loading.value = false;
     }

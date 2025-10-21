@@ -93,7 +93,8 @@ const handleLogin = async () => {
     }, rememberMe.value);
     
     if (success) {
-      router.push('/menu');
+      // authStore.login() already handles navigation based on user role
+      // No need to navigate here
     } else {
       // Map backend error messages to translation keys
       const errorMessage = authStore.error || '';

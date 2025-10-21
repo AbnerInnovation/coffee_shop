@@ -111,7 +111,7 @@ export function canCreateOrders(user: User | null | undefined): boolean {
   if (isAdminOrSysAdmin(user)) return true;
   if (isStaff(user)) {
     // Waiters can create orders
-    return user?.staff_type === StaffType.WAITER;
+    return user?.staff_type === StaffType.WAITER || user?.staff_type === 'waiter';
   }
   return false;
 }
@@ -124,7 +124,7 @@ export function canAccessCashRegister(user: User | null | undefined): boolean {
   if (isAdminOrSysAdmin(user)) return true;
   if (isStaff(user)) {
     // Only cashiers can access cash register
-    return user?.staff_type === StaffType.CASHIER;
+    return user?.staff_type === StaffType.CASHIER || user?.staff_type === 'cashier';
   }
   return false;
 }
@@ -137,7 +137,8 @@ export function canAccessKitchen(user: User | null | undefined): boolean {
   if (isAdminOrSysAdmin(user)) return true;
   if (isStaff(user)) {
     // Only kitchen staff can access kitchen module
-    return user?.staff_type === StaffType.KITCHEN;
+    // Check both enum value and string value for compatibility
+    return user?.staff_type === StaffType.KITCHEN || user?.staff_type === 'kitchen';
   }
   return false;
 }
@@ -158,7 +159,7 @@ export function canEditOrders(user: User | null | undefined): boolean {
   if (isAdminOrSysAdmin(user)) return true;
   if (isStaff(user)) {
     // Only waiters can edit orders
-    return user?.staff_type === StaffType.WAITER;
+    return user?.staff_type === StaffType.WAITER || user?.staff_type === 'waiter';
   }
   return false;
 }
@@ -179,7 +180,7 @@ export function canProcessPayments(user: User | null | undefined): boolean {
   if (isAdminOrSysAdmin(user)) return true;
   if (isStaff(user)) {
     // Only cashiers can process payments
-    return user?.staff_type === StaffType.CASHIER;
+    return user?.staff_type === StaffType.CASHIER || user?.staff_type === 'cashier';
   }
   return false;
 }
