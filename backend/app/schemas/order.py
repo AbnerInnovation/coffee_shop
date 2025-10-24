@@ -109,6 +109,10 @@ class OrderInDBBase(OrderBase):
     created_at: datetime
     updated_at: datetime
     total_amount: float = 0.0
+    subtotal: float = 0.0
+    tax: float = 0.0
+    taxRate: float = 0.0
+    total: float = 0.0
     table_number: Optional[int] = None
     customer_name: Optional[str] = None
     user_id: Optional[int] = None

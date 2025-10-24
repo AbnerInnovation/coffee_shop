@@ -610,7 +610,6 @@ const openAddItemsModal = async (table: Table) => {
   }
 };
 
-// View bill from menu
 const viewBillFromMenu = async (table: Table) => {
   closeMenu(table.id);
   
@@ -620,8 +619,9 @@ const viewBillFromMenu = async (table: Table) => {
     const openOrder = orders.find(o => o.table_id === table.id && o.status !== 'completed' && o.status !== 'cancelled');
     
     if (openOrder) {
-      // Open the order details modal
-      selectedOrderForDetails.value = openOrder;
+      // Fetch complete order details with calculated totals
+      const fullOrderDetails = await orderService.getOrder(openOrder.id);
+      selectedOrderForDetails.value = fullOrderDetails;
       showOrderDetailsModal.value = true;
     } else {
       error.value = t('app.views.orders.errors.no_open_order') || 'No open order found for this table.';

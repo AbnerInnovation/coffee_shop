@@ -53,12 +53,24 @@ def serialize_order_item(item: OrderItemModel) -> dict:
     }
 
 def serialize_order(order: OrderModel) -> dict:
+    # Calculate subtotal from items
+    items = getattr(order, "items", [])
+    subtotal = sum(item.quantity * (item.unit_price or 0) for item in items)
+    
+    # For now, tax is 0 (can be configured later)
+    tax = 0.0
+    total = subtotal + tax
+    
     return {
         "id": order.id,
         "table_id": order.table_id,
         "status": order.status,
         "notes": order.notes or None,
-        "total_amount": float(order.total_amount) if order.total_amount is not None else 0.0,
+        "total_amount": float(order.total_amount) if order.total_amount is not None else total,
+        "subtotal": subtotal,
+        "tax": tax,
+        "taxRate": 0.0,
+        "total": total,
         "created_at": order.created_at,
         "updated_at": order.updated_at,
         "table_number": order.table.number if order.table else None,
@@ -69,7 +81,7 @@ def serialize_order(order: OrderModel) -> dict:
         "payment_method": order.payment_method,
         "sort": order.sort if hasattr(order, 'sort') else 50,
         "deleted_at": order.deleted_at,
-        "items": [serialize_order_item(item) for item in getattr(order, "items", [])],
+        "items": [serialize_order_item(item) for item in items],
     }
 
 # -----------------------------
