@@ -716,7 +716,7 @@ defineExpose({
         </TransitionChild>
 
         <div class="fixed inset-0 z-10 overflow-y-auto">
-          <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+          <div class="flex min-h-full items-end justify-center p-0 sm:p-4 text-center sm:items-center">
             <TransitionChild
               as="template"
               enter="ease-out duration-300"
@@ -726,7 +726,7 @@ defineExpose({
               leave-from="opacity-100 translate-y-0 sm:scale-100"
               leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
             >
-              <DialogPanel class="relative transform overflow-hidden rounded-lg bg-white dark:bg-gray-900 px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6">
+              <DialogPanel class="relative transform overflow-hidden rounded-none sm:rounded-lg bg-white dark:bg-gray-900 px-4 pb-4 pt-5 text-left shadow-xl transition-all w-full min-h-screen sm:min-h-0 sm:my-8 sm:max-w-lg sm:p-6 border-0 sm:border border-gray-200 dark:border-gray-800">
                 <div class="sm:flex sm:items-start">
                   <div class="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
                     <ExclamationTriangleIcon class="h-6 w-6 text-red-600" aria-hidden="true" />
@@ -784,7 +784,7 @@ defineExpose({
     </TransitionChild>
 
     <div class="fixed inset-0 z-10 overflow-y-auto">
-      <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+      <div class="flex min-h-full items-end justify-center p-0 sm:p-4 text-center sm:items-center">
         <TransitionChild
           as="template"
           enter="ease-out duration-300"
@@ -795,7 +795,7 @@ defineExpose({
           leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
         >
           <DialogPanel
-            class="relative transform overflow-hidden rounded-lg bg-white dark:bg-gray-900 px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6"
+            class="relative transform overflow-hidden rounded-none sm:rounded-lg bg-white dark:bg-gray-900 px-4 pb-4 pt-5 text-left shadow-xl transition-all w-full min-h-screen sm:min-h-0 sm:my-8 sm:max-w-lg sm:p-6 border-0 sm:border border-gray-200 dark:border-gray-800"
           >
             <!-- Close button -->
             <div class="absolute right-0 top-0 hidden pr-4 pt-4 sm:block">

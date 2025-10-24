@@ -272,7 +272,8 @@
         "try_again": "Intentar de nuevo",
         "new_order": "Nueva orden",
         "edit_order": "Editar orden",
-        "add_items": "Agregar Items",
+        "add_items": "Agregar items",
+        "payment_completed_success": "Pago completado exitosamente",
         "no_orders": "No se encontraron órdenes",
         "no_orders_description": "Comienza creando una nueva orden",
         "add_items_modal": {
@@ -296,6 +297,17 @@
           "completed": "Completado",
           "cancelled": "Cancelado"
         },
+        "filters": {
+          "payment_status": "Estado de Pago",
+          "all_payments": "Todos",
+          "paid": "Pagados",
+          "unpaid": "No Pagados",
+          "order_type": "Tipo de Orden",
+          "all_types": "Todos",
+          "dine_in": "Comer Aquí",
+          "takeaway": "Para Llevar",
+          "delivery": "A Domicilio"
+        },
         "status_menu": {
           "mark_preparing": "Marcar como preparando",
           "cancel_order": "Cancelar orden",
@@ -304,6 +316,7 @@
         },
         "messages": {
           "order_created_success": "Orden creada correctamente",
+          "order_created_and_paid_success": "Orden creada y marcada como pagada correctamente",
           "order_updated_success": "Orden #{id} actualizada",
           "order_cancelled_success": "La orden ha sido cancelada",
           "status_updated_success": "Estado de la orden #{id} actualizado a {status}",
@@ -316,7 +329,10 @@
           "paid": "Pagado",
           "pending": "Pago Pendiente",
           "select_method": "Seleccionar Método de Pago",
-          "confirm_payment": "Confirmar Pago"
+          "confirm_payment": "Confirmar Pago",
+          "title": "Pago",
+          "mark_as_paid": "Marcar como pagado",
+          "paid_order_warning": "Nota: Los pedidos pagados no se pueden editar."
         },
         "buttons": {
           "view": "Ver",
@@ -456,6 +472,7 @@
         "mark_available": "Disponible",
         "mark_occupied": "Ocupada",
         "new_order": "Nueva orden",
+        "view_bill": "Ver cuenta",
         "edit": "Editar",
         "modal": {
           "edit_title": "Editar mesa",

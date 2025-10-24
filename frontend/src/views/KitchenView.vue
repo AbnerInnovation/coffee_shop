@@ -275,10 +275,10 @@ const hasPreparingItems = (order: Order) => {
 const fetchActiveOrders = async () => {
   try {
     loading.value = true;
-    const pendingOrders = await orderService.getActiveOrders('pending');
-    const preparingOrders = await orderService.getActiveOrders('preparing');
+    const pendingOrders = await orderService.getActiveOrders('pending', undefined, 'kitchen');
+    const preparingOrders = await orderService.getActiveOrders('preparing', undefined, 'kitchen');
     
-    // Backend already orders by status (pending first) then by updated_at
+    // Backend already orders by status (pending first) then by updated_at (FIFO)
     // Just combine the arrays
     const allOrders = [...pendingOrders, ...preparingOrders];
     
@@ -288,7 +288,7 @@ const fetchActiveOrders = async () => {
       items: order.items.map(item => ({
         ...item,
         status: item.status || 'pending',
-        started_at: item.started_at || order.created_at
+        started_at: (item as any).started_at || order.created_at
       }))
     }));
   } catch (error) {

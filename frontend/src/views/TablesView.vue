@@ -100,6 +100,13 @@
               >
                 {{ t('app.views.orders.add_items') || 'Add Items' }}
               </DropdownMenuItem>
+              <DropdownMenuItem
+                :icon="DocumentTextIcon"
+                variant="default"
+                @click="viewBillFromMenu(table)"
+              >
+                {{ t('app.views.tables.view_bill') || 'Ver cuenta' }}
+              </DropdownMenuItem>
             </template>
             
             <DropdownMenuDivider v-if="canCreateOrders || canManageTables" />
@@ -259,6 +266,16 @@
       @success="handleItemsAdded"
     />
 
+    <!-- Order Details Modal (View Bill) -->
+    <OrderDetailsModal
+      v-if="showOrderDetailsModal && selectedOrderForDetails"
+      :open="showOrderDetailsModal"
+      :order="selectedOrderForDetails"
+      @close="showOrderDetailsModal = false"
+      @status-update="handleOrderStatusUpdate"
+      @paymentCompleted="handlePaymentCompleted"
+    />
+
     <!-- Limit Reached Modal -->
     <LimitReachedModal
       :is-open="showLimitModal"
@@ -278,10 +295,11 @@ import { useI18n } from 'vue-i18n';
 import { usePermissions } from '@/composables/usePermissions';
 import MainLayout from '@/components/layout/MainLayout.vue';
 import PageHeader from '@/components/layout/PageHeader.vue';
-import { PlusIcon, XMarkIcon, XCircleIcon, PencilIcon, TrashIcon, CheckCircleIcon, XCircleIcon as XCircleIconOutline, ShoppingBagIcon } from '@heroicons/vue/24/outline';
+import { PlusIcon, XMarkIcon, XCircleIcon, PencilIcon, TrashIcon, CheckCircleIcon, XCircleIcon as XCircleIconOutline, ShoppingBagIcon, DocumentTextIcon } from '@heroicons/vue/24/outline';
 import tableService from '@/services/tableService';
 import NewOrderModal from '@/components/orders/NewOrderModal.vue';
 import AddItemsModal from '@/components/orders/AddItemsModal.vue';
+import OrderDetailsModal from '@/components/orders/OrderDetailsModal.vue';
 import LimitReachedModal from '@/components/subscription/LimitReachedModal.vue';
 import BaseButton from '@/components/ui/BaseButton.vue';
 import DropdownMenu from '@/components/ui/DropdownMenu.vue';
@@ -464,6 +482,10 @@ const showAddItemsModal = ref(false);
 const selectedTableForAddItems = ref<Table | null>(null);
 const selectedOrderId = ref<number | null>(null);
 
+// Order details modal state (View Bill)
+const showOrderDetailsModal = ref(false);
+const selectedOrderForDetails = ref<any>(null);
+
 // Limit reached modal state
 const showLimitModal = ref(false);
 const limitMessage = ref('');
@@ -586,6 +608,41 @@ const openAddItemsModal = async (table: Table) => {
     console.error('Error fetching order for table:', err);
     error.value = t('app.views.orders.errors.fetch_failed') || 'Failed to fetch order. Please try again.';
   }
+};
+
+// View bill from menu
+const viewBillFromMenu = async (table: Table) => {
+  closeMenu(table.id);
+  
+  try {
+    // Get the open order for this table
+    const orders = await orderService.getActiveOrders(undefined, table.id);
+    const openOrder = orders.find(o => o.table_id === table.id && o.status !== 'completed' && o.status !== 'cancelled');
+    
+    if (openOrder) {
+      // Open the order details modal
+      selectedOrderForDetails.value = openOrder;
+      showOrderDetailsModal.value = true;
+    } else {
+      error.value = t('app.views.orders.errors.no_open_order') || 'No open order found for this table.';
+    }
+  } catch (err) {
+    console.error('Error fetching order for table:', err);
+    error.value = t('app.views.orders.errors.fetch_failed') || 'Failed to fetch order. Please try again.';
+  }
+};
+
+// Handle order status update from details modal
+const handleOrderStatusUpdate = () => {
+  fetchTables();
+  refreshOpenOrders();
+};
+
+// Handle payment completed from details modal
+const handlePaymentCompleted = () => {
+  fetchTables();
+  refreshOpenOrders();
+  showOrderDetailsModal.value = false;
 };
 
 // Handle items added successfully

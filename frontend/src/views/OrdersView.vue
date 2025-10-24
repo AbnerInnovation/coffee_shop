@@ -62,6 +62,42 @@
         </nav>
       </div>
 
+      <!-- Additional Filters -->
+      <div class="flex flex-col sm:flex-row gap-3 sm:gap-4">
+        <!-- Payment Status Filter -->
+        <div class="flex-1">
+          <label for="payment-filter" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            {{ t('app.views.orders.filters.payment_status') || 'Estado de Pago' }}
+          </label>
+          <select
+            id="payment-filter"
+            v-model="selectedPaymentFilter"
+            class="block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
+          >
+            <option value="all">{{ t('app.views.orders.filters.all_payments') || 'Todos' }}</option>
+            <option value="paid">{{ t('app.views.orders.filters.paid') || 'Pagados' }}</option>
+            <option value="unpaid">{{ t('app.views.orders.filters.unpaid') || 'No Pagados' }}</option>
+          </select>
+        </div>
+
+        <!-- Order Type Filter -->
+        <div class="flex-1">
+          <label for="type-filter" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            {{ t('app.views.orders.filters.order_type') || 'Tipo de Orden' }}
+          </label>
+          <select
+            id="type-filter"
+            v-model="selectedOrderType"
+            class="block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
+          >
+            <option value="all">{{ t('app.views.orders.filters.all_types') || 'Todos' }}</option>
+            <option value="dine_in">{{ t('app.views.orders.filters.dine_in') || 'Comer Aquí' }}</option>
+            <option value="takeaway">{{ t('app.views.orders.filters.takeaway') || 'Para Llevar' }}</option>
+            <option value="delivery">{{ t('app.views.orders.filters.delivery') || 'A Domicilio' }}</option>
+          </select>
+        </div>
+      </div>
+
       <!-- Order List -->
       <div class="bg-white dark:bg-gray-900 shadow overflow-hidden rounded-lg sm:rounded-md">
         <!-- Empty State -->
@@ -98,9 +134,9 @@
                     {{ t('app.views.orders.buttons.view') }}
                   </DropdownMenuItem>
                   
-                  <!-- Edit Order -->
+                  <!-- Edit Order (disabled if paid) -->
                   <DropdownMenuItem
-                    v-if="order.status !== 'completed' && order.status !== 'cancelled'"
+                    v-if="order.status !== 'completed' && order.status !== 'cancelled' && !order.is_paid"
                     :icon="PencilIcon"
                     variant="default"
                     @click="closeMenuAndExecute(order.id, () => openEditOrder(order))"
@@ -150,6 +186,12 @@
                       :class="order.is_paid ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200' : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-200'"
                     >
                       {{ order.is_paid ? t('app.views.orders.payment.paid') : t('app.views.orders.payment.pending') }}
+                    </span>
+                    <span
+                      class="inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-200"
+                      v-if="(order as any).order_type"
+                    >
+                      {{ getOrderTypeLabel((order as any).order_type) }}
                     </span>
                   </div>
                   <div class="mt-2 flex flex-wrap gap-x-4 gap-y-2">
@@ -375,6 +417,8 @@ const loading = ref(false);
 const error = ref<string | null>(null);
 const statusDropdownOpen = ref<number | null>(null);
 const selectedStatus = ref<OrderStatus>('all');
+const selectedPaymentFilter = ref<'all' | 'paid' | 'unpaid'>('all');
+const selectedOrderType = ref<'all' | 'dine_in' | 'takeaway' | 'delivery'>('all');
 const isNewOrderModalOpen = ref(false);
 const newOrderMode = ref<'create' | 'edit'>('create');
 const selectedOrderForEdit = ref<Order | null>(null);
@@ -450,8 +494,35 @@ const statusMap: Record<OrderStatus, string> = {
 
 
 const filteredOrders = computed<OrderWithLocalFields[]>(() => {
-  if (selectedStatus.value === 'all') return orders.value;
-  return orders.value.filter(order => order.status === selectedStatus.value);
+  let filtered = orders.value;
+  
+  // Filter by status
+  if (selectedStatus.value !== 'all') {
+    filtered = filtered.filter(order => order.status === selectedStatus.value);
+  }
+  
+  // Filter by payment status
+  if (selectedPaymentFilter.value === 'paid') {
+    filtered = filtered.filter(order => order.is_paid === true);
+  } else if (selectedPaymentFilter.value === 'unpaid') {
+    filtered = filtered.filter(order => !order.is_paid);
+  }
+  
+  // Filter by order type
+  if (selectedOrderType.value !== 'all') {
+    const typeMap: Record<string, string> = {
+      'dine_in': 'dine_in',
+      'takeaway': 'takeaway',
+      'delivery': 'delivery'
+    };
+    const targetType = typeMap[selectedOrderType.value];
+    filtered = filtered.filter(order => {
+      const orderType = (order as any).order_type;
+      return orderType === targetType;
+    });
+  }
+  
+  return filtered;
 });
 
 const getOrderCount = (status: OrderStatus): number => {
@@ -476,6 +547,15 @@ const getOrderItemsSummary = (items: OrderItemLocal[]): string => {
 
     return itemText;
   }).join(', ');
+};
+
+const getOrderTypeLabel = (orderType: string): string => {
+  const typeMap: Record<string, string> = {
+    'dine_in': t('app.views.orders.filters.dine_in') as string,
+    'takeaway': t('app.views.orders.filters.takeaway') as string,
+    'delivery': t('app.views.orders.filters.delivery') as string
+  };
+  return typeMap[orderType] || orderType;
 };
 
 const isMounted = ref(true);

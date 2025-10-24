@@ -30,7 +30,7 @@ interface AuthState {
 }
 
 export const useAuthStore = defineStore('auth', () => {
-  const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8000') + '/api/v1';
+  const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8001') + '/api/v1';
   // Get the router instance
   const router = useRouter();
   

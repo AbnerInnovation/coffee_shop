@@ -33,6 +33,7 @@ async def read_orders(
     limit: int = 100,
     status: Optional[OrderStatus] = None,
     table_id: Optional[int] = None,
+    sort_by: str = 'orders',
     db: Session = Depends(get_db),
     restaurant: Restaurant = Depends(get_current_restaurant),
     current_user: User = Depends(get_current_active_user)
@@ -40,6 +41,7 @@ async def read_orders(
     """
     Retrieve orders with optional filtering (filtered by restaurant).
     Waiters only see their own orders.
+    sort_by: 'orders' (newest first by ID) or 'kitchen' (FIFO by status/created_at)
     """
     try:
         # If user is a waiter, filter to only their orders
@@ -52,6 +54,7 @@ async def read_orders(
             restaurant_id=restaurant.id,
             skip=skip,
             limit=limit,
+            sort_by=sort_by,
             status=status,
             table_id=table_id,
             waiter_id=waiter_id
@@ -126,6 +129,25 @@ async def update_order(order_id: int, order: OrderUpdate, db: Session = Depends(
         # Mark order as paid and completed
         db_order.is_paid = True
         db_order.status = OrderStatus.COMPLETED
+
+        # Mark table as available if this is a dine-in order
+        if db_order.table_id:
+            from ...models.table import Table as TableModel
+            table = db.query(TableModel).filter(TableModel.id == db_order.table_id).first()
+            if table:
+                # Check if there are other active orders for this table
+                from datetime import datetime, timezone
+                other_active_orders = db.query(OrderModel).filter(
+                    OrderModel.table_id == db_order.table_id,
+                    OrderModel.id != order_id,
+                    OrderModel.status.in_([OrderStatus.PENDING, OrderStatus.PREPARING, OrderStatus.READY]),
+                    OrderModel.is_paid == False
+                ).count()
+                
+                # Only mark as available if no other active orders
+                if other_active_orders == 0:
+                    table.is_occupied = False
+                    table.updated_at = datetime.now(timezone.utc)
 
         # Create cash register transaction
         try:
@@ -347,6 +369,25 @@ async def mark_order_as_paid(
         db_order.is_paid = True
         db_order.payment_method = payment_method_enum
         db_order.status = OrderStatus.COMPLETED
+
+        # Mark table as available if this is a dine-in order
+        if db_order.table_id:
+            from ...models.table import Table as TableModel
+            from datetime import datetime, timezone
+            table = db.query(TableModel).filter(TableModel.id == db_order.table_id).first()
+            if table:
+                # Check if there are other active orders for this table
+                other_active_orders = db.query(OrderModel).filter(
+                    OrderModel.table_id == db_order.table_id,
+                    OrderModel.id != order_id,
+                    OrderModel.status.in_([OrderStatus.PENDING, OrderStatus.PREPARING, OrderStatus.READY]),
+                    OrderModel.is_paid == False
+                ).count()
+                
+                # Only mark as available if no other active orders
+                if other_active_orders == 0:
+                    table.is_occupied = False
+                    table.updated_at = datetime.now(timezone.utc)
 
         db.commit()
         db.refresh(db_order)

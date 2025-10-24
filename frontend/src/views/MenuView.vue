@@ -16,37 +16,28 @@
     />
 
     <!-- Menu Item Form -->
-    <div v-else>
-      <div class="mb-6">
-        <button
-          type="button"
-          @click="showForm = false; currentItem = null"
-          class="inline-flex items-center text-sm text-gray-600 hover:text-gray-900"
-        >
-          <ArrowLeftIcon class="mr-1 h-4 w-4" />
-          {{ t('app.views.menu.view.back') }}
-        </button>
-      </div>
-      
-      <div class="rounded-lg bg-white dark:bg-gray-900 shadow">
-        <div class="px-4 py-5 sm:p-6">
-          <MenuItemForm
-            v-if="currentItem !== null"
-            :menu-item="currentItem"
-            :loading="formLoading"
-            :errors="formErrors"
-            :is-editing="true"
-            @submit="handleSubmit"
-            @cancel="showForm = false"
-          />
-          <MenuItemForm
-            v-else
-            :loading="formLoading"
-            :errors="formErrors"
-            :is-editing="false"
-            @submit="handleSubmit"
-            @cancel="showForm = false"
-          />
+    <div v-else class="fixed inset-0 z-[10001] overflow-y-auto bg-white dark:bg-gray-900 sm:relative sm:z-0 sm:bg-transparent">
+      <div class="min-h-screen sm:min-h-0">
+        <div class="sm:rounded-lg sm:bg-white sm:dark:bg-gray-900 sm:shadow">
+          <div class="px-4 py-4 sm:p-6">
+            <MenuItemForm
+              v-if="currentItem !== null"
+              :menu-item="currentItem"
+              :loading="formLoading"
+              :errors="formErrors"
+              :is-editing="true"
+              @submit="handleSubmit"
+              @cancel="showForm = false"
+            />
+            <MenuItemForm
+              v-else
+              :loading="formLoading"
+              :errors="formErrors"
+              :is-editing="false"
+              @submit="handleSubmit"
+              @cancel="showForm = false"
+            />
+          </div>
         </div>
       </div>
     </div>

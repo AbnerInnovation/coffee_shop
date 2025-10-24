@@ -19,8 +19,8 @@ def extract_subdomain(host: str) -> Optional[str]:
     
     Examples:
         - restaurant1.example.com -> restaurant1
-        - restaurant1.localhost:8000 -> restaurant1
-        - localhost:8000 -> None (no subdomain)
+        - restaurant1.localhost:8001 -> restaurant1
+        - localhost:8001 -> None (no subdomain)
         - example.com -> None (no subdomain)
     """
     # Remove port if present

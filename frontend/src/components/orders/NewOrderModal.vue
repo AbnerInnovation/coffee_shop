@@ -6,14 +6,14 @@
         class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
 
       <div class="fixed inset-0 z-10 overflow-y-auto">
-        <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+        <div class="flex min-h-full items-end justify-center p-0 sm:p-4 text-center sm:items-center">
           <TransitionChild as="div" enter="ease-out duration-300"
             enter-from="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
             enter-to="opacity-100 translate-y-0 sm:scale-100" leave="ease-in duration-200"
             leave-from="opacity-100 translate-y-0 sm:scale-100"
-            leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
+            leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" class="w-full sm:w-auto">
             <DialogPanel
-              class="relative transform overflow-hidden bg-white mt-10 dark:bg-gray-900 px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-20 w-screen max-w-screen sm:max-w-4xl sm:w-full sm:p-6 mx-0 sm:mx-0 rounded-none sm:rounded-lg border border-gray-200 dark:border-gray-800">
+              class="relative transform overflow-hidden bg-white dark:bg-gray-900 px-4 pb-4 pt-4 sm:px-6 sm:pb-6 sm:pt-5 text-left shadow-xl transition-all w-full min-h-screen sm:min-h-0 sm:my-8 sm:w-full sm:max-w-4xl sm:p-6 rounded-none sm:rounded-lg border-0 sm:border border-gray-200 dark:border-gray-800">
               <div class="flex items-center justify-between">
                 <DialogTitle as="h3" class="text-lg font-medium leading-6 text-gray-900 dark:text-gray-100">
                   {{ isEditMode ? $t('app.views.orders.modals.new_order.title_edit_order', { id: orderToEdit?.id }) : $t('app.views.orders.modals.new_order.title') }}
@@ -304,6 +304,50 @@
                     </div>
                   </div>
                 </div>
+
+                <!-- Payment Section (only in create mode) -->
+                <div v-if="!isEditMode" class="mt-6 border-t border-gray-200 dark:border-gray-700 pt-4">
+                  <div class="flex items-center justify-between mb-3">
+                    <h4 class="text-sm font-medium text-gray-900 dark:text-gray-100">{{$t('app.views.orders.payment.title') || 'Payment'}}</h4>
+                    <button
+                      type="button"
+                      @click="markAsPaid = !markAsPaid"
+                      class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                      :class="markAsPaid ? 'bg-indigo-600' : 'bg-gray-200 dark:bg-gray-700'"
+                      role="switch"
+                      :aria-checked="markAsPaid"
+                    >
+                      <span class="sr-only">{{$t('app.views.orders.payment.mark_as_paid') || 'Mark as paid'}}</span>
+                      <span
+                        :class="markAsPaid ? 'translate-x-5' : 'translate-x-0'"
+                        class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                      />
+                    </button>
+                  </div>
+                  
+                  <!-- Payment Method Selection (shown when markAsPaid is true) -->
+                  <div v-if="markAsPaid" class="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                    <h5 class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">{{$t('app.views.orders.payment.select_method') || 'Select Payment Method'}}</h5>
+                    <div class="grid grid-cols-2 gap-3">
+                      <button
+                        v-for="method in paymentMethods"
+                        :key="method.value"
+                        type="button"
+                        class="flex items-center justify-center gap-2 px-4 py-3 rounded-md border-2 transition-all"
+                        :class="selectedPaymentMethod === method.value 
+                          ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300' 
+                          : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:border-indigo-300 dark:hover:border-indigo-600'"
+                        @click="selectedPaymentMethod = method.value as 'cash' | 'card' | 'digital' | 'other'"
+                      >
+                        <component :is="method.icon" class="h-5 w-5" />
+                        <span class="font-medium">{{ method.label }}</span>
+                      </button>
+                    </div>
+                    <p class="mt-3 text-xs text-gray-500 dark:text-gray-400">
+                      {{$t('app.views.orders.payment.paid_order_warning') || 'Note: Paid orders cannot be edited.'}}
+                    </p>
+                  </div>
+                </div>
               </div>
 
               <div class="mt-5 sm:mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -333,17 +377,17 @@
           class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
 
         <div class="fixed inset-0 z-10 overflow-y-auto">
-          <div class="flex min-h-full items-center justify-center p-4 text-center">
+          <div class="flex min-h-full items-center justify-center p-0 sm:p-4 text-center">
             <TransitionChild as="div" enter="ease-out duration-300"
               enter-from="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
               enter-to="opacity-100 translate-y-0 sm:scale-100" leave="ease-in duration-200"
               leave-from="opacity-100 translate-y-0 sm:scale-100"
               leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" class="w-full">
               <DialogPanel
-                class="relative transform overflow-hidden bg-white dark:bg-gray-900 px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 w-screen max-w-screen sm:w-full sm:max-w-md sm:p-6 rounded-none sm:rounded-lg border border-gray-200 dark:border-gray-800">
+                class="relative transform overflow-hidden bg-white dark:bg-gray-900 px-4 pb-4 pt-5 text-left shadow-xl transition-all w-full min-h-screen sm:min-h-0 sm:my-8 sm:w-full sm:max-w-md sm:p-6 rounded-none sm:rounded-lg border-0 sm:border border-gray-200 dark:border-gray-800">
                 <div>
-                  <div class="mt-3 text-center sm:mt-0 sm:text-left">
-                    <DialogTitle as="h3" class="text-lg font-medium leading-6 text-gray-900">
+                  <div class="mt-3 text-center sm:mt-5">
+                    <DialogTitle as="h3" class="text-lg font-medium leading-6 text-gray-900 dark:text-gray-100">
                       {{ selectedItem?.name }}
                     </DialogTitle>
                     <div class="mt-4">
@@ -448,7 +492,7 @@ import {
   TransitionChild,
   TransitionRoot
 } from '@headlessui/vue';
-import { XMarkIcon, PlusIcon, MinusIcon, ChevronDownIcon } from '@heroicons/vue/24/outline';
+import { XMarkIcon, PlusIcon, MinusIcon, ChevronDownIcon, BanknotesIcon, CreditCardIcon, DevicePhoneMobileIcon, EllipsisHorizontalIcon } from '@heroicons/vue/24/outline';
 import { useI18n } from 'vue-i18n';
 import SpecialNotesBuilder from './SpecialNotesBuilder.vue';
 import type { MenuItemIngredients } from '../menu/IngredientsManager.vue';
@@ -550,6 +594,17 @@ const error = ref({
 });
 
 const expandedCategories = ref<Set<string>>(new Set());
+
+// Payment state
+const markAsPaid = ref(false);
+const selectedPaymentMethod = ref<'cash' | 'card' | 'digital' | 'other'>('cash');
+
+const paymentMethods: Array<{ value: 'cash' | 'card' | 'digital' | 'other'; label: string; icon: any }> = [
+  { value: 'cash' as const, label: t('app.views.cashRegister.cash') || 'Cash', icon: BanknotesIcon },
+  { value: 'card' as const, label: t('app.views.cashRegister.card') || 'Card', icon: CreditCardIcon },
+  { value: 'digital' as const, label: t('app.views.cashRegister.digital') || 'Digital', icon: DevicePhoneMobileIcon },
+  { value: 'other' as const, label: t('app.views.cashRegister.other') || 'Other', icon: EllipsisHorizontalIcon }
+];
 
 // Helper to initialize a fresh form state
 function getInitialForm() {
@@ -968,6 +1023,29 @@ async function createOrder() {
 
       const created = await orderService.createOrder(orderPayload);
       
+      // If marked as paid, complete payment immediately
+      if (markAsPaid.value) {
+        try {
+          await orderService.markOrderPaid(created.id, selectedPaymentMethod.value);
+          showSuccess(t('app.views.orders.messages.order_created_and_paid_success') as string || 'Order created and marked as paid successfully');
+        } catch (paymentError: any) {
+          console.error('Failed to mark order as paid:', paymentError);
+          // Check if it's a cash register session error
+          const errorDetail = paymentError.response?.data?.detail || '';
+          if (errorDetail.includes('No open cash register session found') || errorDetail.includes('cash register session')) {
+            showError(t('app.views.cashRegister.cashRegisterSessionRequiredMessage') as string || 'Please open a cash register session first');
+          } else {
+            showError(t('app.views.cashRegister.paymentFailedGeneric') as string || 'Failed to complete payment');
+          }
+          // Still emit the created order even if payment failed
+          emit('order-created', created);
+          emit('close');
+          return;
+        }
+      } else {
+        showSuccess(t('app.views.orders.messages.order_created_success') as string);
+      }
+      
       // Record special note usage for analytics (non-blocking)
       validItems.forEach(item => {
         if (item.notes) {
@@ -979,7 +1057,6 @@ async function createOrder() {
       
       emit('order-created', created);
       emit('close');
-      showSuccess(t('app.views.orders.messages.order_created_success') as string);
     }
   } catch (error) {
     console.error('Error creating order:', error);

@@ -116,6 +116,7 @@ def get_orders(
     db: Session,
     skip: int = 0,
     limit: int = 100,
+    sort_by: str = 'kitchen',
     **filters,
 ) -> List[dict]:
     try:
@@ -128,21 +129,29 @@ def get_orders(
 
         query = apply_filters(query, filters or {})
         
-        # Order by:
-        # 1. Status (pending before preparing)
-        # 2. Sort ASC (1 = items added to existing order, 2 = new order)
-        # 3. Created_at ASC (oldest first - FIFO)
-        from sqlalchemy import case
-        status_order = case(
-            (OrderModel.status == OrderStatus.PENDING, 0),
-            (OrderModel.status == OrderStatus.PREPARING, 1),
-            else_=2
-        )
-        orders = query.order_by(
-            status_order,
-            OrderModel.sort.asc(),
-            OrderModel.created_at.asc()
-        ).offset(skip).limit(limit).all()
+        # Apply sorting based on context
+        if sort_by == 'kitchen':
+            # Kitchen view: FIFO (oldest first)
+            # Order by:
+            # 1. Status (pending before preparing)
+            # 2. Sort ASC (1 = items added to existing order, 2 = new order)
+            # 3. Created_at ASC (oldest first - FIFO)
+            from sqlalchemy import case
+            status_order = case(
+                (OrderModel.status == OrderStatus.PENDING, 0),
+                (OrderModel.status == OrderStatus.PREPARING, 1),
+                else_=2
+            )
+            orders = query.order_by(
+                status_order,
+                OrderModel.sort.asc(),
+                OrderModel.created_at.asc()
+            ).offset(skip).limit(limit).all()
+        else:
+            # Orders view: Newest first (by ID desc)
+            orders = query.order_by(
+                OrderModel.id.desc()
+            ).offset(skip).limit(limit).all()
 
         return [serialize_order(order) for order in orders]
     except Exception as e:
@@ -226,6 +235,16 @@ def create_order_with_items(db: Session, order: OrderCreate, restaurant_id: int,
 
     db_order.total_amount = total_amount
     db_order.updated_at = datetime.now(timezone.utc)
+    
+    # Mark table as occupied if this is a dine-in order AND order is not already paid
+    # If order enters already paid, table management is manual
+    if order.table_id and not getattr(order, 'is_paid', False):
+        from ..models.table import Table as TableModel
+        table = db.query(TableModel).filter(TableModel.id == order.table_id).first()
+        if table and not table.is_occupied:
+            table.is_occupied = True
+            table.updated_at = datetime.now(timezone.utc)
+    
     db.commit()
 
     return get_order(db, db_order.id, restaurant_id)
@@ -241,6 +260,24 @@ def update_order(db: Session, db_order: OrderModel, order: OrderUpdate) -> dict:
         try:
             from ..models.order import OrderStatus
             update_data['status'] = OrderStatus(update_data['status'])
+            
+            # Mark table as available if order is being cancelled
+            if update_data['status'] == OrderStatus.CANCELLED and db_order.table_id:
+                from ..models.table import Table as TableModel
+                table = db.query(TableModel).filter(TableModel.id == db_order.table_id).first()
+                if table:
+                    # Check if there are other active orders for this table
+                    other_active_orders = db.query(OrderModel).filter(
+                        OrderModel.table_id == db_order.table_id,
+                        OrderModel.id != db_order.id,
+                        OrderModel.status.in_([OrderStatus.PENDING, OrderStatus.PREPARING, OrderStatus.READY]),
+                        OrderModel.is_paid == False
+                    ).count()
+                    
+                    # Only mark as available if no other active orders
+                    if other_active_orders == 0:
+                        table.is_occupied = False
+                        table.updated_at = datetime.now(timezone.utc)
         except ValueError:
             raise ValueError(f"Invalid status. Must be one of: {', '.join([s.value for s in OrderStatus])}")
 

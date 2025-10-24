@@ -4,12 +4,12 @@
     class="fixed inset-0 z-[10001] overflow-y-auto"
     @click.self="$emit('close')"
   >
-    <div class="flex min-h-screen items-center justify-center p-4">
+    <div class="flex min-h-screen items-end sm:items-center justify-center p-0 sm:p-4">
       <!-- Backdrop -->
       <div class="fixed inset-0 bg-black bg-opacity-50 transition-opacity"></div>
 
       <!-- Modal -->
-      <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6">
+      <div class="relative bg-white dark:bg-gray-800 rounded-none sm:rounded-lg shadow-xl w-full min-h-screen sm:min-h-0 sm:max-w-md p-4 sm:p-6 border-0 sm:border border-gray-200 dark:border-gray-700">
         <!-- Header -->
         <div class="mb-6">
           <h3 class="text-xl font-semibold text-gray-900 dark:text-white">
