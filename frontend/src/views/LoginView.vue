@@ -69,7 +69,6 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { useI18n } from 'vue-i18n';
 import { useToast } from '@/composables/useToast';
@@ -78,7 +77,6 @@ const email = ref('');
 const password = ref('');
 const rememberMe = ref(true);
 const loading = ref(false);
-const router = useRouter();
 const authStore = useAuthStore();
 const { t } = useI18n();
 const { showError } = useToast();
@@ -92,11 +90,7 @@ const handleLogin = async () => {
       password: password.value
     }, rememberMe.value);
     
-    if (success) {
-      // authStore.login() already handles navigation based on user role
-      // No need to navigate here
-    } else {
-      // Map backend error messages to translation keys
+    if (!success) {
       const errorMessage = authStore.error || '';
       let translationKey = 'app.views.auth.login.errors.failed';
       
@@ -113,7 +107,6 @@ const handleLogin = async () => {
       showError(t(translationKey) as string, 6000);
     }
   } catch (err: any) {
-    // Handle network or unexpected errors
     const errorMsg = err?.response?.data?.error?.message || err?.message || '';
     let translationKey = 'app.views.auth.login.errors.generic';
     
@@ -128,7 +121,6 @@ const handleLogin = async () => {
     }
     
     showError(t(translationKey) as string, 6000);
-    console.error('Login error:', err);
   } finally {
     loading.value = false;
   }
