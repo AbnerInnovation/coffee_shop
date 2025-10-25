@@ -103,6 +103,16 @@
                     role="menuitem"
                     tabindex="-1"
                     id="user-menu-item-0"
+                    @click="openChangePasswordModal"
+                  >
+                    {{ t('app.profile.change_password.menu_item') }}
+                  </a>
+                  <a
+                    href="#"
+                    class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700/60"
+                    role="menuitem"
+                    tabindex="-1"
+                    id="user-menu-item-1"
                     @click="handleLogout"
                   >
                     {{ t('app.actions.sign_out') }}
@@ -183,6 +193,13 @@
           <a
             href="#"
             class="block rounded-md px-3 py-2 text-base font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white"
+            @click="openChangePasswordModal"
+          >
+            {{ t('app.profile.change_password.menu_item') }}
+          </a>
+          <a
+            href="#"
+            class="block rounded-md px-3 py-2 text-base font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white"
             @click="handleLogout"
           >
             {{ $t('app.actions.sign_out') }}
@@ -191,6 +208,13 @@
       </div>
     </div>
   </nav>
+  
+  <!-- Change Password Modal -->
+  <ChangePasswordModal
+    :show="showChangePasswordModal"
+    @close="showChangePasswordModal = false"
+    @success="handlePasswordChanged"
+  />
 </template>
 
 <script setup>
@@ -203,6 +227,7 @@ import { usePermissions } from '@/composables/usePermissions';
 import { hasRestaurantContext } from '@/utils/subdomain';
 import { useI18n } from 'vue-i18n';
 import { useTheme } from '@/composables/useTheme';
+import ChangePasswordModal from '@/components/profile/ChangePasswordModal.vue';
 
 const props = defineProps({
   subscriptionFeatures: {
@@ -233,6 +258,7 @@ const {
 
 const isMobileMenuOpen = ref(false);
 const isProfileMenuOpen = ref(false);
+const showChangePasswordModal = ref(false);
 
 const navigation = computed(() => {
   const path = route.path;
@@ -296,6 +322,19 @@ function toggleMobileMenu() {
 
 function toggleProfileMenu() {
   isProfileMenuOpen.value = !isProfileMenuOpen.value;
+}
+
+function openChangePasswordModal() {
+  // Close menus
+  isProfileMenuOpen.value = false;
+  isMobileMenuOpen.value = false;
+  
+  // Open modal
+  showChangePasswordModal.value = true;
+}
+
+function handlePasswordChanged() {
+  showSuccess(t('app.profile.change_password.success'));
 }
 
 async function handleLogout() {

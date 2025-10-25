@@ -115,20 +115,111 @@
             <PlusIcon class="h-5 w-5" />
             {{ t('app.sysadmin.actions.new_restaurant') }}
           </button>
-          <button
-            @click="refreshData"
-            class="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2"
-          >
-            <ArrowPathIcon class="h-5 w-5" :class="{ 'animate-spin': loading }" />
-            {{ t('app.sysadmin.actions.refresh') }}
-          </button>
+         
         </div>
       </div>
     </div>
 
-    <!-- Restaurants Table -->
+    <!-- Restaurants List -->
     <div class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-      <div class="overflow-x-auto">
+      <!-- Loading State -->
+      <div v-if="loading" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+        <ArrowPathIcon class="h-8 w-8 animate-spin mx-auto mb-2" />
+        {{ t('app.common.loading') }}
+      </div>
+
+      <!-- Empty State -->
+      <div v-else-if="!restaurants || restaurants.length === 0" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+        {{ t('app.sysadmin.table.no_results') }}
+      </div>
+
+      <!-- Mobile Cards (< md) -->
+      <div v-else class="md:hidden divide-y divide-gray-200 dark:divide-gray-700">
+        <div v-for="restaurant in restaurants" :key="restaurant.id" class="p-4 hover:bg-gray-50 dark:hover:bg-gray-700">
+          <!-- Restaurant Name & Subdomain -->
+          <div class="mb-3">
+            <div class="text-base font-semibold text-gray-900 dark:text-white">
+              {{ restaurant.name }}
+            </div>
+            <div class="text-sm text-gray-500 dark:text-gray-400">
+              {{ restaurant.subdomain }}
+            </div>
+            <a 
+              :href="getRestaurantUrl(restaurant.subdomain)" 
+              target="_blank"
+              class="inline-flex items-center gap-1 text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 mt-1"
+            >
+              <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
+              {{ t('app.sysadmin.actions.open_system') }}
+            </a>
+          </div>
+
+          <!-- Status Badge -->
+          <div class="mb-3">
+            <span
+              v-if="restaurant.subscription_status"
+              :class="getStatusClass(restaurant.subscription_status)"
+              class="inline-flex px-2.5 py-1 text-xs font-semibold rounded-full"
+            >
+              {{ t(`app.sysadmin.status.${restaurant.subscription_status}`) }}
+            </span>
+            <span v-else class="inline-flex px-2.5 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
+              {{ t('app.sysadmin.status.none') }}
+            </span>
+          </div>
+
+          <!-- Plan & Price -->
+          <div class="grid grid-cols-2 gap-3 mb-3 text-sm">
+            <div>
+              <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">{{ t('app.sysadmin.table.plan') }}</div>
+              <div v-if="restaurant.plan_name">
+                <div class="font-medium text-gray-900 dark:text-white">{{ restaurant.plan_name }}</div>
+                <div class="text-xs text-gray-500 dark:text-gray-400">{{ restaurant.plan_tier }}</div>
+              </div>
+              <div v-else class="text-gray-400 dark:text-gray-500 italic">{{ t('app.sysadmin.table.no_plan') }}</div>
+            </div>
+            <div>
+              <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">{{ t('app.sysadmin.table.price') }}</div>
+              <div v-if="restaurant.monthly_price !== null" class="font-medium text-gray-900 dark:text-white">
+                ${{ formatMoney(restaurant.monthly_price) }}/{{ t('app.common.month') }}
+              </div>
+              <div v-else class="text-gray-400 dark:text-gray-500">-</div>
+            </div>
+          </div>
+
+          <!-- Renewal -->
+          <div v-if="restaurant.days_until_renewal !== null" class="mb-3 text-sm">
+            <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">{{ t('app.sysadmin.table.renewal') }}</div>
+            <div class="text-gray-900 dark:text-white">
+              {{ restaurant.days_until_renewal }} {{ t('app.common.days') }}
+            </div>
+            <div class="text-xs text-gray-500 dark:text-gray-400">
+              {{ formatDate(restaurant.current_period_end) }}
+            </div>
+          </div>
+
+          <!-- Action Button -->
+          <button
+            v-if="!restaurant.subscription_id"
+            @click="openAssignModal(restaurant)"
+            class="w-full px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors"
+          >
+            {{ t('app.sysadmin.actions.assign_plan') }}
+          </button>
+          <button
+            v-else
+            @click="openManageModal(restaurant)"
+            class="w-full px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors"
+          >
+            {{ t('app.sysadmin.actions.manage') }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Desktop Table (>= md) -->
+      <div class="hidden md:block overflow-x-auto">
         <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
           <thead class="bg-gray-50 dark:bg-gray-700">
             <tr>
@@ -153,18 +244,7 @@
             </tr>
           </thead>
           <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-            <tr v-if="loading">
-              <td colspan="6" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
-                <ArrowPathIcon class="h-8 w-8 animate-spin mx-auto mb-2" />
-                {{ t('app.common.loading') }}
-              </td>
-            </tr>
-            <tr v-else-if="!restaurants || restaurants.length === 0">
-              <td colspan="6" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
-                {{ t('app.sysadmin.table.no_results') }}
-              </td>
-            </tr>
-            <tr v-for="restaurant in restaurants" v-else :key="restaurant.id" class="hover:bg-gray-50 dark:hover:bg-gray-700">
+            <tr v-for="restaurant in restaurants" :key="restaurant.id" class="hover:bg-gray-50 dark:hover:bg-gray-700">
               <!-- Restaurant Info -->
               <td class="px-6 py-4">
                 <div class="flex items-center">
@@ -175,6 +255,16 @@
                     <div class="text-sm text-gray-500 dark:text-gray-400">
                       {{ restaurant.subdomain }}
                     </div>
+                    <a 
+                      :href="getRestaurantUrl(restaurant.subdomain)" 
+                      target="_blank"
+                      class="inline-flex items-center gap-1 text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 mt-1"
+                    >
+                      <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                      </svg>
+                      {{ t('app.sysadmin.actions.open_system') }}
+                    </a>
                   </div>
                 </div>
               </td>
@@ -234,14 +324,14 @@
                 <button
                   v-if="!restaurant.subscription_id"
                   @click="openAssignModal(restaurant)"
-                  class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 mr-3"
+                  class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300"
                 >
                   {{ t('app.sysadmin.actions.assign_plan') }}
                 </button>
                 <button
                   v-else
                   @click="openManageModal(restaurant)"
-                  class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 mr-3"
+                  class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300"
                 >
                   {{ t('app.sysadmin.actions.manage') }}
                 </button>
@@ -311,7 +401,7 @@ const loadRestaurants = async () => {
   try {
     restaurants.value = await adminService.getRestaurants({
       search: searchQuery.value || undefined,
-      has_subscription: filterSubscription.value
+      has_subscription: filterSubscription.value !== null ? filterSubscription.value : undefined
     });
   } catch (error) {
     console.error('Error loading restaurants:', error);
@@ -363,6 +453,15 @@ const closeCreateModal = () => {
 const handleRestaurantCreated = () => {
   closeCreateModal();
   refreshData();
+};
+
+const getRestaurantUrl = (subdomain: string) => {
+  // Use current hostname for development, or shopacoffee.com for production
+  const hostname = window.location.hostname;
+  if (hostname === 'localhost' || hostname.startsWith('127.')) {
+    return `http://${subdomain}.shopacoffee.local:3000`;
+  }
+  return `https://${subdomain}.shopacoffee.com`;
 };
 
 const getStatusClass = (status: string) => {

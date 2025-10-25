@@ -42,6 +42,7 @@ import AppNavbar from '@/components/layout/AppNavbar.vue';
 import ConfirmDialog from '@/components/ui/ConfirmationDialog.vue';
 import NewOrderModal from '@/components/orders/NewOrderModal.vue';
 import { subscriptionService } from '@/services/subscriptionService';
+import { hasRestaurantContext } from '@/utils/subdomain';
 
 const authStore = useAuthStore();
 const route = useRoute();
@@ -75,9 +76,9 @@ function handleOrderCreated(order) {
 
 // Load subscription features
 const loadSubscriptionFeatures = async () => {
-  // Load subscription features for all authenticated users
-  // This determines which modules are available in the navigation
-  if (!authStore.isAuthenticated) {
+  // Only load subscription features if we're in a restaurant context (subdomain)
+  // and user is authenticated
+  if (!authStore.isAuthenticated || !hasRestaurantContext()) {
     return;
   }
   

@@ -9,8 +9,8 @@ from ...db.base import get_db
 from ...models.user import User as UserModel, UserRole
 from ...models.restaurant import Restaurant
 from ...schemas.token import Token, TokenRefreshRequest
-from ...schemas.user import UserCreate, User as UserSchema
-from ...core.security import create_access_token, create_refresh_token, decode_token
+from ...schemas.user import UserCreate, User as UserSchema, ChangePasswordRequest
+from ...core.security import create_access_token, create_refresh_token, decode_token, verify_password, get_password_hash
 from ...core.config import settings
 from ...services import user as user_service
 from ...core.exceptions import ValidationError, UnauthorizedError, ConflictError
@@ -135,3 +135,42 @@ async def refresh_token(body: TokenRefreshRequest, db: Session = Depends(get_db)
         raise
     except Exception:
         raise UnauthorizedError("Could not refresh token")
+
+
+@router.post("/change-password", status_code=status.HTTP_200_OK)
+async def change_password(
+    password_data: ChangePasswordRequest,
+    db: Session = Depends(get_db),
+    current_user: UserModel = Depends(user_service.get_current_active_user)
+):
+    """
+    Change the password for the currently authenticated user.
+    Requires the current password for verification.
+    """
+    # Verify current password
+    if not verify_password(password_data.current_password, current_user.hashed_password):
+        raise ValidationError("La contraseña actual es incorrecta", field="current_password")
+    
+    # Check that new password is different from current
+    if verify_password(password_data.new_password, current_user.hashed_password):
+        raise ValidationError("La nueva contraseña debe ser diferente a la actual", field="new_password")
+    
+    # Update password - fetch user from db to ensure it's attached to the session
+    try:
+        user = db.query(UserModel).filter(UserModel.id == current_user.id).first()
+        if not user:
+            raise ValidationError("Usuario no encontrado")
+        
+        user.hashed_password = get_password_hash(password_data.new_password)
+        db.commit()
+        db.refresh(user)
+        
+        return {
+            "message": "Contraseña actualizada exitosamente",
+            "success": True
+        }
+    except ValidationError:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise ValidationError(f"Error al actualizar la contraseña: {str(e)}")

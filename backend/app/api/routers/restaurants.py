@@ -4,9 +4,10 @@ from typing import List
 
 from ...db.base import get_db
 from ...models.restaurant import Restaurant as RestaurantModel
-from ...models.user import User, UserRole
+from ...models.user import User, UserRole, User as UserModel
 from ...schemas.restaurant import Restaurant, RestaurantCreate, RestaurantUpdate, RestaurantPublic
-from ...services.user import get_current_active_user
+from ...schemas.user import UserCreate
+from ...services.user import get_current_active_user, create_user
 from ...middleware.restaurant import get_restaurant_from_request
 
 router = APIRouter(
@@ -85,7 +86,7 @@ async def create_restaurant(
     """
     Create a new restaurant (sysadmin only).
     Automatically creates:
-    1. A 14-day trial subscription
+    1. A trial subscription (14, 30, or 60 days)
     2. An admin user with email: admin-{subdomain}@shopacoffee.com
     """
     # Check if subdomain already exists
@@ -99,18 +100,23 @@ async def create_restaurant(
             detail=f"Restaurant with subdomain '{restaurant.subdomain}' already exists"
         )
     
-    # Create new restaurant
-    db_restaurant = RestaurantModel(**restaurant.dict())
+    # Extract trial_days before creating restaurant
+    trial_days = restaurant.trial_days if hasattr(restaurant, 'trial_days') else 14
+    
+    # Create new restaurant (exclude trial_days from dict)
+    restaurant_data = restaurant.dict(exclude={'trial_days'})
+    db_restaurant = RestaurantModel(**restaurant_data)
     db.add(db_restaurant)
     db.commit()
     db.refresh(db_restaurant)
     
-    # Automatically create trial subscription
+    # Automatically create trial subscription with custom trial_days
     try:
         from app.services.subscription_service import SubscriptionService
         subscription_service = SubscriptionService(db)
-        trial_subscription = subscription_service.create_trial_subscription(db_restaurant.id)
+        trial_subscription = subscription_service.create_trial_subscription(db_restaurant.id, trial_days)
         print(f"✅ Trial subscription created for restaurant '{db_restaurant.name}' (ID: {db_restaurant.id})")
+        print(f"   Trial duration: {trial_days} days")
         print(f"   Trial expires: {trial_subscription.trial_end_date}")
     except Exception as e:
         # Log error but don't fail restaurant creation
@@ -182,6 +188,89 @@ async def update_restaurant(
     db.refresh(db_restaurant)
     
     return db_restaurant
+
+
+@router.get("/{restaurant_id}/admins")
+async def get_restaurant_admins(
+    restaurant_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_sysadmin)
+):
+    """
+    Get all admin users for a specific restaurant (sysadmin only).
+    """
+    # Verify restaurant exists
+    db_restaurant = db.query(RestaurantModel).filter(RestaurantModel.id == restaurant_id).first()
+    
+    if not db_restaurant:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Restaurant not found"
+        )
+    
+    # Get all admin users for this restaurant
+    admins = db.query(UserModel).filter(
+        UserModel.restaurant_id == restaurant_id,
+        UserModel.role == UserRole.ADMIN,
+        UserModel.deleted_at == None
+    ).all()
+    
+    return {
+        "restaurant_id": restaurant_id,
+        "restaurant_name": db_restaurant.name,
+        "admins": [
+            {
+                "id": admin.id,
+                "email": admin.email,
+                "full_name": admin.full_name,
+                "created_at": admin.created_at.isoformat() if admin.created_at else None
+            }
+            for admin in admins
+        ]
+    }
+
+
+@router.post("/{restaurant_id}/admin")
+async def create_restaurant_admin(
+    restaurant_id: int,
+    user_data: UserCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_sysadmin)
+):
+    """
+    Create an admin user for a specific restaurant (sysadmin only).
+    """
+    # Verify restaurant exists
+    db_restaurant = db.query(RestaurantModel).filter(RestaurantModel.id == restaurant_id).first()
+    
+    if not db_restaurant:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Restaurant not found"
+        )
+    
+    # Force role to be admin
+    user_data.role = UserRole.ADMIN
+    user_data.restaurant_id = restaurant_id
+    
+    # Create the admin user
+    try:
+        new_admin = create_user(db, user_data)
+        return {
+            "message": f"Admin user created successfully for {db_restaurant.name}",
+            "user": {
+                "id": new_admin.id,
+                "email": new_admin.email,
+                "full_name": new_admin.full_name,
+                "role": new_admin.role,
+                "restaurant_id": new_admin.restaurant_id
+            }
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
 
 
 @router.delete("/{restaurant_id}", status_code=status.HTTP_204_NO_CONTENT)

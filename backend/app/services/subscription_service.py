@@ -83,8 +83,13 @@ class SubscriptionService:
     
     # ==================== SUBSCRIPTION CREATION ====================
     
-    def create_trial_subscription(self, restaurant_id: int) -> RestaurantSubscription:
-        """Create a trial subscription for a new restaurant"""
+    def create_trial_subscription(self, restaurant_id: int, trial_days: int = 14) -> RestaurantSubscription:
+        """Create a trial subscription for a new restaurant
+        
+        Args:
+            restaurant_id: ID of the restaurant
+            trial_days: Number of trial days (14, 30, or 60)
+        """
         # Check if restaurant already has a subscription
         existing = self.db.query(RestaurantSubscription).filter(
             RestaurantSubscription.restaurant_id == restaurant_id
@@ -98,9 +103,9 @@ class SubscriptionService:
         if not trial_plan:
             raise ValidationError("Trial plan not found in system")
         
-        # Calculate dates
+        # Calculate dates using custom trial_days
         now = datetime.utcnow()
-        trial_end = now + timedelta(days=trial_plan.trial_duration_days)
+        trial_end = now + timedelta(days=trial_days)
         
         # Create subscription
         subscription = RestaurantSubscription(

@@ -68,7 +68,15 @@ class RestaurantBase(BaseModel):
 
 class RestaurantCreate(RestaurantBase):
     """Schema for creating a new restaurant"""
-    pass
+    trial_days: Optional[int] = Field(default=14, ge=1, le=90)
+    
+    @validator('trial_days')
+    def validate_trial_days(cls, v):
+        """Validate trial days are within allowed values"""
+        allowed_values = [14, 30, 60]
+        if v not in allowed_values:
+            raise ValueError(f'trial_days must be one of {allowed_values}')
+        return v
 
 
 class RestaurantUpdate(BaseModel):

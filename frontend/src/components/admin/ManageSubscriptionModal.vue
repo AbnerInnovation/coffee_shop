@@ -30,6 +30,119 @@
 
         <!-- Content -->
         <div class="bg-white dark:bg-gray-800 px-6 py-4 max-h-[70vh] overflow-y-auto">
+          <!-- Admin Users Section -->
+          <div class="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+            <div class="flex items-center justify-between mb-3">
+              <h4 class="text-sm font-medium text-gray-900 dark:text-white">
+                {{ t('app.sysadmin.modal.admin_users') }}
+              </h4>
+              <button
+                v-if="!hasAdmins"
+                @click="showCreateAdminForm = true"
+                class="text-sm text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 font-medium"
+              >
+                {{ t('app.sysadmin.modal.create_admin') }}
+              </button>
+            </div>
+            
+            <!-- Loading -->
+            <div v-if="loadingAdmins" class="text-sm text-gray-500 dark:text-gray-400">
+              {{ t('app.common.loading') }}
+            </div>
+            
+            <!-- No admins -->
+            <div v-else-if="!hasAdmins && !showCreateAdminForm" class="text-sm text-amber-700 dark:text-amber-400">
+              ⚠️ {{ t('app.sysadmin.modal.no_admin_warning') }}
+            </div>
+            
+            <!-- Admin list -->
+            <div v-else-if="hasAdmins && !showCreateAdminForm" class="space-y-2">
+              <div
+                v-for="admin in admins"
+                :key="admin.id"
+                class="flex items-center justify-between p-3 bg-white dark:bg-gray-700 rounded-lg"
+              >
+                <div>
+                  <div class="text-sm font-medium text-gray-900 dark:text-white">
+                    {{ admin.full_name }}
+                  </div>
+                  <div class="text-xs text-gray-500 dark:text-gray-400">
+                    {{ admin.email }}
+                  </div>
+                </div>
+                <span class="text-xs px-2 py-1 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 rounded-full">
+                  Admin
+                </span>
+              </div>
+              <button
+                @click="showCreateAdminForm = true"
+                class="w-full text-sm text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 font-medium py-2"
+              >
+                + {{ t('app.sysadmin.modal.add_another_admin') }}
+              </button>
+            </div>
+            
+            <!-- Create admin form -->
+            <div v-if="showCreateAdminForm" class="space-y-3">
+              <div>
+                <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  {{ t('app.sysadmin.create_admin.full_name') }} *
+                </label>
+                <input
+                  v-model="adminForm.full_name"
+                  type="text"
+                  required
+                  class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white"
+                  :placeholder="t('app.sysadmin.create_admin.full_name_placeholder')"
+                />
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  {{ t('app.sysadmin.create_admin.email') }} *
+                </label>
+                <input
+                  v-model="adminForm.email"
+                  type="email"
+                  required
+                  class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white"
+                  :placeholder="t('app.sysadmin.create_admin.email_placeholder')"
+                />
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  {{ t('app.sysadmin.create_admin.password') }} *
+                </label>
+                <input
+                  v-model="adminForm.password"
+                  type="password"
+                  required
+                  minlength="8"
+                  class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white"
+                  :placeholder="t('app.sysadmin.create_admin.password_placeholder')"
+                />
+                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  {{ t('app.sysadmin.create_admin.password_requirements') }}
+                </p>
+              </div>
+              <div class="flex gap-2">
+                <button
+                  @click="cancelCreateAdmin"
+                  type="button"
+                  class="flex-1 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
+                >
+                  {{ t('app.common.cancel') }}
+                </button>
+                <button
+                  @click="handleCreateAdmin"
+                  :disabled="creatingAdmin"
+                  class="flex-1 px-3 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+                >
+                  {{ creatingAdmin ? t('app.common.loading') : t('app.sysadmin.create_admin.submit') }}
+                </button>
+              </div>
+            </div>
+          </div>
+
           <!-- Current Subscription Info (if exists) -->
           <div v-if="hasSubscription && subscriptionDetails" class="mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
             <h4 class="text-sm font-medium text-gray-900 dark:text-white mb-3">
@@ -226,9 +339,21 @@ const selectedPlanId = ref<number | null>(null);
 const billingCycle = ref<'monthly' | 'annual'>('monthly');
 const subscriptionDetails = ref<any>(null);
 
+// Admin users state
+const loadingAdmins = ref(false);
+const admins = ref<any[]>([]);
+const showCreateAdminForm = ref(false);
+const creatingAdmin = ref(false);
+const adminForm = ref({
+  full_name: '',
+  email: '',
+  password: ''
+});
+
 // Computed
 const hasSubscription = computed(() => !!props.restaurant.subscription_id);
 const selectedPlan = computed(() => plans.value?.find(p => p.id === selectedPlanId.value));
+const hasAdmins = computed(() => admins.value.length > 0);
 
 // Methods
 const loadPlans = async () => {
@@ -248,6 +373,66 @@ const loadSubscriptionDetails = async () => {
   } catch (error) {
     console.error('Error loading subscription details:', error);
   }
+};
+
+const loadAdmins = async () => {
+  loadingAdmins.value = true;
+  try {
+    const response = await adminService.getRestaurantAdmins(props.restaurant.id);
+    admins.value = response.admins || [];
+  } catch (error) {
+    console.error('Error loading admins:', error);
+    admins.value = [];
+  } finally {
+    loadingAdmins.value = false;
+  }
+};
+
+const handleCreateAdmin = async () => {
+  if (!adminForm.value.full_name || !adminForm.value.email || !adminForm.value.password) {
+    alert('Por favor completa todos los campos');
+    return;
+  }
+  
+  creatingAdmin.value = true;
+  try {
+    await adminService.createRestaurantAdmin(props.restaurant.id, adminForm.value);
+    
+    // Reload admins list
+    await loadAdmins();
+    
+    // Reset form
+    adminForm.value = {
+      full_name: '',
+      email: '',
+      password: ''
+    };
+    showCreateAdminForm.value = false;
+    
+    alert('Admin creado exitosamente');
+  } catch (error: any) {
+    console.error('Error creating admin:', error);
+    
+    // Handle validation errors
+    if (error.response?.data?.error?.validation_errors) {
+      const validationErrors = error.response.data.error.validation_errors;
+      const errorMessages = validationErrors.map((err: any) => err.message).join('\n');
+      alert(`Error de validación:\n${errorMessages}`);
+    } else {
+      alert(error.response?.data?.error?.message || error.response?.data?.detail || 'Error al crear el admin');
+    }
+  } finally {
+    creatingAdmin.value = false;
+  }
+};
+
+const cancelCreateAdmin = () => {
+  adminForm.value = {
+    full_name: '',
+    email: '',
+    password: ''
+  };
+  showCreateAdminForm.value = false;
 };
 
 const saveSubscription = async () => {
@@ -317,6 +502,7 @@ watch(selectedPlanId, (newId) => {
 onMounted(async () => {
   await loadPlans();
   await loadSubscriptionDetails();
+  await loadAdmins();
   
   // Pre-select current plan if exists
   if (hasSubscription.value && props.restaurant.plan_id) {

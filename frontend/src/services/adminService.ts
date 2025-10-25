@@ -58,6 +58,12 @@ export interface CreateRestaurantData {
   description?: string;
 }
 
+export interface CreateAdminData {
+  full_name: string;
+  email: string;
+  password: string;
+}
+
 class AdminService {
   /**
    * Get system-wide statistics
@@ -108,6 +114,20 @@ class AdminService {
     return await api.delete(`/admin/restaurants/${restaurantId}/subscription`, {
       params: { immediate }
     });
+  }
+
+  /**
+   * Get admin users for a restaurant
+   */
+  async getRestaurantAdmins(restaurantId: number): Promise<any> {
+    return await api.get(`/restaurants/${restaurantId}/admins`);
+  }
+
+  /**
+   * Create an admin user for a restaurant
+   */
+  async createRestaurantAdmin(restaurantId: number, data: CreateAdminData): Promise<any> {
+    return await api.post(`/restaurants/${restaurantId}/admin`, data);
   }
 }
 

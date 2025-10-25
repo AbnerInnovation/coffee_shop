@@ -26,10 +26,75 @@
           >
             <DialogPanel class="w-full max-w-2xl transform overflow-hidden rounded-2xl bg-white dark:bg-gray-800 p-6 text-left align-middle shadow-xl transition-all">
               <DialogTitle as="h3" class="text-lg font-medium leading-6 text-gray-900 dark:text-white mb-4">
-                {{ t('app.sysadmin.create_restaurant.title') }}
+                {{ createdRestaurant ? t('app.sysadmin.create_restaurant.success_title') : t('app.sysadmin.create_restaurant.title') }}
               </DialogTitle>
 
-              <form @submit.prevent="handleSubmit" class="space-y-4">
+              <!-- Success Message with Subdomain Link -->
+              <div v-if="createdRestaurant" class="space-y-4">
+                <div class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
+                  <div class="flex items-start gap-3">
+                    <svg class="h-6 w-6 text-green-600 dark:text-green-400 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div class="flex-1">
+                      <p class="text-sm font-medium text-green-900 dark:text-green-200">
+                        {{ t('app.sysadmin.create_restaurant.created_successfully') }}
+                      </p>
+                      <p class="text-sm text-green-700 dark:text-green-300 mt-1">
+                        {{ t('app.sysadmin.create_restaurant.restaurant_name') }}: <strong>{{ createdRestaurant.name }}</strong>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Subdomain Link -->
+                <div class="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 rounded-lg p-4">
+                  <label class="block text-sm font-medium text-indigo-900 dark:text-indigo-200 mb-2">
+                    {{ t('app.sysadmin.create_restaurant.subdomain_link') }}
+                  </label>
+                  <div class="flex items-center gap-2">
+                    <input
+                      :value="getSubdomainUrl()"
+                      readonly
+                      class="flex-1 px-4 py-2 bg-white dark:bg-gray-700 border border-indigo-300 dark:border-indigo-600 rounded-lg text-sm text-gray-900 dark:text-white font-mono"
+                    />
+                    <button
+                      type="button"
+                      @click="copyToClipboard(getSubdomainUrl())"
+                      class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium"
+                    >
+                      {{ t('app.common.copy') }}
+                    </button>
+                  </div>
+                  <p class="mt-2 text-xs text-indigo-700 dark:text-indigo-300">
+                    {{ t('app.sysadmin.create_restaurant.subdomain_link_hint') }}
+                  </p>
+                </div>
+
+                <!-- Trial Info -->
+                <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                  <p class="text-sm text-blue-900 dark:text-blue-200">
+                    <strong>{{ t('app.sysadmin.create_restaurant.trial_created') }}:</strong> {{ form.trial_days }} {{ t('app.common.days') }}
+                  </p>
+                  <p class="text-xs text-blue-700 dark:text-blue-300 mt-1">
+                    {{ t('app.sysadmin.create_restaurant.admin_credentials_console') }}
+                  </p>
+                </div>
+
+                <!-- Close Button -->
+                <div class="flex justify-end pt-4 border-t border-gray-200 dark:border-gray-700">
+                  <button
+                    type="button"
+                    @click="handleClose"
+                    class="px-6 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700"
+                  >
+                    {{ t('app.common.close') }}
+                  </button>
+                </div>
+              </div>
+
+              <!-- Creation Form -->
+              <form v-else @submit.prevent="handleSubmit" class="space-y-4">
                 <!-- Name -->
                 <div>
                   <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -54,7 +119,7 @@
                       v-model="form.subdomain"
                       type="text"
                       required
-                      pattern="[a-z0-9-]+"
+                      pattern="[a-z0-9\-]+"
                       class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white"
                       :placeholder="t('app.sysadmin.create_restaurant.subdomain_placeholder')"
                       @input="validateSubdomain"
@@ -117,6 +182,24 @@
                     class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white"
                     :placeholder="t('app.sysadmin.create_restaurant.description_placeholder')"
                   />
+                </div>
+
+                <!-- Trial Days Selector -->
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    {{ t('app.sysadmin.create_restaurant.trial_days') }} *
+                  </label>
+                  <select
+                    v-model.number="form.trial_days"
+                    class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white"
+                  >
+                    <option :value="14">14 {{ t('app.common.days') }} ({{ t('app.sysadmin.create_restaurant.trial_default') }})</option>
+                    <option :value="30">30 {{ t('app.common.days') }} (1 {{ t('app.common.month') }})</option>
+                    <option :value="60">60 {{ t('app.common.days') }} (2 {{ t('app.common.months') }})</option>
+                  </select>
+                  <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    {{ t('app.sysadmin.create_restaurant.trial_days_hint') }}
+                  </p>
                 </div>
 
                 <!-- Trial Info -->
@@ -187,13 +270,15 @@ const emit = defineEmits<{
 }>();
 
 const submitting = ref(false);
+const createdRestaurant = ref<any>(null);
 const form = ref({
   name: '',
   subdomain: '',
   email: '',
   phone: '',
   address: '',
-  description: ''
+  description: '',
+  trial_days: 14
 });
 
 const validateSubdomain = (event: Event) => {
@@ -210,22 +295,22 @@ const resetForm = () => {
     email: '',
     phone: '',
     address: '',
-    description: ''
+    description: '',
+    trial_days: 14
   };
+  createdRestaurant.value = null;
 };
 
 const handleSubmit = async () => {
   submitting.value = true;
   try {
-    await adminService.createRestaurant(form.value);
+    const restaurant = await adminService.createRestaurant(form.value);
+    createdRestaurant.value = restaurant;
     
     toast.success(t('app.sysadmin.create_restaurant.success'), {
       position: POSITION.TOP_RIGHT,
-      timeout: 3000
+      timeout: 5000
     });
-    
-    resetForm();
-    emit('created');
   } catch (error: any) {
     console.error('Error creating restaurant:', error);
     
@@ -236,6 +321,41 @@ const handleSubmit = async () => {
     });
   } finally {
     submitting.value = false;
+  }
+};
+
+const handleClose = () => {
+  if (createdRestaurant.value) {
+    emit('created');
+  }
+  resetForm();
+  emit('close');
+};
+
+const getSubdomainUrl = () => {
+  if (!createdRestaurant.value) return '';
+  const subdomain = createdRestaurant.value.subdomain;
+  // Use current hostname for development, or shopacoffee.com for production
+  const hostname = window.location.hostname;
+  if (hostname === 'localhost' || hostname.startsWith('127.')) {
+    return `http://${subdomain}.shopacoffee.local:3000`;
+  }
+  return `https://${subdomain}.shopacoffee.com`;
+};
+
+const copyToClipboard = async (text: string) => {
+  try {
+    await navigator.clipboard.writeText(text);
+    toast.success(t('app.common.copied'), {
+      position: POSITION.TOP_RIGHT,
+      timeout: 2000
+    });
+  } catch (error) {
+    console.error('Failed to copy:', error);
+    toast.error(t('app.common.copy_failed'), {
+      position: POSITION.TOP_RIGHT,
+      timeout: 2000
+    });
   }
 };
 
