@@ -768,8 +768,15 @@ const fetchAvailableTables = async () => {
 function loadOrderIntoForm(order: OrderType) {
   console.log('🔄 Loading order into form:', order);
   
-  // Set order type
-  form.value.type = order.table_id ? 'Dine-in' : 'Takeaway';
+  // Map backend order_type to frontend format
+  const orderTypeMap: Record<string, string> = {
+    'dine_in': 'Dine-in',
+    'takeaway': 'Takeaway',
+    'delivery': 'Delivery'
+  };
+  const backendOrderType = (order as any).order_type || 'dine_in';
+  form.value.type = orderTypeMap[backendOrderType] || 'Dine-in';
+  
   form.value.tableId = order.table_id ?? null;
   form.value.customerName = order.customer_name || '';
   form.value.notes = order.notes || '';
@@ -938,11 +945,28 @@ async function createOrder() {
     if (isEditMode.value && props.orderToEdit) {
       const orderId = props.orderToEdit.id;
 
-      // 1) Update order-level fields (notes, table_id) if changed
+      // 1) Update order-level fields (notes, table_id, order_type, customer_name) if changed
       const updates: any = {};
       const newTableId = form.value.type === 'Dine-in' ? (form.value.tableId as number | null) : null;
       if (newTableId !== props.orderToEdit.table_id) updates.table_id = newTableId;
       if (form.value.notes !== (props.orderToEdit.notes || '')) updates.notes = form.value.notes || null;
+      
+      // Update customer_name for takeaway/delivery orders
+      const newCustomerName = form.value.type !== 'Dine-in' ? (form.value.customerName || null) : null;
+      if (newCustomerName !== (props.orderToEdit.customer_name || null)) {
+        updates.customer_name = newCustomerName;
+      }
+      
+      // Map frontend order type to backend format
+      const orderTypeMap: Record<string, string> = {
+        'Dine-in': 'dine_in',
+        'Takeaway': 'takeaway',
+        'Delivery': 'delivery'
+      };
+      const newOrderType = orderTypeMap[form.value.type] || 'dine_in';
+      const currentOrderType = (props.orderToEdit as any).order_type || 'dine_in';
+      if (newOrderType !== currentOrderType) updates.order_type = newOrderType;
+      
       if (Object.keys(updates).length > 0) {
         await orderService.updateOrder(orderId, updates);
       }

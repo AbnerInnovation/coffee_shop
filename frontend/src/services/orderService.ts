@@ -77,6 +77,7 @@ export interface Order {
   user_id: string | null;
   notes: string | null;
   is_paid?: boolean;
+  order_type?: string;
   items: OrderItem[];
 }
 

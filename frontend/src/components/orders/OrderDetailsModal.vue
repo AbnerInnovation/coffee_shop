@@ -410,7 +410,6 @@ const paymentMethods = [
 async function completePayment() {
   try {
     await orderService.markOrderPaid(props.order.id, selectedPaymentMethod.value);
-    showSuccess(t('app.views.orders.payment_completed_success') || 'Pago completado exitosamente');
     emit('paymentCompleted', props.order);
     emit('close');
     showPaymentMethodSelector.value = false;

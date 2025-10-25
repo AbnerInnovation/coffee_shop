@@ -99,10 +99,17 @@ class OrderCreate(OrderBase):
 
 class OrderUpdate(BaseModel):
     table_id: Optional[int] = None
+    customer_name: Optional[str] = Field(None, max_length=100)
     notes: Optional[str] = None
     status: Optional[OrderStatus] = None
     is_paid: Optional[bool] = None
     payment_method: Optional[PaymentMethod] = None
+    order_type: Optional[str] = Field(None, max_length=50)
+    
+    @validator('customer_name')
+    def validate_customer_name_update(cls, v):
+        """Validate customer name contains only allowed characters."""
+        return validate_name(v, 'Customer name') if v else v
 
 class OrderInDBBase(OrderBase):
     id: int

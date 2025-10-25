@@ -111,6 +111,56 @@ async def update_order(order_id: int, order: OrderUpdate, db: Session = Depends(
     if db_order is None:
         raise ResourceNotFoundError("Order", order_id)
 
+    # Handle table availability when order type changes
+    from ...models.table import Table as TableModel
+    from datetime import datetime, timezone
+    
+    old_table_id = db_order.table_id
+    old_order_type = db_order.order_type
+    
+    # Determine new values (use provided values or keep existing)
+    new_table_id = order.table_id if hasattr(order, 'table_id') and order.table_id is not None else db_order.table_id
+    new_order_type = order.order_type if order.order_type else old_order_type
+    
+    # Scenario 1: Changing from dine-in to takeaway/delivery (removing table)
+    # This happens when table_id is explicitly set to None OR order_type changes to takeaway/delivery
+    is_removing_table = (
+        old_table_id and 
+        (
+            (hasattr(order, 'table_id') and order.table_id is None) or
+            (new_order_type in ['takeaway', 'delivery'] and old_order_type == 'dine_in')
+        )
+    )
+    
+    if is_removing_table:
+        old_table = db.query(TableModel).filter(TableModel.id == old_table_id).first()
+        if old_table:
+            # Check if there are other active orders for this table
+            other_active_orders = db.query(OrderModel).filter(
+                OrderModel.table_id == old_table_id,
+                OrderModel.id != order_id,
+                OrderModel.status.in_([OrderStatus.PENDING, OrderStatus.PREPARING, OrderStatus.READY]),
+                OrderModel.is_paid == False
+            ).count()
+            
+            # Only mark as available if no other active orders
+            if other_active_orders == 0:
+                old_table.is_occupied = False
+                old_table.updated_at = datetime.now(timezone.utc)
+    
+    # Scenario 2: Changing from takeaway/delivery to dine-in (adding table)
+    is_adding_table = (
+        not old_table_id and 
+        new_table_id and 
+        new_order_type == 'dine_in'
+    )
+    
+    if is_adding_table:
+        new_table = db.query(TableModel).filter(TableModel.id == new_table_id).first()
+        if new_table:
+            new_table.is_occupied = True
+            new_table.updated_at = datetime.now(timezone.utc)
+
     # Check if order is being marked as paid
     if order.is_paid and not db_order.is_paid:
         # Validate payment method if provided
