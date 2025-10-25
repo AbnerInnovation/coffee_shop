@@ -98,10 +98,10 @@ async def create_menu_item(
         )
 
     try:
-        with db.begin():
-            db_item = create_menu_item_service(db=db, menu_item=menu_item, restaurant_id=restaurant.id)
-            db.refresh(db_item, ['category', 'variants'])
-            return db_item
+        db_item = create_menu_item_service(db=db, menu_item=menu_item, restaurant_id=restaurant.id)
+        db.commit()
+        db.refresh(db_item, ['category', 'variants'])
+        return db_item
     except Exception as e:
         db.rollback()
         logger.error(f"Error creating menu item: {str(e)}")
