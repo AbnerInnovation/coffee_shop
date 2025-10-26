@@ -1,8 +1,9 @@
 from datetime import datetime, timezone
-from sqlalchemy import or_, and_
+from sqlalchemy import or_, and_, func as sa_func
 from typing import List, Optional, Dict, Any
 import logging
 from sqlalchemy.orm import Session, joinedload
+import sqlalchemy as sa
 
 from ..models.order import Order as OrderModel, OrderStatus
 from ..models.order_item import OrderItem as OrderItemModel
@@ -63,6 +64,7 @@ def serialize_order(order: OrderModel) -> dict:
     
     return {
         "id": order.id,
+        "order_number": order.order_number,
         "table_id": order.table_id,
         "status": order.status,
         "notes": order.notes or None,
@@ -199,7 +201,14 @@ def create_order_with_items(db: Session, order: OrderCreate, restaurant_id: int,
     # Set order_type based on whether table_id is provided
     order_type = "dine_in" if order.table_id is not None else "delivery"
 
+    # Get the next order number for this restaurant
+    max_order_number = db.query(sa.func.max(OrderModel.order_number)).filter(
+        OrderModel.restaurant_id == restaurant_id
+    ).scalar()
+    next_order_number = (max_order_number or 0) + 1
+
     db_order = OrderModel(
+        order_number=next_order_number,
         table_id=order.table_id,
         customer_name=getattr(order, 'customer_name', None),  # Add customer_name if provided
         order_type=order_type,

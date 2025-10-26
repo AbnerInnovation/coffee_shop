@@ -67,6 +67,7 @@ export interface TableDetails {
 
 export interface Order {
   id: number;
+  order_number: number;
   status: OrderStatus;
   created_at: string;
   updated_at: string;

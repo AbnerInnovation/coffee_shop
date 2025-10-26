@@ -88,6 +88,14 @@ export const routes: RouteRecordRaw[] = [
       permissionCheck: 'canManageUsers' // Admin + SysAdmin
     }
   },
+  {
+    path: '/profile',
+    name: 'Profile',
+    component: () => import('./views/ProfileView.vue'),
+    meta: { 
+      requiresAuth: true // All authenticated users can view their profile
+    }
+  },
 
   // Public routes
   {

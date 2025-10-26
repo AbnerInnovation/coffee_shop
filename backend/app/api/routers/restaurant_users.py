@@ -36,12 +36,10 @@ async def list_restaurant_users(
     """
     List all users for the current restaurant.
     Only accessible by restaurant admin or sysadmin.
+    When in a restaurant context (subdomain), shows only that restaurant's users.
     """
-    # SYSADMIN can see all users, others only see their restaurant's users
-    if current_user.role == UserRole.SYSADMIN:
-        query = db.query(UserModel)
-    else:
-        query = db.query(UserModel).filter(UserModel.restaurant_id == restaurant.id)
+    # Filter by current restaurant context
+    query = db.query(UserModel).filter(UserModel.restaurant_id == restaurant.id)
     
     users = query.offset(skip).limit(limit).all()
     return users

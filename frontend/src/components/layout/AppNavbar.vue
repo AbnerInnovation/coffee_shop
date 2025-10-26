@@ -97,16 +97,16 @@
                   >
                     {{ t('app.nav.subscription') }}
                   </router-link>
-                  <a
-                    href="#"
+                  <router-link
+                    to="/profile"
                     class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700/60"
                     role="menuitem"
                     tabindex="-1"
                     id="user-menu-item-0"
-                    @click="openChangePasswordModal"
+                    @click="isProfileMenuOpen = false"
                   >
-                    {{ t('app.profile.change_password.menu_item') }}
-                  </a>
+                    {{ t('app.profile.view_profile') }}
+                  </router-link>
                   <a
                     href="#"
                     class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700/60"
@@ -190,13 +190,13 @@
           >
             {{ $t('app.nav.subscription') }}
           </router-link>
-          <a
-            href="#"
+          <router-link
+            to="/profile"
             class="block rounded-md px-3 py-2 text-base font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white"
-            @click="openChangePasswordModal"
+            @click="isMobileMenuOpen = false"
           >
-            {{ t('app.profile.change_password.menu_item') }}
-          </a>
+            {{ t('app.profile.view_profile') }}
+          </router-link>
           <a
             href="#"
             class="block rounded-md px-3 py-2 text-base font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white"
@@ -208,13 +208,6 @@
       </div>
     </div>
   </nav>
-  
-  <!-- Change Password Modal -->
-  <ChangePasswordModal
-    :show="showChangePasswordModal"
-    @close="showChangePasswordModal = false"
-    @success="handlePasswordChanged"
-  />
 </template>
 
 <script setup>
@@ -227,7 +220,6 @@ import { usePermissions } from '@/composables/usePermissions';
 import { hasRestaurantContext } from '@/utils/subdomain';
 import { useI18n } from 'vue-i18n';
 import { useTheme } from '@/composables/useTheme';
-import ChangePasswordModal from '@/components/profile/ChangePasswordModal.vue';
 
 const props = defineProps({
   subscriptionFeatures: {
@@ -258,10 +250,37 @@ const {
 
 const isMobileMenuOpen = ref(false);
 const isProfileMenuOpen = ref(false);
-const showChangePasswordModal = ref(false);
 
 const navigation = computed(() => {
   const path = route.path;
+  const isMainDomain = !hasRestaurantContext();
+  
+  // If on main domain (no subdomain), only show Users and Administration
+  if (isMainDomain) {
+    const mainDomainNav = [];
+    
+    // Add Users management link if user has permission
+    if (canManageUsers.value) {
+      mainDomainNav.push({ name: 'users', labelKey: 'app.nav.users', to: '/users', current: false, show: true });
+    }
+    
+    // Add SysAdmin link only on main domain
+    if (isSysAdmin.value) {
+      mainDomainNav.push({ name: 'sysadmin', labelKey: 'app.nav.sysadmin', to: '/sysadmin', current: false, show: true });
+    }
+    
+    return mainDomainNav
+      .filter(item => item.show)
+      .map(item => ({
+        ...item,
+        current: item.to === path || 
+                 (item.to === '/' && path === '') ||
+                 (item.to !== '/' && path.startsWith(item.to) && 
+                  (path === item.to || path.startsWith(`${item.to}/`)))
+      }));
+  }
+  
+  // If on subdomain (restaurant context), show restaurant operations
   const baseNav = [
     { name: 'menu', labelKey: 'app.nav.menu', to: '/menu', current: false, show: true },
     { name: 'categories', labelKey: 'app.nav.categories', to: '/categories', current: false, show: canEditCategories.value },
@@ -278,11 +297,6 @@ const navigation = computed(() => {
   // Add Users management link if user has permission
   if (canManageUsers.value) {
     baseNav.push({ name: 'users', labelKey: 'app.nav.users', to: '/users', current: false, show: true });
-  }
-  
-  // Add SysAdmin link only on main domain (not subdomains)
-  if (isSysAdmin.value && !hasRestaurantContext()) {
-    baseNav.push({ name: 'sysadmin', labelKey: 'app.nav.sysadmin', to: '/sysadmin', current: false, show: true });
   }
   
   // Filter by show property and update current state based on route
@@ -322,19 +336,6 @@ function toggleMobileMenu() {
 
 function toggleProfileMenu() {
   isProfileMenuOpen.value = !isProfileMenuOpen.value;
-}
-
-function openChangePasswordModal() {
-  // Close menus
-  isProfileMenuOpen.value = false;
-  isMobileMenuOpen.value = false;
-  
-  // Open modal
-  showChangePasswordModal.value = true;
-}
-
-function handlePasswordChanged() {
-  showSuccess(t('app.profile.change_password.success'));
 }
 
 async function handleLogout() {

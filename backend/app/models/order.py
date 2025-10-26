@@ -30,6 +30,7 @@ class Order(BaseModel):
     __tablename__ = "orders"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    order_number: Mapped[int] = mapped_column(Integer, nullable=False, index=True)  # Consecutive number per restaurant
     table_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("tables.id"), nullable=True)
     customer_name: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     order_type: Mapped[str] = mapped_column(String(50), default="dine_in", nullable=False)

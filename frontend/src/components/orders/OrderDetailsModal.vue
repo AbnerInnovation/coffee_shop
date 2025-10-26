@@ -29,7 +29,7 @@
                 <!-- Header with close button -->
                 <div class="flex items-start justify-between mb-3 sm:mb-4">
                   <DialogTitle as="h3" class="text-base sm:text-lg font-medium leading-6 text-gray-900 dark:text-gray-100">
-                    {{$t('app.views.orders.modals.details.order_title', { id: order.id })}}
+                    {{$t('app.views.orders.modals.details.order_title', { id: order.order_number || order.id })}}
                   </DialogTitle>
                   <button
                     type="button"
@@ -40,6 +40,46 @@
                     <XMarkIcon class="h-5 w-5 sm:h-6 sm:w-6" aria-hidden="true" />
                   </button>
                 </div>
+
+                <!-- Internal Toast Notification -->
+                <Transition
+                  enter-active-class="transition-all duration-300 ease-out"
+                  enter-from-class="transform opacity-0 -translate-y-2"
+                  enter-to-class="transform opacity-100 translate-y-0"
+                  leave-active-class="transition-all duration-200 ease-in"
+                  leave-from-class="transform opacity-100 translate-y-0"
+                  leave-to-class="transform opacity-0 -translate-y-2"
+                >
+                  <div v-if="internalToast.show" class="mb-4 rounded-lg p-3 flex items-center justify-between shadow-md"
+                    :class="{
+                      'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800': internalToast.type === 'success',
+                      'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800': internalToast.type === 'error',
+                      'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800': internalToast.type === 'info',
+                      'bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800': internalToast.type === 'warning'
+                    }"
+                  >
+                    <span class="text-sm font-medium"
+                      :class="{
+                        'text-green-800 dark:text-green-200': internalToast.type === 'success',
+                        'text-red-800 dark:text-red-200': internalToast.type === 'error',
+                        'text-blue-800 dark:text-blue-200': internalToast.type === 'info',
+                        'text-yellow-800 dark:text-yellow-200': internalToast.type === 'warning'
+                      }"
+                    >
+                      {{ internalToast.message }}
+                    </span>
+                    <button @click="internalToast.show = false" class="ml-3 flex-shrink-0"
+                      :class="{
+                        'text-green-600 hover:text-green-700 dark:text-green-400': internalToast.type === 'success',
+                        'text-red-600 hover:text-red-700 dark:text-red-400': internalToast.type === 'error',
+                        'text-blue-600 hover:text-blue-700 dark:text-blue-400': internalToast.type === 'info',
+                        'text-yellow-600 hover:text-yellow-700 dark:text-yellow-400': internalToast.type === 'warning'
+                      }"
+                    >
+                      <XMarkIcon class="h-5 w-5" />
+                    </button>
+                  </div>
+                </Transition>
                 
                 <!-- Status badges -->
                 <div class="flex flex-wrap gap-2 mb-4">
@@ -142,29 +182,29 @@
                               </td>
                             </tr>
                             <tr>
-                              <td colspan="2" class="sm:colspan-3 px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-medium text-gray-900 dark:text-gray-100 text-right">
+                              <td colspan="2" class="sm:colspan-3 px-2 sm:px-4 py-1 text-base sm:text-lg font-bold text-gray-900 dark:text-gray-100 text-right">
                                 {{$t('app.views.orders.modals.details.subtotal')}}
                               </td>
                               <td class="hidden sm:table-cell"></td>
-                              <td class="px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-medium text-gray-900 dark:text-gray-100 text-right">
+                              <td class="px-2 sm:px-4 py-1 text-base sm:text-lg font-bold text-gray-900 dark:text-gray-100 text-right">
                                 ${{ (order.subtotal || 0).toFixed(2) }}
                               </td>
                             </tr>
                             <tr v-if="(order.tax || 0) > 0">
-                              <td colspan="2" class="sm:colspan-3 px-2 sm:px-4 py-1 text-xs sm:text-sm text-gray-500 dark:text-gray-400 text-right">
+                              <td colspan="2" class="sm:colspan-3 px-2 sm:px-4 py-1 text-sm sm:text-base text-gray-600 dark:text-gray-300 text-right font-medium">
                                 {{$t('app.views.orders.modals.details.tax', { rate: ((order.taxRate || 0) * 100).toFixed(1) })}}
                               </td>
                               <td class="hidden sm:table-cell"></td>
-                              <td class="px-2 sm:px-4 py-1 text-xs sm:text-sm text-gray-500 dark:text-gray-400 text-right">
+                              <td class="px-2 sm:px-4 py-1 text-sm sm:text-base text-gray-600 dark:text-gray-300 text-right font-medium">
                                 ${{ (order.tax || 0).toFixed(2) }}
                               </td>
                             </tr>
                             <tr>
-                              <td colspan="2" class="sm:colspan-3 px-2 sm:px-4 py-2 sm:py-3 text-sm sm:text-base font-bold text-gray-900 dark:text-white text-right">
+                              <td colspan="2" class="sm:colspan-3 px-2 sm:px-4 py-2 sm:py-3 text-base sm:text-lg font-bold text-gray-900 dark:text-white text-right">
                                 {{$t('app.views.orders.modals.details.total')}}
                               </td>
                               <td class="hidden sm:table-cell"></td>
-                              <td class="px-2 sm:px-4 py-2 sm:py-3 text-sm sm:text-base font-bold text-gray-900 dark:text-white text-right">
+                              <td class="px-2 sm:px-4 py-2 sm:py-3 text-base sm:text-lg font-bold text-gray-900 dark:text-white text-right">
                                 ${{ (order.total || 0).toFixed(2) }}
                               </td>
                             </tr>
@@ -292,6 +332,21 @@ const { showSuccess, showError } = useToast();
 const { t } = useI18n();
 const isMounted = ref(false);
 
+// Internal toast notification state
+const internalToast = ref({
+  show: false,
+  message: '',
+  type: 'success' as 'success' | 'error' | 'info' | 'warning'
+});
+
+// Function to show internal toast
+const showInternalToast = (message: string, type: 'success' | 'error' | 'info' | 'warning' = 'success', duration = 3000) => {
+  internalToast.value = { show: true, message, type };
+  setTimeout(() => {
+    internalToast.value.show = false;
+  }, duration);
+};
+
 // Watch for confirmation dialog state
 const { isOpen: isConfirmOpen } = useConfirm();
 
@@ -410,30 +465,30 @@ const paymentMethods = [
 async function completePayment() {
   try {
     await orderService.markOrderPaid(props.order.id, selectedPaymentMethod.value);
+    showInternalToast(t('app.views.orders.payment.success') || 'Pago completado exitosamente', 'success');
     emit('paymentCompleted', props.order);
-    emit('close');
     showPaymentMethodSelector.value = false;
-  } catch (e) {
+    // Close modal after a short delay to show the success message
+    setTimeout(() => {
+      emit('close');
+    }, 1500);
+  } catch (e: any) {
     console.error('Failed to complete payment:', e);
 
-    // Handle specific cash register session error
-    const errorDetail = e.response?.data?.detail || '';
-
-    if (errorDetail.includes('No open cash register session found') || errorDetail.includes('cash register session')) {
-      const openSession = await confirm(
-        t('app.views.cashRegister.cashRegisterSessionRequiredTitle'),
-        t('app.views.cashRegister.cashRegisterSessionRequiredMessage'),
-        t('app.views.cashRegister.openCashRegisterButton'),
-        t('app.views.cashRegister.cancelPaymentButton'),
-        'bg-blue-600 hover:bg-blue-700 focus:ring-blue-500'
+    // Get error message from response
+    const errorMessage = e.response?.data?.error?.message || e.response?.data?.detail || '';
+    
+    // Handle specific cash register session error with friendly message
+    if (errorMessage.includes('No open cash register session') || errorMessage.includes('cash register session')) {
+      showInternalToast(
+        'No hay una sesión de caja abierta. Por favor abre una sesión de caja antes de procesar pagos.',
+        'warning',
+        5000
       );
-
-      if (openSession) {
-        emit('openCashRegister');
-      }
     } else {
       // Show generic error for other payment failures
-      showError(errorDetail || t('app.views.cashRegister.paymentFailedGeneric'));
+      const friendlyMessage = errorMessage || t('app.views.cashRegister.paymentFailedGeneric') || 'Error al procesar el pago';
+      showInternalToast(friendlyMessage, 'error', 5000);
     }
   }
 }

@@ -133,4 +133,9 @@
   .dark * {
     scrollbar-color: #4b5563 #1f2937;
   }
+
+  /* Vue Toastification z-index override to appear above modals */
+  .Vue-Toastification__container {
+    z-index: 10002 !important;
+  }
 }

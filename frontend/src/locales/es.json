@@ -794,7 +794,19 @@
       }
     },
     "profile": {
+      "view_profile": "Ver Perfil",
+      "title": "Mi Perfil",
+      "subtitle": "Información de tu cuenta de usuario",
+      "fields": {
+        "full_name": "Nombre Completo",
+        "email": "Correo Electrónico",
+        "role": "Rol",
+        "restaurant": "Restaurante",
+        "status": "Estado",
+        "member_since": "Miembro desde"
+      },
       "change_password": {
+        "button": "Cambiar Contraseña",
         "menu_item": "Cambiar Contraseña",
         "title": "Cambiar Contraseña",
         "current_password": "Contraseña Actual",

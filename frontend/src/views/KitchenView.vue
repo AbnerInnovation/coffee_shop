@@ -56,7 +56,7 @@
           <div class="p-3 sm:p-4 border-b border-gray-200 dark:border-gray-700">
             <div class="flex justify-between items-start gap-2">
               <div class="flex-1 min-w-0">
-                <h3 class="text-base sm:text-lg font-semibold text-gray-900 dark:text-white truncate">{{ t('app.views.kitchen.order', { id: order.id }) }}</h3>
+                <h3 class="text-base sm:text-lg font-semibold text-gray-900 dark:text-white truncate">{{ t('app.views.kitchen.order', { id: order.order_number || order.id }) }}</h3>
                 <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
                   {{ formatTime(order.created_at) }}
                   <span v-if="order.table_number" class="ml-1 sm:ml-2">• {{ t('app.views.kitchen.table', { number: order.table_number }) }}</span>

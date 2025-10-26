@@ -113,6 +113,7 @@ class OrderUpdate(BaseModel):
 
 class OrderInDBBase(OrderBase):
     id: int
+    order_number: int
     created_at: datetime
     updated_at: datetime
     total_amount: float = 0.0

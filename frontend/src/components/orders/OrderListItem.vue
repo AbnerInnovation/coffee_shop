@@ -61,7 +61,7 @@
           <!-- Order Info -->
           <div class="flex items-center flex-wrap gap-2">
             <p class="text-base sm:text-sm font-semibold text-indigo-600 dark:text-indigo-400">
-              #{{ order.id }}
+              #{{ order.order_number || order.id }}
             </p>
             <span 
               class="inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium"
