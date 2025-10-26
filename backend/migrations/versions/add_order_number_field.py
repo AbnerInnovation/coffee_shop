@@ -43,7 +43,9 @@ def upgrade() -> None:
         """)
         
         # Make order_number NOT NULL after populating
-        op.alter_column('orders', 'order_number', nullable=False)
+        op.alter_column('orders', 'order_number',
+                       existing_type=sa.Integer(),
+                       nullable=False)
     
     # Check if index exists before creating
     indexes = [idx['name'] for idx in inspector.get_indexes('orders')]
