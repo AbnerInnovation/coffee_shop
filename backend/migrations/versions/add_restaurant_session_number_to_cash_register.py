@@ -78,6 +78,13 @@ def upgrade():
             WHERE id = :session_id
         """), {"session_number": restaurant_counters[restaurant_id], "session_id": session_id})
     
+    # For MySQL: Must drop foreign key before altering column, then recreate it
+    # Drop the foreign key constraint temporarily
+    if 'fk_cash_register_sessions_restaurant_id' in foreign_keys:
+        op.drop_constraint('fk_cash_register_sessions_restaurant_id', 
+                          'cash_register_sessions', 
+                          type_='foreignkey')
+    
     # Now make the columns NOT NULL (MySQL requires specifying the type)
     op.alter_column('cash_register_sessions', 'restaurant_id', 
                     existing_type=sa.Integer(), 
@@ -85,6 +92,15 @@ def upgrade():
     op.alter_column('cash_register_sessions', 'session_number', 
                     existing_type=sa.Integer(), 
                     nullable=False)
+    
+    # Recreate the foreign key constraint
+    op.create_foreign_key(
+        'fk_cash_register_sessions_restaurant_id',
+        'cash_register_sessions', 
+        'restaurants',
+        ['restaurant_id'], 
+        ['id']
+    )
     
     # Create index for faster queries by restaurant if it doesn't exist
     indexes = [idx['name'] for idx in inspector.get_indexes('cash_register_sessions')]
