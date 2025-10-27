@@ -303,11 +303,21 @@ const expandedCategories = ref<Set<string>>(new Set());
 const menuItemsByCategory = computed(() => {
   const grouped: Record<string, MenuItem[]> = {};
   menuItems.value.forEach(item => {
-    const category = item.category || t('app.views.orders.modals.new_order.uncategorized');
-    if (!grouped[category]) {
-      grouped[category] = [];
+    // Extract category name from category object or use string directly
+    let categoryName = t('app.views.orders.modals.new_order.uncategorized');
+    
+    if (item.category) {
+      if (typeof item.category === 'object' && item.category !== null && 'name' in item.category) {
+        categoryName = (item.category as any).name;
+      } else if (typeof item.category === 'string') {
+        categoryName = item.category;
+      }
     }
-    grouped[category].push(item);
+    
+    if (!grouped[categoryName]) {
+      grouped[categoryName] = [];
+    }
+    grouped[categoryName].push(item);
   });
   return grouped;
 });

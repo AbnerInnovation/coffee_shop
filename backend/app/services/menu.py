@@ -85,29 +85,21 @@ def create_menu_item(db: Session, menu_item: MenuItemCreate, restaurant_id: int)
     logger.info(f"Creating menu item with data: {menu_item}")
     logger.info(f"Variants data: {menu_item.variants if hasattr(menu_item, 'variants') else 'No variants'}")
 
-    # Get the data as dict, excluding variants and category
-    item_data = menu_item.dict(exclude={"variants", "category"}, exclude_unset=True)
-    logger.info(f"Item data (excluding variants and category): {item_data}")
+    # Get the data as dict, excluding variants
+    item_data = menu_item.dict(exclude={"variants"}, exclude_unset=True)
+    logger.info(f"Item data (excluding variants): {item_data}")
 
-    # Look up the category by name within the same restaurant
-    category_name = menu_item.category.upper()
-    logger.info(f"Looking up category: {category_name}")
-    
+    # Verify the category exists and belongs to the restaurant
     category = db.query(CategoryModel).filter(
-        CategoryModel.name == category_name,
+        CategoryModel.id == menu_item.category_id,
         CategoryModel.restaurant_id == restaurant_id,
         CategoryModel.deleted_at.is_(None)
     ).first()
 
     if not category:
-        logger.info(f"Creating new category: {category_name}")
-        category = CategoryModel(name=category_name, restaurant_id=restaurant_id)
-        db.add(category)
-        db.flush()
-
-    # Add the category_id to the item data
-    item_data["category_id"] = category.id
-    logger.info(f"Using category ID: {category.id}")
+        raise ValueError(f"Category with ID {menu_item.category_id} not found or doesn't belong to this restaurant")
+    
+    logger.info(f"Using category ID: {category.id} (Name: {category.name})")
 
     try:
         # Create the menu item
@@ -185,20 +177,15 @@ def update_menu_item(
         logger.info(f"Ingredients data: {data['ingredients']}")
 
     # --- Handle category update ---
-    if "category" in data:
-        category_name = data.pop("category")
-        category = db.query(CategoryModel).filter(CategoryModel.name.ilike(category_name)).first()
-        if not category:
-            category = CategoryModel(name=category_name.upper())
-            db.add(category)
-            db.commit()  # Commit so category ID is available
-            db.refresh(category)
-        db_item.category_id = category.id
-    elif "category_id" in data:
+    if "category_id" in data:
         category_id = data.pop("category_id")
-        category = db.query(CategoryModel).filter(CategoryModel.id == category_id).first()
+        category = db.query(CategoryModel).filter(
+            CategoryModel.id == category_id,
+            CategoryModel.restaurant_id == restaurant_id,
+            CategoryModel.deleted_at.is_(None)
+        ).first()
         if not category:
-            raise ValueError(f"Category with ID {category_id} not found")
+            raise ValueError(f"Category with ID {category_id} not found or doesn't belong to this restaurant")
         db_item.category_id = category_id
 
     # --- Update menu item fields ---

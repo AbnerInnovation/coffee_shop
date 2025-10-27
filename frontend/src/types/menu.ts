@@ -29,7 +29,8 @@ export interface MenuItem {
   id?: string | number;
   name: string;
   description?: string;
-  category: string | CategoryForm; // Can be string (name) or full category object
+  category?: MenuCategory; // Full category object from backend
+  category_id?: number; // Category ID for create/update
   price: number;
   discount_price?: number;
   image_url?: string;
@@ -43,7 +44,7 @@ export interface MenuItem {
 export interface MenuItemFormData {
   name: string;
   description: string;
-  category: string;
+  category_id: number; // Use category ID instead of name
   price: number | string;
   discount_price?: number | string;
   is_available: boolean;

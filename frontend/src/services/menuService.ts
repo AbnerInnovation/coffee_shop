@@ -124,9 +124,16 @@ export const getMenuItem = async (id: string | number): Promise<MenuItemResponse
 };
 
 export const createMenuItem = async (menuItemData: Omit<MenuItem, 'id'>): Promise<MenuItemResponse> => {
-  // Prepare the data with proper variant format
+  // Prepare the data with proper variant format and category_id
   const payload = {
-    ...menuItemData,
+    name: menuItemData.name,
+    description: menuItemData.description,
+    price: Number(menuItemData.price),
+    discount_price: menuItemData.discount_price ? Number(menuItemData.discount_price) : undefined,
+    category_id: menuItemData.category_id, // Send category_id instead of category name
+    is_available: menuItemData.is_available ?? true,
+    image_url: menuItemData.image_url,
+    ingredients: menuItemData.ingredients || null,
     // Ensure variants array is included if it exists
     variants: menuItemData.variants?.map(variant => ({
       name: variant.name,
@@ -145,22 +152,32 @@ export const createMenuItem = async (menuItemData: Omit<MenuItem, 'id'>): Promis
 
 export const updateMenuItem = async (
   id: string | number,
-  menuItemData: Partial<Omit<MenuItem, 'id'>> & { category?: string | { name: string } }
+  menuItemData: Partial<Omit<MenuItem, 'id'>>
 ): Promise<MenuItemResponse> => {
-  // Prepare the data with proper variant format
-  const payload = {
-    ...menuItemData,
-    // Only include variants if they are provided in the update
-    ...(menuItemData.variants && {
-      variants: menuItemData.variants.map(variant => ({
-        ...(variant.id && { id: variant.id }), // Only include id if it exists
-        name: variant.name,
-        price: Number(variant.price),
-        discount_price: variant.discount_price ? Number(variant.discount_price) : undefined,
-        is_available: variant.is_available ?? true
-      }))
-    })
-  };
+  // Prepare the data with proper variant format and category_id
+  const payload: any = {};
+  
+  if (menuItemData.name !== undefined) payload.name = menuItemData.name;
+  if (menuItemData.description !== undefined) payload.description = menuItemData.description;
+  if (menuItemData.price !== undefined) payload.price = Number(menuItemData.price);
+  if (menuItemData.discount_price !== undefined) {
+    payload.discount_price = menuItemData.discount_price ? Number(menuItemData.discount_price) : undefined;
+  }
+  if (menuItemData.category_id !== undefined) payload.category_id = menuItemData.category_id; // Use category_id
+  if (menuItemData.is_available !== undefined) payload.is_available = menuItemData.is_available;
+  if (menuItemData.image_url !== undefined) payload.image_url = menuItemData.image_url;
+  if (menuItemData.ingredients !== undefined) payload.ingredients = menuItemData.ingredients;
+  
+  // Only include variants if they are provided in the update
+  if (menuItemData.variants) {
+    payload.variants = menuItemData.variants.map(variant => ({
+      ...(variant.id && { id: variant.id }), // Only include id if it exists
+      name: variant.name,
+      price: Number(variant.price),
+      discount_price: variant.discount_price ? Number(variant.discount_price) : undefined,
+      is_available: variant.is_available ?? true
+    }));
+  }
 
   const response = await apiInstance.put<MenuItemResponse>(
     `${MENU_BASE_PATH}/${id}`,

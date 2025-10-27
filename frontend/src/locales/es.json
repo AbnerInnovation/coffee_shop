@@ -525,8 +525,13 @@
         "tabs": {
           "all": "Todas",
           "pending": "Pendientes",
-          "preparing": "En Proceso"
+          "preparing": "En Proceso",
+          "grouped": "Agrupado"
         },
+        "grouped": {
+          "from_orders": "De las órdenes"
+        },
+        "table_short": "M{number}",
         "actions": {
           "order_ready": "Orden lista para recoger",
           "start_preparing": "Comenzar a preparar",

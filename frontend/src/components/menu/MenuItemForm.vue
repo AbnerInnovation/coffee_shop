@@ -38,14 +38,6 @@ const { t } = useI18n();
 const hasIngredientsModule = ref(false);
 
 
-// Helper function to normalize category input
-const normalizeCategory = (category: string | CategoryForm | undefined): string => {
-  if (!category) return '';
-  if (typeof category === 'string') return category;
-  if (typeof category === 'object' && 'name' in category) return category.name;
-  return '';
-};
-
 // Check subscription features
 const checkSubscriptionFeatures = async () => {
   try {
@@ -75,7 +67,7 @@ type FormData = {
   description: string;
   price: number;
   discount_price?: number;
-  category: string | CategoryForm;
+  category_id: number | null;
   is_available: boolean;
   image_url: string;
   ingredients: MenuItemIngredients | null;
@@ -94,7 +86,7 @@ const formData = ref<FormData>({
   description: '',
   price: 0,
   discount_price: undefined,
-  category: '',
+  category_id: null,
   is_available: true,
   image_url: '',
   ingredients: null,
@@ -109,7 +101,7 @@ if (props.menuItem) {
     description: menuItem.description || '',
     price: menuItem.price || 0,
     discount_price: menuItem.discount_price,
-    category: menuItem.category || '',
+    category_id: menuItem.category_id || (typeof menuItem.category === 'object' && menuItem.category?.id ? Number(menuItem.category.id) : null),
     is_available: menuItem.is_available ?? true,
     image_url: menuItem.image_url || '',
     ingredients: (menuItem as any).ingredients || null,
@@ -148,23 +140,13 @@ const formErrors = ref<Record<string, string>>({});
 const isFormValid = computed(() => {
   return (
     formData.value.name.trim() !== '' &&
-    formData.value.category &&
+    formData.value.category_id !== null &&
     formData.value.price >= 0
   );
 });
 
-// Store category ID separately for IngredientsManager
-const categoryIdForIngredients = ref<number | string | undefined>(undefined);
-
-// Computed to get category name for display
-const categoryName = computed(() => {
-  if (typeof formData.value.category === 'string') {
-    return formData.value.category;
-  } else if (formData.value.category && typeof formData.value.category === 'object') {
-    return formData.value.category.name;
-  }
-  return '';
-});
+// Computed to get category ID for IngredientsManager
+const categoryIdForIngredients = computed(() => formData.value.category_id || undefined);
 
 // Load categories when component mounts
 onMounted(async () => {
@@ -175,7 +157,14 @@ onMounted(async () => {
     // If editing, load the menu item data
     if (props.menuItem?.id) {
       const item = await menuStore.getMenuItem(props.menuItem.id);
-      const normalizedCategory = normalizeCategory(item.category);
+      
+      // Extract category_id
+      let categoryId: number | null = null;
+      if (item.category_id) {
+        categoryId = Number(item.category_id);
+      } else if (typeof item.category === 'object' && item.category && 'id' in item.category) {
+        categoryId = Number(item.category.id);
+      }
       
       // Update form data with the menu item
       formData.value = {
@@ -183,7 +172,7 @@ onMounted(async () => {
         description: item.description || '',
         price: item.price || 0,
         discount_price: item.discount_price,
-        category: normalizedCategory || '',
+        category_id: categoryId,
         is_available: item.is_available ?? true,
         image_url: item.image_url || '',
         ingredients: item.ingredients || null,
@@ -195,19 +184,12 @@ onMounted(async () => {
           is_available: v.is_available ?? true
         }))
       };
-      
-      // Extract category ID for IngredientsManager
-      if (typeof item.category === 'object' && item.category && 'id' in item.category) {
-        categoryIdForIngredients.value = item.category.id;
+    } else if (menuStore.categoriesDetailed.length > 0) {
+      // For new items, set the first category ID as default
+      const firstCategory = menuStore.categoriesDetailed[0];
+      if (firstCategory && firstCategory.id) {
+        formData.value.category_id = Number(firstCategory.id);
       }
-      
-      // Ensure the current category is in the categories list
-      if (normalizedCategory && !menuStore.categories.includes(normalizedCategory)) {
-        menuStore.categories = [normalizedCategory, ...menuStore.categories];
-      }
-    } else if (menuStore.categories.length > 0) {
-      // For new items, set the first category as default
-      formData.value.category = menuStore.categories[0];
     }
   } catch (error: unknown) {
     console.error('Error initializing form:', error);
@@ -221,12 +203,7 @@ async function loadCategories() {
   try {
     loadingCategories.value = true;
     // Force refresh categories
-    const categories = await menuStore.getCategories();
-    
-    // If we're editing and the current category isn't in the list, add it
-    if (props.menuItem?.id && formData.value.category && !categories.includes(formData.value.category)) {
-      menuStore.categories = [formData.value.category, ...categories];
-    }
+    await menuStore.getCategories();
   } catch (error: unknown) {
     console.error('Error loading categories:', error);
     showError(t('app.messages.load_categories_failed'));
@@ -262,7 +239,7 @@ function handleSubmit() {
     return;
   }
   
-  if (!formData.value.category) {
+  if (!formData.value.category_id) {
     formErrors.value.category = t('validation.category_required');
     return;
   }
@@ -277,7 +254,7 @@ function handleSubmit() {
     ...formData.value,
     price: Number(formData.value.price),
     discount_price: formData.value.discount_price ? Number(formData.value.discount_price) : undefined,
-    category: formData.value.category,
+    category_id: formData.value.category_id,
     is_available: formData.value.is_available,
     image_url: formData.value.image_url,
     variants: formData.value.variants.map(variant => ({
@@ -426,7 +403,7 @@ defineExpose({
           <div class="mt-1 relative">
             <select
               id="category"
-              v-model="formData.category"
+              v-model.number="formData.category_id"
               class="block dark:bg-gray-900 dark:text-white w-full rounded-md border border-gray-300 py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
               :class="{ 
                 'border-red-500': formErrors.category,
@@ -435,16 +412,15 @@ defineExpose({
               :disabled="loadingCategories || menuStore.loading"
               required
             >
-              <option v-if="loadingCategories || menuStore.loading" value="" disabled>{{ t('app.forms.loading_categories') }}</option>
-              <option v-else-if="!menuStore.categories || menuStore.categories.length === 0" value="" disabled>{{ t('app.forms.no_categories') }}</option>
+              <option v-if="loadingCategories || menuStore.loading" :value="null" disabled>{{ t('app.forms.loading_categories') }}</option>
+              <option v-else-if="!menuStore.categoriesDetailed || menuStore.categoriesDetailed.length === 0" :value="null" disabled>{{ t('app.forms.no_categories') }}</option>
               <option 
                 v-else
-                v-for="category in menuStore.categories" 
-                :key="category" 
-                :value="category"
-                :selected="formData.category === category"
+                v-for="category in menuStore.categoriesDetailed" 
+                :key="category.id" 
+                :value="Number(category.id)"
               >
-                {{ category }}
+                {{ category.name }}
               </option>
             </select>
           </div>

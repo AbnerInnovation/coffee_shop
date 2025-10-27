@@ -281,7 +281,7 @@ class MenuItemBase(BaseModel):
         return v
 
 class MenuItemCreate(MenuItemBase):
-    category: str = Field(..., min_length=1, max_length=50)
+    category_id: int = Field(..., ge=1, description="Category ID")
     variants: List['MenuItemVariantCreate'] = []
     ingredients: Optional[MenuItemIngredients] = None
 
@@ -290,8 +290,7 @@ class MenuItemUpdate(BaseModel):
     description: Optional[str] = Field(None, max_length=1000)
     price: Optional[float] = Field(None, le=999999.99)
     discount_price: Optional[float] = Field(None, ge=0, le=999999.99)
-    category_id: Optional[int] = Field(None, ge=1)
-    category: Optional[str] = Field(None, min_length=1, max_length=50)
+    category_id: Optional[int] = Field(None, ge=1, description="Category ID")
     is_available: Optional[bool] = None
     image_url: Optional[str] = Field(None, max_length=500)
     variants: List['MenuItemVariantCreate'] = []

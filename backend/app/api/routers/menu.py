@@ -91,10 +91,10 @@ async def create_menu_item(
     # Check subscription limit for menu items
     SubscriptionLimitsMiddleware.check_menu_item_limit(db, restaurant.id)
 
-    if not menu_item.category:
+    if not menu_item.category_id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Category is required"
+            detail="Category ID is required"
         )
 
     try:
