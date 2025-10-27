@@ -15,6 +15,7 @@ from ..core.validators import sanitize_text, validate_url, validate_discount_pri
 class CategoryBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=50)
     description: Optional[str] = Field(None, max_length=500)
+    visible_in_kitchen: bool = Field(default=True, description="Whether items in this category should be visible in kitchen view")
     
     @validator('name')
     def sanitize_name(cls, v):
@@ -31,6 +32,7 @@ class CategoryCreate(CategoryBase):
 
 class CategoryUpdate(CategoryBase):
     name: Optional[str] = Field(None, min_length=1, max_length=50)
+    visible_in_kitchen: Optional[bool] = None
 
 class CategoryInDB(CategoryBase):
     id: int

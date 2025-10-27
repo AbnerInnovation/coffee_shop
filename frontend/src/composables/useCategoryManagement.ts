@@ -16,6 +16,7 @@ export function useCategoryManagement() {
   const categoryModalOpen = ref<boolean>(false);
   const categoryFormName = ref<string>('');
   const categoryFormDescription = ref<string>('');
+  const categoryFormVisibleInKitchen = ref<boolean>(true);
   const categoryEditingId = ref<string | number | null>(null);
   const subscriptionLimitError = ref<string>('');
   
@@ -47,10 +48,12 @@ export function useCategoryManagement() {
       categoryEditingId.value = category.id;
       categoryFormName.value = category.name;
       categoryFormDescription.value = category.description || '';
+      categoryFormVisibleInKitchen.value = (category as any).visible_in_kitchen !== false;
     } else {
       categoryEditingId.value = null;
       categoryFormName.value = '';
       categoryFormDescription.value = '';
+      categoryFormVisibleInKitchen.value = true;
     }
     subscriptionLimitError.value = '';
     categoryModalOpen.value = true;
@@ -62,6 +65,7 @@ export function useCategoryManagement() {
     categoryEditingId.value = null;
     categoryFormName.value = '';
     categoryFormDescription.value = '';
+    categoryFormVisibleInKitchen.value = true;
     subscriptionLimitError.value = '';
   }
 
@@ -98,13 +102,14 @@ export function useCategoryManagement() {
 
     const name = categoryFormName.value.trim();
     const description = categoryFormDescription.value;
+    const visibleInKitchen = categoryFormVisibleInKitchen.value;
 
     try {
       if (categoryEditingId.value !== null) {
-        await (menuStore as any).updateCategory(categoryEditingId.value, { name, description });
+        await (menuStore as any).updateCategory(categoryEditingId.value, { name, description, visible_in_kitchen: visibleInKitchen });
         showSuccess(t('app.messages.update_success') as string);
       } else {
-        await (menuStore as any).createCategory(name, description);
+        await (menuStore as any).createCategory(name, description, visibleInKitchen);
         showSuccess(t('app.messages.create_success') as string);
       }
       closeModal();
@@ -155,6 +160,7 @@ export function useCategoryManagement() {
     categoryModalOpen,
     categoryFormName,
     categoryFormDescription,
+    categoryFormVisibleInKitchen,
     categoryEditingId,
     subscriptionLimitError,
     menuCategoriesDetailed,

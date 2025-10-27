@@ -325,7 +325,8 @@ def create_category(db: Session, category_data: CategoryCreate, restaurant_id: i
     db_category = CategoryModel(
         name=category_data.name.upper(),
         description=category_data.description,
-        restaurant_id=restaurant_id
+        restaurant_id=restaurant_id,
+        visible_in_kitchen=category_data.visible_in_kitchen
     )
     db.add(db_category)
     db.commit()
@@ -376,6 +377,9 @@ def update_category(
 
     if category_data.description is not None:
         db_category.description = category_data.description
+    
+    if category_data.visible_in_kitchen is not None:
+        db_category.visible_in_kitchen = category_data.visible_in_kitchen
 
     db.commit()
     db.refresh(db_category)

@@ -29,10 +29,20 @@ logger = logging.getLogger(__name__)
 # Cash Register Session Services
 # -----------------------------
 
-def create_session(db: Session, session_data: CashRegisterSessionCreate) -> CashRegisterSessionModel:
-    """Create a new cash register session."""
+def create_session(db: Session, session_data: CashRegisterSessionCreate, restaurant_id: int) -> CashRegisterSessionModel:
+    """Create a new cash register session with automatic session number calculation per restaurant."""
     try:
+        # Calculate the next session number for this restaurant
+        last_session = db.query(CashRegisterSessionModel)\
+            .filter(CashRegisterSessionModel.restaurant_id == restaurant_id)\
+            .order_by(CashRegisterSessionModel.session_number.desc())\
+            .first()
+        
+        next_session_number = (last_session.session_number + 1) if last_session else 1
+        
         db_session = CashRegisterSessionModel(
+            restaurant_id=restaurant_id,
+            session_number=next_session_number,
             opened_by_user_id=session_data.opened_by_user_id,
             cashier_id=session_data.cashier_id,
             initial_balance=session_data.initial_balance,
@@ -42,7 +52,7 @@ def create_session(db: Session, session_data: CashRegisterSessionCreate) -> Cash
         db.add(db_session)
         db.commit()
         db.refresh(db_session)
-        logger.info(f"Created cash register session {db_session.id}")
+        logger.info(f"Created cash register session #{next_session_number} for restaurant {restaurant_id}")
         return db_session
     except Exception as e:
         db.rollback()
@@ -72,17 +82,25 @@ def get_current_session(db: Session, user_id: int) -> Optional[CashRegisterSessi
         .first()
 
 def get_sessions(db: Session,
+                restaurant_id: Optional[int] = None,
                 status: Optional[SessionStatus] = None,
                 cashier_id: Optional[int] = None,
                 skip: int = 0,
                 limit: int = 100) -> List[CashRegisterSessionModel]:
     """Get cash register sessions with optional filtering."""
-    return db.query(CashRegisterSessionModel)\
+    query = db.query(CashRegisterSessionModel)\
         .options(joinedload(CashRegisterSessionModel.transactions))\
         .options(joinedload(CashRegisterSessionModel.reports))\
-        .options(joinedload(CashRegisterSessionModel.opened_by_user))\
-        .filter(CashRegisterSessionModel.status == status if status is not None else True)\
-        .filter(CashRegisterSessionModel.cashier_id == cashier_id if cashier_id is not None else True)\
+        .options(joinedload(CashRegisterSessionModel.opened_by_user))
+    
+    if restaurant_id is not None:
+        query = query.filter(CashRegisterSessionModel.restaurant_id == restaurant_id)
+    if status is not None:
+        query = query.filter(CashRegisterSessionModel.status == status)
+    if cashier_id is not None:
+        query = query.filter(CashRegisterSessionModel.cashier_id == cashier_id)
+    
+    return query.order_by(CashRegisterSessionModel.session_number.desc())\
         .offset(skip)\
         .limit(limit)\
         .all()
@@ -152,6 +170,7 @@ def cut_session(db: Session, session_id: int, payment_breakdown: PaymentBreakdow
         # Use the provided payment breakdown data
         report_data = DailySummaryReport(
             session_id=session_id,
+            session_number=db_session.session_number,
             total_sales=total_sales,
             total_refunds=total_refunds,
             total_tips=total_tips,
@@ -448,6 +467,7 @@ def get_daily_summary_reports(
     start_date: Optional[datetime] = None,
     end_date: Optional[datetime] = None,
     cashier_id: Optional[int] = None,
+    restaurant_id: Optional[int] = None,
     skip: int = 0,
     limit: int = 100
 ) -> List[DailySummaryReport]:
@@ -460,6 +480,7 @@ def get_daily_summary_reports(
         start_date: Optional start date filter
         end_date: Optional end date filter
         cashier_id: Optional cashier ID filter (for staff users)
+        restaurant_id: Optional restaurant ID filter (for multi-restaurant isolation)
         skip: Number of records to skip
         limit: Maximum number of records to return
     
@@ -478,6 +499,8 @@ def get_daily_summary_reports(
             query = query.filter(CashRegisterSessionModel.closed_at <= end_date)
         if cashier_id:
             query = query.filter(CashRegisterSessionModel.cashier_id == cashier_id)
+        if restaurant_id:
+            query = query.filter(CashRegisterSessionModel.restaurant_id == restaurant_id)
         
         sessions = query.order_by(CashRegisterSessionModel.closed_at.desc()).offset(skip).limit(limit).all()
         
@@ -503,6 +526,7 @@ def get_daily_summary_reports(
             
             result.append(DailySummaryReport(
                 session_id=session.id,
+                session_number=session.session_number,
                 opened_at=session.opened_at,
                 closed_at=session.closed_at,
                 total_sales=total_sales,

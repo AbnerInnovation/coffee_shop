@@ -27,7 +27,9 @@
         <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-4">
           <div class="flex items-center gap-3">
             <div class="text-sm text-gray-600 dark:text-gray-400">
-              <span class="font-medium">Session opened:</span>
+              <span class="font-medium">{{ t('app.views.cashRegister.sessionNumber') || 'Session' }} #{{ currentSession.session_number }}</span>
+              <span class="mx-2">•</span>
+              <span class="font-medium">{{ t('app.views.cashRegister.openedAt') || 'Opened' }}:</span>
               <span class="ml-2">{{ sessionDuration }}</span>
             </div>
           </div>

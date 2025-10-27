@@ -466,12 +466,13 @@ async function completePayment() {
   try {
     await orderService.markOrderPaid(props.order.id, selectedPaymentMethod.value);
     showInternalToast(t('app.views.orders.payment.success') || 'Pago completado exitosamente', 'success');
-    emit('paymentCompleted', props.order);
     showPaymentMethodSelector.value = false;
-    // Close modal after a short delay to show the success message
-    setTimeout(() => {
-      emit('close');
-    }, 1500);
+    
+    // Close modal immediately to prevent showing stale data
+    emit('close');
+    
+    // Emit payment completed event after closing
+    emit('paymentCompleted', props.order);
   } catch (e: any) {
     console.error('Failed to complete payment:', e);
 

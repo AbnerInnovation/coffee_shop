@@ -31,6 +31,7 @@
       :is-open="categoryModalOpen"
       v-model:name="categoryFormName"
       v-model:description="categoryFormDescription"
+      v-model:visible-in-kitchen="categoryFormVisibleInKitchen"
       :is-editing="isEditing"
       :limit-error="subscriptionLimitError"
       @save="saveCategory"
@@ -58,6 +59,7 @@ const {
   categoryModalOpen,
   categoryFormName,
   categoryFormDescription,
+  categoryFormVisibleInKitchen,
   subscriptionLimitError,
   menuCategoriesDetailed,
   isEditing,

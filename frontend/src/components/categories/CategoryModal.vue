@@ -26,6 +26,23 @@
         class="w-full rounded-md border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
       ></textarea>
       
+      <!-- Visible in Kitchen Checkbox -->
+      <div class="mt-4">
+        <label class="flex items-center cursor-pointer">
+          <input 
+            type="checkbox" 
+            v-model="localVisibleInKitchen"
+            class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 h-4 w-4"
+          />
+          <span class="ml-2 text-sm text-gray-700 dark:text-gray-200">
+            {{ $t('app.forms.visible_in_kitchen') || 'Visible in Kitchen' }}
+          </span>
+        </label>
+        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+          {{ $t('app.forms.visible_in_kitchen_help') || 'Uncheck to hide items from this category in the kitchen view (e.g., beverages)' }}
+        </p>
+      </div>
+      
       <!-- Subscription Limit Alert -->
       <SubscriptionLimitAlert
         v-if="limitError"
@@ -64,6 +81,7 @@ const props = defineProps<{
   isOpen: boolean;
   name: string;
   description: string;
+  visibleInKitchen: boolean;
   isEditing: boolean;
   limitError: string;
 }>();
@@ -73,6 +91,7 @@ const emit = defineEmits<{
   cancel: [];
   'update:name': [value: string];
   'update:description': [value: string];
+  'update:visibleInKitchen': [value: boolean];
 }>();
 
 const { t } = useI18n();
@@ -85,6 +104,11 @@ const localName = computed({
 const localDescription = computed({
   get: () => props.description,
   set: (value) => emit('update:description', value)
+});
+
+const localVisibleInKitchen = computed({
+  get: () => props.visibleInKitchen,
+  set: (value) => emit('update:visibleInKitchen', value)
 });
 
 const modalTitle = computed(() => {

@@ -62,7 +62,7 @@
         <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 mb-4">
           <div class="flex-1">
             <h4 class="text-md font-medium text-gray-900 dark:text-gray-100">
-              {{ t('app.views.cashRegister.sessionReport') || 'Session Report' }} #{{ report.session_id }}
+              {{ t('app.views.cashRegister.sessionReport') || 'Session Report' }} #{{ report.session_number }}
             </h4>
             <div class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 mt-1">
               <p class="text-xs text-gray-500 dark:text-gray-400">

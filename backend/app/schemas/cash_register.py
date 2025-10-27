@@ -61,6 +61,8 @@ class CashRegisterSessionUpdate(BaseModel):
 
 class CashRegisterSessionInDBBase(CashRegisterSessionBase):
     id: int
+    restaurant_id: int
+    session_number: int
     opened_at: datetime
     closed_at: Optional[datetime] = None
     expected_balance: float
@@ -179,6 +181,7 @@ class CashDifferenceReport(BaseModel):
 
 class DailySummaryReport(BaseModel):
     session_id: int
+    session_number: int
     opened_at: Optional[datetime] = None
     closed_at: Optional[datetime] = None
     total_sales: float = 0.0

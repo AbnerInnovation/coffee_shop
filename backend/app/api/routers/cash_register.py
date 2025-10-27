@@ -50,7 +50,13 @@ def create_session(
     current_user: User = Depends(get_current_active_user)
 ) -> CashRegisterSession:
     try:
-        return cash_register_service.create_session(db, session)
+        # Get restaurant_id from current user
+        if not current_user.restaurant_id:
+            raise HTTPException(status_code=400, detail="User must be associated with a restaurant")
+        
+        return cash_register_service.create_session(db, session, current_user.restaurant_id)
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error creating session: {str(e)}")
 
@@ -78,7 +84,14 @@ def get_session(
         db_session = cash_register_service.get_session(db, session_id)
         if not db_session:
             raise HTTPException(status_code=404, detail="Session not found")
+        
+        # Security: Verify session belongs to user's restaurant
+        if current_user.restaurant_id and db_session.restaurant_id != current_user.restaurant_id:
+            raise HTTPException(status_code=403, detail="Access denied: Session belongs to another restaurant")
+        
         return db_session
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error retrieving session: {str(e)}")
 
@@ -96,8 +109,11 @@ def get_sessions(
         if current_user.role == "staff" and current_user.staff_type == "cashier":
             cashier_id = current_user.id
         
+        # Filter by restaurant_id to ensure isolation
+        restaurant_id = current_user.restaurant_id if current_user.restaurant_id else None
+        
         return cash_register_service.get_sessions(
-            db, status=status, cashier_id=cashier_id, skip=skip, limit=limit
+            db, restaurant_id=restaurant_id, status=status, cashier_id=cashier_id, skip=skip, limit=limit
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error retrieving sessions: {str(e)}")
@@ -110,7 +126,16 @@ def close_session(
     current_user: User = Depends(get_current_active_user)
 ) -> CashRegisterSession:
     try:
+        # Security: Verify session belongs to user's restaurant
+        db_session = cash_register_service.get_session(db, session_id)
+        if not db_session:
+            raise HTTPException(status_code=404, detail="Session not found")
+        if current_user.restaurant_id and db_session.restaurant_id != current_user.restaurant_id:
+            raise HTTPException(status_code=403, detail="Access denied: Session belongs to another restaurant")
+        
         return cash_register_service.close_session(db, session_id, session_update)
+    except HTTPException:
+        raise
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
@@ -124,7 +149,16 @@ def cut_session(
     current_user: User = Depends(get_current_active_user)
 ) -> DailySummaryReport:
     try:
+        # Security: Verify session belongs to user's restaurant
+        db_session = cash_register_service.get_session(db, session_id)
+        if not db_session:
+            raise HTTPException(status_code=404, detail="Session not found")
+        if current_user.restaurant_id and db_session.restaurant_id != current_user.restaurant_id:
+            raise HTTPException(status_code=403, detail="Access denied: Session belongs to another restaurant")
+        
         return cash_register_service.cut_session(db, session_id, payment_breakdown)
+    except HTTPException:
+        raise
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
@@ -219,10 +253,17 @@ def get_session_reports(
 ) -> List[CashRegisterReport]:
     """Get all reports for a specific session."""
     try:
+        session = cash_register_service.get_session(db, session_id)
+        if not session:
+            raise HTTPException(status_code=404, detail="Session not found")
+        
+        # Security: Verify session belongs to user's restaurant
+        if current_user.restaurant_id and session.restaurant_id != current_user.restaurant_id:
+            raise HTTPException(status_code=403, detail="Access denied: Session belongs to another restaurant")
+        
         # If user is a cashier, verify the session belongs to them
         if current_user.role == "staff" and current_user.staff_type == "cashier":
-            session = cash_register_service.get_session(db, session_id)
-            if not session or session.cashier_id != current_user.id:
+            if session.cashier_id != current_user.id:
                 raise HTTPException(
                     status_code=403,
                     detail="No tienes permiso para ver reportes de esta sesión"
@@ -242,7 +283,16 @@ def get_last_cut(
 ) -> Optional[DailySummaryReport]:
     """Get the last cut (most recent daily summary report) for a session."""
     try:
+        # Security: Verify session belongs to user's restaurant
+        db_session = cash_register_service.get_session(db, session_id)
+        if not db_session:
+            raise HTTPException(status_code=404, detail="Session not found")
+        if current_user.restaurant_id and db_session.restaurant_id != current_user.restaurant_id:
+            raise HTTPException(status_code=403, detail="Access denied: Session belongs to another restaurant")
+        
         return cash_register_service.get_last_cut(db, session_id)
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error retrieving last cut: {str(e)}")
 
@@ -259,6 +309,13 @@ def add_expense(
 ) -> CashTransaction:
     """Add an expense to a cash register session."""
     try:
+        # Security: Verify session belongs to user's restaurant
+        db_session = cash_register_service.get_session(db, session_id)
+        if not db_session:
+            raise HTTPException(status_code=404, detail="Session not found")
+        if current_user.restaurant_id and db_session.restaurant_id != current_user.restaurant_id:
+            raise HTTPException(status_code=403, detail="Access denied: Session belongs to another restaurant")
+        
         transaction = cash_register_service.add_expense_to_session(
             db=db,
             session_id=session_id,
@@ -268,6 +325,8 @@ def add_expense(
             category=expense.category
         )
         return transaction
+    except HTTPException:
+        raise
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
@@ -317,8 +376,12 @@ def get_daily_summaries(
         if current_user.role == "staff" and current_user.staff_type == "cashier":
             cashier_id = current_user.id
         
+        # Get restaurant_id for filtering
+        restaurant_id = current_user.restaurant_id if current_user.restaurant_id else None
+        
         return cash_register_service.get_daily_summary_reports(
-            db, start_date=start_datetime, end_date=end_datetime, cashier_id=cashier_id, skip=skip, limit=limit
+            db, start_date=start_datetime, end_date=end_datetime, cashier_id=cashier_id, 
+            restaurant_id=restaurant_id, skip=skip, limit=limit
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=f"Invalid date format. Use YYYY-MM-DD: {str(e)}")
@@ -360,9 +423,18 @@ def close_session_with_denominations(
 ) -> CashRegisterSession:
     """Close a session with denomination counting."""
     try:
+        # Security: Verify session belongs to user's restaurant
+        db_session = cash_register_service.get_session(db, session_id)
+        if not db_session:
+            raise HTTPException(status_code=404, detail="Session not found")
+        if current_user.restaurant_id and db_session.restaurant_id != current_user.restaurant_id:
+            raise HTTPException(status_code=403, detail="Access denied: Session belongs to another restaurant")
+        
         return cash_register_service.close_session_with_denominations(
             db, session_id, close_data, close_data.denominations
         )
+    except HTTPException:
+        raise
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:

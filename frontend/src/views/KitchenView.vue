@@ -181,30 +181,49 @@ let refreshInterval: number | null = null;
 const { t } = useI18n();
 
 // Status tabs with counts
-const statusTabs = computed(() => [
-  {
-    value: 'all',
-    label: t('app.views.kitchen.tabs.all'),
-    count: activeOrders.value.length
-  },
-  {
-    value: 'pending',
-    label: t('app.views.kitchen.tabs.pending'),
-    count: activeOrders.value.filter(o => o.status === 'pending').length
-  },
-  {
-    value: 'preparing',
-    label: t('app.views.kitchen.tabs.preparing'),
-    count: activeOrders.value.filter(o => o.status === 'preparing').length
-  }
-]);
+// Only count orders that have visible items in kitchen
+const statusTabs = computed(() => {
+  const ordersWithVisibleItems = activeOrders.value.filter(order => {
+    const visibleItems = getPendingItems(order);
+    return visibleItems.length > 0;
+  });
+  
+  return [
+    {
+      value: 'all',
+      label: t('app.views.kitchen.tabs.all'),
+      count: ordersWithVisibleItems.length
+    },
+    {
+      value: 'pending',
+      label: t('app.views.kitchen.tabs.pending'),
+      count: ordersWithVisibleItems.filter(o => o.status === 'pending').length
+    },
+    {
+      value: 'preparing',
+      label: t('app.views.kitchen.tabs.preparing'),
+      count: ordersWithVisibleItems.filter(o => o.status === 'preparing').length
+    }
+  ];
+});
 
 // Filtered orders based on selected status
+// Also filter out orders that have no visible items in kitchen
 const filteredOrders = computed(() => {
-  if (selectedStatus.value === 'all') {
-    return activeOrders.value;
+  let orders = activeOrders.value;
+  
+  // Filter by status
+  if (selectedStatus.value !== 'all') {
+    orders = orders.filter(order => order.status === selectedStatus.value);
   }
-  return activeOrders.value.filter(order => order.status === selectedStatus.value);
+  
+  // Filter out orders with no kitchen-visible items
+  orders = orders.filter(order => {
+    const visibleItems = getPendingItems(order);
+    return visibleItems.length > 0;
+  });
+  
+  return orders;
 });
 
 // Format time for display
@@ -255,10 +274,13 @@ const getTimeElapsed = (startedAt: string) => {
 };
 
 // Filter items to show only pending or preparing items (not completed, ready, or cancelled)
+// Also filter out items whose category is not visible in kitchen (e.g., beverages)
 const getPendingItems = (order: Order) => {
-  return order.items.filter(item => 
-    item.status === 'pending' || item.status === 'preparing'
-  );
+  return order.items.filter(item => {
+    const isActiveStatus = item.status === 'pending' || item.status === 'preparing';
+    const isVisibleInKitchen = item.menu_item?.category_visible_in_kitchen !== false;
+    return isActiveStatus && isVisibleInKitchen;
+  });
 };
 
 // Check if order has pending items

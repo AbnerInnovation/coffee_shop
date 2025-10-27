@@ -25,6 +25,7 @@ export interface OrderItem {
     description: string;
     price: number;
     category: string;
+    category_visible_in_kitchen: boolean;
     image_url: string;
     is_available: boolean;
   };

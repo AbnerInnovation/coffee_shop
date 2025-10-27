@@ -15,6 +15,11 @@ from ..schemas.order import OrderCreate, OrderUpdate, OrderItemCreate, OrderItem
 # -----------------------------
 
 def serialize_menu_item(menu_item: MenuItem) -> dict:
+    # Get category visible_in_kitchen flag
+    category_visible = True  # Default to visible
+    if menu_item.category:
+        category_visible = getattr(menu_item.category, "visible_in_kitchen", True)
+    
     return {
         "id": menu_item.id,
         "name": menu_item.name,
@@ -22,6 +27,7 @@ def serialize_menu_item(menu_item: MenuItem) -> dict:
         "discount_price": float(menu_item.discount_price) if menu_item.discount_price is not None else None,
         "description": menu_item.description,
         "category": getattr(menu_item.category, "name", menu_item.category) if menu_item.category else None,
+        "category_visible_in_kitchen": category_visible,
         "image_url": menu_item.image_url,
         "is_available": menu_item.is_available,
     }

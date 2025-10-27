@@ -53,6 +53,7 @@ class MenuItemBase(BaseModel):
     description: Optional[str] = None
     price: float
     category: Optional[str] = None
+    category_visible_in_kitchen: bool = True
     image_url: Optional[str] = None
     is_available: bool = True
 

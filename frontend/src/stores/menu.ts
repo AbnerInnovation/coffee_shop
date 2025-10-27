@@ -259,11 +259,11 @@ export const useMenuStore = defineStore('menu', () => {
     getCategories,
     // Category CRUD
     // Now using real backend endpoints
-    async createCategory(name: string, description?: string) {
+    async createCategory(name: string, description?: string, visibleInKitchen: boolean = true) {
       loading.value = true;
       error.value = null;
       try {
-        const created = await menuService.createCategory({ name, description });
+        const created = await menuService.createCategory({ name, description, visible_in_kitchen: visibleInKitchen });
         // Add to local state
         categoriesDetailed.value.push(created);
         categories.value = categoriesDetailed.value.map(c => c.name);
@@ -275,7 +275,7 @@ export const useMenuStore = defineStore('menu', () => {
         loading.value = false;
       }
     },
-    async updateCategory(id: string | number, data: { name?: string; description?: string }) {
+    async updateCategory(id: string | number, data: { name?: string; description?: string; visible_in_kitchen?: boolean }) {
       loading.value = true;
       error.value = null;
       try {

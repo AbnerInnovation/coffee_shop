@@ -13,6 +13,7 @@ class Category(BaseModel):
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     name: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
     description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    visible_in_kitchen: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     
     # Multi-tenant support
     restaurant_id: Mapped[int] = mapped_column(Integer, ForeignKey("restaurants.id"), nullable=False, index=True)
@@ -25,10 +26,11 @@ class Category(BaseModel):
         cascade="all, delete-orphan"
     )
     
-    def __init__(self, name: str, restaurant_id: int, description: Optional[str] = None):
+    def __init__(self, name: str, restaurant_id: int, description: Optional[str] = None, visible_in_kitchen: bool = True):
         self.name = name.upper()  # Store category names in uppercase for consistency
         self.restaurant_id = restaurant_id
         self.description = description
+        self.visible_in_kitchen = visible_in_kitchen
         
     def __repr__(self) -> str:
         return f"<Category(id={self.id}, name='{self.name}')>"

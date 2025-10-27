@@ -36,6 +36,8 @@ class ReportType(str, PyEnum):
 class CashRegisterSession(BaseModel):
     __tablename__ = "cash_register_sessions"
 
+    restaurant_id = Column(Integer, ForeignKey("restaurants.id"), nullable=False)
+    session_number = Column(Integer, nullable=False)  # Consecutive number per restaurant
     opened_at = Column(DateTime(timezone=True), nullable=False)
     closed_at = Column(DateTime(timezone=True), nullable=True)
     opened_by_user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
@@ -48,6 +50,7 @@ class CashRegisterSession(BaseModel):
     notes = Column(Text, nullable=True)
 
     # Relationships
+    restaurant = relationship("Restaurant")
     opened_by_user = relationship("User", foreign_keys=[opened_by_user_id])
     cashier = relationship("User", foreign_keys=[cashier_id])
     transactions = relationship("CashTransaction", back_populates="session")
