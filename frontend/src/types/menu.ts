@@ -56,5 +56,6 @@ export interface MenuCategory {
   id: string | number;
   name: string;
   description?: string;
+  visible_in_kitchen?: boolean;
   items?: MenuItem[];
 }

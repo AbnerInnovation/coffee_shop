@@ -421,7 +421,11 @@
             "mark_ready": "Marcar como listo",
             "mark_completed": "Marcar como completado",
             "print_receipt": "Imprimir recibo",
-            "close": "Cerrar"
+            "close": "Cerrar",
+            "visible_in_kitchen": "Visible en cocina",
+            "not_visible_in_kitchen": "No visible en cocina",
+            "in_kitchen": "En cocina",
+            "not_in_kitchen": "No en cocina"
           },
           "order_modal": {
             "title_for_table": "Nueva orden para la Mesa #{number}",
@@ -611,7 +615,9 @@
           "add": "Agregar categoría",
           "empty": "Sin categorías por ahora",
           "confirm_delete_title": "Eliminar categoría",
-          "confirm_delete_message_named": "¿Seguro que deseas eliminar la categoría \"{name}\"? Esta acción no se puede deshacer."
+          "confirm_delete_message_named": "¿Seguro que deseas eliminar la categoría \"{name}\"? Esta acción no se puede deshacer.",
+          "in_kitchen": "En cocina",
+          "not_in_kitchen": "No en cocina"
         },
         "ingredients": {
           "title": "Ingredientes y Opciones",

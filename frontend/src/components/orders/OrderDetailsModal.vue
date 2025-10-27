@@ -133,9 +133,24 @@
                                 <div v-if="item.variant" class="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
                                   {{ item.variant.name }}
                                 </div>
-                                <div v-if="item.menu_item?.category" class="mt-1">
+                                <div v-if="item.menu_item?.category" class="mt-1 flex items-center gap-1.5 flex-wrap">
                                   <span class="inline-flex items-center rounded-full bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 text-xs font-medium text-gray-600 dark:text-gray-300">
-                                    {{ item.menu_item.category }}
+                                    {{ typeof item.menu_item.category === 'string' ? item.menu_item.category : item.menu_item.category.name }}
+                                  </span>
+                                  <!-- Kitchen visibility indicator -->
+                                  <span v-if="getCategoryVisibility(item) === false" 
+                                    class="inline-flex items-center gap-1 rounded-full bg-orange-100 dark:bg-orange-900/30 px-1.5 py-0.5 text-xs font-medium text-orange-700 dark:text-orange-300"
+                                    :title="$t('app.views.orders.modals.details.not_visible_in_kitchen')"
+                                  >
+                                    <EyeSlashIcon class="h-3 w-3" />
+                                    <span class="hidden sm:inline">{{$t('app.views.orders.modals.details.not_in_kitchen')}}</span>
+                                  </span>
+                                  <span v-else-if="getCategoryVisibility(item) === true" 
+                                    class="inline-flex items-center gap-1 rounded-full bg-green-100 dark:bg-green-900/30 px-1.5 py-0.5 text-xs font-medium text-green-700 dark:text-green-300"
+                                    :title="$t('app.views.orders.modals.details.visible_in_kitchen')"
+                                  >
+                                    <EyeIcon class="h-3 w-3" />
+                                    <span class="hidden sm:inline">{{$t('app.views.orders.modals.details.in_kitchen')}}</span>
                                   </span>
                                 </div>
                                 <div v-if="item.notes" class="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -293,7 +308,7 @@
 <script setup lang="ts">
 import { computed, ref, onMounted } from 'vue'
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
-import { XMarkIcon, BanknotesIcon, CreditCardIcon, DevicePhoneMobileIcon, EllipsisHorizontalIcon } from '@heroicons/vue/24/outline'
+import { XMarkIcon, BanknotesIcon, CreditCardIcon, DevicePhoneMobileIcon, EllipsisHorizontalIcon, EyeIcon, EyeSlashIcon } from '@heroicons/vue/24/outline'
 import orderService from '@/services/orderService'
 import { useI18n } from 'vue-i18n'
 import { useToast } from '@/composables/useToast'
@@ -364,6 +379,19 @@ const handleClose = () => {
   if (isMounted.value) {
     emit('close');
   }
+};
+
+// Helper function to get category visibility
+const getCategoryVisibility = (item: any): boolean | null => {
+  if (!item.menu_item?.category) return null;
+  
+  // If category is an object with visible_in_kitchen property
+  if (typeof item.menu_item.category === 'object' && item.menu_item.category !== null) {
+    return item.menu_item.category.visible_in_kitchen ?? true;
+  }
+  
+  // If category is just a string, we don't have visibility info
+  return null;
 };
 
 // Calculate total savings from discounts

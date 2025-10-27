@@ -192,7 +192,8 @@ export const getCategories = async (): Promise<MenuCategory[]> => {
   return arr.map((c: any) => ({
     id: c.id,
     name: c.name,
-    description: c.description || ''
+    description: c.description || '',
+    visible_in_kitchen: c.visible_in_kitchen ?? true
   } as MenuCategory));
 };
 
@@ -206,7 +207,7 @@ export const createCategory = async (data: { name: string; description?: string 
 
 export const updateCategory = async (
   id: string | number,
-  data: Partial<{ name: string; description?: string }>
+  data: Partial<{ name: string; description?: string; visible_in_kitchen?: boolean }>
 ): Promise<MenuCategory> => {
   const response = await apiInstance.put<MenuCategory>(`${CATEGORIES_BASE_PATH}/${id}`, data);
   return response as unknown as MenuCategory;

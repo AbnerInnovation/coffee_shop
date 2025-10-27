@@ -336,6 +336,7 @@ class MenuItem(MenuItemInDBBase):
                 id=obj.category.id,
                 name=obj.category.name,
                 description=obj.category.description,
+                visible_in_kitchen=getattr(obj.category, 'visible_in_kitchen', True),
                 created_at=getattr(obj.category, 'created_at', None),
                 updated_at=getattr(obj.category, 'updated_at', None)
             )

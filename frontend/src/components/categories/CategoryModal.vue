@@ -1,5 +1,5 @@
 <template>
-  <div v-if="isOpen" class="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4">
+  <div v-if="isOpen" class="fixed inset-0 z-[10001] flex items-center justify-center bg-black/40 p-4">
     <div class="w-full max-w-md rounded-lg bg-white dark:bg-gray-900 p-6 shadow-lg">
       <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
         {{ modalTitle }}
