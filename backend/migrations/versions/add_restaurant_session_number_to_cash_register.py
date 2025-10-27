@@ -34,16 +34,8 @@ def upgrade():
         op.add_column('cash_register_sessions', 
                       sa.Column('session_number', sa.Integer(), nullable=True))
     
-    # Add foreign key constraint for restaurant_id if it doesn't exist
+    # Store foreign_keys list for later use
     foreign_keys = [fk['name'] for fk in inspector.get_foreign_keys('cash_register_sessions')]
-    if 'fk_cash_register_sessions_restaurant_id' not in foreign_keys:
-        op.create_foreign_key(
-            'fk_cash_register_sessions_restaurant_id',
-            'cash_register_sessions', 
-            'restaurants',
-            ['restaurant_id'], 
-            ['id']
-        )
     
     # Update restaurant_id from opened_by_user's restaurant_id
     op.execute("""
@@ -126,14 +118,17 @@ def upgrade():
                     existing_type=sa.Integer(), 
                     nullable=False)
     
-    # Recreate the foreign key constraint
-    op.create_foreign_key(
-        'fk_cash_register_sessions_restaurant_id',
-        'cash_register_sessions', 
-        'restaurants',
-        ['restaurant_id'], 
-        ['id']
-    )
+    # Recreate the foreign key constraint (only if it doesn't exist)
+    # Re-check foreign keys after potential drop
+    current_foreign_keys = [fk['name'] for fk in inspector.get_foreign_keys('cash_register_sessions')]
+    if 'fk_cash_register_sessions_restaurant_id' not in current_foreign_keys:
+        op.create_foreign_key(
+            'fk_cash_register_sessions_restaurant_id',
+            'cash_register_sessions', 
+            'restaurants',
+            ['restaurant_id'], 
+            ['id']
+        )
     
     # Create index for faster queries by restaurant if it doesn't exist
     indexes = [idx['name'] for idx in inspector.get_indexes('cash_register_sessions')]
