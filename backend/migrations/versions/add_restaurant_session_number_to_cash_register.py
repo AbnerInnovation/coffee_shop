@@ -53,6 +53,39 @@ def upgrade():
         WHERE crs.restaurant_id IS NULL
     """)
     
+    # Handle orphaned sessions (where user doesn't exist or user has no restaurant_id)
+    # Delete sessions that can't be associated with a restaurant
+    bind = op.get_bind()
+    orphaned = bind.execute(sa.text("""
+        SELECT COUNT(*) as count
+        FROM cash_register_sessions 
+        WHERE restaurant_id IS NULL
+    """)).fetchone()
+    
+    if orphaned and orphaned[0] > 0:
+        print(f"WARNING: Found {orphaned[0]} orphaned cash register sessions with no restaurant_id")
+        print("These sessions will be deleted as they cannot be migrated.")
+        op.execute("""
+            DELETE FROM cash_register_sessions 
+            WHERE restaurant_id IS NULL
+        """)
+    
+    # Verify all restaurant_ids exist in restaurants table
+    invalid = bind.execute(sa.text("""
+        SELECT COUNT(*) as count
+        FROM cash_register_sessions crs
+        LEFT JOIN restaurants r ON crs.restaurant_id = r.id
+        WHERE crs.restaurant_id IS NOT NULL AND r.id IS NULL
+    """)).fetchone()
+    
+    if invalid and invalid[0] > 0:
+        print(f"WARNING: Found {invalid[0]} sessions with invalid restaurant_id references")
+        print("These sessions will be deleted as they reference non-existent restaurants.")
+        op.execute("""
+            DELETE FROM cash_register_sessions 
+            WHERE restaurant_id NOT IN (SELECT id FROM restaurants)
+        """)
+    
     # Calculate session_number for existing sessions per restaurant using Python
     bind = op.get_bind()
     
