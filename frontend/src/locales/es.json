@@ -12,7 +12,8 @@
       "new_order": "Nueva Orden",
       "sysadmin": "Administración",
       "subscription": "Suscripción",
-      "users": "Usuarios"
+      "users": "Usuarios",
+      "reports": "Reportes"
     },
     "actions": {
       "sign_out": "Cerrar sesión",
@@ -983,6 +984,41 @@
         "delete_failed": "Error al eliminar el usuario",
         "toggle_status_failed": "Error al cambiar el estado del usuario"
       }
+    },
+    "reports": {
+      "title": "Reportes y Estadísticas",
+      "subtitle": "Análisis completo del desempeño de tu restaurante",
+      "today": "Hoy",
+      "week": "Semana",
+      "month": "Mes",
+      "custom": "Personalizado",
+      "to": "a",
+      "apply": "Aplicar",
+      "export_csv": "Exportar CSV",
+      "print": "Imprimir",
+      "total_sales": "Ventas Totales",
+      "total_tickets": "Total de Tickets",
+      "average_ticket": "Ticket Promedio",
+      "top_products": "Productos Más Vendidos",
+      "payment_breakdown": "Desglose por Método de Pago",
+      "sales_trend": "Tendencia de Ventas",
+      "cash_register": "Caja Registradora",
+      "open_sessions": "Sesiones Abiertas",
+      "closed_sessions": "Sesiones Cerradas",
+      "total_cash_collected": "Total Efectivo Recaudado",
+      "inventory_alerts": "Alertas de Inventario",
+      "unavailable_products_count": "{count} producto(s) no disponible(s)",
+      "all_products_available": "Todos los productos están disponibles",
+      "quantity_sold": "Cantidad Vendida",
+      "daily_sales": "Ventas Diarias",
+      "payment_cash": "Efectivo",
+      "payment_card": "Tarjeta",
+      "payment_digital": "Digital",
+      "payment_other": "Otro",
+      "no_data": "No hay datos disponibles para este período",
+      "error_loading": "Error al cargar los reportes",
+      "error_custom_dates": "Por favor selecciona fechas de inicio y fin",
+      "error_generic": "Ocurrió un error al cargar los datos"
     }
   }
 }

@@ -89,6 +89,15 @@ export const routes: RouteRecordRaw[] = [
     }
   },
   {
+    path: '/reports',
+    name: 'Reports',
+    component: () => import('./views/ReportsView.vue'),
+    meta: { 
+      requiresAuth: true,
+      permissionCheck: 'canViewSubscription' // Admin + SysAdmin (same as subscription)
+    }
+  },
+  {
     path: '/profile',
     name: 'Profile',
     component: () => import('./views/ProfileView.vue'),

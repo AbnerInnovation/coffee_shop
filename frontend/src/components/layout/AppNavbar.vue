@@ -245,6 +245,7 @@ const {
   canAccessCashRegister, 
   canAccessKitchen, 
   canManageUsers, 
+  canViewSubscription,
   isSysAdmin 
 } = usePermissions();
 
@@ -297,6 +298,11 @@ const navigation = computed(() => {
   // Add Users management link if user has permission
   if (canManageUsers.value) {
     baseNav.push({ name: 'users', labelKey: 'app.nav.users', to: '/users', current: false, show: true });
+  }
+  
+  // Add Reports link if user has permission (admin/sysadmin)
+  if (canViewSubscription.value) {
+    baseNav.push({ name: 'reports', labelKey: 'app.nav.reports', to: '/reports', current: false, show: true });
   }
   
   // Filter by show property and update current state based on route
