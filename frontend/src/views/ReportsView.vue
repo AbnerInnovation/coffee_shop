@@ -445,7 +445,8 @@ const chartOptions = {
         autoSkip: false,
         font: {
           size: 11
-        }
+        },
+        color: '#6b7280' // Gray-500: balanced contrast for both light and dark mode
       }
     }
   }
@@ -458,9 +459,10 @@ const doughnutOptions = {
     legend: {
       position: 'bottom' as const,
       labels: {
-        color: '#e5e7eb', // Light gray for dark mode
+        color: '#6b7280', // Gray-500: balanced contrast for both modes
         font: {
-          size: 13
+          size: 13,
+          weight: 500
         },
         padding: 15,
         generateLabels: function(chart: any) {
@@ -472,6 +474,7 @@ const doughnutOptions = {
               return {
                 text: `${label}: $${formattedValue}`,
                 fillStyle: data.datasets[0].backgroundColor[i],
+                fontColor: '#6b7280', // Gray-500 for each label
                 hidden: false,
                 index: i
               };
@@ -502,12 +505,26 @@ const lineChartOptions = {
   plugins: {
     legend: {
       display: true,
-      position: 'top' as const
+      position: 'top' as const,
+      labels: {
+        color: '#6b7280', // Gray-500 for better contrast
+        font: {
+          size: 13
+        }
+      }
     }
   },
   scales: {
+    x: {
+      ticks: {
+        color: '#6b7280' // Gray-500 for x-axis labels (dates)
+      }
+    },
     y: {
-      beginAtZero: true
+      beginAtZero: true,
+      ticks: {
+        color: '#6b7280' // Gray-500 for y-axis labels (amounts)
+      }
     }
   }
 };
