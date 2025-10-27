@@ -847,7 +847,8 @@
       "months": "meses",
       "days": "días",
       "yes": "Sí",
-      "no": "No"
+      "no": "No",
+      "created_at": "Creado el"
     },
     "subscription": {
       "title": "Mi Suscripción",

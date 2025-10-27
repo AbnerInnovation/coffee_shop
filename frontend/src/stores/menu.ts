@@ -49,7 +49,9 @@ export const useMenuStore = defineStore('menu', () => {
             discount_price: v.discount_price ? (typeof v.discount_price === 'number' ? v.discount_price : parseFloat(v.discount_price)) : undefined,
             is_available: v.is_available ?? true
           }))
-        : []
+        : [],
+      created_at: item.created_at,
+      updated_at: item.updated_at
     };
   }
 

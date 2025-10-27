@@ -58,4 +58,6 @@ export interface MenuCategory {
   description?: string;
   visible_in_kitchen?: boolean;
   items?: MenuItem[];
+  created_at?: string;
+  updated_at?: string;
 }

@@ -188,10 +188,9 @@ export const updateMenuItemAvailability = async (
 export const getCategories = async (): Promise<MenuCategory[]> => {
   const response = await apiInstance.get<MenuCategory[]>(`${CATEGORIES_BASE_PATH}/`);
   const arr = Array.isArray(response) ? response : [];
-  // The response is already normalized category objects from the backend
+  // Use spread operator to preserve all fields automatically
   return arr.map((c: any) => ({
-    id: c.id,
-    name: c.name,
+    ...c,
     description: c.description || '',
     visible_in_kitchen: c.visible_in_kitchen ?? true
   } as MenuCategory));

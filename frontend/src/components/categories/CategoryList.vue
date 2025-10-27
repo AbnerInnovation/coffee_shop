@@ -49,6 +49,9 @@
                   <p v-if="category.description" class="text-sm text-gray-500 dark:text-gray-400 mt-1">
                     {{ category.description }}
                   </p>
+                  <p v-if="category.created_at" class="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                    {{ $t('app.common.created_at') }}: {{ formatDate(category.created_at) }}
+                  </p>
                 </div>
                 
                 <!-- Actions Dropdown -->
@@ -109,5 +112,17 @@ defineEmits<{
 const getCategoryVisibility = (category: MenuCategory): boolean => {
   // Return the value, defaulting to true if undefined
   return category.visible_in_kitchen ?? true;
+};
+
+// Format date helper
+const formatDate = (dateString: string): string => {
+  const date = new Date(dateString);
+  return new Intl.DateTimeFormat('es-MX', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  }).format(date);
 };
 </script>
