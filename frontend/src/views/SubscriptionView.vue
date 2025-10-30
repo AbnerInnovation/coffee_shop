@@ -24,7 +24,7 @@
         >
           {{ t('app.subscription.tabs.overview') }}
         </button>
-        <button
+        <!-- <button
           @click="activeTab = 'addons'"
           :class="[
             activeTab === 'addons'
@@ -34,7 +34,7 @@
           ]"
         >
           {{ t('app.subscription.tabs.addons') }}
-        </button>
+        </button> -->
       </nav>
     </div>
 
