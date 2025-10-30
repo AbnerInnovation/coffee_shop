@@ -63,12 +63,6 @@
                   {{ subscription.subscription.plan.name }}
                 </h3>
                 <span
-                  v-if="subscription.subscription.plan.is_trial"
-                  class="px-3 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
-                >
-                  {{ t('app.subscription.trial') }}
-                </span>
-                <span
                   :class="getStatusClass(subscription.subscription.status)"
                   class="px-3 py-1 text-xs font-semibold rounded-full"
                 >
