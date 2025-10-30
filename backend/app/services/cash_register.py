@@ -351,7 +351,7 @@ def create_transaction_from_order(
         session_id=session_id,
         transaction_type=transaction_type,
         amount=db_order.total_amount,
-        description=f"Payment for order #{order_id}",
+        description=f"Payment for order #{db_order.order_number}",
         order_id=order_id,
         created_by_user_id=created_by_user_id,
         payment_method=payment_method_enum
