@@ -2,7 +2,7 @@ import { useI18n } from 'vue-i18n';
 
 // Types
 export type BackendOrderStatus = 'pending' | 'preparing' | 'ready' | 'completed' | 'cancelled';
-export type OrderStatus = BackendOrderStatus | 'all';
+export type OrderStatus = BackendOrderStatus
 
 export interface OrderItemLocal {
   id: number;
@@ -86,7 +86,7 @@ export function getOrderTypeLabel(orderType: string): string {
 // Get order count by status
 export function getOrderCount(orders: OrderWithLocalFields[], status: OrderStatus): number {
   if (!orders || !orders.length) return 0;
-  if (status === 'all') return orders.length;
+  
   return orders.filter(order => order.status === status).length;
 }
 

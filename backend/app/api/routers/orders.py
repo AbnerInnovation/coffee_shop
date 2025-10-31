@@ -34,6 +34,7 @@ async def read_orders(
     status: Optional[OrderStatus] = None,
     table_id: Optional[int] = None,
     sort_by: str = 'orders',
+    hours: Optional[int] = None,
     db: Session = Depends(get_db),
     restaurant: Restaurant = Depends(get_current_restaurant),
     current_user: User = Depends(get_current_active_user)
@@ -42,6 +43,7 @@ async def read_orders(
     Retrieve orders with optional filtering (filtered by restaurant).
     Waiters only see their own orders.
     sort_by: 'orders' (newest first by ID) or 'kitchen' (FIFO by status/created_at)
+    hours: Filter orders from the last X hours (e.g., 24 for last 24 hours)
     """
     try:
         # If user is a waiter, filter to only their orders
@@ -57,7 +59,8 @@ async def read_orders(
             sort_by=sort_by,
             status=status,
             table_id=table_id,
-            waiter_id=waiter_id
+            waiter_id=waiter_id,
+            hours=hours
         )
     except Exception as e:
         raise DatabaseError(f"Error retrieving orders: {str(e)}", operation="select")

@@ -135,9 +135,13 @@ const orderService = {
     return await api.get(`/tables/${tableId}/orders`) as Order[];
   },
 
-  async getActiveOrders(status?: OrderStatus, tableId?: number, sortBy: string = 'orders'): Promise<Order[]> {
+  async getActiveOrders(status?: OrderStatus, tableId?: number, sortBy: string = 'orders', hours: number = 24): Promise<Order[]> {
     try {
-      const params: { limit: number; status?: OrderStatus; table_id?: number; sort_by?: string } = { limit: 200, sort_by: sortBy };
+      const params: { limit: number; status?: OrderStatus; table_id?: number; sort_by?: string; hours?: number } = { 
+        limit: 500, 
+        sort_by: sortBy,
+        hours: hours 
+      };
       if (status) {
         params.status = status;
       }

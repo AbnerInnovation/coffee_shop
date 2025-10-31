@@ -16,7 +16,7 @@
               class="relative transform overflow-hidden bg-white dark:bg-gray-900 px-4 pb-4 pt-4 sm:px-6 sm:pb-6 sm:pt-5 text-left shadow-xl transition-all w-full min-h-screen sm:min-h-0 sm:my-8 sm:w-full sm:max-w-4xl sm:p-6 rounded-none sm:rounded-lg border-0 sm:border border-gray-200 dark:border-gray-800">
               <div class="flex items-center justify-between">
                 <DialogTitle as="h3" class="text-lg font-medium leading-6 text-gray-900 dark:text-gray-100">
-                  {{ isEditMode ? $t('app.views.orders.modals.new_order.title_edit_order', { id: orderToEdit?.id }) : $t('app.views.orders.modals.new_order.title') }}
+                  {{ isEditMode ? $t('app.views.orders.modals.new_order.title_edit_order', { id: orderToEdit?.order_number }) : $t('app.views.orders.modals.new_order.title') }}
                 </DialogTitle>
                 <button type="button"
                   class="rounded-md bg-white dark:bg-transparent text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
@@ -516,7 +516,7 @@ interface MenuItemVariant {
   [key: string]: unknown;
 }
 
-interface ExtendedMenuItem extends Omit<MenuItemType, 'variants' | 'id' | 'price'> {
+interface ExtendedMenuItem extends Omit<MenuItemType, 'variants' | 'id' | 'price' | 'category'> {
   id: number;
   has_variants: boolean;
   variants?: MenuItemVariant[];
@@ -538,6 +538,7 @@ interface OrderItemWithDetails {
   notes?: string;
   special_instructions?: string;
   unit_price?: number;
+  status?: string; // Order item status: 'pending', 'preparing', 'ready', 'delivered'
 }
 
 // Props and Emits

@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from sqlalchemy import or_, and_, func as sa_func
 from typing import List, Optional, Dict, Any
 import logging
@@ -125,6 +125,11 @@ def apply_filters(query, filters: Dict[str, Any]):
     if filters.get("search"):
         search_term = f"%{filters['search']}%"
         query = query.filter(or_(OrderModel.notes.ilike(search_term), OrderModel.customer_name.ilike(search_term)))
+
+    # Filter by hours (e.g., last 24 hours)
+    if filters.get("hours") is not None:
+        hours_ago = datetime.now(timezone.utc) - timedelta(hours=filters["hours"])
+        query = query.filter(OrderModel.created_at >= hours_ago)
 
     return query
 

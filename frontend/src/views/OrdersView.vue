@@ -1,79 +1,58 @@
 <template>
   <MainLayout>
     <div class="space-y-6">
-    <!-- Loading State -->
-    <div v-if="loading" class="flex justify-center items-center py-12">
-      <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
-    </div>
+      <!-- Loading State -->
+      <div v-if="loading" class="flex justify-center items-center py-12">
+        <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+      </div>
 
-    <!-- Error State -->
-    <div v-else-if="error" class="bg-red-50 border-l-4 border-red-400 p-4">
-      <div class="flex">
-        <div class="flex-shrink-0">
-          <XMarkIcon class="h-5 w-5 text-red-400" aria-hidden="true" />
-        </div>
-        <div class="ml-3">
-          <p class="text-sm text-red-700">{{ error }}</p>
-          <button @click="() => fetchOrders()"
-            class="mt-2 text-sm font-medium text-red-700 hover:text-red-600 focus:outline-none">
-            {{ t('app.views.orders.try_again') }} <span aria-hidden="true">&rarr;</span>
-          </button>
+      <!-- Error State -->
+      <div v-else-if="error" class="bg-red-50 border-l-4 border-red-400 p-4">
+        <div class="flex">
+          <div class="flex-shrink-0">
+            <XMarkIcon class="h-5 w-5 text-red-400" aria-hidden="true" />
+          </div>
+          <div class="ml-3">
+            <p class="text-sm text-red-700">{{ error }}</p>
+            <button @click="() => fetchOrders()"
+              class="mt-2 text-sm font-medium text-red-700 hover:text-red-600 focus:outline-none">
+              {{ t('app.views.orders.try_again') }} <span aria-hidden="true">&rarr;</span>
+            </button>
+          </div>
         </div>
       </div>
-    </div>
 
-    <div v-else class="space-y-4 sm:space-y-6">
-      <PageHeader
-        :title="t('app.views.orders.title')"
-        :subtitle="selectedStatus === 'all' ? t('app.views.orders.tabs.all') + ' ' + t('app.views.orders.title').toLowerCase() : t('app.status.' + selectedStatus) + ' ' + t('app.views.orders.title').toLowerCase()"
-      >
-        <template #actions>
-          <button
-            type="button"
-            @click="openNewOrderModal"
-            class="block rounded-md bg-indigo-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-          >
-            <PlusIcon class="-ml-1 mr-2 h-5 w-5 inline" aria-hidden="true" />
-            {{ t('app.views.orders.new_order') }}
-          </button>
-        </template>
-      </PageHeader>
-      <!-- Filters Component -->
-      <OrderFilters
-        :tabs="tabs"
-        :selected-status="selectedStatus"
-        :payment-filter="selectedPaymentFilter"
-        :order-type="selectedOrderType"
-        @select-tab="selectTab"
-        @update:payment-filter="selectedPaymentFilter = $event"
-        @update:order-type="selectedOrderType = $event"
-      />
+      <div v-else class="space-y-4 sm:space-y-6">
+        <PageHeader :title="t('app.views.orders.title')"
+          :subtitle="t('app.status.' + selectedStatus) + ' ' + t('app.views.orders.title').toLowerCase()">
+          <template #actions>
+            <button type="button" @click="openNewOrderModal"
+              class="block rounded-md bg-indigo-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+              <PlusIcon class="-ml-1 mr-2 h-5 w-5 inline" aria-hidden="true" />
+              {{ t('app.views.orders.new_order') }}
+            </button>
+          </template>
+        </PageHeader>
+        <!-- Filters Component -->
+        <OrderFilters :tabs="tabs" :selected-status="selectedStatus" :payment-filter="selectedPaymentFilter"
+          :order-type="selectedOrderType" @select-tab="selectTab"
+          @update:payment-filter="selectedPaymentFilter = $event" @update:order-type="selectedOrderType = $event" />
 
-      <!-- Order List Component -->
-      <OrderList
-        :orders="filteredOrders"
-        @new-order="openNewOrderModal"
-        @view="viewOrderDetails"
-        @edit="openEditOrder"
-        @complete="updateOrderStatus($event, 'completed')"
-        @cancel="cancelOrder"
-      />
+        <!-- Order List Component -->
+        <OrderList :orders="filteredOrders" @new-order="openNewOrderModal" @view="viewOrderDetails"
+          @edit="openEditOrder" @complete="updateOrderStatus($event, 'completed')" @cancel="cancelOrder" />
 
-      <!-- Order Details Modal -->
-      <OrderDetails v-if="isOrderDetailsOpen && selectedOrder" :open="isOrderDetailsOpen" :order="selectedOrder"
-        @close="closeOrderDetails" @status-update="handleStatusUpdate" @paymentCompleted="handlePaymentCompleted" @edit-order="openEditOrder" @openCashRegister="handleOpenCashRegister" />
+        <!-- Order Details Modal -->
+        <OrderDetails v-if="isOrderDetailsOpen && selectedOrder" :open="isOrderDetailsOpen" :order="selectedOrder"
+          @close="closeOrderDetails" @status-update="handleStatusUpdate" @paymentCompleted="handlePaymentCompleted"
+          @edit-order="openEditOrder" @openCashRegister="handleOpenCashRegister" />
 
-      <!-- New Order Modal - only mount when needed -->
-      <NewOrderModal
-        v-if="isNewOrderModalOpen"
-        :open="isNewOrderModalOpen"
-        :mode="newOrderMode"
-        :order-to-edit="newOrderMode === 'edit' ? selectedOrderForEdit : null"
-        :table-id="newOrderMode === 'create' ? undefined : (selectedOrderForEdit?.table_id ?? undefined)"
-        @close="closeNewOrderModal"
-        @order-created="handleNewOrder"
-        @order-updated="handleOrderUpdated" />
-    </div>
+        <!-- New Order Modal - only mount when needed -->
+        <NewOrderModal v-if="isNewOrderModalOpen" :open="isNewOrderModalOpen" :mode="newOrderMode"
+          :order-to-edit="newOrderMode === 'edit' ? selectedOrderForEdit : null"
+          :table-id="newOrderMode === 'create' ? undefined : (selectedOrderForEdit?.table_id ?? undefined)"
+          @close="closeNewOrderModal" @order-created="handleNewOrder" @order-updated="handleOrderUpdated" />
+      </div>
     </div>
   </MainLayout>
 </template>
@@ -94,7 +73,7 @@ import { PlusIcon } from '@heroicons/vue/24/outline';
 import { useToast } from '@/composables/useToast';
 import { useConfirm } from '@/composables/useConfirm';
 import { useOrderFilters, type PaymentFilter, type OrderTypeFilter } from '@/composables/useOrderFilters';
-import { 
+import {
   canCancelOrder as canCancelOrderHelper,
   transformOrderToLocal,
   type OrderWithLocalFields,
@@ -148,6 +127,7 @@ function handleOrderUpdated(updated: any) {
     showSuccess(t('app.views.orders.messages.order_updated_success', { id: updated.id }) as string);
     // Ensure full consistency by refetching
     fetchOrders(true);
+    fetchTabCounts(); // Update all tab counts after updating an order
     // Reset edit state
     selectedOrderForEdit.value = null;
     newOrderMode.value = 'create';
@@ -175,7 +155,7 @@ const confirmCancelOrder = async () => {
 // State
 const loading = ref(false);
 const error = ref<string | null>(null);
-const selectedStatus = ref<OrderStatus>('all');
+const selectedStatus = ref<OrderStatus>('pending');
 const selectedPaymentFilter = ref<PaymentFilter>('all');
 const selectedOrderType = ref<OrderTypeFilter>('all');
 const isNewOrderModalOpen = ref(false);
@@ -185,28 +165,37 @@ const isOrderDetailsOpen = ref(false);
 const hasAutoOpenedFromTable = ref(false);
 const selectedOrder = ref<OrderWithLocalFields | null>(null);
 const orders = ref<OrderWithLocalFields[]>([]);
-const orderMenuStates = ref<Record<number, boolean>>({});
 
 // Tab definitions
 const tabs = [
-  { id: 'all' as const, name: 'All', count: 0 },
   { id: 'pending' as const, name: 'Pending', count: 0 },
   { id: 'preparing' as const, name: 'Preparing', count: 0 },
   { id: 'ready' as const, name: 'Ready', count: 0 },
   { id: 'completed' as const, name: 'Completed', count: 0 },
-  { id: 'cancelled' as const, name: 'Cancelled', count: 0 },
 ];
 
-// Update tab counts when orders change
-watch(orders, (newOrders) => {
-  tabs.forEach(tab => {
-    if (tab.id === 'all') {
-      tab.count = newOrders.length;
-    } else {
-      tab.count = newOrders.filter(order => order.status === tab.id).length;
-    }
-  });
-}, { immediate: true });
+// Fetch counts for all tabs
+const fetchTabCounts = async () => {
+  try {
+    // Fetch counts for each status in parallel
+    const countPromises = tabs.map(async (tab) => {
+      const response = await orderService.getActiveOrders(tab.id, undefined);
+      return { status: tab.id, count: response.length };
+    });
+    
+    const counts = await Promise.all(countPromises);
+    
+    // Update tab counts
+    counts.forEach(({ status, count }) => {
+      const tab = tabs.find(t => t.id === status);
+      if (tab) {
+        tab.count = count;
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching tab counts:', error);
+  }
+};
 
 // Tab selection
 const selectTab = (tabId: OrderStatus) => {
@@ -225,7 +214,6 @@ const formatStatus = (status: OrderStatus): string => {
 
 // Map of status to display names
 const statusMap: Record<OrderStatus, string> = {
-  'all': 'All',
   'pending': 'Pending',
   'preparing': 'Preparing',
   'ready': 'Ready for Pickup',
@@ -254,12 +242,12 @@ let closeDetailsTimeout: ReturnType<typeof setTimeout> | null = null;
 
 function closeOrderDetails() {
   isOrderDetailsOpen.value = false;
-  
+
   // Clear any existing timeout
   if (closeDetailsTimeout) {
     clearTimeout(closeDetailsTimeout);
   }
-  
+
   // Wait for the transition to complete before clearing the selected order
   closeDetailsTimeout = setTimeout(() => {
     selectedOrder.value = null;
@@ -280,6 +268,7 @@ function closeNewOrderModal() {
 const handleNewOrder = async (newOrder: Order) => {
   try {
     await fetchOrders();
+    await fetchTabCounts(); // Update all tab counts after creating an order
     closeNewOrderModal();
   } catch (err) {
     console.error('Error processing new order:', err);
@@ -294,10 +283,8 @@ const handleNewOrder = async (newOrder: Order) => {
 };
 
 const handleStatusUpdate = ({ orderId, status }: { orderId: number; status: OrderStatus }) => {
-  if (status !== 'all') {
     updateOrderStatus(orderId, status as BackendOrderStatus);
     closeOrderDetails();
-  }
 };
 
 const handlePaymentCompleted = async (updatedOrder: any) => {
@@ -328,7 +315,8 @@ const fetchOrders = async (fetchAll = false) => {
     error.value = null;
 
     // Fetch orders with the selected status filter
-    const statusToFetch = selectedStatus.value === 'all' || fetchAll ? undefined : selectedStatus.value;
+    // Send the status filter to backend to get only orders with that status
+    const statusToFetch = fetchAll ? undefined : selectedStatus.value;
     const tableIdParam = route.query.table_id ? Number(route.query.table_id) : undefined;
     const response = await orderService.getActiveOrders(statusToFetch, tableIdParam);
 
@@ -341,6 +329,12 @@ const fetchOrders = async (fetchAll = false) => {
       .filter((order): order is OrderWithLocalFields => order !== null);
 
     orders.value = processedOrders;
+
+    // Update only the current tab count based on the response
+    const currentTab = tabs.find(t => t.id === selectedStatus.value);
+    if (currentTab) {
+      currentTab.count = processedOrders.length;
+    }
 
     // If filtered by table_id and there is at least one order, auto-open it for quick edit/view
     if (tableIdParam && orders.value.length > 0 && !hasAutoOpenedFromTable.value) {
@@ -368,6 +362,9 @@ const updateOrderStatus = async (orderId: number, newStatus: BackendOrderStatus)
       orders.value.splice(orderIndex, 1, updatedOrder);
     }
 
+    // Update all tab counts after status change
+    await fetchTabCounts();
+
     showSuccess(t('app.views.orders.messages.status_updated_success', { id: orderId, status: formatStatus(newStatus) }) as string);
   } catch (err) {
     console.error('Error updating order status:', err);
@@ -382,18 +379,18 @@ const canCancelOrder = canCancelOrderHelper;
 const cancelOrder = async (orderId: number) => {
   // Find the order to validate
   const order = orders.value.find(o => o.id === orderId);
-  
+
   if (!order) {
     showError(t('app.views.orders.messages.order_not_found') as string);
     return;
   }
-  
+
   // Validate if order can be cancelled
   if (!canCancelOrder(order)) {
     showError('No se puede cancelar una orden que ya está en preparación o lista. Solo se pueden cancelar órdenes pendientes con todos sus items pendientes.');
     return;
   }
-  
+
   const confirmed = await confirmCancelOrder();
 
   if (!confirmed) return;
@@ -411,12 +408,20 @@ const cancelOrder = async (orderId: number) => {
       orders.value.splice(orderIndex, 1, updatedOrder);
     }
 
+    // Update all tab counts after cancelling
+    await fetchTabCounts();
+
     showSuccess(t('app.views.orders.messages.order_cancelled_success') as string);
   } catch (err) {
     console.error('Error cancelling order:', err);
     showError(t('app.views.orders.messages.cancel_failed') as string);
   }
 };
+
+// Watch for status changes to refetch orders from backend
+watch(selectedStatus, () => {
+  fetchOrders();
+});
 
 // Initialize component
 onMounted(() => {

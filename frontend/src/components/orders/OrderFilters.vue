@@ -75,7 +75,7 @@
 </template>
 
 <script setup lang="ts">
-type OrderStatus = 'pending' | 'preparing' | 'ready' | 'completed' | 'cancelled' | 'all';
+type OrderStatus = 'pending' | 'preparing' | 'ready' | 'completed' | 'cancelled';
 type PaymentFilter = 'all' | 'paid' | 'unpaid';
 type OrderTypeFilter = 'all' | 'dine_in' | 'takeaway' | 'delivery';
 
