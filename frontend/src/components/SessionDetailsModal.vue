@@ -12,13 +12,13 @@
           <!-- Header -->
           <div class="flex justify-between items-center mb-4 pb-4 border-b border-gray-200 dark:border-gray-700">
             <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">
-              {{ t('app.views.cashRegister.sessionDetails') || 'Session Details' }}
+              {{ t('app.views.cashRegister.sessionDetails') }}
             </h3>
             <button
               @click="closeModal"
               class="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
             >
-              <span class="sr-only">{{ t('app.actions.close') || 'Close' }}</span>
+              <span class="sr-only">{{ t('app.actions.close') }}</span>
               <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
               </svg>
@@ -29,7 +29,7 @@
           <div v-if="isLoading" class="flex justify-center items-center py-8">
             <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
             <span class="ml-2 text-gray-600 dark:text-gray-400">
-              {{ t('app.status.loading') || 'Loading...' }}
+              {{ t('app.status.loading') }}
             </span>
           </div>
 
@@ -37,31 +37,31 @@
           <div v-else-if="session" class="space-y-6">
             <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
               <h4 class="text-md font-medium text-gray-900 dark:text-gray-100 mb-3">
-                {{ t('app.views.cashRegister.sessionOverview') || 'Session Overview' }}
+                {{ t('app.views.cashRegister.sessionOverview') }}
               </h4>
               <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div>
                   <p class="text-sm text-gray-500 dark:text-gray-400">
-                    {{ t('app.views.cashRegister.openedBy') || 'Opened by' }}
+                    {{ t('app.views.cashRegister.openedBy') }}
                   </p>
                   <p class="font-medium text-gray-900 dark:text-gray-100">
-                    {{ session.opened_by_user?.full_name || session.opened_by_user?.email || 'Unknown' }}
+                    {{ session.opened_by_user?.full_name || session.opened_by_user?.email || t('app.common.unknown') }}
                   </p>
                 </div>
                 <div>
                   <p class="text-sm text-gray-500 dark:text-gray-400">
-                    {{ t('app.views.cashRegister.status') || 'Status' }}
+                    {{ t('app.views.cashRegister.status') }}
                   </p>
                   <span
                     class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
                     :class="getStatusBadgeClass(session.status)"
                   >
-                    {{ session.status }}
+                    {{ translateStatus(session.status) }}
                   </span>
                 </div>
                 <div>
                   <p class="text-sm text-gray-500 dark:text-gray-400">
-                    {{ t('app.views.cashRegister.initialBalance') || 'Initial Balance' }}
+                    {{ t('app.views.cashRegister.initialBalance') }}
                   </p>
                   <p class="font-medium text-gray-900 dark:text-gray-100">
                     {{ formatCurrency(session.initial_balance || 0) }}
@@ -69,7 +69,7 @@
                 </div>
                 <div v-if="session.final_balance">
                   <p class="text-sm text-gray-500 dark:text-gray-400">
-                    {{ t('app.views.cashRegister.finalBalance') || 'Final Balance' }}
+                    {{ t('app.views.cashRegister.finalBalance') }}
                   </p>
                   <p class="font-medium text-gray-900 dark:text-gray-100">
                     {{ formatCurrency(session.final_balance || 0) }}
@@ -79,7 +79,7 @@
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                 <div>
                   <p class="text-sm text-gray-500 dark:text-gray-400">
-                    {{ t('app.views.cashRegister.startDate') || 'Start Date' }}
+                    {{ t('app.views.cashRegister.startDate') }}
                   </p>
                   <p class="font-medium text-gray-900 dark:text-gray-100">
                     {{ formatDate(session.created_at) }}
@@ -87,7 +87,7 @@
                 </div>
                 <div v-if="session.closed_at">
                   <p class="text-sm text-gray-500 dark:text-gray-400">
-                    {{ t('app.views.cashRegister.endDate') || 'End Date' }}
+                    {{ t('app.views.cashRegister.endDate') }}
                   </p>
                   <p class="font-medium text-gray-900 dark:text-gray-100">
                     {{ formatDate(session.closed_at) }}
@@ -99,12 +99,12 @@
             <!-- Payment Breakdown -->
             <div v-if="paymentBreakdown" class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
               <h4 class="text-md font-medium text-gray-900 dark:text-gray-100 mb-3">
-                {{ t('app.views.cashRegister.paymentBreakdown') || 'Payment Breakdown' }}
+                {{ t('app.views.cashRegister.paymentBreakdown') }}
               </h4>
               <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div class="text-center">
                   <p class="text-sm text-gray-500 dark:text-gray-400">
-                    {{ t('app.views.cashRegister.cashPayments') || 'Cash' }}
+                    {{ t('app.views.cashRegister.cashPayments') }}
                   </p>
                   <p class="text-lg font-semibold text-gray-900 dark:text-gray-100">
                     {{ formatCurrency(paymentBreakdown.cash || 0) }}
@@ -112,7 +112,7 @@
                 </div>
                 <div class="text-center">
                   <p class="text-sm text-gray-500 dark:text-gray-400">
-                    {{ t('app.views.cashRegister.cardPayments') || 'Card' }}
+                    {{ t('app.views.cashRegister.cardPayments') }}
                   </p>
                   <p class="text-lg font-semibold text-gray-900 dark:text-gray-100">
                     {{ formatCurrency(paymentBreakdown.card || 0) }}
@@ -120,7 +120,7 @@
                 </div>
                 <div class="text-center">
                   <p class="text-sm text-gray-500 dark:text-gray-400">
-                    {{ t('app.views.cashRegister.digitalPayments') || 'Digital' }}
+                    {{ t('app.views.cashRegister.digitalPayments') }}
                   </p>
                   <p class="text-lg font-semibold text-gray-900 dark:text-gray-100">
                     {{ formatCurrency(paymentBreakdown.digital || 0) }}
@@ -128,7 +128,7 @@
                 </div>
                 <div class="text-center">
                   <p class="text-sm text-gray-500 dark:text-gray-400">
-                    {{ t('app.views.cashRegister.otherPayments') || 'Other' }}
+                    {{ t('app.views.cashRegister.otherPayments') }}
                   </p>
                   <p class="text-lg font-semibold text-gray-900 dark:text-gray-100">
                     {{ formatCurrency(paymentBreakdown.other || 0) }}
@@ -144,7 +144,7 @@
             <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
               <div class="flex justify-between items-center mb-4">
                 <h4 class="text-md font-medium text-gray-900 dark:text-gray-100">
-                  {{ t('app.views.cashRegister.transactions') || 'Transactions' }}
+                  {{ t('app.views.cashRegister.transactions') }}
                   <span class="text-sm text-gray-500 dark:text-gray-400 ml-2">
                     ({{ filteredTransactions.length }})
                   </span>
@@ -155,11 +155,11 @@
                   v-model="transactionTypeFilter"
                   class="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-sm dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 >
-                  <option value="">{{ t('app.views.cashRegister.allTypes') || 'All Types' }}</option>
-                  <option value="sale">{{ t('app.views.cashRegister.typeSale') || 'Sale' }}</option>
-                  <option value="refund">{{ t('app.views.cashRegister.typeRefund') || 'Refund' }}</option>
-                  <option value="tip">{{ t('app.views.cashRegister.typeTip') || 'Tip' }}</option>
-                  <option value="adjustment">{{ t('app.views.cashRegister.typeAdjustment') || 'Adjustment' }}</option>
+                  <option value="">{{ t('app.views.cashRegister.allTypes') }}</option>
+                  <option value="sale">{{ t('app.views.cashRegister.typeSale') }}</option>
+                  <option value="refund">{{ t('app.views.cashRegister.typeRefund') }}</option>
+                  <option value="tip">{{ t('app.views.cashRegister.typeTip') }}</option>
+                  <option value="adjustment">{{ t('app.views.cashRegister.typeAdjustment') }}</option>
                 </select>
               </div>
 
@@ -168,7 +168,7 @@
                 <input
                   v-model="transactionSearchTerm"
                   type="text"
-                  :placeholder="t('app.views.cashRegister.searchTransactions') || 'Search transactions...'"
+                  :placeholder="t('app.views.cashRegister.searchTransactions')"
                   class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
@@ -176,7 +176,7 @@
               <!-- Transactions List -->
               <div v-if="filteredTransactions.length === 0" class="text-center py-4">
                 <p class="text-gray-500 dark:text-gray-400">
-                  {{ t('app.views.cashRegister.noTransactionsFound') || 'No transactions found.' }}
+                  {{ t('app.views.cashRegister.noTransactionsFound') }}
                 </p>
               </div>
               <div v-else class="max-h-64 overflow-y-auto">
@@ -184,7 +184,7 @@
                      class="flex justify-between items-center py-2 px-3 bg-white dark:bg-gray-800 rounded-md mb-2">
                   <div class="flex-1">
                     <p class="text-sm font-medium text-gray-900 dark:text-gray-100">
-                      {{ transaction.description }}
+                      {{ translateDescription(transaction.description) }}
                     </p>
                     <p class="text-xs text-gray-500 dark:text-gray-400">
                       {{ formatDate(transaction.created_at) }}
@@ -205,13 +205,13 @@
               <!-- Transaction Pagination -->
               <div v-if="totalTransactionPages > 1" class="flex justify-between items-center mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
                 <div class="text-sm text-gray-500 dark:text-gray-400">
-                  {{ t('app.views.cashRegister.showing') || 'Showing' }}
+                  {{ t('app.views.cashRegister.showing') }}
                   {{ transactionPagination.offset + 1 }}
-                  {{ t('app.views.cashRegister.to') || 'to' }}
+                  {{ t('app.views.cashRegister.to') }}
                   {{ Math.min(transactionPagination.offset + transactionPagination.limit, filteredTransactions.length) }}
-                  {{ t('app.views.cashRegister.of') || 'of' }}
+                  {{ t('app.views.cashRegister.of') }}
                   {{ filteredTransactions.length }}
-                  {{ t('app.views.cashRegister.transactions') || 'transactions' }}
+                  {{ t('app.views.cashRegister.transactions') }}
                 </div>
                 <div class="flex space-x-2">
                   <button
@@ -219,14 +219,14 @@
                     :disabled="transactionPagination.page <= 1"
                     class="px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-700 dark:text-white"
                   >
-                    {{ t('app.actions.previous') || 'Previous' }}
+                    {{ t('app.users.actions.previous') }}
                   </button>
                   <button
                     @click="nextTransactionPage"
                     :disabled="transactionPagination.page >= totalTransactionPages"
                     class="px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-700 dark:text-white"
                   >
-                    {{ t('app.actions.next') || 'Next' }}
+                    {{ t('app.users.actions.next') }}
                   </button>
                 </div>
               </div>
@@ -235,12 +235,12 @@
             <!-- Session Summary -->
             <div v-if="sessionSummary" class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
               <h4 class="text-md font-medium text-gray-900 dark:text-gray-100 mb-3">
-                {{ t('app.views.cashRegister.sessionSummary') || 'Session Summary' }}
+                {{ t('app.views.cashRegister.sessionSummary') }}
               </h4>
               <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div class="text-center">
                   <p class="text-sm text-gray-500 dark:text-gray-400">
-                    {{ t('app.views.cashRegister.totalSales') || 'Total Sales' }}
+                    {{ t('app.views.cashRegister.totalSales') }}
                   </p>
                   <p class="text-xl font-bold text-green-600 dark:text-green-400">
                     {{ formatCurrency(sessionSummary.total_sales || 0) }}
@@ -248,7 +248,7 @@
                 </div>
                 <div class="text-center">
                   <p class="text-sm text-gray-500 dark:text-gray-400">
-                    {{ t('app.views.cashRegister.totalRefunds') || 'Total Refunds' }}
+                    {{ t('app.views.cashRegister.totalRefunds') }}
                   </p>
                   <p class="text-xl font-bold text-red-600 dark:text-red-400">
                     {{ formatCurrency(sessionSummary.total_refunds || 0) }}
@@ -256,7 +256,7 @@
                 </div>
                 <div class="text-center">
                   <p class="text-sm text-gray-500 dark:text-gray-400">
-                    {{ t('app.views.cashRegister.netCashFlow') || 'Net Cash Flow' }}
+                    {{ t('app.views.cashRegister.netCashFlow') }}
                   </p>
                   <p class="text-xl font-bold text-blue-600 dark:text-blue-400">
                     {{ formatCurrency(sessionSummary.net_cash_flow || 0) }}
@@ -269,7 +269,7 @@
           <!-- No session state -->
           <div v-else class="flex justify-center items-center py-8">
             <p class="text-gray-600 dark:text-gray-400">
-              {{ t('app.views.cashRegister.sessionNotFound') || 'Session not found' }}
+              {{ t('app.views.cashRegister.sessionNotFound') }}
             </p>
           </div>
         </div>
@@ -279,7 +279,7 @@
             type="button"
             class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:w-auto sm:text-sm"
           >
-            {{ t('app.actions.close') || 'Close' }}
+            {{ t('app.actions.close') }}
           </button>
           <button
             v-if="session"
@@ -290,7 +290,7 @@
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
               <path fill-rule="evenodd" d="M5 4v3H4a2 2 0 00-2 2v3a2 2 0 002 2h1v2a2 2 0 002 2h6a2 2 0 002-2v-2h1a2 2 0 002-2V9a2 2 0 00-2-2h-1V4a2 2 0 00-2-2H7a2 2 0 00-2 2zm8 0H7v3h6V4zm0 8H7v4h6v-4z" clip-rule="evenodd" />
             </svg>
-            {{ t('app.actions.print') || 'Print' }}
+            {{ t('app.actions.print') }}
           </button>
         </div>
       </div>
@@ -373,7 +373,7 @@ const loadSessionDetails = async () => {
     session.value = sessionResponse || null
 
     if (!session.value) {
-      toast.showToast(t('app.views.cashRegister.sessionNotFound') || 'Session not found', 'error')
+      toast.showToast(t('app.views.cashRegister.sessionNotFound'), 'error')
       return
     }
 
@@ -395,7 +395,7 @@ const loadSessionDetails = async () => {
   } catch (error: any) {
     console.error('Error loading session details:', error)
     toast.showToast(
-      t('app.views.cashRegister.errorLoadingSessionDetails') || 'Error loading session details',
+      t('app.views.cashRegister.errorLoadingSessionDetails'),
       'error'
     )
   } finally {
@@ -443,6 +443,17 @@ const nextTransactionPage = () => {
   }
 }
 
+const translateStatus = (status: string) => {
+  switch (status?.toUpperCase()) {
+    case 'OPEN':
+      return t('app.views.cashRegister.statusOpenBadge')
+    case 'CLOSED':
+      return t('app.views.cashRegister.statusClosedBadge')
+    default:
+      return status
+  }
+}
+
 const getStatusBadgeClass = (status: string) => {
   switch (status?.toUpperCase()) {
     case 'OPEN':
@@ -457,20 +468,33 @@ const getStatusBadgeClass = (status: string) => {
 const getTransactionTypeLabel = (type: string) => {
   switch (type?.toLowerCase()) {
     case 'sale':
-      return t('app.views.cashRegister.typeSale') || 'Sale'
+      return t('app.views.cashRegister.typeSale')
     case 'refund':
-      return t('app.views.cashRegister.typeRefund') || 'Refund'
+      return t('app.views.cashRegister.typeRefund')
     case 'tip':
-      return t('app.views.cashRegister.typeTip') || 'Tip'
+      return t('app.views.cashRegister.typeTip')
     case 'adjustment':
-      return t('app.views.cashRegister.typeAdjustment') || 'Adjustment'
+      return t('app.views.cashRegister.typeAdjustment')
     default:
-      return type || 'Unknown'
+      return type || t('app.common.unknown')
   }
 }
 
+const translateDescription = (description: string) => {
+  if (!description) return description
+  
+  // Traducir "Payment for order #X" a "Pago de orden #X"
+  const paymentPattern = /^Payment for order #(\d+)$/i
+  const match = description.match(paymentPattern)
+  if (match) {
+    return `Pago de orden #${match[1]}`
+  }
+  
+  return description
+}
+
 const formatDate = (dateString: string) => {
-  if (!dateString) return 'N/A'
+  if (!dateString) return t('app.common.na')
   return new Date(dateString).toLocaleString()
 }
 

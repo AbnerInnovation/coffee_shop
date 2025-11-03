@@ -1,12 +1,11 @@
 <template>
   <div class="bg-blue-50 dark:bg-blue-900/30 p-4 rounded-md border border-blue-200 dark:border-blue-800">
     <h3 class="text-lg font-medium text-blue-900 dark:text-blue-100">
-      {{ t('app.views.cashRegister.lastCut') || 'Last Cut' }}
+      {{ t('app.views.cashRegister.lastCut') }}
     </h3>
     <div v-if="isLoading" class="flex items-center justify-center py-2">
       <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-      <span class="ml-2 text-blue-600 dark:text-blue-400">{{ t('app.views.cashRegister.loading') ||
-        'Loading...' }}</span>
+      <span class="ml-2 text-blue-600 dark:text-blue-400">{{ t('app.views.cashRegister.loading') }}</span>
     </div>
     <div v-else-if="lastCut" class="space-y-4">
       <div class="grid grid-cols-2 gap-4">
@@ -20,10 +19,10 @@
         </div>
         <div class="text-right">
           <p class="text-base text-gray-700 dark:text-gray-300">
-            Session #{{ lastCut.session_id }}
+            {{ t('app.views.cashRegister.sessionNumber') }} #{{ lastCut.session_id }}
           </p>
           <p class="text-sm text-gray-600 dark:text-gray-400">
-            {{ lastCut.total_transactions || 0 }} transactions
+            {{ lastCut.total_transactions || 0 }} {{ t('app.views.cashRegister.transactions') }}
           </p>
         </div>
       </div>
@@ -31,31 +30,27 @@
       <!-- Payment Breakdown -->
       <div class="border-t border-blue-200 dark:border-blue-800 pt-3">
         <h4 class="text-base font-medium text-blue-900 dark:text-blue-100 mb-2">
-          {{ t('app.views.cashRegister.paymentBreakdown') || 'Payment Breakdown' }}
+          {{ t('app.views.cashRegister.paymentBreakdown') }}
         </h4>
         <div class="flex flex-col text-sm space-y-1">
           <div v-if="lastCut.payment_breakdown?.cash !== undefined || lastCut.cash_payments !== undefined"
             class="flex justify-between">
-            <span class="text-gray-600 dark:text-gray-400">{{ t('app.views.cashRegister.cash') || 'Cash'
-              }}:</span>
+            <span class="text-gray-600 dark:text-gray-400">{{ t('app.views.cashRegister.cash') }}:</span>
             <span class="font-medium text-gray-900 dark:text-gray-100">${{ (lastCut.payment_breakdown?.cash || lastCut.cash_payments ||
               0).toFixed(2) }}</span>
           </div>
           <div v-if="lastCut.payment_breakdown?.card !== undefined || lastCut.card_payments !== undefined"
             class="flex justify-between">
-            <span class="text-gray-600 dark:text-gray-400">{{ t('app.views.cashRegister.card') || 'Card'
-              }}:</span>
+            <span class="text-gray-600 dark:text-gray-400">{{ t('app.views.cashRegister.card') }}:</span>
             <span class="font-medium text-gray-900 dark:text-gray-100">${{ (lastCut.payment_breakdown?.card || lastCut.card_payments ||
               0).toFixed(2) }}</span>
           </div>
           <div v-if="lastCut.payment_breakdown?.digital !== undefined" class="flex justify-between">
-            <span class="text-gray-600 dark:text-gray-400">{{ t('app.views.cashRegister.digital') ||
-              'Digital' }}:</span>
+            <span class="text-gray-600 dark:text-gray-400">{{ t('app.views.cashRegister.digital') }}:</span>
             <span class="font-medium text-gray-900 dark:text-gray-100">${{ (lastCut.payment_breakdown?.digital || 0).toFixed(2) }}</span>
           </div>
           <div v-if="lastCut.payment_breakdown?.other !== undefined" class="flex justify-between">
-            <span class="text-gray-600 dark:text-gray-400">{{ t('app.views.cashRegister.other') || 'Other'
-              }}:</span>
+            <span class="text-gray-600 dark:text-gray-400">{{ t('app.views.cashRegister.other') }}:</span>
             <span class="font-medium text-gray-900 dark:text-gray-100">${{ (lastCut.payment_breakdown?.other || 0).toFixed(2) }}</span>
           </div>
         </div>
@@ -64,34 +59,30 @@
       <!-- Transaction Summary -->
       <div class="border-t border-blue-200 dark:border-blue-800 pt-3">
         <h4 class="text-base font-medium text-blue-900 dark:text-blue-100 mb-2">
-          {{ t('app.views.cashRegister.transactionSummary') || 'Transaction Summary' }}
+          {{ t('app.views.cashRegister.transactionSummary') }}
         </h4>
         <div class="grid grid-cols-2 gap-2 text-sm">
           <div class="flex justify-between">
-            <span class="text-gray-600 dark:text-gray-400">{{ t('app.views.cashRegister.totalSales') ||
-              'Sales' }}:</span>
+            <span class="text-gray-600 dark:text-gray-400">{{ t('app.views.cashRegister.totalSales') }}:</span>
             <span class="font-medium text-gray-900 dark:text-gray-100">${{ (lastCut.total_sales || 0).toFixed(2) }}</span>
           </div>
           <div class="flex justify-between">
-            <span class="text-gray-600 dark:text-gray-400">{{ t('app.views.cashRegister.totalRefunds') ||
-              'Refunds' }}:</span>
+            <span class="text-gray-600 dark:text-gray-400">{{ t('app.views.cashRegister.totalRefunds') }}:</span>
             <span class="font-medium text-gray-900 dark:text-gray-100">${{ (lastCut.total_refunds || 0).toFixed(2) }}</span>
           </div>
           <div class="flex justify-between">
-            <span class="text-gray-600 dark:text-gray-400">{{ t('app.views.cashRegister.totalTips') ||
-              'Tips' }}:</span>
+            <span class="text-gray-600 dark:text-gray-400">{{ t('app.views.cashRegister.totalTips') }}:</span>
             <span class="font-medium text-gray-900 dark:text-gray-100">${{ (lastCut.total_tips || 0).toFixed(2) }}</span>
           </div>
           <div class="flex justify-between">
-            <span class="text-gray-600 dark:text-gray-400">{{ t('app.views.cashRegister.totalExpenses') ||
-              'Expenses' }}:</span>
+            <span class="text-gray-600 dark:text-gray-400">{{ t('app.views.cashRegister.totalExpenses') }}:</span>
             <span class="font-medium text-red-600 dark:text-red-400">${{ (lastCut.total_expenses || 0).toFixed(2) }}</span>
           </div>
         </div>
       </div>
     </div>
     <p v-else class="text-gray-600 dark:text-gray-400">
-      {{ t('app.views.cashRegister.noLastCut') || 'No cuts yet' }}
+      {{ t('app.views.cashRegister.noLastCut') }}
     </p>
   </div>
 </template>
@@ -112,12 +103,12 @@ const props = withDefaults(defineProps<Props>(), {
 const { t } = useI18n()
 
 const formatDate = (dateString: string) => {
-  if (!dateString) return 'No date'
+  if (!dateString) return t('app.common.na')
   try {
     return new Date(dateString).toLocaleString()
   } catch (error) {
     console.error('Error formatting date:', dateString, error)
-    return 'Invalid date'
+    return t('app.common.na')
   }
 }
 </script>

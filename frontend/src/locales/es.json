@@ -187,6 +187,8 @@
         "allStatuses": "Todos los Estados",
         "statusOpen": "Abierta",
         "statusClosed": "Cerrada",
+        "statusOpenBadge": "ABIERTA",
+        "statusClosedBadge": "CERRADA",
         "openedBy": "Abierta por",
         "finalBalance": "Final",
         "sessions": "sesiones",
@@ -854,7 +856,9 @@
       "days": "días",
       "yes": "Sí",
       "no": "No",
-      "created_at": "Creado el"
+      "created_at": "Creado el",
+      "unknown": "Desconocido",
+      "na": "N/A"
     },
     "subscription": {
       "title": "Mi Suscripción",
@@ -951,7 +955,9 @@
         "edit": "Editar",
         "delete": "Eliminar",
         "activate": "Activar",
-        "deactivate": "Desactivar"
+        "deactivate": "Desactivar",
+        "previous": "Anterior",
+        "next": "Siguiente"
       },
       "staff_types": {
         "waiter": "Mesero",
