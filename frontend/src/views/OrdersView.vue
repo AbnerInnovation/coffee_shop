@@ -293,6 +293,9 @@ const handlePaymentCompleted = async (updatedOrder: any) => {
 
     // Refresh the orders list
     await fetchOrders(true);
+    
+    // Update all tab counts after payment completion
+    await fetchTabCounts();
 
     // Emit event to refresh cash register if it's open
     window.dispatchEvent(new CustomEvent('orderPaymentCompleted', {
