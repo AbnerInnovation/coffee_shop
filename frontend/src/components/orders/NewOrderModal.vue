@@ -227,9 +227,9 @@
                     </div>
 
                     <!-- Extras Selector -->
-                    <div class="mt-4 border-t border-gray-200 dark:border-gray-700 pt-4">
+                    <!-- <div class="mt-4 border-t border-gray-200 dark:border-gray-700 pt-4">
                       <ExtrasSelector v-model="itemExtras" />
-                    </div>
+                    </div> -->
 
                     <!-- Add to Order Button -->
                     <div class="mt-4 flex justify-end space-x-2">
