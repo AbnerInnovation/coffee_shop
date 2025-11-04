@@ -242,7 +242,7 @@
                 </div>
                 
                 <!-- Payment Method Selection -->
-                <div v-if="!order.is_paid && order.status !== 'cancelled' && showPaymentMethodSelector" class="mb-4 p-3 sm:p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                <div v-if="!order.is_paid && order.status !== 'cancelled' && showPaymentMethodSelector && canProcessPayments" class="mb-4 p-3 sm:p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
                   <h4 class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">{{$t('app.views.orders.payment.select_method') || 'Select Payment Method'}}</h4>
                   <div class="grid grid-cols-2 gap-2 sm:gap-3">
                     <button
@@ -271,7 +271,7 @@
                     {{$t('app.forms.edit')}}
                   </button>
                   <button
-                    v-if="!order.is_paid && order.status !== 'cancelled'"
+                    v-if="!order.is_paid && order.status !== 'cancelled' && canProcessPayments"
                     type="button"
                     class="inline-flex w-full justify-center rounded-md border border-transparent bg-indigo-600 px-3 py-2 sm:px-4 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:col-start-2"
                     @click="showPaymentMethodSelector ? completePayment() : showPaymentMethodSelector = true"
@@ -320,6 +320,7 @@ import { useI18n } from 'vue-i18n'
 import { useToast } from '@/composables/useToast'
 import { useConfirm } from '@/composables/useConfirm'
 import { useTheme } from '@/composables/useTheme'
+import { usePermissions } from '@/composables/usePermissions'
 
 const props = defineProps({
   open: {
@@ -346,11 +347,12 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(['close', 'status-update', 'paymentCompleted', 'openCashRegister']);
+const emit = defineEmits(['close', 'status-update', 'paymentCompleted', 'openCashRegister', 'edit-order']);
 
 const { confirm } = useConfirm();
 const { showSuccess, showError } = useToast();
 const { t } = useI18n();
+const { canProcessPayments } = usePermissions();
 const isMounted = ref(false);
 
 // Internal toast notification state
@@ -483,13 +485,13 @@ function updateStatus(newStatus) {
 }
 
 async function cancelOrder() {
-  const confirmed = await confirm({
-    title: 'Cancel Order',
-    message: 'Are you sure you want to cancel this order? This action cannot be undone.',
-    confirmText: 'Yes, cancel order',
-    cancelText: 'No, keep it',
-    confirmClass: 'bg-red-600 hover:bg-red-700 focus:ring-red-500'
-  });
+  const confirmed = await confirm(
+    'Cancel Order',
+    'Are you sure you want to cancel this order? This action cannot be undone.',
+    'Yes, cancel order',
+    'No, keep it',
+    'bg-red-600 hover:bg-red-700 focus:ring-red-500'
+  );
 
   if (confirmed) {
     updateStatus('Cancelled');
@@ -505,10 +507,10 @@ const showPaymentMethodSelector = ref(false)
 const selectedPaymentMethod = ref<'cash' | 'card' | 'digital' | 'other'>('cash')
 
 const paymentMethods = [
-  { value: 'cash', label: t('app.views.cashRegister.cash') || 'Cash', icon: BanknotesIcon },
-  { value: 'card', label: t('app.views.cashRegister.card') || 'Card', icon: CreditCardIcon },
-  { value: 'digital', label: t('app.views.cashRegister.digital') || 'Digital', icon: DevicePhoneMobileIcon },
-  { value: 'other', label: t('app.views.cashRegister.other') || 'Other', icon: EllipsisHorizontalIcon }
+  { value: 'cash' as const, label: t('app.views.cashRegister.cash') || 'Cash', icon: BanknotesIcon },
+  { value: 'card' as const, label: t('app.views.cashRegister.card') || 'Card', icon: CreditCardIcon },
+  { value: 'digital' as const, label: t('app.views.cashRegister.digital') || 'Digital', icon: DevicePhoneMobileIcon },
+  { value: 'other' as const, label: t('app.views.cashRegister.other') || 'Other', icon: EllipsisHorizontalIcon }
 ]
 
 async function completePayment() {
