@@ -9,12 +9,12 @@ from ...models.table import Table as TableModel
 from ...models.menu import MenuItem as MenuItemModel
 from ...models.restaurant import Restaurant
 from ...models.user import User
-from ...schemas.order import Order, OrderCreate, OrderUpdate, OrderItemCreate, OrderItemUpdate, OrderItem
+from ...schemas.order import Order, OrderCreate, OrderUpdate, OrderItemCreate, OrderItemUpdate, OrderItem, OrderItemExtraCreate, OrderItemExtraUpdate, OrderItemExtra
 from ...services import order as order_service
 from ...services.order import serialize_order_item
 from ...services.cash_register import create_transaction_from_order
 from ...services.user import get_current_active_user
-from ...core.dependencies import get_current_restaurant
+from ...core.dependencies import get_current_restaurant, get_current_user_with_active_subscription
 from ...core.exceptions import ResourceNotFoundError, ValidationError, ConflictError, DatabaseError
 
 router = APIRouter(
@@ -74,7 +74,7 @@ async def create_order(
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     restaurant: Restaurant = Depends(get_current_restaurant),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_user_with_active_subscription)
 ) -> Order:
     """
     Create a new order.
@@ -105,7 +105,7 @@ async def read_order(order_id: int, db: Session = Depends(get_db), restaurant: R
 
 
 @router.put("/{order_id}", response_model=Order)
-async def update_order(order_id: int, order: OrderUpdate, db: Session = Depends(get_db), current_user = Depends(get_current_active_user)) -> Order:
+async def update_order(order_id: int, order: OrderUpdate, db: Session = Depends(get_db), current_user = Depends(get_current_user_with_active_subscription)) -> Order:
     """
     Update an order.
     """
@@ -228,7 +228,7 @@ async def update_order(order_id: int, order: OrderUpdate, db: Session = Depends(
 
 
 @router.delete("/{order_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_order(order_id: int, db: Session = Depends(get_db)) -> None:
+async def delete_order(order_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user_with_active_subscription)) -> None:
     """
     Delete an order.
     """
@@ -240,7 +240,7 @@ async def delete_order(order_id: int, db: Session = Depends(get_db)) -> None:
 
 
 @router.post("/{order_id}/items", response_model=OrderItem, status_code=status.HTTP_201_CREATED)
-async def add_order_item(order_id: int, item: OrderItemCreate, db: Session = Depends(get_db)) -> OrderItem:
+async def add_order_item(order_id: int, item: OrderItemCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user_with_active_subscription)) -> OrderItem:
     """
     Add an item to an existing order.
     """
@@ -276,7 +276,8 @@ async def add_multiple_items_to_order(
     order_id: int, 
     items: List[OrderItemCreate], 
     db: Session = Depends(get_db),
-    restaurant: Restaurant = Depends(get_current_restaurant)
+    restaurant: Restaurant = Depends(get_current_restaurant),
+    current_user: User = Depends(get_current_user_with_active_subscription)
 ) -> Order:
     """
     Add multiple items to an existing order at once.
@@ -326,7 +327,7 @@ async def add_multiple_items_to_order(
 
 
 @router.put("/{order_id}/items/{item_id}", response_model=OrderItem)
-async def update_order_item(order_id: int, item_id: int, item: OrderItemUpdate, db: Session = Depends(get_db)) -> OrderItem:
+async def update_order_item(order_id: int, item_id: int, item: OrderItemUpdate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user_with_active_subscription)) -> OrderItem:
     """
     Update an order item.
     """
@@ -342,7 +343,8 @@ async def update_order_item_status(
     order_id: int, 
     item_id: int, 
     status: str, 
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user_with_active_subscription)
 ) -> OrderItem:
     """
     Update the status of an order item.
@@ -452,3 +454,195 @@ async def mark_order_as_paid(
     except Exception as e:
         db.rollback()
         raise DatabaseError(f"Error processing payment: {str(e)}", operation="update")
+
+
+# -----------------------------
+# Order Item Extras Endpoints
+# -----------------------------
+
+@router.post("/{order_id}/items/{item_id}/extras", response_model=OrderItemExtra, status_code=status.HTTP_201_CREATED)
+async def add_extra_to_order_item(
+    order_id: int,
+    item_id: int,
+    extra: OrderItemExtraCreate,
+    db: Session = Depends(get_db),
+    restaurant: Restaurant = Depends(get_current_restaurant)
+) -> OrderItemExtra:
+    """
+    Add an extra (e.g., extra tortillas, extra guacamole) to an order item.
+    """
+    from ...models.order_item_extra import OrderItemExtra as OrderItemExtraModel
+    from datetime import datetime, timezone
+    
+    # Verify order exists and belongs to restaurant
+    db_order = db.query(OrderModel).filter(
+        OrderModel.id == order_id,
+        OrderModel.restaurant_id == restaurant.id,
+        OrderModel.deleted_at.is_(None)
+    ).first()
+    if not db_order:
+        raise ResourceNotFoundError("Order", order_id)
+    
+    # Verify order item exists and belongs to the order
+    db_item = db.query(OrderItemModel).filter(
+        OrderItemModel.id == item_id,
+        OrderItemModel.order_id == order_id,
+        OrderItemModel.deleted_at.is_(None)
+    ).first()
+    if not db_item:
+        raise ResourceNotFoundError("OrderItem", item_id)
+    
+    # Create the extra
+    db_extra = OrderItemExtraModel(
+        order_item_id=item_id,
+        name=extra.name,
+        price=extra.price,
+        quantity=extra.quantity,
+        created_at=datetime.now(timezone.utc),
+        updated_at=datetime.now(timezone.utc)
+    )
+    db.add(db_extra)
+    
+    # Update order total
+    extra_total = extra.price * extra.quantity
+    db_order.total_amount = (db_order.total_amount or 0) + extra_total
+    db_order.updated_at = datetime.now(timezone.utc)
+    
+    db.commit()
+    db.refresh(db_extra)
+    
+    return db_extra
+
+
+@router.get("/{order_id}/items/{item_id}/extras", response_model=List[OrderItemExtra])
+async def get_order_item_extras(
+    order_id: int,
+    item_id: int,
+    db: Session = Depends(get_db),
+    restaurant: Restaurant = Depends(get_current_restaurant)
+) -> List[OrderItemExtra]:
+    """
+    Get all extras for a specific order item.
+    """
+    from ...models.order_item_extra import OrderItemExtra as OrderItemExtraModel
+    
+    # Verify order exists and belongs to restaurant
+    db_order = db.query(OrderModel).filter(
+        OrderModel.id == order_id,
+        OrderModel.restaurant_id == restaurant.id,
+        OrderModel.deleted_at.is_(None)
+    ).first()
+    if not db_order:
+        raise ResourceNotFoundError("Order", order_id)
+    
+    # Verify order item exists
+    db_item = db.query(OrderItemModel).filter(
+        OrderItemModel.id == item_id,
+        OrderItemModel.order_id == order_id,
+        OrderItemModel.deleted_at.is_(None)
+    ).first()
+    if not db_item:
+        raise ResourceNotFoundError("OrderItem", item_id)
+    
+    # Get all extras for this item
+    extras = db.query(OrderItemExtraModel).filter(
+        OrderItemExtraModel.order_item_id == item_id
+    ).all()
+    
+    return extras
+
+
+@router.put("/{order_id}/items/{item_id}/extras/{extra_id}", response_model=OrderItemExtra)
+async def update_order_item_extra(
+    order_id: int,
+    item_id: int,
+    extra_id: int,
+    extra_update: OrderItemExtraUpdate,
+    db: Session = Depends(get_db),
+    restaurant: Restaurant = Depends(get_current_restaurant)
+) -> OrderItemExtra:
+    """
+    Update an extra on an order item.
+    """
+    from ...models.order_item_extra import OrderItemExtra as OrderItemExtraModel
+    from datetime import datetime, timezone
+    
+    # Verify order exists and belongs to restaurant
+    db_order = db.query(OrderModel).filter(
+        OrderModel.id == order_id,
+        OrderModel.restaurant_id == restaurant.id,
+        OrderModel.deleted_at.is_(None)
+    ).first()
+    if not db_order:
+        raise ResourceNotFoundError("Order", order_id)
+    
+    # Verify extra exists
+    db_extra = db.query(OrderItemExtraModel).filter(
+        OrderItemExtraModel.id == extra_id,
+        OrderItemExtraModel.order_item_id == item_id
+    ).first()
+    if not db_extra:
+        raise ResourceNotFoundError("OrderItemExtra", extra_id)
+    
+    # Calculate old total for this extra
+    old_total = db_extra.price * db_extra.quantity
+    
+    # Update fields
+    update_data = extra_update.dict(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(db_extra, field, value)
+    
+    db_extra.updated_at = datetime.now(timezone.utc)
+    
+    # Calculate new total and update order
+    new_total = db_extra.price * db_extra.quantity
+    db_order.total_amount = (db_order.total_amount or 0) - old_total + new_total
+    db_order.updated_at = datetime.now(timezone.utc)
+    
+    db.commit()
+    db.refresh(db_extra)
+    
+    return db_extra
+
+
+@router.delete("/{order_id}/items/{item_id}/extras/{extra_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_order_item_extra(
+    order_id: int,
+    item_id: int,
+    extra_id: int,
+    db: Session = Depends(get_db),
+    restaurant: Restaurant = Depends(get_current_restaurant)
+):
+    """
+    Delete an extra from an order item.
+    """
+    from ...models.order_item_extra import OrderItemExtra as OrderItemExtraModel
+    from datetime import datetime, timezone
+    
+    # Verify order exists and belongs to restaurant
+    db_order = db.query(OrderModel).filter(
+        OrderModel.id == order_id,
+        OrderModel.restaurant_id == restaurant.id,
+        OrderModel.deleted_at.is_(None)
+    ).first()
+    if not db_order:
+        raise ResourceNotFoundError("Order", order_id)
+    
+    # Verify extra exists
+    db_extra = db.query(OrderItemExtraModel).filter(
+        OrderItemExtraModel.id == extra_id,
+        OrderItemExtraModel.order_item_id == item_id
+    ).first()
+    if not db_extra:
+        raise ResourceNotFoundError("OrderItemExtra", extra_id)
+    
+    # Update order total
+    extra_total = db_extra.price * db_extra.quantity
+    db_order.total_amount = (db_order.total_amount or 0) - extra_total
+    db_order.updated_at = datetime.now(timezone.utc)
+    
+    # Delete the extra
+    db.delete(db_extra)
+    db.commit()
+    
+    return None

@@ -73,9 +73,30 @@ api.interceptors.response.use(
       window.location.href = '/login';
     }
     
-    // For 403 errors, DON'T logout users
-    // Permission errors are not authentication errors
-    // User is authenticated, just lacks permission for this resource
+    // For 403 errors, check if it's a subscription issue
+    if (error.response?.status === 403) {
+      const errorMessage = (error.response?.data as any)?.detail || '';
+      
+      // Check if error is subscription-related
+      const isSubscriptionError = 
+        errorMessage.includes('suscripción') ||
+        errorMessage.includes('subscription') ||
+        errorMessage.includes('expirado') ||
+        errorMessage.includes('expired') ||
+        errorMessage.includes('suspendida') ||
+        errorMessage.includes('suspended');
+      
+      if (isSubscriptionError) {
+        // Dispatch custom event for subscription error
+        window.dispatchEvent(new CustomEvent('subscription-error', {
+          detail: { message: errorMessage }
+        }));
+      }
+      
+      // DON'T logout users for 403 errors
+      // Permission errors are not authentication errors
+      // User is authenticated, just lacks permission for this resource
+    }
     
     return Promise.reject(error);
   }

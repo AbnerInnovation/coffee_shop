@@ -111,6 +111,15 @@ export interface SubscriptionUsage {
   };
 }
 
+export interface SubscriptionStatus {
+  is_active: boolean;
+  status: string;
+  message: string;
+  can_operate: boolean;
+  days_remaining: number;
+  plan_name?: string;
+}
+
 class SubscriptionService {
   /**
    * Get current restaurant's subscription
@@ -158,6 +167,13 @@ class SubscriptionService {
    */
   async getPlanById(planId: number): Promise<SubscriptionPlan> {
     return await api.get(`/subscriptions/plans/${planId}`);
+  }
+
+  /**
+   * Check subscription status (active/expired/suspended)
+   */
+  async checkStatus(): Promise<SubscriptionStatus> {
+    return await api.get('/subscriptions/status');
   }
 }
 

@@ -12,6 +12,9 @@ const router = createRouter({
   }
 });
 
+// Track if we've already tried to load user in this session
+let authCheckAttempted = false;
+
 /**
  * Global navigation guard with permission checks
  * Uses the centralized permissions module for consistent access control
@@ -22,26 +25,34 @@ router.beforeEach(async (to, from, next) => {
   // Wait for auth check to complete if there's a token but no user yet
   const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
   
-  if (token && !authStore.user) {
-    // If there's a token but no user, we need to load the user
-    if (!authStore.loading) {
-      try {
-        await authStore.checkAuth();
-      } catch (error) {
-        console.error('Auth check failed in router guard:', error);
-        // If auth check fails, clear token and redirect to login
-        if (to.meta.requiresAuth) {
-          next({ name: 'Login', query: { redirect: to.fullPath } });
-          return;
-        }
+  if (token && !authStore.user && !authCheckAttempted) {
+    // Mark that we're attempting auth check to prevent multiple simultaneous attempts
+    authCheckAttempted = true;
+    
+    try {
+      // Wait for auth check to complete
+      await authStore.checkAuth();
+    } catch (error) {
+      console.error('Auth check failed in router guard:', error);
+      // If auth check fails, clear token and redirect to login
+      if (to.meta.requiresAuth) {
+        next({ name: 'Login', query: { redirect: to.fullPath } });
+        return;
       }
-    } else {
-      // If already loading, wait for it to complete (max 2 seconds)
-      let attempts = 0;
-      while (authStore.loading && attempts < 20) {
-        await new Promise(resolve => setTimeout(resolve, 100));
-        attempts++;
-      }
+    }
+  } else if (token && !authStore.user && authCheckAttempted && authStore.loading) {
+    // If we already attempted but still loading, wait for it to complete (max 3 seconds)
+    let attempts = 0;
+    while (authStore.loading && attempts < 30) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+      attempts++;
+    }
+    
+    // If still no user after waiting, something went wrong
+    if (!authStore.user && to.meta.requiresAuth) {
+      console.warn('Auth check timed out, redirecting to login');
+      next({ name: 'Login', query: { redirect: to.fullPath } });
+      return;
     }
   }
   

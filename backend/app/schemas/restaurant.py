@@ -150,3 +150,15 @@ class RestaurantPublic(BaseModel):
     
     class Config:
         from_attributes = True
+
+
+class RestaurantCreationResponse(BaseModel):
+    """Response schema for restaurant creation with welcome message"""
+    restaurant: Restaurant
+    admin_email: str
+    admin_password: str
+    restaurant_url: str
+    trial_days: int
+    trial_expires: datetime
+    welcome_message: str
+    shareable_message: str

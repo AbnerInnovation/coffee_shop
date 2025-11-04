@@ -3,7 +3,6 @@ import vue from '@vitejs/plugin-vue';
 import { VitePWA } from 'vite-plugin-pwa';
 import { fileURLToPath, URL } from 'node:url';
 import { resolve } from 'node:path';
-import { createPinia } from 'pinia';
 
 export default defineConfig(({ mode }) => {
   // Load env file based on `mode` in the current working directory.
@@ -18,7 +17,6 @@ export default defineConfig(({ mode }) => {
           }
         }
       }),
-      createPinia(),
       VitePWA({
         registerType: 'autoUpdate',
         includeAssets: ['favicon.png', 'icons/*.png'],

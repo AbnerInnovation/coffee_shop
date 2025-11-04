@@ -13,9 +13,16 @@ export interface OrderItemLocal {
   total_price: number;
   notes?: string;
   variant_id?: number | null;
+  variant_name?: string;
   status?: string;
   variant?: { id: number; name: string } | null;
   menu_item?: { id: number; name: string; category?: string; price?: number };
+  extras?: Array<{
+    id: number;
+    name: string;
+    price: number;
+    quantity: number;
+  }>;
 }
 
 export interface OrderWithLocalFields {
@@ -66,8 +73,29 @@ export function getOrderItemsSummary(items: OrderItemLocal[]): string {
   if (!items || !Array.isArray(items)) return '';
   return items.map(item => {
     let itemText = `${item.quantity}x ${item.name}`;
-    const price = item.unit_price || 0;
-    itemText += ` = $${(price * item.quantity).toFixed(2)}`;
+    
+    // Add variant if present
+    if (item.variant_name) {
+      itemText += ` (${item.variant_name})`;
+    }
+    
+    // Calculate item total including extras
+    let itemTotal = (item.unit_price || 0) * item.quantity;
+    
+    // Add extras to the summary
+    if (item.extras && item.extras.length > 0) {
+      const extrasText = item.extras.map(extra => 
+        `+${extra.name} ($${extra.price.toFixed(2)})`
+      ).join(', ');
+      itemText += ` [${extrasText}]`;
+      
+      // Add extras to total
+      item.extras.forEach(extra => {
+        itemTotal += extra.price * extra.quantity;
+      });
+    }
+    
+    itemText += ` = $${itemTotal.toFixed(2)}`;
     return itemText;
   }).join(', ');
 }
@@ -109,13 +137,21 @@ export function transformOrderToLocal(order: any, t: any): OrderWithLocalFields 
 
     const unitPrice = item.unit_price || 0;
     const quantity = item.quantity || 0;
-    const total = unitPrice * quantity;
+    let total = unitPrice * quantity;
+    
+    // Add extras to total if present
+    if (item.extras && Array.isArray(item.extras)) {
+      item.extras.forEach((extra: any) => {
+        total += (extra.price || 0) * (extra.quantity || 0);
+      });
+    }
 
     return {
       id: item.id,
       menu_item_id: item.menu_item_id,
       name: itemName,
       variant_id: item.variant_id,
+      variant_name: variantName,
       quantity: quantity,
       unit_price: unitPrice,
       total_price: total,
@@ -127,7 +163,13 @@ export function transformOrderToLocal(order: any, t: any): OrderWithLocalFields 
         name: item.menu_item.name,
         category: item.menu_item.category,
         price: item.menu_item.price
-      } : undefined
+      } : undefined,
+      extras: item.extras && Array.isArray(item.extras) ? item.extras.map((extra: any) => ({
+        id: extra.id,
+        name: extra.name,
+        price: extra.price || 0,
+        quantity: extra.quantity || 1
+      })) : []
     };
   }) : [];
 

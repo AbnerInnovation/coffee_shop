@@ -159,6 +159,12 @@
                                 <div v-if="item.special_instructions" class="text-xs text-gray-500 dark:text-gray-400 mt-1">
                                   <span class="font-medium">{{$t('app.views.orders.modals.details.special_instructions')}}</span> {{ item.special_instructions }}
                                 </div>
+                                <!-- Show extras if any -->
+                                <div v-if="item.extras && item.extras.length > 0" class="mt-1 space-y-0.5">
+                                  <p v-for="(extra, idx) in item.extras" :key="idx" class="text-xs text-indigo-600 dark:text-indigo-400">
+                                    + {{ extra.name }} ({{ extra.quantity }}x ${{ extra.price.toFixed(2) }})
+                                  </p>
+                                </div>
                                 <!-- Show price on mobile (hidden on desktop) -->
                                 <div class="sm:hidden text-xs text-gray-500 dark:text-gray-400 mt-1">
                                   ${{ (item.unit_price || 0).toFixed(2) }} c/u
@@ -182,7 +188,7 @@
                             </div>
                           </td>
                               <td class="px-2 sm:px-4 py-2 sm:py-3 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100 text-right align-top">
-                                ${{ (item.quantity * (item.price || item.unit_price || 0)).toFixed(2) }}
+                                ${{ calculateItemTotal(item).toFixed(2) }}
                               </td>
                             </tr>
                           </tbody>
@@ -392,6 +398,21 @@ const getCategoryVisibility = (item: any): boolean | null => {
   
   // If category is just a string, we don't have visibility info
   return null;
+};
+
+// Calculate item total including extras
+const calculateItemTotal = (item: any): number => {
+  let total = item.quantity * (item.price || item.unit_price || 0);
+  
+  // Add extras to total
+  if (item.extras && item.extras.length > 0) {
+    const extrasTotal = item.extras.reduce((sum: number, extra: any) => {
+      return sum + (extra.price * extra.quantity);
+    }, 0);
+    total += extrasTotal;
+  }
+  
+  return total;
 };
 
 // Calculate total savings from discounts

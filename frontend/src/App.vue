@@ -31,6 +31,15 @@
       @close="showNewOrderModal = false"
       @order-created="handleOrderCreated"
     />
+
+    <!-- Account Suspended Modal -->
+    <AccountSuspendedModal
+      :is-open="showSuspendedModal"
+      :message="subscriptionStatus?.message || ''"
+      :status="subscriptionStatus?.status"
+      :days-remaining="subscriptionStatus?.days_remaining"
+      @close="closeSuspendedModal"
+    />
   </div>
 </template>
 
@@ -41,12 +50,17 @@ import { useAuthStore } from '@/stores/auth';
 import AppNavbar from '@/components/layout/AppNavbar.vue';
 import ConfirmDialog from '@/components/ui/ConfirmationDialog.vue';
 import NewOrderModal from '@/components/orders/NewOrderModal.vue';
+import AccountSuspendedModal from '@/components/subscription/AccountSuspendedModal.vue';
 import { subscriptionService } from '@/services/subscriptionService';
 import { hasRestaurantContext } from '@/utils/subdomain';
+import { useSubscriptionCheck } from '@/composables/useSubscriptionCheck';
 
 const authStore = useAuthStore();
 const route = useRoute();
 const router = useRouter();
+
+// Subscription check
+const { subscriptionStatus, showSuspendedModal, closeSuspendedModal } = useSubscriptionCheck();
 
 // Subscription features
 const subscriptionFeatures = ref({

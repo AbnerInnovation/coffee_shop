@@ -5,6 +5,7 @@ from typing import Optional
 from ..models.restaurant import Restaurant
 from ..models.user import User, UserRole
 from ..middleware.restaurant import get_restaurant_from_request
+from ..middleware.subscription_status import SubscriptionStatusMiddleware
 from ..services.user import get_current_active_user
 from ..db.base import get_db
 
@@ -55,6 +56,31 @@ async def get_current_user_with_restaurant(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You don't have access to this restaurant"
         )
+    
+    return current_user
+
+
+async def get_current_user_with_active_subscription(
+    current_user: User = Depends(get_current_user_with_restaurant),
+    restaurant: Restaurant = Depends(get_current_restaurant),
+    db: Session = Depends(get_db)
+) -> User:
+    """
+    Dependency to get current user and validate:
+    1. They have access to the current restaurant
+    2. The restaurant has an active subscription
+    
+    - SYSADMIN: Bypasses subscription check
+    - Other roles: Requires active subscription
+    
+    Raises HTTPException if subscription is expired or suspended.
+    """
+    # Check subscription status (SYSADMIN bypasses this check)
+    SubscriptionStatusMiddleware.check_active_subscription(
+        db=db,
+        restaurant_id=restaurant.id,
+        user_role=current_user.role.value
+    )
     
     return current_user
 

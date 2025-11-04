@@ -32,6 +32,7 @@ from ...schemas.cash_register import (
 from ...services.user import get_current_active_user
 from ...services import cash_register as cash_register_service
 from ...models.user import User
+from ...core.dependencies import get_current_user_with_active_subscription
 
 router = APIRouter(
     prefix="/cash-register",
@@ -47,7 +48,7 @@ router = APIRouter(
 def create_session(
     session: CashRegisterSessionCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_user_with_active_subscription)
 ) -> CashRegisterSession:
     try:
         # Get restaurant_id from current user

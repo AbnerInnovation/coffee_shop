@@ -5,6 +5,7 @@ from .user import User, UserRole
 from .menu import MenuItem, MenuItemVariant, Category
 from .table import Table
 from .order import Order, OrderItem, OrderStatus
+from .order_item_extra import OrderItemExtra
 from .cash_register import (
     CashRegisterSession,
     CashTransaction,
@@ -26,7 +27,7 @@ __all__ = [
     "User", "UserRole",
     "MenuItem", "MenuItemVariant", "Category",
     "Table",
-    "Order", "OrderItem", "OrderStatus",
+    "Order", "OrderItem", "OrderStatus", "OrderItemExtra",
     "CashRegisterSession",
     "CashTransaction",
     "CashRegisterReport",

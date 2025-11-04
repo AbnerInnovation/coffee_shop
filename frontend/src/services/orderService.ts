@@ -2,6 +2,16 @@ import api from './api';
 
 export type OrderStatus = 'pending' | 'preparing' | 'ready' | 'completed' | 'cancelled';
 
+export interface OrderItemExtra {
+  id: number;
+  order_item_id: number;
+  name: string;
+  price: number;
+  quantity: number;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface OrderItem {
   id: number;
   menu_item_id: number;
@@ -29,6 +39,7 @@ export interface OrderItem {
     image_url: string;
     is_available: boolean;
   };
+  extras: OrderItemExtra[];
 }
 
 export interface CreateOrderItemData {
@@ -37,6 +48,11 @@ export interface CreateOrderItemData {
   quantity: number;
   special_instructions: string | null;
   unit_price: number;
+  extras?: Array<{
+    name: string;
+    price: number;
+    quantity: number;
+  }>;
 }
 
 export interface CreateOrderData {
@@ -207,6 +223,51 @@ const orderService = {
       return await api.get('/menu/items') as MenuItem[];
     } catch (error) {
       console.error('Error fetching menu items:', error);
+      throw error;
+    }
+  },
+
+  // Order Item Extras
+  async addExtraToOrderItem(orderId: number, itemId: number, extra: { name: string; price: number; quantity: number }): Promise<OrderItemExtra> {
+    try {
+      return await api.post(`/orders/${orderId}/items/${itemId}/extras`, extra) as OrderItemExtra;
+    } catch (error: any) {
+      if (error.response) {
+        throw new Error(error.response.data?.detail || 'Failed to add extra to order item');
+      }
+      throw error;
+    }
+  },
+
+  async getOrderItemExtras(orderId: number, itemId: number): Promise<OrderItemExtra[]> {
+    try {
+      return await api.get(`/orders/${orderId}/items/${itemId}/extras`) as OrderItemExtra[];
+    } catch (error: any) {
+      if (error.response) {
+        throw new Error(error.response.data?.detail || 'Failed to get extras');
+      }
+      throw error;
+    }
+  },
+
+  async updateOrderItemExtra(orderId: number, itemId: number, extraId: number, extra: { name?: string; price?: number; quantity?: number }): Promise<OrderItemExtra> {
+    try {
+      return await api.put(`/orders/${orderId}/items/${itemId}/extras/${extraId}`, extra) as OrderItemExtra;
+    } catch (error: any) {
+      if (error.response) {
+        throw new Error(error.response.data?.detail || 'Failed to update extra');
+      }
+      throw error;
+    }
+  },
+
+  async deleteOrderItemExtra(orderId: number, itemId: number, extraId: number): Promise<void> {
+    try {
+      await api.delete(`/orders/${orderId}/items/${itemId}/extras/${extraId}`);
+    } catch (error: any) {
+      if (error.response) {
+        throw new Error(error.response.data?.detail || 'Failed to delete extra');
+      }
       throw error;
     }
   },

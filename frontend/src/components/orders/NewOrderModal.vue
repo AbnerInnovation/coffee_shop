@@ -226,6 +226,11 @@
                         :placeholder="$t('app.views.orders.modals.new_order.special_requests_placeholder')" />
                     </div>
 
+                    <!-- Extras Selector -->
+                    <div class="mt-4 border-t border-gray-200 dark:border-gray-700 pt-4">
+                      <ExtrasSelector v-model="itemExtras" />
+                    </div>
+
                     <!-- Add to Order Button -->
                     <div class="mt-4 flex justify-end space-x-2">
                       <button type="button" class="px-3 py-2 text-sm font-medium text-gray-700 hover:text-gray-500 dark:hover:text-gray-300"
@@ -268,6 +273,12 @@
                           </span>
                         </div>
                         <p v-if="item.notes" class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ item.notes }}</p>
+                        <!-- Show extras if any -->
+                        <div v-if="item.extras && item.extras.length > 0" class="mt-1 space-y-0.5">
+                          <p v-for="(extra, idx) in item.extras" :key="idx" class="text-xs text-indigo-600 dark:text-indigo-400">
+                            + {{ extra.name }} ({{ extra.quantity }}x ${{ extra.price.toFixed(2) }})
+                          </p>
+                        </div>
                         <p v-if="isItemLocked(item)" class="text-xs text-orange-600 dark:text-orange-400 mt-1">
                           {{ t('app.views.orders.modals.new_order.item_locked') }}
                         </p>
@@ -495,7 +506,9 @@ import {
 import { XMarkIcon, PlusIcon, MinusIcon, ChevronDownIcon, BanknotesIcon, CreditCardIcon, DevicePhoneMobileIcon, EllipsisHorizontalIcon } from '@heroicons/vue/24/outline';
 import { useI18n } from 'vue-i18n';
 import SpecialNotesBuilder from './SpecialNotesBuilder.vue';
+import ExtrasSelector from './ExtrasSelector.vue';
 import type { MenuItemIngredients } from '../menu/IngredientsManager.vue';
+import type { Extra } from './ExtrasSelector.vue';
 
 // Import types
 import type { MenuItem as MenuItemType } from '@/types/menu';
@@ -539,6 +552,7 @@ interface OrderItemWithDetails {
   special_instructions?: string;
   unit_price?: number;
   status?: string; // Order item status: 'pending', 'preparing', 'ready', 'delivered'
+  extras?: Extra[];
 }
 
 // Props and Emits
@@ -568,6 +582,7 @@ const form = ref({
     notes?: string;
     special_instructions?: string;
     unit_price?: number;
+    extras?: Extra[];
   }>
 });
 
@@ -575,6 +590,7 @@ const selectedItem = ref<ExtendedMenuItem | null>(null);
 const selectedVariant = ref<MenuItemVariant | null>(null);
 const itemNotes = ref('');
 const itemSpecialNote = ref('');
+const itemExtras = ref<Extra[]>([]);
 const topNotes = ref<string[]>([]);
 const showItemModal = ref(false);
 const isEditMode = computed(() => { 
@@ -830,7 +846,8 @@ const selectedItems = computed<OrderItemWithDetails[]>(() => {
         quantity: item.quantity,
         notes: item.notes,
         special_instructions: item.special_instructions,
-        unit_price: item.unit_price
+        unit_price: item.unit_price,
+        extras: item.extras || []
       };
     });
 });
@@ -841,7 +858,18 @@ const calculateItemTotal = (item: OrderItemWithDetails) => {
     (typeof item.unit_price === 'string' ? parseFloat(item.unit_price) : item.unit_price) :
     (item.price !== undefined && item.price !== null ?
       (typeof item.price === 'string' ? parseFloat(item.price) : item.price) : 0);
-  return (price * (item.quantity || 0)).toFixed(2);
+  
+  let total = price * (item.quantity || 0);
+  
+  // Add extras to total
+  if (item.extras && item.extras.length > 0) {
+    const extrasTotal = item.extras.reduce((sum, extra) => {
+      return sum + (extra.price * extra.quantity);
+    }, 0);
+    total += extrasTotal;
+  }
+  
+  return total.toFixed(2);
 };
 
 // Add item with variant and notes
@@ -877,6 +905,10 @@ function addItemWithDetails() {
     if (finalNote) {
       existingItem.notes = finalNote;
     }
+    // Add extras to existing item
+    if (itemExtras.value.length > 0) {
+      existingItem.extras = [...(existingItem.extras || []), ...itemExtras.value];
+    }
   } else {
     // Add new item
     form.value.items.push({
@@ -885,7 +917,8 @@ function addItemWithDetails() {
       quantity: 1,
       unit_price: itemPrice,
       notes: finalNote || '',
-      special_instructions: ''
+      special_instructions: '',
+      extras: itemExtras.value.length > 0 ? [...itemExtras.value] : []
     });
   }
 
@@ -893,6 +926,7 @@ function addItemWithDetails() {
   showItemModal.value = false;
   itemNotes.value = '';
   itemSpecialNote.value = '';
+  itemExtras.value = [];
 }
 
 function increaseQuantity(item: OrderItemWithDetails) {
@@ -1043,6 +1077,7 @@ async function createOrder() {
           quantity: it.quantity,
           special_instructions: it.notes ?? null,
           unit_price: it.unit_price ?? 0,
+          extras: it.extras || [],
         })),
       };
 

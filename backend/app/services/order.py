@@ -43,7 +43,24 @@ def serialize_variant(variant: Optional[MenuItemVariant]) -> Optional[dict]:
         "description": getattr(variant, "description", None),
     }
 
+def serialize_order_item_extra(extra) -> dict:
+    """Serialize an order item extra"""
+    return {
+        "id": extra.id,
+        "order_item_id": extra.order_item_id,
+        "name": extra.name,
+        "price": float(extra.price) if extra.price is not None else 0.0,
+        "quantity": extra.quantity,
+        "created_at": extra.created_at,
+        "updated_at": extra.updated_at,
+    }
+
 def serialize_order_item(item: OrderItemModel) -> dict:
+    # Serialize extras if they exist
+    extras = []
+    if hasattr(item, 'extras') and item.extras:
+        extras = [serialize_order_item_extra(extra) for extra in item.extras]
+    
     return {
         "id": item.id,
         "order_id": item.order_id,
@@ -57,12 +74,20 @@ def serialize_order_item(item: OrderItemModel) -> dict:
         "created_at": item.created_at,
         "updated_at": item.updated_at,
         "menu_item": serialize_menu_item(item.menu_item),
+        "extras": extras,
     }
 
 def serialize_order(order: OrderModel) -> dict:
-    # Calculate subtotal from items
+    # Calculate subtotal from items including extras
     items = getattr(order, "items", [])
-    subtotal = sum(item.quantity * (item.unit_price or 0) for item in items)
+    subtotal = 0.0
+    for item in items:
+        # Add item price
+        subtotal += item.quantity * (item.unit_price or 0)
+        # Add extras price
+        if hasattr(item, 'extras') and item.extras:
+            for extra in item.extras:
+                subtotal += extra.quantity * (extra.price or 0)
     
     # For now, tax is 0 (can be configured later)
     tax = 0.0
@@ -185,9 +210,12 @@ def get_orders(
 
 def get_order(db: Session, order_id: int, restaurant_id: int, include_deleted: bool = False) -> Optional[dict]:
     try:
+        from ..models.order_item_extra import OrderItemExtra
+        
         query = db.query(OrderModel).options(
             joinedload(OrderModel.items).joinedload(OrderItemModel.menu_item),
             joinedload(OrderModel.items).joinedload(OrderItemModel.variant),
+            joinedload(OrderModel.items).joinedload(OrderItemModel.extras),
             joinedload(OrderModel.table),
             joinedload(OrderModel.user),
         ).filter(
@@ -263,7 +291,26 @@ def create_order_with_items(db: Session, order: OrderCreate, restaurant_id: int,
             updated_at=datetime.now(timezone.utc),
         )
         db.add(db_item)
+        db.flush()  # Flush to get the item ID for extras
+        
+        # Add item price to total
         total_amount += unit_price * item.quantity
+        
+        # Add extras if provided
+        if hasattr(item, 'extras') and item.extras:
+            from ..models.order_item_extra import OrderItemExtra
+            for extra_data in item.extras:
+                db_extra = OrderItemExtra(
+                    order_item_id=db_item.id,
+                    name=extra_data.name,
+                    price=extra_data.price,
+                    quantity=extra_data.quantity,
+                    created_at=datetime.now(timezone.utc),
+                    updated_at=datetime.now(timezone.utc)
+                )
+                db.add(db_extra)
+                # Add extra price to total
+                total_amount += extra_data.price * extra_data.quantity
 
     db_order.total_amount = total_amount
     db_order.updated_at = datetime.now(timezone.utc)

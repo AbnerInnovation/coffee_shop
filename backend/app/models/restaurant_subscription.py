@@ -101,11 +101,100 @@ class RestaurantSubscription(BaseModel):
         return self.status in [SubscriptionStatus.TRIAL, SubscriptionStatus.ACTIVE]
     
     @property
+    def can_operate(self) -> bool:
+        """
+        Check if restaurant can operate based on subscription status and expiration.
+        This is the single source of truth for subscription validation.
+        """
+        # Check status first
+        if self.status not in [SubscriptionStatus.TRIAL, SubscriptionStatus.ACTIVE]:
+            return False
+        
+        # For TRIAL, check if trial has expired
+        if self.status == SubscriptionStatus.TRIAL and self.is_trial_expired:
+            return False
+        
+        # For ACTIVE, check if current period has ended
+        if self.status == SubscriptionStatus.ACTIVE:
+            if self.current_period_end:
+                now = datetime.utcnow()
+                # Remove timezone info from both for comparison if needed
+                period_end = self.current_period_end.replace(tzinfo=None) if self.current_period_end.tzinfo else self.current_period_end
+                
+                # Debug logging
+                print(f"[CAN_OPERATE] Now (UTC): {now}")
+                print(f"[CAN_OPERATE] Period end: {period_end}")
+                print(f"[CAN_OPERATE] Period end < now: {period_end < now}")
+                print(f"[CAN_OPERATE] Days until renewal: {self.days_until_renewal}")
+                
+                # If period has ended, subscription is expired
+                if period_end < now:
+                    print(f"[CAN_OPERATE] Subscription {self.id} period has ended - cannot operate")
+                    return False
+        
+        return True
+    
+    @property
+    def is_expired(self) -> bool:
+        """
+        Check if subscription period has expired (regardless of status field).
+        This checks the actual dates, not just the status field.
+        """
+        if self.status == SubscriptionStatus.TRIAL:
+            return self.is_trial_expired
+        
+        if self.status == SubscriptionStatus.ACTIVE:
+            if self.current_period_end:
+                now = datetime.utcnow()
+                period_end = self.current_period_end.replace(tzinfo=None) if self.current_period_end.tzinfo else self.current_period_end
+                return period_end < now
+        
+        # If status is already EXPIRED, CANCELLED, etc.
+        return self.status not in [SubscriptionStatus.TRIAL, SubscriptionStatus.ACTIVE]
+    
+    def check_and_update_expiration(self, db_session) -> bool:
+        """
+        Check if subscription has expired and update status automatically.
+        Returns True if status was updated, False otherwise.
+        
+        This should be called whenever subscription is accessed to ensure
+        the status field reflects the actual expiration state.
+        """
+        # Skip if already in a terminal state
+        if self.status in [SubscriptionStatus.EXPIRED, SubscriptionStatus.CANCELLED]:
+            return False
+        
+        # Check if trial has expired
+        if self.status == SubscriptionStatus.TRIAL and self.is_trial_expired:
+            print(f"[AUTO-EXPIRE] Trial subscription {self.id} has expired, updating status")
+            self.status = SubscriptionStatus.EXPIRED
+            db_session.commit()
+            return True
+        
+        # Check if active subscription period has ended
+        if self.status == SubscriptionStatus.ACTIVE and self.current_period_end:
+            now = datetime.utcnow()
+            period_end = self.current_period_end.replace(tzinfo=None) if self.current_period_end.tzinfo else self.current_period_end
+            
+            if period_end < now:
+                print(f"[AUTO-EXPIRE] Active subscription {self.id} period has ended, updating status to EXPIRED")
+                self.status = SubscriptionStatus.EXPIRED
+                db_session.commit()
+                return True
+        
+        return False
+    
+    @property
     def days_until_renewal(self) -> int:
         """Calculate days until next renewal"""
         if not self.current_period_end:
             return 0
-        delta = self.current_period_end - datetime.utcnow()
+        
+        now = datetime.utcnow()
+        # Remove timezone info for comparison if needed
+        period_end = self.current_period_end.replace(tzinfo=None) if self.current_period_end.tzinfo else self.current_period_end
+        
+        delta = period_end - now
         return max(0, delta.days)
     
     @property
@@ -113,7 +202,12 @@ class RestaurantSubscription(BaseModel):
         """Calculate trial days remaining"""
         if not self.trial_end_date or self.status != SubscriptionStatus.TRIAL:
             return 0
-        delta = self.trial_end_date - datetime.utcnow()
+        
+        now = datetime.utcnow()
+        # Remove timezone info for comparison if needed
+        trial_end = self.trial_end_date.replace(tzinfo=None) if self.trial_end_date.tzinfo else self.trial_end_date
+        
+        delta = trial_end - now
         return max(0, delta.days)
     
     @property
@@ -121,7 +215,12 @@ class RestaurantSubscription(BaseModel):
         """Check if trial has expired"""
         if not self.trial_end_date:
             return False
-        return datetime.utcnow() > self.trial_end_date
+        
+        now = datetime.utcnow()
+        # Remove timezone info for comparison if needed
+        trial_end = self.trial_end_date.replace(tzinfo=None) if self.trial_end_date.tzinfo else self.trial_end_date
+        
+        return now > trial_end
     
     def calculate_total_cost(self) -> float:
         """Calculate total cost including addons"""

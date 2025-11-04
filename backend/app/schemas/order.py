@@ -5,6 +5,39 @@ from typing import List, Optional
 from enum import Enum
 from ..core.validators import sanitize_text, validate_name
 
+# Order Item Extra Schemas
+class OrderItemExtraBase(BaseModel):
+    name: str = Field(..., min_length=1, max_length=100, description="Extra name (e.g., 'Extra tortillas')")
+    price: float = Field(..., ge=0, description="Price must be non-negative")
+    quantity: int = Field(1, ge=1, le=10, description="Quantity must be between 1 and 10")
+    
+    @validator('name')
+    def sanitize_extra_name(cls, v):
+        """Remove potentially dangerous characters from extra name."""
+        return sanitize_text(v)
+
+class OrderItemExtraCreate(OrderItemExtraBase):
+    pass
+
+class OrderItemExtraUpdate(BaseModel):
+    name: Optional[str] = Field(None, min_length=1, max_length=100)
+    price: Optional[float] = Field(None, ge=0)
+    quantity: Optional[int] = Field(None, ge=1, le=10)
+    
+    @validator('name')
+    def sanitize_extra_name_update(cls, v):
+        """Remove potentially dangerous characters from extra name."""
+        return sanitize_text(v) if v else v
+
+class OrderItemExtra(OrderItemExtraBase):
+    id: int
+    order_item_id: int
+    created_at: datetime
+    updated_at: datetime
+    
+    class Config:
+        orm_mode = True
+
 class OrderStatus(str, Enum):
     PENDING = "pending"
     PREPARING = "preparing"
@@ -31,7 +64,7 @@ class OrderItemBase(BaseModel):
         return sanitize_text(v)
 
 class OrderItemCreate(OrderItemBase):
-    pass
+    extras: List[OrderItemExtraCreate] = []
 
 class OrderItemUpdate(BaseModel):
     quantity: Optional[int] = Field(None, gt=0)
@@ -73,6 +106,7 @@ class OrderItem(OrderItemInDBBase):
     variant: Optional[VariantBase] = None
     unit_price: Optional[float] = None
     menu_item: Optional[MenuItemBase] = None
+    extras: List[OrderItemExtra] = []
     
     class Config:
         orm_mode = True

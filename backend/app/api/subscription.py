@@ -26,16 +26,20 @@ def get_my_subscription(
 ):
     """Get current restaurant's subscription details. Requires admin or sysadmin privileges."""
     
+    # Get the most recent subscription (including expired ones)
     subscription = db.query(RestaurantSubscription).filter(
         RestaurantSubscription.restaurant_id == restaurant.id,
-        RestaurantSubscription.status.in_([SubscriptionStatus.TRIAL, SubscriptionStatus.ACTIVE])
-    ).first()
+        RestaurantSubscription.deleted_at.is_(None)
+    ).order_by(RestaurantSubscription.created_at.desc()).first()
     
     if not subscription:
         return {
             "has_subscription": False,
-            "message": "No active subscription found"
+            "message": "No subscription found"
         }
+    
+    # Check and auto-update expiration status
+    subscription.check_and_update_expiration(db)
     
     return {
         "has_subscription": True,
@@ -70,14 +74,18 @@ def get_subscription_usage(
     # Check if restaurant has an active subscription
     subscription = db.query(RestaurantSubscription).filter(
         RestaurantSubscription.restaurant_id == restaurant.id,
+        RestaurantSubscription.deleted_at.is_(None),
         RestaurantSubscription.status.in_([SubscriptionStatus.TRIAL, SubscriptionStatus.ACTIVE])
-    ).first()
+    ).order_by(RestaurantSubscription.created_at.desc()).first()
     
     if not subscription:
         return {
             "has_subscription": False,
             "message": "No active subscription found. Please choose a plan to continue."
         }
+    
+    # Check and auto-update expiration status
+    subscription.check_and_update_expiration(db)
     
     service = SubscriptionService(db)
     limits = service.get_subscription_limits(restaurant.id)
@@ -197,11 +205,15 @@ def get_available_addons(
     
     subscription = db.query(RestaurantSubscription).filter(
         RestaurantSubscription.restaurant_id == restaurant.id,
+        RestaurantSubscription.deleted_at.is_(None),
         RestaurantSubscription.status.in_([SubscriptionStatus.TRIAL, SubscriptionStatus.ACTIVE])
-    ).first()
+    ).order_by(RestaurantSubscription.created_at.desc()).first()
     
     if not subscription:
-        return []
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No active subscription found"
+        )
     
     service = SubscriptionService(db)
     plan_tier = subscription.plan.tier.value
@@ -319,3 +331,91 @@ def upgrade_subscription(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e)
         )
+
+
+@router.get("/status")
+def check_subscription_status(
+    current_user: User = Depends(get_current_active_user),
+    restaurant: Restaurant = Depends(get_current_restaurant),
+    db: Session = Depends(get_db)
+):
+    """
+    Check if restaurant's subscription is active.
+    Returns status information including whether operations are allowed.
+    """
+    from datetime import datetime
+    
+    # Get restaurant's most recent active or trial subscription
+    subscription = db.query(RestaurantSubscription).filter(
+        RestaurantSubscription.restaurant_id == restaurant.id,
+        RestaurantSubscription.deleted_at.is_(None),
+        RestaurantSubscription.status.in_([SubscriptionStatus.TRIAL, SubscriptionStatus.ACTIVE])
+    ).order_by(RestaurantSubscription.created_at.desc()).first()
+    
+    # No subscription found
+    if not subscription:
+        return {
+            "is_active": False,
+            "status": "no_subscription",
+            "message": "No se encontró una suscripción activa. Por favor contacta al administrador.",
+            "can_operate": False,
+            "days_remaining": 0
+        }
+    
+    # Check and auto-update expiration status
+    subscription.check_and_update_expiration(db)
+    
+    # Use the can_operate property for consistent logic
+    can_operate = subscription.can_operate
+    is_expired = subscription.is_expired
+    
+    # Debug logging
+    print(f"[STATUS ENDPOINT] Subscription ID: {subscription.id}")
+    print(f"[STATUS ENDPOINT] Status: {subscription.status}")
+    print(f"[STATUS ENDPOINT] Can operate: {can_operate}")
+    print(f"[STATUS ENDPOINT] Is expired: {is_expired}")
+    print(f"[STATUS ENDPOINT] Current period end: {subscription.current_period_end}")
+    print(f"[STATUS ENDPOINT] Days until renewal: {subscription.days_until_renewal}")
+    
+    # If cannot operate, provide specific error message
+    if not can_operate:
+        if subscription.status == SubscriptionStatus.EXPIRED:
+            message = "Tu suscripción ha expirado. Por favor renueva tu plan para continuar."
+            status_str = "expired"
+        elif subscription.status == SubscriptionStatus.CANCELLED:
+            message = "Tu suscripción ha sido cancelada. Por favor contacta al administrador."
+            status_str = "cancelled"
+        elif subscription.status == SubscriptionStatus.TRIAL and subscription.is_trial_expired:
+            message = "Tu período de prueba ha expirado. Por favor elige un plan de pago."
+            status_str = "trial_expired"
+        elif subscription.status == SubscriptionStatus.PAST_DUE:
+            message = "Tu suscripción tiene pagos pendientes. Por favor actualiza tu método de pago."
+            status_str = "past_due"
+        elif subscription.status == SubscriptionStatus.ACTIVE:
+            message = "Tu suscripción ha vencido. Por favor renueva tu plan."
+            status_str = "period_ended"
+        else:
+            message = "Tu suscripción no está activa. Por favor contacta al administrador."
+            status_str = subscription.status.value
+        
+        return {
+            "is_active": False,
+            "status": status_str,
+            "message": message,
+            "can_operate": False,
+            "days_remaining": 0
+        }
+    
+    # Subscription is active and can operate
+    days_remaining = subscription.days_until_renewal
+    if subscription.status == SubscriptionStatus.TRIAL:
+        days_remaining = subscription.trial_days_remaining
+    
+    return {
+        "is_active": True,
+        "status": subscription.status.value,
+        "message": "Suscripción activa",
+        "can_operate": True,
+        "days_remaining": days_remaining,
+        "plan_name": subscription.plan.display_name
+    }

@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Optional, TYPE_CHECKING
+from typing import Optional, List, TYPE_CHECKING
 from datetime import datetime
 from sqlalchemy import Integer, String, Float, ForeignKey, Enum as SQLEnum, DateTime
 from sqlalchemy.orm import relationship, Mapped, mapped_column
@@ -8,6 +8,7 @@ from .base import BaseModel
 if TYPE_CHECKING:
     from .order import Order
     from .menu import MenuItem, MenuItemVariant
+    from .order_item_extra import OrderItemExtra
 
 # Enum for item status
 class OrderItemStatus(str, Enum):
@@ -46,6 +47,11 @@ class OrderItem(BaseModel):
     menu_item: Mapped["MenuItem"] = relationship("MenuItem", back_populates="order_items")
     variant: Mapped[Optional["MenuItemVariant"]] = relationship(
         "MenuItemVariant", back_populates="order_items"
+    )
+    extras: Mapped[List["OrderItemExtra"]] = relationship(
+        "OrderItemExtra", 
+        back_populates="order_item",
+        cascade="all, delete-orphan"
     )
 
     def __repr__(self) -> str:

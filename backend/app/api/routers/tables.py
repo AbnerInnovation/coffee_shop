@@ -9,7 +9,7 @@ from ...schemas.table import Table, TableCreate, TableUpdate
 from ...services import table as table_service
 from ...models.user import User
 from ...models.restaurant import Restaurant
-from ...core.dependencies import get_current_restaurant, require_admin_or_sysadmin, require_staff_or_admin
+from ...core.dependencies import get_current_restaurant, require_admin_or_sysadmin, require_staff_or_admin, get_current_user_with_active_subscription
 from ...services.user import get_current_active_user, UserRole
 from ...core.exceptions import ResourceNotFoundError, ConflictError, ValidationError
 from ...middleware.subscription_limits import SubscriptionLimitsMiddleware
@@ -90,7 +90,7 @@ async def update_table_occupancy(
     table_id: int,
     occupancy_data: TableOccupancyUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_staff_or_admin),
+    current_user: User = Depends(get_current_user_with_active_subscription),
     restaurant: Restaurant = Depends(get_current_restaurant)
 ) -> Table:
     """

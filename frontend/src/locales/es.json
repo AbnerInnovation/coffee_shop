@@ -356,6 +356,17 @@
           "takeaway": "Para llevar",
           "dine_in": "Para comer aquí"
         },
+        "extras": {
+          "title": "Extras",
+          "name": "Nombre del extra",
+          "name_placeholder": "Ej: Extra tortillas",
+          "price": "Precio",
+          "price_placeholder": "0.00",
+          "quantity": "Cantidad",
+          "quantity_placeholder": "1",
+          "add_button": "Agregar Extra",
+          "common": "Extras comunes"
+        },
         "modals": {
           "new_order": {
             "title": "Nueva orden",
@@ -919,7 +930,21 @@
         "cancelled": "Cancelado",
         "expired": "Expirado"
       },
-      "staff_users": "Personal"
+      "staff_users": "Personal",
+      "account_suspended": {
+        "title": "Cuenta Suspendida",
+        "days_remaining": "Días restantes",
+        "days": "días",
+        "what_to_do": "¿Qué puedo hacer?",
+        "contact_admin": "Contacta al administrador del sistema",
+        "renew_plan": "Renueva tu plan de suscripción",
+        "update_payment": "Actualiza tu método de pago",
+        "view_subscription": "Ver Suscripción",
+        "logout": "Cerrar Sesión",
+        "period_ended": "Tu período de suscripción ha finalizado. Por favor renueva tu plan para continuar usando el sistema.",
+        "trial_ended": "Tu período de prueba ha finalizado. Por favor elige un plan de pago para continuar.",
+        "subscription_expired": "Tu suscripción ha expirado. Por favor renueva tu plan para continuar."
+      }
     },
     "users": {
       "title": "Gestión de Usuarios",

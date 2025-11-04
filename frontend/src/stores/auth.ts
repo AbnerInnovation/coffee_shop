@@ -81,10 +81,13 @@ export const useAuthStore = defineStore('auth', () => {
         });
         
         if (userResponse.data) {
-          // Update store state
+          // Update store state FIRST
           const userData = userResponse.data;
           user.value = userData;
           localStorage.setItem('user', JSON.stringify(userData));
+          
+          // Wait a moment to ensure state is fully updated
+          await new Promise(resolve => setTimeout(resolve, 50));
           
           // Navigate based on user role and staff type
           if (router) {
@@ -109,13 +112,19 @@ export const useAuthStore = defineStore('auth', () => {
               redirectRoute = 'Dashboard';
             }
             
-            await router.push({ name: redirectRoute });
+            // Use router.replace instead of push to avoid back button issues
+            await router.replace({ name: redirectRoute });
           }
           return true;
         }
       } catch (userError) {
         console.error('Failed to fetch user data:', userError);
         error.value = 'Failed to load user data';
+        // Clear tokens if user fetch fails
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
+        sessionStorage.removeItem('access_token');
+        sessionStorage.removeItem('refresh_token');
         return false;
       }
     } catch (err: any) {
@@ -250,7 +259,6 @@ export const useAuthStore = defineStore('auth', () => {
   function init() {
     // Prefer localStorage (more reliable across refreshes)
     const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
-    const refreshToken = localStorage.getItem('refresh_token') || sessionStorage.getItem('refresh_token');
     const storedUser = localStorage.getItem('user') || sessionStorage.getItem('user');
     
     if (token && storedUser) {
@@ -261,9 +269,24 @@ export const useAuthStore = defineStore('auth', () => {
         // checkAuth() will be called by router guard when navigating
       } catch (err) {
         console.error('Failed to parse stored user data:', err);
-        logout();
+        // Clear invalid data
+        localStorage.removeItem('user');
+        sessionStorage.removeItem('user');
+        localStorage.removeItem('access_token');
+        sessionStorage.removeItem('access_token');
+        user.value = null;
       }
-    } else if (!token && refreshToken) {
+    } else if (!token && storedUser) {
+      // If we have user data but no token, clear the stale user data
+      localStorage.removeItem('user');
+      sessionStorage.removeItem('user');
+      user.value = null;
+    }
+    
+    // Removed automatic refresh token logic to prevent race conditions
+    // Refresh should be handled explicitly when needed
+    const refreshToken = localStorage.getItem('refresh_token') || sessionStorage.getItem('refresh_token');
+    if (!token && refreshToken) {
       // Attempt silent refresh to keep session
       axios.post(`${API_BASE_URL}/auth/refresh-token`, { refresh_token: refreshToken })
         .then((resp) => {
