@@ -65,6 +65,8 @@ class CashRegisterSessionInDBBase(CashRegisterSessionBase):
     session_number: int
     opened_at: datetime
     closed_at: Optional[datetime] = None
+    final_balance: Optional[float] = None
+    actual_balance: Optional[float] = None
     expected_balance: float
     status: SessionStatus
     created_at: datetime

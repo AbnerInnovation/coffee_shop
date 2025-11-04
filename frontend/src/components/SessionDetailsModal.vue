@@ -67,12 +67,48 @@
                     {{ formatCurrency(session.initial_balance || 0) }}
                   </p>
                 </div>
-                <div v-if="session.final_balance">
+                <div v-if="session.expected_balance !== undefined">
                   <p class="text-sm text-gray-500 dark:text-gray-400">
-                    {{ t('app.views.cashRegister.finalBalance') }}
+                    {{ t('app.views.cashRegister.expectedBalance') }}
                   </p>
                   <p class="font-medium text-gray-900 dark:text-gray-100">
-                    {{ formatCurrency(session.final_balance || 0) }}
+                    {{ formatCurrency(session.expected_balance || 0) }}
+                  </p>
+                </div>
+              </div>
+              <!-- Cash reconciliation section for closed sessions -->
+              <div v-if="session.status === 'CLOSED' && session.actual_balance !== null" class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4 pt-4 border-t border-gray-300 dark:border-gray-600">
+                <div>
+                  <p class="text-sm text-gray-500 dark:text-gray-400">
+                    {{ t('app.views.cashRegister.actualCash') }}
+                  </p>
+                  <p class="text-lg font-semibold text-blue-600 dark:text-blue-400">
+                    {{ formatCurrency(session.actual_balance || 0) }}
+                  </p>
+                  <p class="text-xs text-gray-500 dark:text-gray-400">
+                    {{ t('app.views.cashRegister.actualCashDescription') }}
+                  </p>
+                </div>
+                <div>
+                  <p class="text-sm text-gray-500 dark:text-gray-400">
+                    {{ t('app.views.cashRegister.expectedCash') }}
+                  </p>
+                  <p class="text-lg font-semibold text-gray-700 dark:text-gray-300">
+                    {{ formatCurrency(session.expected_balance || 0) }}
+                  </p>
+                  <p class="text-xs text-gray-500 dark:text-gray-400">
+                    {{ t('app.views.cashRegister.expectedCashDescription') }}
+                  </p>
+                </div>
+                <div>
+                  <p class="text-sm text-gray-500 dark:text-gray-400">
+                    {{ t('app.views.cashRegister.difference') }}
+                  </p>
+                  <p class="text-lg font-bold" :class="getDifferenceClass(session.actual_balance, session.expected_balance)">
+                    {{ formatDifference(session.actual_balance, session.expected_balance) }}
+                  </p>
+                  <p class="text-xs" :class="getDifferenceTextClass(session.actual_balance, session.expected_balance)">
+                    {{ getDifferenceLabel(session.actual_balance, session.expected_balance) }}
                   </p>
                 </div>
               </div>
@@ -503,6 +539,44 @@ const formatCurrency = (amount: number) => {
     style: 'currency',
     currency: 'MXN'
   }).format(amount)
+}
+
+const formatDifference = (actual: number | null | undefined, expected: number | null | undefined) => {
+  if (actual === null || actual === undefined || expected === null || expected === undefined) {
+    return formatCurrency(0)
+  }
+  const diff = actual - expected
+  return (diff >= 0 ? '+' : '') + formatCurrency(diff)
+}
+
+const getDifferenceClass = (actual: number | null | undefined, expected: number | null | undefined) => {
+  if (actual === null || actual === undefined || expected === null || expected === undefined) {
+    return 'text-gray-600 dark:text-gray-400'
+  }
+  const diff = actual - expected
+  if (Math.abs(diff) < 0.01) return 'text-green-600 dark:text-green-400' // Exact match
+  if (diff > 0) return 'text-blue-600 dark:text-blue-400' // Surplus
+  return 'text-red-600 dark:text-red-400' // Shortage
+}
+
+const getDifferenceTextClass = (actual: number | null | undefined, expected: number | null | undefined) => {
+  if (actual === null || actual === undefined || expected === null || expected === undefined) {
+    return 'text-gray-500 dark:text-gray-400'
+  }
+  const diff = actual - expected
+  if (Math.abs(diff) < 0.01) return 'text-green-600 dark:text-green-400'
+  if (diff > 0) return 'text-blue-600 dark:text-blue-400'
+  return 'text-red-600 dark:text-red-400'
+}
+
+const getDifferenceLabel = (actual: number | null | undefined, expected: number | null | undefined) => {
+  if (actual === null || actual === undefined || expected === null || expected === undefined) {
+    return t('app.common.na')
+  }
+  const diff = actual - expected
+  if (Math.abs(diff) < 0.01) return t('app.views.cashRegister.exactMatch')
+  if (diff > 0) return t('app.views.cashRegister.surplus')
+  return t('app.views.cashRegister.shortage')
 }
 
 watch(
