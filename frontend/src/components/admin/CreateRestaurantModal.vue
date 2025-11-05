@@ -227,6 +227,22 @@
                   />
                 </div>
 
+                <!-- Admin Email (Optional) -->
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Email del Administrador (Opcional)
+                  </label>
+                  <input
+                    v-model="form.admin_email"
+                    type="email"
+                    class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white"
+                    placeholder="admin@ejemplo.com"
+                  />
+                  <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    Si se deja vacío, se usará: admin-{{ form.subdomain || 'subdomain' }}@shopacoffee.com
+                  </p>
+                </div>
+
                 <!-- Phone -->
                 <div>
                   <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -358,6 +374,7 @@ const form = ref({
   name: '',
   subdomain: '',
   email: '',
+  admin_email: '',
   phone: '',
   address: '',
   description: '',
@@ -376,6 +393,7 @@ const resetForm = () => {
     name: '',
     subdomain: '',
     email: '',
+    admin_email: '',
     phone: '',
     address: '',
     description: '',

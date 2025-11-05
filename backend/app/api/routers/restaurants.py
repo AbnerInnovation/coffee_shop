@@ -132,7 +132,12 @@ async def create_restaurant(
         import secrets
         from app.core.security import get_password_hash
         
-        admin_email = f"admin-{db_restaurant.subdomain}@shopacoffee.com"
+        # Use custom admin email if provided, otherwise use default pattern
+        if restaurant.admin_email:
+            admin_email = restaurant.admin_email
+        else:
+            admin_email = f"admin-{db_restaurant.subdomain}@shopacoffee.com"
+        
         admin_password = secrets.token_urlsafe(16)  # Generate secure random password
         
         # Check if admin user already exists

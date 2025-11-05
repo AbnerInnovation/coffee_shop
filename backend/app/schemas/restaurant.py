@@ -69,6 +69,7 @@ class RestaurantBase(BaseModel):
 class RestaurantCreate(RestaurantBase):
     """Schema for creating a new restaurant"""
     trial_days: Optional[int] = Field(default=14, ge=1, le=90)
+    admin_email: Optional[str] = Field(None, max_length=100)
     
     @validator('trial_days')
     def validate_trial_days(cls, v):
@@ -76,6 +77,13 @@ class RestaurantCreate(RestaurantBase):
         allowed_values = [14, 30, 60]
         if v not in allowed_values:
             raise ValueError(f'trial_days must be one of {allowed_values}')
+        return v
+    
+    @validator('admin_email')
+    def validate_admin_email_field(cls, v):
+        """Validate admin email if provided"""
+        if v:
+            return validate_email(v)
         return v
 
 
