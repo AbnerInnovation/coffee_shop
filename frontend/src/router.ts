@@ -80,7 +80,8 @@ router.beforeEach(async (to, from, next) => {
       if (!hasPermission) {
         console.warn(`❌ User lacks permission: ${to.meta.permissionCheck} for route: ${to.path}`);
         console.warn('User data:', { role: user?.role, staff_type: user?.staff_type });
-        next({ name: 'Menu' });
+        // Redirect to Dashboard instead of Menu to avoid lazy loading issues
+        next({ name: 'Dashboard' });
         return;
       }
     }
