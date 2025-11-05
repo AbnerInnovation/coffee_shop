@@ -102,11 +102,19 @@ async def create_restaurant(
             detail=f"Restaurant with subdomain '{restaurant.subdomain}' already exists"
         )
     
-    # Extract trial_days before creating restaurant
+    # Extract trial_days and admin_email before creating restaurant
     trial_days = restaurant.trial_days if hasattr(restaurant, 'trial_days') else 14
+    custom_admin_email = restaurant.admin_email if hasattr(restaurant, 'admin_email') else None
     
-    # Create new restaurant (exclude trial_days from dict)
-    restaurant_data = restaurant.dict(exclude={'trial_days'})
+    # Debug log
+    print(f"🔍 Restaurant creation request:")
+    print(f"   Name: {restaurant.name}")
+    print(f"   Subdomain: {restaurant.subdomain}")
+    print(f"   Trial days: {trial_days}")
+    print(f"   Custom admin email: {custom_admin_email if custom_admin_email else '(not provided)'}")
+    
+    # Create new restaurant (exclude trial_days and admin_email from dict - they're not DB fields)
+    restaurant_data = restaurant.dict(exclude={'trial_days', 'admin_email'})
     db_restaurant = RestaurantModel(**restaurant_data)
     db.add(db_restaurant)
     db.commit()
@@ -133,10 +141,12 @@ async def create_restaurant(
         from app.core.security import get_password_hash
         
         # Use custom admin email if provided, otherwise use default pattern
-        if restaurant.admin_email:
-            admin_email = restaurant.admin_email
+        if custom_admin_email:
+            admin_email = custom_admin_email
+            print(f"📧 Using custom admin email: {admin_email}")
         else:
             admin_email = f"admin-{db_restaurant.subdomain}@shopacoffee.com"
+            print(f"📧 Using default admin email: {admin_email}")
         
         admin_password = secrets.token_urlsafe(16)  # Generate secure random password
         

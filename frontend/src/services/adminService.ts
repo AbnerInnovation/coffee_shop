@@ -53,9 +53,11 @@ export interface CreateRestaurantData {
   name: string;
   subdomain: string;
   email: string;
+  admin_email?: string;
   phone?: string;
   address?: string;
   description?: string;
+  trial_days?: number;
 }
 
 export interface CreateAdminData {
