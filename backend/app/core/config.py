@@ -30,6 +30,12 @@ class Settings(BaseSettings):
     # Frontend
     FRONTEND_URL: str = Field("http://localhost:3000", env='FRONTEND_URL')
     
+    # Base domain for restaurant URLs (e.g., "shopacoffee.com" or "localhost:3000")
+    BASE_DOMAIN: str = Field("shopacoffee.local:3000", env='BASE_DOMAIN')
+    
+    # Protocol for restaurant URLs (http or https)
+    BASE_PROTOCOL: str = Field("http", env='BASE_PROTOCOL')
+    
     # Debug
     DEBUG: bool = Field(False, env='DEBUG')
     

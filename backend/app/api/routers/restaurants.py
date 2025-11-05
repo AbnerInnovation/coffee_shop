@@ -9,6 +9,7 @@ from ...schemas.restaurant import Restaurant, RestaurantCreate, RestaurantUpdate
 from ...schemas.user import UserCreate
 from ...services.user import get_current_active_user, create_user
 from ...middleware.restaurant import get_restaurant_from_request
+from ...core.config import settings
 
 router = APIRouter(
     prefix="/restaurants",
@@ -162,10 +163,8 @@ async def create_restaurant(
         # Log error but don't fail restaurant creation
         print(f"⚠️ Warning: Could not create admin user for restaurant {db_restaurant.id}: {e}")
     
-    # Generate restaurant URL
-    # TODO: Replace with actual domain from environment variable
-    base_domain = "shopacoffee.local:3000"  # Development
-    restaurant_url = f"http://{db_restaurant.subdomain}.{base_domain}"
+    # Generate restaurant URL from environment variables
+    restaurant_url = f"{settings.BASE_PROTOCOL}://{db_restaurant.subdomain}.{settings.BASE_DOMAIN}"
     
     # Generate welcome message
     trial_expires = trial_subscription.trial_end_date if trial_subscription else None
