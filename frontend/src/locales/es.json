@@ -818,6 +818,7 @@
       },
       "modal": {
         "manage_title": "Gestionar Restaurante",
+        "select_plan_placeholder": "Selecciona un plan...",
         "assign_title": "Asignar Plan de Suscripción",
         "admin_users": "Usuarios Administradores",
         "create_admin": "Crear Admin",
