@@ -22,6 +22,10 @@ class Settings(BaseSettings):
 
     # Frontend
     FRONTEND_URL: str = "http://localhost:3000"
+    
+    # Base domain for restaurant URLs
+    BASE_DOMAIN: str = "shopacoffee.com"
+    BASE_PROTOCOL: str = "https"
 
     @property
     def DATABASE_URI(self) -> str:
