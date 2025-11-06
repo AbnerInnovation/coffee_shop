@@ -75,3 +75,5 @@ coverage.xml
 !.env.example
 venv
 logs/app.log
+logs
+nul
