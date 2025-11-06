@@ -11,7 +11,7 @@ sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 # Import the SQLAlchemy Base and settings
 from app.db.base import Base, engine
-from app.config import settings  # Your FastAPI settings
+from app.core.config import settings  # Your FastAPI settings
 
 # Import all models to ensure they are registered with SQLAlchemy
 from app.models.user import User, UserRole
@@ -23,7 +23,7 @@ from app.models.order import Order, OrderItem, OrderStatus
 config = context.config
 
 # Override the sqlalchemy.url from alembic.ini with your FastAPI settings
-config.set_main_option("sqlalchemy.url", settings.DATABASE_URI)
+config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
 
 # Set up Python logging from the config file
 if config.config_file_name is not None:
