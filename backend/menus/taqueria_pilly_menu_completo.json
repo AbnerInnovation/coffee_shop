@@ -1,0 +1,203 @@
+{
+  "restaurant_id": 4,
+  "clear_existing": true,
+  "force": false,
+  "menu_data": {
+    "categories": [
+      {
+        "name": "TACOS",
+        "description": "Tacos tradicionales",
+        "visible_in_kitchen": true,
+        "items": [
+          {
+            "name": "Taco de Pastor",
+            "description": "Taco de carne al pastor",
+            "price": 25,
+            "is_available": true
+          },
+          {
+            "name": "Taco de Suadero",
+            "description": "Taco de suadero",
+            "price": 30,
+            "is_available": true
+          },
+          {
+            "name": "Taco de Tripa",
+            "description": "Taco de tripa",
+            "price": 30,
+            "is_available": true
+          },
+          {
+            "name": "Taco de Longaniza",
+            "description": "Taco de longaniza",
+            "price": 30,
+            "is_available": true
+          },
+          {
+            "name": "Taco de Campechano",
+            "description": "Taco campechano",
+            "price": 30,
+            "is_available": true
+          },
+          {
+            "name": "Taco de Asada",
+            "description": "Taco de carne asada",
+            "price": 30,
+            "is_available": true
+          },
+          {
+            "name": "Taco de Bistec",
+            "description": "Taco de bistec",
+            "price": 30,
+            "is_available": true
+          }
+        ]
+      },
+      {
+        "name": "PAPAS",
+        "description": "Papas con carne",
+        "visible_in_kitchen": true,
+        "items": [
+          {
+            "name": "Papas con Pastor",
+            "description": "Papas con carne al pastor",
+            "price": 120,
+            "is_available": true
+          },
+          {
+            "name": "Papas con Bistec",
+            "description": "Papas con bistec",
+            "price": 130,
+            "is_available": true
+          },
+          {
+            "name": "Papas con Suadero",
+            "description": "Papas con suadero",
+            "price": 130,
+            "is_available": true
+          },
+          {
+            "name": "Papas con Tripa",
+            "description": "Papas con tripa",
+            "price": 130,
+            "is_available": true
+          }
+        ]
+      },
+      {
+        "name": "VOLCANES",
+        "description": "Volcanes con tortilla crujiente",
+        "visible_in_kitchen": true,
+        "items": [
+          {
+            "name": "Volcán de Pastor",
+            "description": "Volcán con carne al pastor",
+            "price": 40,
+            "is_available": true
+          },
+          {
+            "name": "Volcán de Bistec",
+            "description": "Volcán con bistec",
+            "price": 40,
+            "is_available": true
+          },
+          {
+            "name": "Volcán de Suadero",
+            "description": "Volcán con suadero",
+            "price": 40,
+            "is_available": true
+          },
+          {
+            "name": "Volcán de Tripa",
+            "description": "Volcán con tripa",
+            "price": 40,
+            "is_available": true
+          }
+        ]
+      },
+      {
+        "name": "QUESADILLAS",
+        "description": "Quesadillas con queso",
+        "visible_in_kitchen": true,
+        "items": [
+          {
+            "name": "Quesadilla Sencilla",
+            "description": "Quesadilla solo con queso",
+            "price": 40,
+            "is_available": true
+          },
+          {
+            "name": "Quesadilla con Carne",
+            "description": "Quesadilla con carne a elegir",
+            "price": 70,
+            "is_available": true
+          }
+        ]
+      },
+      {
+        "name": "GRINGAS",
+        "description": "Gringas con tortilla de harina",
+        "visible_in_kitchen": true,
+        "items": [
+          {
+            "name": "Gringa",
+            "description": "Quesadilla de harina con carne de su elección: suadero, pastor, bistec o longaniza",
+            "price": 120,
+            "is_available": true
+          }
+        ]
+      },
+      {
+        "name": "ESPECIALIDADES",
+        "description": "Platillos especiales",
+        "visible_in_kitchen": true,
+        "items": [
+          {
+            "name": "El Rasurado",
+            "description": "Deliciosa carne al pastor, morrón, cebolla caramelizada, piña y queso gratinado",
+            "price": 120,
+            "is_available": true
+          },
+          {
+            "name": "El Pilly",
+            "description": "Deliciosa carne de suadero y al pastor, morrón, piña, cebolla caramelizada y queso gratinado",
+            "price": 130,
+            "is_available": true
+          },
+          {
+            "name": "Al Gusto",
+            "description": "Dos carnes a su elección, morrón, cebolla caramelizada y queso gratinado",
+            "price": 130,
+            "is_available": true
+          }
+        ]
+      },
+      {
+        "name": "BEBIDAS",
+        "description": "Bebidas refrescantes",
+        "visible_in_kitchen": false,
+        "items": [
+          {
+            "name": "Sodas",
+            "description": "Refrescos variados",
+            "price": 30,
+            "is_available": true
+          }
+        ]
+      },
+      {
+        "name": "PROMOCIONES",
+        "description": "Ofertas especiales",
+        "visible_in_kitchen": true,
+        "items": [
+          {
+            "name": "Promoción: 4 Tacos al Pastor",
+            "description": "4 tacos al pastor por $70 (solo tortilla de maíz)",
+            "price": 70,
+            "is_available": true
+          }
+        ]
+      }
+    ]
+  }
+}
