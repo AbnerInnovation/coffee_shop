@@ -317,7 +317,7 @@
                 </div>
 
                 <!-- Payment Section (only in create mode) -->
-                <div v-if="!isEditMode" class="mt-6 border-t border-gray-200 dark:border-gray-700 pt-4">
+                <div v-if="!isEditMode && canProcessPayments" class="mt-6 border-t border-gray-200 dark:border-gray-700 pt-4">
                   <div class="flex items-center justify-between mb-3">
                     <h4 class="text-sm font-medium text-gray-900 dark:text-gray-100">{{$t('app.views.orders.payment.title') || 'Payment'}}</h4>
                     <button
@@ -509,6 +509,7 @@ import SpecialNotesBuilder from './SpecialNotesBuilder.vue';
 import ExtrasSelector from './ExtrasSelector.vue';
 import type { MenuItemIngredients } from '../menu/IngredientsManager.vue';
 import type { Extra } from './ExtrasSelector.vue';
+import { usePermissions } from '@/composables/usePermissions';
 
 // Import types
 import type { MenuItem as MenuItemType } from '@/types/menu';
@@ -597,6 +598,7 @@ const isEditMode = computed(() => {
   return (props.mode || 'create') === 'edit' && !!props.orderToEdit});
 
 const { showError, showSuccess, showToast } = useToast();
+const { canProcessPayments } = usePermissions();
 const { t } = useI18n();
 const menuItems = ref<ExtendedMenuItem[]>([]);
 const availableTables = ref<any[]>([]);

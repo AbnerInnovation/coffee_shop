@@ -3,6 +3,7 @@ import { routes } from './routes';
 import { useAuthStore } from './stores/auth';
 import { subscriptionService } from './services/subscriptionService';
 import * as permissions from './utils/permissions';
+import { hasRestaurantContext } from './utils/subdomain';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -70,7 +71,20 @@ router.beforeEach(async (to, from, next) => {
     return;
   }
 
-  // 3. Check permission using permissions module
+  // 3. Check if route requires restaurant context (subdomain)
+  if (to.meta.requiresRestaurantContext && !hasRestaurantContext()) {
+    console.warn(`❌ Route ${to.path} requires restaurant context (subdomain)`);
+    // If user is sysadmin, redirect to sysadmin dashboard
+    if (user?.role === 'sysadmin') {
+      next({ name: 'SysAdmin' });
+    } else {
+      // For other users, redirect to dashboard (which will show appropriate content)
+      next({ name: 'Dashboard' });
+    }
+    return;
+  }
+
+  // 4. Check permission using permissions module
   if (to.meta.permissionCheck && typeof to.meta.permissionCheck === 'string') {
     const permissionFn = permissions[to.meta.permissionCheck as keyof typeof permissions];
     
@@ -87,7 +101,7 @@ router.beforeEach(async (to, from, next) => {
     }
   }
 
-  // 4. Check kitchen module subscription (if required)
+  // 5. Check kitchen module subscription (if required)
   if (to.meta.requiresKitchenModule) {
     if (!authStore.isAuthenticated) {
       next({ name: 'Login', query: { redirect: to.fullPath } });
@@ -109,7 +123,7 @@ router.beforeEach(async (to, from, next) => {
     }
   }
 
-  // 5. All checks passed, proceed
+  // 6. All checks passed, proceed
   next();
 });
 

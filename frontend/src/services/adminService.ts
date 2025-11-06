@@ -14,6 +14,30 @@ export interface AdminStats {
   plans_distribution: Record<string, number>;
 }
 
+export interface GlobalStats {
+  restaurants: {
+    total: number;
+    active: number;
+    trial: number;
+    suspended: number;
+    new_last_30_days: number;
+  };
+  users: {
+    total: number;
+    admins: number;
+    staff: number;
+  };
+  revenue: {
+    mrr: number;
+    revenue_30d: number;
+    pending_payments: number;
+  };
+  activity: {
+    orders_30d: number;
+  };
+  subscription_distribution: Record<string, number>;
+}
+
 export interface RestaurantWithSubscription {
   id: number;
   name: string;
@@ -72,6 +96,13 @@ class AdminService {
    */
   async getStats(): Promise<AdminStats> {
     return await api.get('/admin/stats');
+  }
+
+  /**
+   * Get global system statistics (for SYSADMIN dashboard)
+   */
+  async getGlobalStats(): Promise<GlobalStats> {
+    return await api.get('/restaurants/stats/global');
   }
 
   /**

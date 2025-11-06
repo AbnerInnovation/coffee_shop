@@ -178,16 +178,15 @@ export const useAuthStore = defineStore('auth', () => {
       sessionStorage.removeItem('refresh_token');
       sessionStorage.removeItem('user');
       
-      // Wait a moment to ensure state is cleared
-      await new Promise(resolve => setTimeout(resolve, 50));
-      
-      // Navigate to login page
-      await router.push({ name: 'Login' });
+      // Use window.location to force a full page reload
+      // This avoids issues with dynamic module loading after logout
+      window.location.href = '/login';
     } catch (error) {
       console.error('Error during logout:', error);
       // Even if navigation fails, ensure we're logged out
       user.value = null;
-      throw error;
+      // Fallback to window.location
+      window.location.href = '/login';
     } finally {
       loading.value = false;
     }

@@ -40,7 +40,7 @@ class SubscriptionStatusMiddleware:
             )
         
         # Check and auto-update expiration status
-        subscription.check_and_update_expiration(db)
+        subscription.update_status(db)
         
         # Use the can_operate property which handles all checks
         if not subscription.can_operate:
@@ -53,6 +53,8 @@ class SubscriptionStatusMiddleware:
                 detail = "Tu período de prueba ha expirado. Por favor elige un plan de pago para continuar."
             elif subscription.status == SubscriptionStatus.PAST_DUE:
                 detail = "Tu suscripción tiene pagos pendientes. Por favor actualiza tu método de pago para continuar."
+            elif subscription.status == SubscriptionStatus.PENDING_PAYMENT:
+                detail = "Tu pago está en revisión. Podrás operar una vez que sea aprobado."
             elif subscription.status == SubscriptionStatus.ACTIVE:
                 detail = "Tu suscripción ha vencido. Por favor renueva tu plan para continuar usando el sistema."
             else:

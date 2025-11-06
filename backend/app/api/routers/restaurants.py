@@ -1,10 +1,15 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
-from typing import List
+from sqlalchemy import func, case
+from typing import List, Dict, Any
+from datetime import datetime, timedelta
 
 from ...db.base import get_db
 from ...models.restaurant import Restaurant as RestaurantModel
 from ...models.user import User, UserRole, User as UserModel
+from ...models.restaurant_subscription import RestaurantSubscription, SubscriptionStatus
+from ...models.order import Order, OrderStatus
+from ...models.subscription_plan import SubscriptionPlan
 from ...schemas.restaurant import Restaurant, RestaurantCreate, RestaurantUpdate, RestaurantPublic, RestaurantCreationResponse
 from ...schemas.user import UserCreate
 from ...services.user import get_current_active_user, create_user
@@ -425,3 +430,121 @@ async def delete_restaurant(
     
     db.delete(db_restaurant)
     db.commit()
+
+
+@router.get("/stats/global", response_model=Dict[str, Any])
+async def get_global_stats(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_sysadmin)
+):
+    """
+    Get global system statistics (sysadmin only).
+    Returns overview of all restaurants, subscriptions, users, and revenue.
+    """
+    # Total restaurants
+    total_restaurants = db.query(func.count(RestaurantModel.id)).scalar()
+    
+    # Active restaurants (with active subscription)
+    active_restaurants = db.query(func.count(func.distinct(RestaurantModel.id))).join(
+        RestaurantSubscription,
+        RestaurantModel.id == RestaurantSubscription.restaurant_id
+    ).filter(
+        RestaurantSubscription.status == SubscriptionStatus.ACTIVE
+    ).scalar()
+    
+    # Trial restaurants
+    trial_restaurants = db.query(func.count(func.distinct(RestaurantModel.id))).join(
+        RestaurantSubscription,
+        RestaurantModel.id == RestaurantSubscription.restaurant_id
+    ).filter(
+        RestaurantSubscription.status == SubscriptionStatus.TRIAL
+    ).scalar()
+    
+    # Expired/Cancelled restaurants (suspended)
+    suspended_restaurants = db.query(func.count(func.distinct(RestaurantModel.id))).join(
+        RestaurantSubscription,
+        RestaurantModel.id == RestaurantSubscription.restaurant_id
+    ).filter(
+        RestaurantSubscription.status.in_([SubscriptionStatus.EXPIRED, SubscriptionStatus.CANCELLED])
+    ).scalar()
+    
+    # Total users by role
+    total_users = db.query(func.count(UserModel.id)).scalar()
+    admin_users = db.query(func.count(UserModel.id)).filter(UserModel.role == UserRole.ADMIN).scalar()
+    staff_users = db.query(func.count(UserModel.id)).filter(UserModel.role == UserRole.STAFF).scalar()
+    
+    # Monthly Recurring Revenue (MRR)
+    # Sum total_price for monthly subscriptions, or total_price/12 for annual
+    mrr_monthly = db.query(func.sum(RestaurantSubscription.total_price)).filter(
+        RestaurantSubscription.status.in_([SubscriptionStatus.ACTIVE, SubscriptionStatus.TRIAL]),
+        RestaurantSubscription.billing_cycle == 'monthly'
+    ).scalar() or 0
+    
+    mrr_annual = db.query(func.sum(RestaurantSubscription.total_price)).filter(
+        RestaurantSubscription.status.in_([SubscriptionStatus.ACTIVE, SubscriptionStatus.TRIAL]),
+        RestaurantSubscription.billing_cycle == 'annual'
+    ).scalar() or 0
+    
+    # Convert annual to monthly (divide by 12)
+    mrr = mrr_monthly + (mrr_annual / 12)
+    
+    # Pending payments (subscriptions expiring in next 7 days)
+    next_week = datetime.utcnow() + timedelta(days=7)
+    pending_payments = db.query(func.count(RestaurantSubscription.id)).filter(
+        RestaurantSubscription.current_period_end <= next_week,
+        RestaurantSubscription.status.in_([SubscriptionStatus.ACTIVE, SubscriptionStatus.TRIAL])
+    ).scalar()
+    
+    # Recent activity (restaurants created in last 30 days)
+    thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+    new_restaurants_30d = db.query(func.count(RestaurantModel.id)).filter(
+        RestaurantModel.created_at >= thirty_days_ago
+    ).scalar()
+    
+    # Total orders across all restaurants (last 30 days)
+    total_orders_30d = db.query(func.count(Order.id)).filter(
+        Order.created_at >= thirty_days_ago
+    ).scalar()
+    
+    # Revenue from completed orders (last 30 days)
+    revenue_30d = db.query(func.sum(Order.total_amount)).filter(
+        Order.created_at >= thirty_days_ago,
+        Order.status == OrderStatus.COMPLETED
+    ).scalar() or 0
+    
+    # Subscription distribution by plan
+    subscription_distribution = db.query(
+        SubscriptionPlan.name,
+        func.count(RestaurantSubscription.id).label('count')
+    ).join(
+        RestaurantSubscription,
+        SubscriptionPlan.id == RestaurantSubscription.plan_id
+    ).filter(
+        RestaurantSubscription.status.in_([SubscriptionStatus.ACTIVE, SubscriptionStatus.TRIAL])
+    ).group_by(SubscriptionPlan.name).all()
+    
+    plan_distribution = {plan: count for plan, count in subscription_distribution}
+    
+    return {
+        "restaurants": {
+            "total": total_restaurants,
+            "active": active_restaurants,
+            "trial": trial_restaurants,
+            "suspended": suspended_restaurants,
+            "new_last_30_days": new_restaurants_30d
+        },
+        "users": {
+            "total": total_users,
+            "admins": admin_users,
+            "staff": staff_users
+        },
+        "revenue": {
+            "mrr": float(mrr),
+            "revenue_30d": float(revenue_30d),
+            "pending_payments": pending_payments
+        },
+        "activity": {
+            "orders_30d": total_orders_30d
+        },
+        "subscription_distribution": plan_distribution
+    }

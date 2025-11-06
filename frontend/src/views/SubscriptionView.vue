@@ -48,6 +48,42 @@
       <!-- Overview Tab -->
       <div v-if="activeTab === 'overview'" class="space-y-6">
       
+      <!-- Subscription Alerts -->
+      <div v-if="subscription?.has_subscription">
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-3">
+          {{ t('app.subscription.alerts.title') }}
+        </h3>
+        <SubscriptionAlerts 
+          :unread-only="false"
+          :auto-refresh="true"
+          @update:count="handleAlertCountUpdate"
+        />
+      </div>
+      
+      <!-- Expiring Soon Alert (1-3 days) -->
+      <div v-if="subscription?.has_subscription && daysUntilExpiration > 0 && daysUntilExpiration <= 3" 
+           class="bg-amber-50 dark:bg-amber-900/20 border-l-4 border-amber-500 p-4 rounded-lg">
+        <div class="flex items-start">
+          <svg class="h-6 w-6 text-amber-500 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <div class="flex-1">
+            <h3 class="text-sm font-semibold text-amber-800 dark:text-amber-200">
+              ⚠️ Tu suscripción vence en {{ daysUntilExpiration }} {{ daysUntilExpiration === 1 ? 'día' : 'días' }}
+            </h3>
+            <p class="mt-1 text-sm text-amber-700 dark:text-amber-300">
+              Renueva ahora para evitar interrupciones en tu servicio
+            </p>
+            <button
+              @click="showRenewalModal = true"
+              class="mt-3 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors text-sm font-medium"
+            >
+              Renovar Ahora
+            </button>
+          </div>
+        </div>
+      </div>
+      
       <!-- Expired Subscription Alert -->
       <div v-if="subscription?.has_subscription && subscription.subscription?.status === 'expired'" 
            class="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 p-4 rounded-lg">
@@ -63,7 +99,7 @@
               {{ t('app.subscription.account_suspended.period_ended') }}
             </p>
             <button
-              @click="showUpgradeModal = true"
+              @click="showRenewalModal = true"
               class="mt-3 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium"
             >
               {{ t('app.subscription.account_suspended.renew_plan') }}
@@ -85,13 +121,13 @@
             <div class="flex-1">
               <div class="flex items-center gap-3">
                 <h3 class="text-2xl font-bold text-gray-900 dark:text-white">
-                  {{ subscription.subscription.plan.name }}
+                  {{ subscription.subscription?.plan.name }}
                 </h3>
                 <span
-                  :class="getStatusClass(subscription.subscription.status)"
+                  :class="getStatusClass(subscription.subscription?.status || 'active')"
                   class="px-3 py-1 text-xs font-semibold rounded-full"
                 >
-                  {{ t(`app.subscription.status.${subscription.subscription.status}`) }}
+                  {{ t(`app.subscription.status.${subscription.subscription?.status}`) }}
                 </span>
               </div>
               
@@ -99,19 +135,19 @@
                 <div>
                   <p class="text-sm text-gray-500 dark:text-gray-400">{{ t('app.subscription.price') }}</p>
                   <p class="text-lg font-semibold text-gray-900 dark:text-white">
-                    ${{ formatMoney(subscription.subscription.total_price) }}/{{ t(`app.subscription.${subscription.subscription.billing_cycle}`) }}
+                    ${{ formatMoney(subscription.subscription?.total_price || 0) }}/{{ t(`app.subscription.${subscription.subscription?.billing_cycle}`) }}
                   </p>
                 </div>
-                <div v-if="subscription.subscription.days_until_renewal !== null">
-                  <p class="text-sm text-gray-500 dark:text-gray-400">{{ t('app.subscription.renewal') }}</p>
+                <div v-if="subscription?.subscription?.days_until_renewal !== null && subscription?.subscription?.days_until_renewal !== undefined">
+                  <p class="text-sm text-gray-500 dark:text-gray-400">{{ t('app.subscription.renewal_date') }}</p>
                   <p class="text-lg font-semibold text-gray-900 dark:text-white">
-                    {{ subscription.subscription.days_until_renewal }} {{ t('app.common.days') }}
+                    {{ subscription.subscription?.days_until_renewal }} {{ t('app.common.days') }}
                   </p>
                 </div>
                 <div>
                   <p class="text-sm text-gray-500 dark:text-gray-400">{{ t('app.subscription.auto_renew') }}</p>
                   <p class="text-lg font-semibold text-gray-900 dark:text-white">
-                    {{ subscription.subscription.auto_renew ? t('app.common.yes') : t('app.common.no') }}
+                    {{ subscription.subscription?.auto_renew ? t('app.common.yes') : t('app.common.no') }}
                   </p>
                 </div>
               </div>
@@ -328,6 +364,14 @@
       @close="showUpgradeModal = false"
       @upgraded="handleUpgraded"
     />
+
+    <!-- Renewal Payment Modal -->
+    <RenewalPaymentModal
+      :is-open="showRenewalModal"
+      :available-plans="availablePlans"
+      @close="showRenewalModal = false"
+      @success="handleRenewalSuccess"
+    />
   </div>
 </template>
 
@@ -340,6 +384,8 @@ import { subscriptionService, type MySubscription, type SubscriptionUsage, type 
 import UsageBar from '@/components/subscription/UsageBar.vue';
 import FeatureBadge from '@/components/subscription/FeatureBadge.vue';
 import UpgradePlanModal from '@/components/subscription/UpgradePlanModal.vue';
+import RenewalPaymentModal from '@/components/RenewalPaymentModal.vue';
+import SubscriptionAlerts from '@/components/SubscriptionAlerts.vue';
 
 const { t } = useI18n();
 const route = useRoute();
@@ -351,6 +397,8 @@ const subscription = ref<MySubscription | null>(null);
 const usage = ref<SubscriptionUsage | null>(null);
 const addons = ref<SubscriptionAddon[]>([]);
 const showUpgradeModal = ref(false);
+const showRenewalModal = ref(false);
+const availablePlans = ref<any[]>([]);
 
 // Active tab from URL query
 const activeTab = computed({
@@ -360,20 +408,43 @@ const activeTab = computed({
   }
 });
 
+// Calculate days until expiration
+const daysUntilExpiration = computed(() => {
+  if (!subscription.value?.subscription?.current_period_end) return null;
+  
+  const endDate = new Date(subscription.value.subscription.current_period_end);
+  const now = new Date();
+  const diffTime = endDate.getTime() - now.getTime();
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  
+  return diffDays;
+});
+
 // Methods
 const loadData = async () => {
   loading.value = true;
   try {
-    [subscription.value, usage.value, addons.value] = await Promise.all([
+    [subscription.value, usage.value, addons.value, availablePlans.value] = await Promise.all([
       subscriptionService.getMySubscription(),
       subscriptionService.getUsage(),
-      subscriptionService.getAddons().catch(() => []) // Addons are optional
+      subscriptionService.getAddons().catch(() => []), // Addons are optional
+      subscriptionService.getPlans().catch(() => []) // Load available plans
     ]);
   } catch (error) {
     console.error('Error loading subscription data:', error);
   } finally {
     loading.value = false;
   }
+};
+
+const handleRenewalSuccess = async () => {
+  // Reload subscription data after successful renewal
+  await loadData();
+};
+
+const handleAlertCountUpdate = (count: number) => {
+  // Handle alert count update if needed
+  console.log('Unread alerts:', count);
 };
 
 const formatMoney = (amount: number) => {

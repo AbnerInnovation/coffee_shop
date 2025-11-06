@@ -43,6 +43,22 @@
         <!-- Desktop user menu -->
         <div class="hidden md:block">
           <div class="ml-4 flex items-center md:ml-6 gap-2 sm:gap-3">
+            <!-- Alerts Badge - Only show in restaurant subdomains -->
+            <router-link
+              v-if="canViewSubscription && hasRestaurantContext()"
+              to="/subscription"
+              class="relative rounded-full p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-300 dark:hover:text-white dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-primary-500 touch-manipulation"
+              :aria-label="'Alertas de suscripción'"
+            >
+              <BellAlertIcon class="h-5 w-5 sm:h-6 sm:w-6" />
+              <span
+                v-if="unreadAlertCount > 0"
+                class="absolute top-0 right-0 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full min-w-[18px]"
+              >
+                {{ unreadAlertCount > 9 ? '9+' : unreadAlertCount }}
+              </span>
+            </router-link>
+
             <!-- Theme toggle -->
             <button
               type="button"
@@ -88,7 +104,7 @@
                   tabindex="-1"
                 >
                   <router-link
-                    v-if="authStore.user?.role === 'admin' || authStore.user?.role === 'sysadmin'"
+                    v-if="(authStore.user?.role === 'admin' || authStore.user?.role === 'sysadmin') && hasRestaurantContext()"
                     to="/subscription"
                     class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700/60"
                     role="menuitem"
@@ -183,7 +199,7 @@
         </div>
         <div class="mt-3 space-y-1 px-2">
           <router-link
-            v-if="authStore.user?.role === 'admin' || authStore.user?.role === 'sysadmin'"
+            v-if="(authStore.user?.role === 'admin' || authStore.user?.role === 'sysadmin') && hasRestaurantContext()"
             to="/subscription"
             class="block rounded-md px-3 py-2 text-base font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white"
             @click="isMobileMenuOpen = false"
@@ -211,15 +227,16 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { Bars3Icon, XMarkIcon, MoonIcon, SunIcon } from '@heroicons/vue/24/outline';
+import { Bars3Icon, XMarkIcon, MoonIcon, SunIcon, BellAlertIcon } from '@heroicons/vue/24/outline';
 import { useAuthStore } from '@/stores/auth';
 import { useToast } from '@/composables/useToast';
 import { usePermissions } from '@/composables/usePermissions';
 import { hasRestaurantContext } from '@/utils/subdomain';
 import { useI18n } from 'vue-i18n';
 import { useTheme } from '@/composables/useTheme';
+import { alertService } from '@/services/alertService';
 
 const props = defineProps({
   subscriptionFeatures: {
@@ -251,33 +268,28 @@ const {
 
 const isMobileMenuOpen = ref(false);
 const isProfileMenuOpen = ref(false);
+const unreadAlertCount = ref(0);
+let alertCheckInterval = null;
 
 const navigation = computed(() => {
   const path = route.path;
   const isMainDomain = !hasRestaurantContext();
   
-  // If on main domain (no subdomain), only show Users and Administration
+  // If on main domain (no subdomain), only show Administration
   if (isMainDomain) {
     const mainDomainNav = [];
     
-    // Add Users management link if user has permission
-    if (canManageUsers.value) {
-      mainDomainNav.push({ name: 'users', labelKey: 'app.nav.users', to: '/users', current: false, show: true });
-    }
-    
-    // Add SysAdmin link only on main domain
+    // Add SysAdmin links only on main domain
     if (isSysAdmin.value) {
       mainDomainNav.push({ name: 'sysadmin', labelKey: 'app.nav.sysadmin', to: '/sysadmin', current: false, show: true });
+      mainDomainNav.push({ name: 'payments', labelKey: 'app.nav.pending_payments', to: '/sysadmin/payments', current: false, show: true });
     }
     
     return mainDomainNav
       .filter(item => item.show)
       .map(item => ({
         ...item,
-        current: item.to === path || 
-                 (item.to === '/' && path === '') ||
-                 (item.to !== '/' && path.startsWith(item.to) && 
-                  (path === item.to || path.startsWith(`${item.to}/`)))
+        current: item.to === path
       }));
   }
   
@@ -350,14 +362,40 @@ async function handleLogout() {
     isProfileMenuOpen.value = false;
     
     await authStore.logout();
-    showSuccess(t('app.messages.logout_success'));
-    // No need to push to login - authStore.logout() already handles navigation
+    // Note: authStore.logout() uses window.location.href, so this code won't execute
+    // The page will reload before we get here
   } catch (error) {
     console.error('Logout failed:', error);
-    // If logout fails, try to navigate anyway
-    router.push('/login');
+    // If logout fails, force navigation with full page reload
+    window.location.href = '/login';
   }
 }
+
+// Load alert count
+async function loadAlertCount() {
+  if (canViewSubscription.value && hasRestaurantContext()) {
+    try {
+      unreadAlertCount.value = await alertService.getUnreadCount();
+    } catch (error) {
+      // Silently fail - alerts are not critical
+      console.error('Failed to load alert count:', error);
+    }
+  }
+}
+
+// Start periodic alert check
+onMounted(() => {
+  loadAlertCount();
+  // Check every 2 minutes
+  alertCheckInterval = setInterval(loadAlertCount, 120000);
+});
+
+// Cleanup
+onUnmounted(() => {
+  if (alertCheckInterval) {
+    clearInterval(alertCheckInterval);
+  }
+});
 
 // Close mobile menu when route changes
 watch(

@@ -18,6 +18,7 @@ export const routes: RouteRecordRaw[] = [
     component: () => import('./views/TablesView.vue'),
     meta: { 
       requiresAuth: true,
+      requiresRestaurantContext: true,
       permissionCheck: 'canManageTables' // Admin only for management
     }
   },
@@ -25,7 +26,10 @@ export const routes: RouteRecordRaw[] = [
     path: '/menu',
     name: 'Menu',
     component: () => import('./views/MenuView.vue'),
-    meta: { requiresAuth: true }
+    meta: { 
+      requiresAuth: true,
+      requiresRestaurantContext: true
+    }
   },
   {
     path: '/categories',
@@ -33,6 +37,7 @@ export const routes: RouteRecordRaw[] = [
     component: () => import('./views/CategoriesView.vue'),
     meta: { 
       requiresAuth: true,
+      requiresRestaurantContext: true,
       permissionCheck: 'canEditCategories' // Admin only
     }
   },
@@ -42,6 +47,7 @@ export const routes: RouteRecordRaw[] = [
     component: () => import('./views/CashRegisterView.vue'),
     meta: { 
       requiresAuth: true,
+      requiresRestaurantContext: true,
       permissionCheck: 'canAccessCashRegister' // Admin + Cashier
     }
   },
@@ -49,7 +55,10 @@ export const routes: RouteRecordRaw[] = [
     path: '/orders',
     name: 'Orders',
     component: () => import('./views/OrdersView.vue'),
-    meta: { requiresAuth: true }
+    meta: { 
+      requiresAuth: true,
+      requiresRestaurantContext: true
+    }
   },
   {
     path: '/kitchen',
@@ -57,6 +66,7 @@ export const routes: RouteRecordRaw[] = [
     component: () => import('./views/KitchenView.vue'),
     meta: { 
       requiresAuth: true,
+      requiresRestaurantContext: true,
       requiresKitchenModule: true,
       permissionCheck: 'canAccessKitchen' // Admin + Kitchen staff
     }
@@ -71,11 +81,21 @@ export const routes: RouteRecordRaw[] = [
     }
   },
   {
+    path: '/sysadmin/payments',
+    name: 'PendingPayments',
+    component: () => import('./views/PendingPaymentsView.vue'),
+    meta: { 
+      requiresAuth: true,
+      permissionCheck: 'isSysAdmin' // SysAdmin only
+    }
+  },
+  {
     path: '/subscription',
     name: 'Subscription',
     component: () => import('./views/SubscriptionView.vue'),
     meta: { 
       requiresAuth: true,
+      requiresRestaurantContext: true, // Only accessible in restaurant subdomains
       permissionCheck: 'canViewSubscription' // Admin + SysAdmin
     }
   },
@@ -85,6 +105,7 @@ export const routes: RouteRecordRaw[] = [
     component: () => import('./views/UsersManagementView.vue'),
     meta: { 
       requiresAuth: true,
+      requiresRestaurantContext: true,
       permissionCheck: 'canManageUsers' // Admin + SysAdmin
     }
   },
@@ -94,6 +115,7 @@ export const routes: RouteRecordRaw[] = [
     component: () => import('./views/ReportsView.vue'),
     meta: { 
       requiresAuth: true,
+      requiresRestaurantContext: true,
       permissionCheck: 'canViewSubscription' // Admin + SysAdmin (same as subscription)
     }
   },

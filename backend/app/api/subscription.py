@@ -12,8 +12,12 @@ from app.models import (
     MenuItem, Table, Category, SubscriptionStatus
 )
 from app.services.subscription_service import SubscriptionService
+from app.services.payment_service import PaymentService
+from app.services.alert_service import AlertService
 from app.api.deps import get_current_user, get_current_restaurant, require_admin_or_sysadmin
 from app.services.user import get_current_active_user
+from app.schemas.payment import RenewalRequest, RenewalResponse, PaymentSubmit, PaymentResponse
+from app.schemas.alert import AlertResponse, AlertMarkRead
 
 router = APIRouter(prefix="/subscriptions", tags=["subscriptions"])
 
@@ -39,7 +43,16 @@ def get_my_subscription(
         }
     
     # Check and auto-update expiration status
-    subscription.check_and_update_expiration(db)
+    subscription.update_status(db)
+    
+    # Check for expiring subscriptions and create alerts if needed
+    try:
+        from app.services.alert_service import AlertService
+        alert_service = AlertService(db)
+        alert_service.check_expiring_subscriptions()
+    except Exception as e:
+        # Log error but don't fail the request
+        print(f"Warning: Could not check expiring subscriptions: {e}")
     
     return {
         "has_subscription": True,
@@ -85,7 +98,7 @@ def get_subscription_usage(
         }
     
     # Check and auto-update expiration status
-    subscription.check_and_update_expiration(db)
+    subscription.update_status(db)
     
     service = SubscriptionService(db)
     limits = service.get_subscription_limits(restaurant.id)
@@ -363,7 +376,7 @@ def check_subscription_status(
         }
     
     # Check and auto-update expiration status
-    subscription.check_and_update_expiration(db)
+    subscription.update_status(db)
     
     # Use the can_operate property for consistent logic
     can_operate = subscription.can_operate
@@ -391,6 +404,9 @@ def check_subscription_status(
         elif subscription.status == SubscriptionStatus.PAST_DUE:
             message = "Tu suscripción tiene pagos pendientes. Por favor actualiza tu método de pago."
             status_str = "past_due"
+        elif subscription.status == SubscriptionStatus.PENDING_PAYMENT:
+            message = "Tu pago está en revisión. Podrás operar una vez que sea aprobado."
+            status_str = "pending_payment"
         elif subscription.status == SubscriptionStatus.ACTIVE:
             message = "Tu suscripción ha vencido. Por favor renueva tu plan."
             status_str = "period_ended"
@@ -419,3 +435,221 @@ def check_subscription_status(
         "days_remaining": days_remaining,
         "plan_name": subscription.plan.display_name
     }
+
+
+# ============================================================================
+# PAYMENT ENDPOINTS
+# ============================================================================
+
+@router.post("/request-renewal", response_model=RenewalResponse)
+def request_renewal(
+    request: RenewalRequest,
+    current_user: User = Depends(require_admin_or_sysadmin),
+    restaurant: Restaurant = Depends(get_current_restaurant),
+    db: Session = Depends(get_db)
+):
+    """Request subscription renewal - generates payment instructions"""
+    # Get current subscription
+    subscription = db.query(RestaurantSubscription).filter(
+        RestaurantSubscription.restaurant_id == restaurant.id,
+        RestaurantSubscription.deleted_at.is_(None)
+    ).order_by(RestaurantSubscription.created_at.desc()).first()
+    
+    if not subscription:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No subscription found"
+        )
+    
+    # Get plan details
+    plan = db.query(SubscriptionPlan).filter(
+        SubscriptionPlan.id == request.plan_id
+    ).first()
+    
+    if not plan:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Plan not found"
+        )
+    
+    # Calculate amount
+    if request.billing_cycle == "monthly":
+        amount = plan.monthly_price
+    else:
+        amount = plan.annual_price
+    
+    # Create payment request
+    payment_service = PaymentService(db)
+    payment = payment_service.create_renewal_request(
+        restaurant_id=restaurant.id,
+        subscription_id=subscription.id,
+        plan_id=request.plan_id,
+        billing_cycle=request.billing_cycle,
+        amount=amount
+    )
+    
+    # Bank details (TODO: move to config)
+    bank_details = {
+        "bank": "BBVA",
+        "account": "1234567890",
+        "clabe": "012345678901234567",
+        "beneficiary": "CloudRestaurant SA de CV"
+    }
+    
+    instructions = f"""
+Realiza una transferencia bancaria con los siguientes datos:
+
+Banco: {bank_details['bank']}
+Cuenta: {bank_details['account']}
+CLABE: {bank_details['clabe']}
+Beneficiario: {bank_details['beneficiary']}
+
+IMPORTANTE: Incluye el número de referencia en tu transferencia.
+Número de Referencia: {payment.reference_number}
+
+Una vez realizada la transferencia, sube tu comprobante de pago.
+"""
+    
+    return RenewalResponse(
+        payment_id=payment.id,
+        reference_number=payment.reference_number,
+        amount=amount,
+        instructions=instructions,
+        bank_details=bank_details
+    )
+
+
+@router.post("/submit-payment/{payment_id}", response_model=PaymentResponse)
+def submit_payment(
+    payment_id: int,
+    data: PaymentSubmit,
+    current_user: User = Depends(require_admin_or_sysadmin),
+    restaurant: Restaurant = Depends(get_current_restaurant),
+    db: Session = Depends(get_db)
+):
+    """Submit payment proof for review"""
+    payment_service = PaymentService(db)
+    
+    # Verify payment belongs to restaurant
+    payment = payment_service.get_payment_by_id(payment_id)
+    if not payment or payment.restaurant_id != restaurant.id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Payment not found"
+        )
+    
+    try:
+        payment = payment_service.submit_payment_proof(
+            payment_id=payment_id,
+            payment_date=data.payment_date,
+            proof_url=data.proof_image_url,
+            notes=data.notes
+        )
+        
+        return PaymentResponse(
+            id=payment.id,
+            restaurant_id=payment.restaurant_id,
+            subscription_id=payment.subscription_id,
+            plan_id=payment.plan_id,
+            amount=payment.amount,
+            billing_cycle=payment.billing_cycle,
+            payment_method=payment.payment_method,
+            reference_number=payment.reference_number,
+            payment_date=payment.payment_date,
+            proof_image_url=payment.proof_image_url,
+            notes=payment.notes,
+            status=payment.status,
+            reviewed_by=payment.reviewed_by,
+            reviewed_at=payment.reviewed_at,
+            rejection_reason=payment.rejection_reason,
+            created_at=payment.created_at,
+            updated_at=payment.updated_at
+        )
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+
+
+@router.get("/payment-status/{payment_id}", response_model=PaymentResponse)
+def get_payment_status(
+    payment_id: int,
+    current_user: User = Depends(require_admin_or_sysadmin),
+    restaurant: Restaurant = Depends(get_current_restaurant),
+    db: Session = Depends(get_db)
+):
+    """Get payment status"""
+    payment_service = PaymentService(db)
+    payment = payment_service.get_payment_by_id(payment_id)
+    
+    if not payment or payment.restaurant_id != restaurant.id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Payment not found"
+        )
+    
+    return PaymentResponse(
+        id=payment.id,
+        restaurant_id=payment.restaurant_id,
+        subscription_id=payment.subscription_id,
+        plan_id=payment.plan_id,
+        amount=payment.amount,
+        billing_cycle=payment.billing_cycle,
+        payment_method=payment.payment_method,
+        reference_number=payment.reference_number,
+        payment_date=payment.payment_date,
+        proof_image_url=payment.proof_image_url,
+        notes=payment.notes,
+        status=payment.status,
+        reviewed_by=payment.reviewed_by,
+        reviewed_at=payment.reviewed_at,
+        rejection_reason=payment.rejection_reason,
+        created_at=payment.created_at,
+        updated_at=payment.updated_at
+    )
+
+
+# ============================================================================
+# ALERT ENDPOINTS
+# ============================================================================
+
+@router.get("/alerts", response_model=list[AlertResponse])
+def get_alerts(
+    unread_only: bool = False,
+    current_user: User = Depends(require_admin_or_sysadmin),
+    restaurant: Restaurant = Depends(get_current_restaurant),
+    db: Session = Depends(get_db)
+):
+    """Get subscription alerts for restaurant"""
+    alert_service = AlertService(db)
+    alerts = alert_service.get_restaurant_alerts(restaurant.id, unread_only)
+    
+    return [
+        AlertResponse(
+            id=alert.id,
+            restaurant_id=alert.restaurant_id,
+            subscription_id=alert.subscription_id,
+            alert_type=alert.alert_type,
+            title=alert.title,
+            message=alert.message,
+            is_read=alert.is_read,
+            read_at=alert.read_at,
+            created_at=alert.created_at
+        )
+        for alert in alerts
+    ]
+
+
+@router.post("/alerts/mark-read")
+def mark_alerts_read(
+    data: AlertMarkRead,
+    current_user: User = Depends(require_admin_or_sysadmin),
+    restaurant: Restaurant = Depends(get_current_restaurant),
+    db: Session = Depends(get_db)
+):
+    """Mark alerts as read"""
+    alert_service = AlertService(db)
+    alert_service.mark_as_read(data.alert_ids, restaurant.id)
+    
+    return {"message": "Alerts marked as read"}

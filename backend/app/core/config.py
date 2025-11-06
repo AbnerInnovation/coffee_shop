@@ -31,10 +31,10 @@ class Settings(BaseSettings):
     FRONTEND_URL: str = Field("http://localhost:3000", env='FRONTEND_URL')
     
     # Base domain for restaurant URLs (e.g., "shopacoffee.com" or "localhost:3000")
-    BASE_DOMAIN: str = Field("shopacoffee.local:3000", env='BASE_DOMAIN')
+    BASE_DOMAIN: str = Field(default="shopacoffee.local:3000")
     
     # Protocol for restaurant URLs (http or https)
-    BASE_PROTOCOL: str = Field("http", env='BASE_PROTOCOL')
+    BASE_PROTOCOL: str = Field(default="http")
     
     # Debug
     DEBUG: bool = Field(False, env='DEBUG')
@@ -68,3 +68,5 @@ settings = Settings()
 logger.info(f"App environment: {'DEVELOPMENT' if settings.DEBUG else 'PRODUCTION'}")
 logger.info(f"Frontend URL: {settings.FRONTEND_URL}")
 logger.info(f"Token expires in: {settings.ACCESS_TOKEN_EXPIRE_MINUTES} minutes")
+logger.info(f"Base Domain: {settings.BASE_DOMAIN}")
+logger.info(f"Base Protocol: {settings.BASE_PROTOCOL}")

@@ -102,20 +102,20 @@ def get_system_stats(
         func.count(func.distinct(RestaurantSubscription.restaurant_id))
     ).scalar()
     
-    # Count by status
-    active_subs = db.query(func.count(RestaurantSubscription.id)).filter(
+    # Count by status (count unique restaurants, not subscriptions)
+    active_subs = db.query(func.count(func.distinct(RestaurantSubscription.restaurant_id))).filter(
         RestaurantSubscription.status == SubscriptionStatus.ACTIVE
     ).scalar()
     
-    trial_subs = db.query(func.count(RestaurantSubscription.id)).filter(
+    trial_subs = db.query(func.count(func.distinct(RestaurantSubscription.restaurant_id))).filter(
         RestaurantSubscription.status == SubscriptionStatus.TRIAL
     ).scalar()
     
-    cancelled_subs = db.query(func.count(RestaurantSubscription.id)).filter(
+    cancelled_subs = db.query(func.count(func.distinct(RestaurantSubscription.restaurant_id))).filter(
         RestaurantSubscription.status == SubscriptionStatus.CANCELLED
     ).scalar()
     
-    expired_subs = db.query(func.count(RestaurantSubscription.id)).filter(
+    expired_subs = db.query(func.count(func.distinct(RestaurantSubscription.restaurant_id))).filter(
         RestaurantSubscription.status == SubscriptionStatus.EXPIRED
     ).scalar()
     
@@ -124,13 +124,15 @@ def get_system_stats(
         RestaurantSubscription.status.in_([SubscriptionStatus.ACTIVE, SubscriptionStatus.TRIAL])
     ).scalar() or 0.0
     
-    # Plans distribution
+    # Plans distribution (count unique restaurants per plan)
     plans_dist = {}
     plan_counts = db.query(
         SubscriptionPlan.display_name,
-        func.count(RestaurantSubscription.id)
+        func.count(func.distinct(RestaurantSubscription.restaurant_id))
     ).join(
         RestaurantSubscription
+    ).filter(
+        RestaurantSubscription.status.in_([SubscriptionStatus.ACTIVE, SubscriptionStatus.TRIAL])
     ).group_by(
         SubscriptionPlan.display_name
     ).all()

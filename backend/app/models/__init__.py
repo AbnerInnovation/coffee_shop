@@ -19,6 +19,8 @@ from .subscription_plan import SubscriptionPlan, PlanTier
 from .subscription_addon import SubscriptionAddon, AddonType, AddonCategory
 from .restaurant_subscription import RestaurantSubscription, SubscriptionStatus, BillingCycle
 from .restaurant_addon import RestaurantAddon
+from .subscription_payment import SubscriptionPayment, PaymentStatus, PaymentMethod
+from .subscription_alert import SubscriptionAlert, AlertType
 from .restaurant import Restaurant
 
 # Make models available for import from app.models
@@ -39,5 +41,7 @@ __all__ = [
     "SubscriptionPlan", "PlanTier",
     "SubscriptionAddon", "AddonType", "AddonCategory",
     "RestaurantSubscription", "SubscriptionStatus", "BillingCycle",
-    "RestaurantAddon"
+    "RestaurantAddon",
+    "SubscriptionPayment", "PaymentStatus", "PaymentMethod",
+    "SubscriptionAlert", "AlertType"
 ]

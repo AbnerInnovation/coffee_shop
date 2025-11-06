@@ -42,7 +42,8 @@ export const authService = {
     formData.append('username', credentials.email);
     formData.append('password', credentials.password);
 
-    const response = await api.post<AuthResponse>(
+    // Axios interceptor already returns response.data
+    return await api.post<AuthResponse>(
       '/auth/token',
       formData,
       {
@@ -50,23 +51,22 @@ export const authService = {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
       }
-    );
-    return response.data;
+    ) as unknown as AuthResponse;
   },
 
   // Register new user
   async register(userData: RegisterData): Promise<AuthResponse> {
-    const response = await api.post<AuthResponse>(
+    // Axios interceptor already returns response.data
+    return await api.post<AuthResponse>(
       '/auth/register',
       userData
-    );
-    return response.data;
+    ) as unknown as AuthResponse;
   },
 
   // Get current user
   async getCurrentUser(token: string) {
-    const response = await api.get('/users/me');
-    return response.data;
+    // Axios interceptor already returns response.data
+    return await api.get('/users/me');
   },
 
   // Logout (client-side only)
@@ -117,8 +117,8 @@ export const authService = {
           },
           _retry: true  // Mark this request to avoid infinite refresh loops
         }
-      ) as { data: AuthResponse }; // Type assertion to ensure correct type
-      return response.data;
+      ) as unknown as AuthResponse; // Axios interceptor already returns response.data
+      return response;
     } catch (error) {
       console.error('Failed to refresh token:', error);
       return null;

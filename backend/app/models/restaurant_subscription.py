@@ -13,9 +13,10 @@ class SubscriptionStatus(str, PyEnum):
     """Subscription status enumeration"""
     TRIAL = "trial"
     ACTIVE = "active"
-    PAST_DUE = "past_due"
+    PAST_DUE = "past_due"  # Expired but in grace period
+    PENDING_PAYMENT = "pending_payment"  # Payment submitted, awaiting approval
     CANCELLED = "cancelled"
-    EXPIRED = "expired"
+    EXPIRED = "expired"  # Suspended after grace period
 
 class BillingCycle(str, PyEnum):
     """Billing cycle enumeration"""
@@ -75,6 +76,11 @@ class RestaurantSubscription(BaseModel):
     # Auto-renewal
     auto_renew: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     
+    # Grace period and payment tracking
+    grace_period_end: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    pending_payment_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    payment_method_id: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)  # For future automatic payments
+    
     # Additional metadata
     subscription_metadata: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSON, nullable=True)
     
@@ -103,36 +109,46 @@ class RestaurantSubscription(BaseModel):
     @property
     def can_operate(self) -> bool:
         """
-        Check if restaurant can operate based on subscription status and expiration.
-        This is the single source of truth for subscription validation.
+        ÚNICA fuente de verdad para validar si el restaurant puede operar.
+        Consolida TODAS las validaciones en un solo lugar.
         """
-        # Check status first
-        if self.status not in [SubscriptionStatus.TRIAL, SubscriptionStatus.ACTIVE]:
+        now = datetime.utcnow()
+        
+        # 1. Estados que NO pueden operar
+        if self.status in [SubscriptionStatus.EXPIRED, SubscriptionStatus.CANCELLED]:
             return False
         
-        # For TRIAL, check if trial has expired
-        if self.status == SubscriptionStatus.TRIAL and self.is_trial_expired:
+        # 2. Trial activo
+        if self.status == SubscriptionStatus.TRIAL:
+            if self.trial_end_date:
+                trial_end = self.trial_end_date.replace(tzinfo=None) if self.trial_end_date.tzinfo else self.trial_end_date
+                return trial_end > now
             return False
         
-        # For ACTIVE, check if current period has ended
+        # 3. Suscripción activa
         if self.status == SubscriptionStatus.ACTIVE:
             if self.current_period_end:
-                now = datetime.utcnow()
-                # Remove timezone info from both for comparison if needed
                 period_end = self.current_period_end.replace(tzinfo=None) if self.current_period_end.tzinfo else self.current_period_end
-                
-                # Debug logging
-                print(f"[CAN_OPERATE] Now (UTC): {now}")
-                print(f"[CAN_OPERATE] Period end: {period_end}")
-                print(f"[CAN_OPERATE] Period end < now: {period_end < now}")
-                print(f"[CAN_OPERATE] Days until renewal: {self.days_until_renewal}")
-                
-                # If period has ended, subscription is expired
-                if period_end < now:
-                    print(f"[CAN_OPERATE] Subscription {self.id} period has ended - cannot operate")
-                    return False
+                return period_end > now
+            return False
         
-        return True
+        # 4. Período de gracia (PAST_DUE)
+        if self.status == SubscriptionStatus.PAST_DUE:
+            # Puede operar SI está en período de gracia Y tiene pago pendiente
+            if self.grace_period_end and self.pending_payment_id:
+                grace_end = self.grace_period_end.replace(tzinfo=None) if self.grace_period_end.tzinfo else self.grace_period_end
+                return grace_end > now
+            return False
+        
+        # 5. Pago pendiente de aprobación
+        if self.status == SubscriptionStatus.PENDING_PAYMENT:
+            # Puede operar mientras espera aprobación (dentro de gracia)
+            if self.grace_period_end:
+                grace_end = self.grace_period_end.replace(tzinfo=None) if self.grace_period_end.tzinfo else self.grace_period_end
+                return grace_end > now
+            return False
+        
+        return False
     
     @property
     def is_expired(self) -> bool:
@@ -152,37 +168,60 @@ class RestaurantSubscription(BaseModel):
         # If status is already EXPIRED, CANCELLED, etc.
         return self.status not in [SubscriptionStatus.TRIAL, SubscriptionStatus.ACTIVE]
     
-    def check_and_update_expiration(self, db_session) -> bool:
+    def update_status(self, db_session) -> bool:
         """
-        Check if subscription has expired and update status automatically.
+        Actualiza el status automáticamente basado en fechas y estado actual.
+        Este método debe llamarse en CADA request antes de verificar can_operate.
         Returns True if status was updated, False otherwise.
-        
-        This should be called whenever subscription is accessed to ensure
-        the status field reflects the actual expiration state.
         """
-        # Skip if already in a terminal state
+        now = datetime.utcnow()
+        changed = False
+        
+        # Skip terminal states
         if self.status in [SubscriptionStatus.EXPIRED, SubscriptionStatus.CANCELLED]:
             return False
         
-        # Check if trial has expired
-        if self.status == SubscriptionStatus.TRIAL and self.is_trial_expired:
-            print(f"[AUTO-EXPIRE] Trial subscription {self.id} has expired, updating status")
-            self.status = SubscriptionStatus.EXPIRED
+        # 1. Trial expirado → EXPIRED
+        if self.status == SubscriptionStatus.TRIAL:
+            if self.trial_end_date:
+                trial_end = self.trial_end_date.replace(tzinfo=None) if self.trial_end_date.tzinfo else self.trial_end_date
+                if trial_end < now:
+                    print(f"[UPDATE_STATUS] Trial {self.id} expired → EXPIRED")
+                    self.status = SubscriptionStatus.EXPIRED
+                    changed = True
+        
+        # 2. Suscripción activa expirada → PAST_DUE (inicia período de gracia)
+        elif self.status == SubscriptionStatus.ACTIVE:
+            if self.current_period_end:
+                period_end = self.current_period_end.replace(tzinfo=None) if self.current_period_end.tzinfo else self.current_period_end
+                if period_end < now:
+                    print(f"[UPDATE_STATUS] Active {self.id} expired → PAST_DUE (grace period)")
+                    self.status = SubscriptionStatus.PAST_DUE
+                    self.grace_period_end = now + timedelta(days=3)
+                    changed = True
+        
+        # 3. Período de gracia terminado sin pago → EXPIRED
+        elif self.status == SubscriptionStatus.PAST_DUE:
+            if self.grace_period_end:
+                grace_end = self.grace_period_end.replace(tzinfo=None) if self.grace_period_end.tzinfo else self.grace_period_end
+                if grace_end < now and not self.pending_payment_id:
+                    print(f"[UPDATE_STATUS] Grace period {self.id} ended without payment → EXPIRED")
+                    self.status = SubscriptionStatus.EXPIRED
+                    changed = True
+        
+        # 4. Pago pendiente fuera de gracia → EXPIRED
+        elif self.status == SubscriptionStatus.PENDING_PAYMENT:
+            if self.grace_period_end:
+                grace_end = self.grace_period_end.replace(tzinfo=None) if self.grace_period_end.tzinfo else self.grace_period_end
+                if grace_end < now:
+                    print(f"[UPDATE_STATUS] Pending payment {self.id} grace expired → EXPIRED")
+                    self.status = SubscriptionStatus.EXPIRED
+                    changed = True
+        
+        if changed:
             db_session.commit()
-            return True
         
-        # Check if active subscription period has ended
-        if self.status == SubscriptionStatus.ACTIVE and self.current_period_end:
-            now = datetime.utcnow()
-            period_end = self.current_period_end.replace(tzinfo=None) if self.current_period_end.tzinfo else self.current_period_end
-            
-            if period_end < now:
-                print(f"[AUTO-EXPIRE] Active subscription {self.id} period has ended, updating status to EXPIRED")
-                self.status = SubscriptionStatus.EXPIRED
-                db_session.commit()
-                return True
-        
-        return False
+        return changed
     
     @property
     def days_until_renewal(self) -> int:
