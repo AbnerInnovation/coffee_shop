@@ -37,10 +37,7 @@ class Settings(BaseSettings):
     BASE_PROTOCOL: str = Field(default="http")
     
     # Debug
-    DEBUG: bool = Field(False, env='DEBUG')
-
-    BASE_DOMAIN: str = Field(default="shopacoffee.local:3000")
-    BASE_PROTOCOL: str = Field(default="http")    
+    DEBUG: bool = Field(False, env='DEBUG')   
     # Build database URL with proper escaping for special characters in password
     @property
     def DATABASE_URL(self) -> str:
