@@ -23,10 +23,14 @@ class OAuth2PasswordBearerWithCookie(OAuth2PasswordBearer):
     """
     
     async def __call__(self, request: Request) -> Optional[str]:
+        import logging
+        logger = logging.getLogger(__name__)
+        
         # Try to get token from cookie first (HTTPOnly - more secure)
         token = request.cookies.get("access_token")
         
         if token:
+            logger.info(f"✅ Token found in cookie: {token[:20]}...")
             return token
         
         # Fall back to Authorization header for backward compatibility
@@ -34,7 +38,10 @@ class OAuth2PasswordBearerWithCookie(OAuth2PasswordBearer):
         scheme, param = get_authorization_scheme_param(authorization)
         
         if authorization and scheme.lower() == "bearer":
+            logger.info(f"✅ Token found in Authorization header: {param[:20]}...")
             return param
+        
+        logger.warning(f"⚠️ No token found - Cookies: {list(request.cookies.keys())}, Auth header: {authorization}")
         
         # If auto_error is True, raise exception
         if self.auto_error:
