@@ -3,6 +3,7 @@ import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
 import { safeStorage, checkStorageAndWarn } from '@/utils/storage';
+import { setGlobalToken } from '@/main';
 
 // Types
 export interface LoginCredentials {
@@ -39,6 +40,7 @@ export const useAuthStore = defineStore('auth', () => {
   const user = ref<User | null>(null);
   const loading = ref<boolean>(false);
   const error = ref<string | null>(null);
+  const accessToken = ref<string | null>(null); // In-memory token for Safari
   const isAuthenticated = computed<boolean>(() => !!user.value);
   const isAdmin = computed<boolean>(() => user.value?.role === 'admin');
   
@@ -67,9 +69,12 @@ export const useAuthStore = defineStore('auth', () => {
         throw new Error('No access token received');
       }
       
-      // Use safe storage (handles iOS/Safari restrictions)
-      safeStorage.setItem('access_token', access_token);
+      // Store tokens in memory FIRST (for Safari)
+      accessToken.value = access_token;
+      setGlobalToken(access_token); // Set global cache
       
+      // Then store in storage
+      safeStorage.setItem('access_token', access_token);
       if (refresh_token) {
         safeStorage.setItem('refresh_token', refresh_token);
       }
@@ -194,8 +199,17 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       loading.value = true;
       
+      // Call backend logout to clear HTTPOnly cookies
+      try {
+        await axios.post(`${API_BASE_URL}/auth/logout`);
+      } catch (err) {
+        console.warn('Backend logout failed, continuing with client cleanup:', err);
+      }
+      
       // Clear user state
       user.value = null;
+      accessToken.value = null;
+      setGlobalToken(null);
       
       // Clear tokens from storage
       safeStorage.removeItem('access_token');
@@ -212,6 +226,8 @@ export const useAuthStore = defineStore('auth', () => {
       console.error('Error during logout:', error);
       // Even if navigation fails, ensure we're logged out
       user.value = null;
+      accessToken.value = null;
+      setGlobalToken(null);
       // Fallback to window.location
       window.location.href = '/login';
     } finally {

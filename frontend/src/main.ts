@@ -11,11 +11,27 @@ import { safeStorage } from './utils/storage';
 
 // Configure axios
 axios.defaults.baseURL = import.meta.env.VITE_API_URL || 'http://localhost:8001';
+axios.defaults.withCredentials = true; // Send cookies with requests
+
+// Global in-memory token cache for Safari compatibility
+// Safari sometimes blocks localStorage access during navigation
+let _cachedToken: string | null = null;
+
+export function setGlobalToken(token: string | null) {
+  _cachedToken = token;
+  console.log('🔐 Global token set:', !!token);
+}
+
+export function getGlobalToken(): string | null {
+  return _cachedToken;
+}
 
 // Request interceptor - add auth token
 axios.interceptors.request.use(
   (config) => {
-    const token = safeStorage.getItem('access_token') || safeStorage.getItem('access_token', true);
+    // Try in-memory token first (for Safari), then storage
+    let token = _cachedToken || safeStorage.getItem('access_token') || safeStorage.getItem('access_token', true);
+    
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
       console.log('🔑 Token attached to request:', config.url);
@@ -53,21 +69,20 @@ axios.interceptors.response.use(
       originalRequest._retry = true;
       
       console.log('🔒 401 Unauthorized - Clearing session');
-      console.log('⏸️ REDIRECT DISABLED FOR DEBUGGING - Check the error above');
       
-      // TEMPORARILY DISABLED FOR DEBUGGING
       // Clear invalid token and redirect to login
-      // safeStorage.removeItem('access_token');
-      // safeStorage.removeItem('refresh_token');
-      // safeStorage.removeItem('user');
-      // safeStorage.removeItem('access_token', true);
-      // safeStorage.removeItem('refresh_token', true);
-      // safeStorage.removeItem('user', true);
+      setGlobalToken(null);
+      safeStorage.removeItem('access_token');
+      safeStorage.removeItem('refresh_token');
+      safeStorage.removeItem('user');
+      safeStorage.removeItem('access_token', true);
+      safeStorage.removeItem('refresh_token', true);
+      safeStorage.removeItem('user', true);
       
       // Redirect to login only if not already there
-      // if (!window.location.pathname.includes('/login')) {
-      //   window.location.href = '/login';
-      // }
+      if (!window.location.pathname.includes('/login')) {
+        window.location.href = '/login';
+      }
     }
     
     return Promise.reject(error);

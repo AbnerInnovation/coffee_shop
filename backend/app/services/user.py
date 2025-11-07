@@ -7,14 +7,12 @@ from sqlalchemy.orm import Session
 import logging
 
 from app.core.config import settings
-from app.core.security import oauth2_scheme, SECRET_KEY, ALGORITHM, get_password_hash, verify_password
+from app.core.security import oauth2_scheme_cookie, SECRET_KEY, ALGORITHM, get_password_hash, verify_password
 from app.models.user import User as UserModel
 from app.schemas.user import UserCreate, UserUpdate, UserRole
 from app.db.base import SessionLocal
 
 logger = logging.getLogger(__name__)
-
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 def get_db() -> Session:
     db = SessionLocal()
@@ -24,7 +22,7 @@ def get_db() -> Session:
         db.close()
 
 async def get_current_user(
-    token: str = Depends(oauth2_scheme),
+    token: str = Depends(oauth2_scheme_cookie),
     db: Session = Depends(get_db)
 ) -> UserModel:
     credentials_exception = HTTPException(

@@ -2,8 +2,9 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Union, Optional
 from jose import jwt, JWTError
 from passlib.context import CryptContext
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordBearer
+from fastapi.security.utils import get_authorization_scheme_param
 
 from .config import settings
 
@@ -12,7 +13,42 @@ SECRET_KEY = settings.SECRET_KEY
 ALGORITHM = settings.ALGORITHM
 ACCESS_TOKEN_EXPIRE_MINUTES = settings.ACCESS_TOKEN_EXPIRE_MINUTES
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token", auto_error=False)
+
+
+class OAuth2PasswordBearerWithCookie(OAuth2PasswordBearer):
+    """
+    OAuth2 scheme that supports both Authorization header and HTTPOnly cookies.
+    Tries cookies first (more secure), then falls back to Authorization header.
+    """
+    
+    async def __call__(self, request: Request) -> Optional[str]:
+        # Try to get token from cookie first (HTTPOnly - more secure)
+        token = request.cookies.get("access_token")
+        
+        if token:
+            return token
+        
+        # Fall back to Authorization header for backward compatibility
+        authorization = request.headers.get("Authorization")
+        scheme, param = get_authorization_scheme_param(authorization)
+        
+        if authorization and scheme.lower() == "bearer":
+            return param
+        
+        # If auto_error is True, raise exception
+        if self.auto_error:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Not authenticated",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        
+        return None
+
+
+# Use the cookie-aware scheme
+oauth2_scheme_cookie = OAuth2PasswordBearerWithCookie(tokenUrl="token", auto_error=False)
 
 # Password hashing context
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")

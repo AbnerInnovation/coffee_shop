@@ -1,7 +1,7 @@
 from datetime import timedelta
 from typing import Optional
 
-from fastapi import APIRouter, Depends, status, Request
+from fastapi import APIRouter, Depends, status, Request, Response
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
@@ -49,12 +49,14 @@ async def register_user(
 @router.post("/token", response_model=Token)
 async def login_for_access_token(
     request: Request,
+    response: Response,
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db)
 ) -> dict[str, str]:
     """
     OAuth2 compatible token login, get an access token for future requests.
     Validates that the user belongs to the restaurant subdomain.
+    Sets HTTPOnly cookies for enhanced security.
     """
     user = user_service.authenticate_user(
         db, 
@@ -103,6 +105,39 @@ async def login_for_access_token(
     )
     refresh_token = create_refresh_token(subject=user.id)
     
+    # Determine if we're in production (HTTPS)
+    is_production = request.url.scheme == "https"
+    
+    # Safari/iOS requires samesite="none" for cross-port cookies (localhost:3000 → localhost:8001)
+    # But samesite="none" requires secure=True, which requires HTTPS
+    # Solution: Use "lax" in development (same domain), "none" in production (cross-domain)
+    samesite_value = "none" if is_production else "lax"
+    
+    # Set HTTPOnly cookies for enhanced security
+    # Access token cookie
+    response.set_cookie(
+        key="access_token",
+        value=access_token,
+        httponly=True,  # JavaScript cannot access
+        secure=is_production,  # Only send over HTTPS in production
+        samesite=samesite_value,  # "none" for production (cross-domain), "lax" for dev
+        max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,  # seconds
+        path="/",
+    )
+    
+    # Refresh token cookie
+    response.set_cookie(
+        key="refresh_token",
+        value=refresh_token,
+        httponly=True,
+        secure=is_production,
+        samesite=samesite_value,
+        max_age=60 * 60 * 24 * 7,  # 7 days
+        path="/",
+    )
+    
+    # Still return tokens in response for backward compatibility
+    # Frontend can use either cookies or tokens
     return {
         "access_token": access_token,
         "token_type": "bearer",
@@ -135,6 +170,29 @@ async def refresh_token(body: TokenRefreshRequest, db: Session = Depends(get_db)
         raise
     except Exception:
         raise UnauthorizedError("Could not refresh token")
+
+
+@router.post("/logout", status_code=status.HTTP_200_OK)
+async def logout(response: Response):
+    """
+    Logout user by clearing HTTPOnly cookies.
+    """
+    # Clear access token cookie
+    response.delete_cookie(
+        key="access_token",
+        path="/",
+    )
+    
+    # Clear refresh token cookie
+    response.delete_cookie(
+        key="refresh_token",
+        path="/",
+    )
+    
+    return {
+        "message": "Successfully logged out",
+        "success": True
+    }
 
 
 @router.post("/change-password", status_code=status.HTTP_200_OK)
