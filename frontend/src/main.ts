@@ -30,10 +30,16 @@ axios.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
     
+    // Don't handle 401 errors during login/register
+    const isAuthEndpoint = originalRequest.url?.includes('/auth/token') || 
+                          originalRequest.url?.includes('/auth/register');
+    
     // Only clear tokens if we get a 401 response from the server
-    // Don't clear on network errors or other issues
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // Don't clear on network errors, auth endpoints, or other issues
+    if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
       originalRequest._retry = true;
+      
+      console.log('🔒 401 Unauthorized - Clearing session');
       
       // Clear invalid token and redirect to login
       safeStorage.removeItem('access_token');
@@ -43,8 +49,10 @@ axios.interceptors.response.use(
       safeStorage.removeItem('refresh_token', true);
       safeStorage.removeItem('user', true);
       
-      // Redirect to login
-      window.location.href = '/login';
+      // Redirect to login only if not already there
+      if (!window.location.pathname.includes('/login')) {
+        window.location.href = '/login';
+      }
     }
     
     return Promise.reject(error);

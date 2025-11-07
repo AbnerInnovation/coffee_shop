@@ -76,6 +76,7 @@ export const useAuthStore = defineStore('auth', () => {
       
       try {
         // Fetch user data
+        console.log('🔍 Fetching user data...');
         const userResponse = await axios.get(`${API_BASE_URL}/users/me`, {
           headers: { Authorization: `Bearer ${access_token}` },
         });
@@ -86,12 +87,18 @@ export const useAuthStore = defineStore('auth', () => {
           user.value = userData;
           safeStorage.setItem('user', JSON.stringify(userData));
           
+          console.log('✅ User data saved:', {
+            email: userData.email,
+            role: userData.role,
+            staff_type: userData.staff_type
+          });
+          
           // Wait a moment to ensure state is fully updated
-          await new Promise(resolve => setTimeout(resolve, 50));
+          await new Promise(resolve => setTimeout(resolve, 100));
           
           // Navigate based on user role and staff type
           if (router) {
-            let redirectRoute = 'Menu'; // Default route
+            let redirectRoute = 'Dashboard'; // Default to Dashboard for all
             
             // Redirect based on role and staff_type
             if (userData.role === 'staff' && userData.staff_type) {
@@ -106,11 +113,11 @@ export const useAuthStore = defineStore('auth', () => {
                   redirectRoute = 'Kitchen';
                   break;
                 default:
-                  redirectRoute = 'Menu';
+                  redirectRoute = 'Dashboard';
               }
-            } else if (userData.role === 'admin' || userData.role === 'sysadmin') {
-              redirectRoute = 'Dashboard';
             }
+            
+            console.log('🚀 Redirecting to:', redirectRoute);
             
             // Use router.replace instead of push to avoid back button issues
             await router.replace({ name: redirectRoute });
@@ -118,13 +125,15 @@ export const useAuthStore = defineStore('auth', () => {
           return true;
         }
       } catch (userError) {
-        console.error('Failed to fetch user data:', userError);
+        console.error('❌ Failed to fetch user data:', userError);
         error.value = 'Failed to load user data';
         // Clear tokens if user fetch fails
         safeStorage.removeItem('access_token');
         safeStorage.removeItem('refresh_token');
+        safeStorage.removeItem('user');
         safeStorage.removeItem('access_token', true);
         safeStorage.removeItem('refresh_token', true);
+        safeStorage.removeItem('user', true);
         return false;
       }
     } catch (err: any) {
@@ -262,9 +271,7 @@ export const useAuthStore = defineStore('auth', () => {
     if (token && storedUser) {
       try {
         user.value = JSON.parse(storedUser);
-        // DON'T verify token here - let the router guard do it when needed
-        // This prevents clearing tokens on every page load
-        // checkAuth() will be called by router guard when navigating
+        console.log('✅ User loaded from storage:', user.value?.email);
       } catch (err) {
         console.error('Failed to parse stored user data:', err);
         // Clear invalid data
@@ -276,47 +283,13 @@ export const useAuthStore = defineStore('auth', () => {
       }
     } else if (!token && storedUser) {
       // If we have user data but no token, clear the stale user data
+      console.log('⚠️ User data without token, clearing...');
       safeStorage.removeItem('user');
       safeStorage.removeItem('user', true);
       user.value = null;
-    }
-    
-    // Removed automatic refresh token logic to prevent race conditions
-    // Refresh should be handled explicitly when needed
-    const refreshToken = safeStorage.getItem('refresh_token') || safeStorage.getItem('refresh_token', true);
-    if (!token && refreshToken) {
-      // Attempt silent refresh to keep session
-      axios.post(`${API_BASE_URL}/auth/refresh-token`, { refresh_token: refreshToken })
-        .then((resp) => {
-          const { access_token: newAccess, refresh_token: newRefresh } = resp.data || {};
-          if (newAccess) {
-            // Persist new token
-            safeStorage.setItem('access_token', newAccess);
-          }
-          if (newRefresh) {
-            safeStorage.setItem('refresh_token', newRefresh);
-          }
-          // After obtaining new token, try loading user
-          return axios.get(`${API_BASE_URL}/users/me`, {
-            headers: { Authorization: `Bearer ${newAccess}` },
-          });
-        })
-        .then((userResp) => {
-          if (userResp && userResp.data) {
-            user.value = userResp.data;
-            safeStorage.setItem('user', JSON.stringify(user.value));
-          }
-        })
-        .catch(() => {
-          // If refresh fails, clear stored tokens
-          safeStorage.removeItem('access_token');
-          safeStorage.removeItem('refresh_token');
-          safeStorage.removeItem('user');
-          safeStorage.removeItem('access_token', true);
-          safeStorage.removeItem('refresh_token', true);
-          safeStorage.removeItem('user', true);
-          user.value = null;
-        });
+    } else if (!token && !storedUser) {
+      console.log('ℹ️ No stored credentials found');
+      user.value = null;
     }
   }
   

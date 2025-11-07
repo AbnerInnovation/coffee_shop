@@ -14,50 +14,12 @@ const router = createRouter({
   }
 });
 
-// Track if we've already tried to load user in this session
-let authCheckAttempted = false;
-
 /**
  * Global navigation guard with permission checks
  * Uses the centralized permissions module for consistent access control
  */
 router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore();
-  
-  // Wait for auth check to complete if there's a token but no user yet
-  const token = safeStorage.getItem('access_token') || safeStorage.getItem('access_token', true);
-  
-  if (token && !authStore.user && !authCheckAttempted) {
-    // Mark that we're attempting auth check to prevent multiple simultaneous attempts
-    authCheckAttempted = true;
-    
-    try {
-      // Wait for auth check to complete
-      await authStore.checkAuth();
-    } catch (error) {
-      console.error('Auth check failed in router guard:', error);
-      // If auth check fails, clear token and redirect to login
-      if (to.meta.requiresAuth) {
-        next({ name: 'Login', query: { redirect: to.fullPath } });
-        return;
-      }
-    }
-  } else if (token && !authStore.user && authCheckAttempted && authStore.loading) {
-    // If we already attempted but still loading, wait for it to complete (max 3 seconds)
-    let attempts = 0;
-    while (authStore.loading && attempts < 30) {
-      await new Promise(resolve => setTimeout(resolve, 100));
-      attempts++;
-    }
-    
-    // If still no user after waiting, something went wrong
-    if (!authStore.user && to.meta.requiresAuth) {
-      console.warn('Auth check timed out, redirecting to login');
-      next({ name: 'Login', query: { redirect: to.fullPath } });
-      return;
-    }
-  }
-  
   const user = authStore.user;
 
   // 1. Check authentication requirement
