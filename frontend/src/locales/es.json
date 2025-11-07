@@ -349,7 +349,15 @@
           "confirm_payment": "Confirmar Pago",
           "title": "Pago",
           "mark_as_paid": "Marcar como pagado",
-          "paid_order_warning": "Nota: Los pedidos pagados no se pueden editar."
+          "paid_order_warning": "Nota: Los pedidos pagados no se pueden editar.",
+          "amount_received": "Monto Recibido",
+          "total_to_pay": "Total a Pagar",
+          "change": "Cambio",
+          "insufficient": "Falta",
+          "insufficient_warning": "El monto recibido es insuficiente para completar el pago",
+          "enter_amount": "Por favor ingresa el monto recibido",
+          "insufficient_amount": "El monto recibido es insuficiente",
+          "success": "Pago completado exitosamente"
         },
         "buttons": {
           "view": "Ver",

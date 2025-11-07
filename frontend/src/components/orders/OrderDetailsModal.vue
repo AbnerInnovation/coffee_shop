@@ -259,6 +259,53 @@
                       <span class="font-medium text-xs sm:text-sm">{{ method.label }}</span>
                     </button>
                   </div>
+                  
+                  <!-- Cash Change Calculator -->
+                  <div v-if="selectedPaymentMethod === 'cash'" class="mt-4 space-y-3">
+                    <div class="bg-white dark:bg-gray-900 p-3 rounded-lg border border-gray-200 dark:border-gray-700">
+                      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        {{$t('app.views.orders.payment.amount_received') || 'Monto Recibido'}}
+                      </label>
+                      <div class="relative">
+                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400">$</span>
+                        <input
+                          v-model.number="cashReceived"
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          class="block w-full pl-7 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm"
+                          :placeholder="(order.total || 0).toFixed(2)"
+                          @input="calculateChange"
+                        />
+                      </div>
+                    </div>
+                    
+                    <!-- Total and Change Display -->
+                    <div class="grid grid-cols-2 gap-3">
+                      <div class="bg-indigo-50 dark:bg-indigo-900/20 p-3 rounded-lg border border-indigo-200 dark:border-indigo-800">
+                        <p class="text-xs text-indigo-600 dark:text-indigo-400 font-medium mb-1">{{$t('app.views.orders.payment.total_to_pay') || 'Total a Pagar'}}</p>
+                        <p class="text-lg font-bold text-indigo-900 dark:text-indigo-100">${{ (order.total || 0).toFixed(2) }}</p>
+                      </div>
+                      <div class="p-3 rounded-lg border" :class="changeAmount >= 0 ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'">
+                        <p class="text-xs font-medium mb-1" :class="changeAmount >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'">
+                          {{ changeAmount >= 0 ? ($t('app.views.orders.payment.change') || 'Cambio') : ($t('app.views.orders.payment.insufficient') || 'Falta') }}
+                        </p>
+                        <p class="text-lg font-bold" :class="changeAmount >= 0 ? 'text-green-900 dark:text-green-100' : 'text-red-900 dark:text-red-100'">
+                          ${{ Math.abs(changeAmount).toFixed(2) }}
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <!-- Insufficient amount warning -->
+                    <div v-if="changeAmount < 0" class="flex items-start gap-2 p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                      <svg class="h-5 w-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                      </svg>
+                      <p class="text-xs text-red-700 dark:text-red-300">
+                        {{$t('app.views.orders.payment.insufficient_warning') || 'El monto recibido es insuficiente para completar el pago'}}
+                      </p>
+                    </div>
+                  </div>
                 </div>
                 
                 <div class="flex flex-col gap-2 sm:grid sm:grid-flow-row-dense sm:grid-cols-3 sm:gap-3">
@@ -505,6 +552,8 @@ function printOrder() {
 
 const showPaymentMethodSelector = ref(false)
 const selectedPaymentMethod = ref<'cash' | 'card' | 'digital' | 'other'>('cash')
+const cashReceived = ref<number>(0)
+const changeAmount = ref<number>(0)
 
 const paymentMethods = [
   { value: 'cash' as const, label: t('app.views.cashRegister.cash') || 'Cash', icon: BanknotesIcon },
@@ -513,11 +562,43 @@ const paymentMethods = [
   { value: 'other' as const, label: t('app.views.cashRegister.other') || 'Other', icon: EllipsisHorizontalIcon }
 ]
 
+// Calculate change when cash amount changes
+function calculateChange() {
+  const total = props.order.total || 0;
+  const received = cashReceived.value || 0;
+  changeAmount.value = received - total;
+}
+
 async function completePayment() {
+  // Validate cash payment has sufficient amount
+  if (selectedPaymentMethod.value === 'cash') {
+    if (!cashReceived.value || cashReceived.value <= 0) {
+      showInternalToast(
+        t('app.views.orders.payment.enter_amount') || 'Por favor ingresa el monto recibido',
+        'warning',
+        3000
+      );
+      return;
+    }
+    
+    if (changeAmount.value < 0) {
+      showInternalToast(
+        t('app.views.orders.payment.insufficient_amount') || 'El monto recibido es insuficiente',
+        'error',
+        3000
+      );
+      return;
+    }
+  }
+  
   try {
     await orderService.markOrderPaid(props.order.id, selectedPaymentMethod.value);
     showInternalToast(t('app.views.orders.payment.success') || 'Pago completado exitosamente', 'success');
     showPaymentMethodSelector.value = false;
+    
+    // Reset cash fields
+    cashReceived.value = 0;
+    changeAmount.value = 0;
     
     // Close modal immediately to prevent showing stale data
     emit('close');
