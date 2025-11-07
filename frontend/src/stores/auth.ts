@@ -85,7 +85,19 @@ export const useAuthStore = defineStore('auth', () => {
           // Update store state FIRST
           const userData = userResponse.data;
           user.value = userData;
+          
+          // Save to BOTH localStorage and sessionStorage for Safari compatibility
           safeStorage.setItem('user', JSON.stringify(userData));
+          safeStorage.setItem('user', JSON.stringify(userData), true); // sessionStorage
+          
+          // Re-save tokens to ensure they persist
+          safeStorage.setItem('access_token', access_token);
+          safeStorage.setItem('access_token', access_token, true); // sessionStorage
+          
+          if (refresh_token) {
+            safeStorage.setItem('refresh_token', refresh_token);
+            safeStorage.setItem('refresh_token', refresh_token, true); // sessionStorage
+          }
           
           console.log('✅ User data saved:', {
             email: userData.email,
@@ -93,8 +105,14 @@ export const useAuthStore = defineStore('auth', () => {
             staff_type: userData.staff_type
           });
           
-          // Wait a moment to ensure state is fully updated
-          await new Promise(resolve => setTimeout(resolve, 100));
+          console.log('💾 Storage check:', {
+            localStorage: safeStorage.getItem('access_token'),
+            sessionStorage: safeStorage.getItem('access_token', true),
+            storageType: safeStorage.getStorageType()
+          });
+          
+          // Wait longer to ensure Safari persists the data
+          await new Promise(resolve => setTimeout(resolve, 300));
           
           // Navigate based on user role and staff type
           if (router) {
