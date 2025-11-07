@@ -24,17 +24,20 @@
         >
           {{ t('app.subscription.tabs.overview') }}
         </button>
-        <!-- <button
-          @click="activeTab = 'addons'"
+        <button
+          @click="activeTab = 'alerts'"
           :class="[
-            activeTab === 'addons'
+            activeTab === 'alerts'
               ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
               : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300',
             'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm'
           ]"
         >
-          {{ t('app.subscription.tabs.addons') }}
-        </button> -->
+          {{ t('app.subscription.tabs.alerts') }}
+          <span v-if="unreadAlertCount > 0" class="ml-2 py-0.5 px-2 rounded-full text-xs bg-red-100 text-red-600 dark:bg-red-900 dark:text-red-300">
+            {{ unreadAlertCount }}
+          </span>
+        </button>
       </nav>
     </div>
 
@@ -48,20 +51,8 @@
       <!-- Overview Tab -->
       <div v-if="activeTab === 'overview'" class="space-y-6">
       
-      <!-- Subscription Alerts -->
-      <div v-if="subscription?.has_subscription">
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-3">
-          {{ t('app.subscription.alerts.title') }}
-        </h3>
-        <SubscriptionAlerts 
-          :unread-only="false"
-          :auto-refresh="true"
-          @update:count="handleAlertCountUpdate"
-        />
-      </div>
-      
       <!-- Expiring Soon Alert (1-3 days) -->
-      <div v-if="subscription?.has_subscription && daysUntilExpiration > 0 && daysUntilExpiration <= 3" 
+      <div v-if="subscription?.has_subscription && daysUntilExpiration !== null && daysUntilExpiration > 0 && daysUntilExpiration <= 3" 
            class="bg-amber-50 dark:bg-amber-900/20 border-l-4 border-amber-500 p-4 rounded-lg">
         <div class="flex items-start">
           <svg class="h-6 w-6 text-amber-500 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -213,21 +204,21 @@
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <UsageBar
                 :label="t('app.subscription.admin_users')"
-                :current="usage.usage.users.admin"
-                :max="usage.limits.max_admin_users"
-                :percentage="usage.percentages.admin_users"
+                :current="usage?.usage?.users?.admin ?? 0"
+                :max="usage?.limits?.max_admin_users ?? 0"
+                :percentage="usage?.percentages?.admin_users ?? 0"
               />
               <UsageBar
                 :label="t('app.subscription.waiter_users')"
-                :current="usage.usage.users.waiter"
-                :max="usage.limits.max_waiter_users"
-                :percentage="usage.percentages.waiter_users"
+                :current="usage?.usage?.users?.waiter ?? 0"
+                :max="usage?.limits?.max_waiter_users ?? 0"
+                :percentage="usage?.percentages?.waiter_users ?? 0"
               />
               <UsageBar
                 :label="t('app.subscription.cashier_users')"
-                :current="usage.usage.users.cashier"
-                :max="usage.limits.max_cashier_users"
-                :percentage="usage.percentages.cashier_users"
+                :current="usage?.usage?.users?.cashier ?? 0"
+                :max="usage?.limits?.max_cashier_users ?? 0"
+                :percentage="usage?.percentages?.cashier_users ?? 0"
               />
             </div>
           </div>
@@ -240,21 +231,21 @@
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
               <UsageBar
                 :label="t('app.subscription.tables')"
-                :current="usage.usage.tables"
-                :max="usage.limits.max_tables"
-                :percentage="usage.percentages.tables"
+                :current="usage?.usage?.tables ?? 0"
+                :max="usage?.limits?.max_tables ?? 0"
+                :percentage="usage?.percentages?.tables ?? 0"
               />
               <UsageBar
                 :label="t('app.subscription.menu_items')"
-                :current="usage.usage.menu_items"
-                :max="usage.limits.max_menu_items"
-                :percentage="usage.percentages.menu_items"
+                :current="usage?.usage?.menu_items ?? 0"
+                :max="usage?.limits?.max_menu_items ?? 0"
+                :percentage="usage?.percentages?.menu_items ?? 0"
               />
               <UsageBar
                 :label="t('app.subscription.categories')"
-                :current="usage.usage.categories"
-                :max="usage.limits.max_categories"
-                :percentage="usage.percentages.categories"
+                :current="usage?.usage?.categories ?? 0"
+                :max="usage?.limits?.max_categories ?? 0"
+                :percentage="usage?.percentages?.categories ?? 0"
               />
             </div>
           </div>
@@ -267,23 +258,23 @@
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
               <FeatureBadge
                 :label="t('app.subscription.kitchen_module')"
-                :enabled="usage.limits.has_kitchen_module"
+                :enabled="usage?.limits?.has_kitchen_module ?? false"
               />
               <FeatureBadge
                 :label="t('app.subscription.ingredients_module')"
-                :enabled="usage.limits.has_ingredients_module"
+                :enabled="usage?.limits?.has_ingredients_module ?? false"
               />
               <FeatureBadge
                 :label="t('app.subscription.inventory_module')"
-                :enabled="usage.limits.has_inventory_module"
+                :enabled="usage?.limits?.has_inventory_module ?? false"
               />
               <FeatureBadge
                 :label="t('app.subscription.advanced_reports')"
-                :enabled="usage.limits.has_advanced_reports"
+                :enabled="usage?.limits?.has_advanced_reports ?? false"
               />
               <FeatureBadge
                 :label="t('app.subscription.multi_branch')"
-                :enabled="usage.limits.has_multi_branch"
+                :enabled="usage?.limits?.has_multi_branch ?? false"
               />
             </div>
           </div>
@@ -329,14 +320,14 @@
               </div>
 
               <div v-if="addon.addon_type !== 'service'" class="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                <span v-if="addon.addon_type === 'extra_users'">
-                  +{{ addon.extra_users || 1 }} {{ t('app.subscription.users').toLowerCase() }}
+                <span v-if="addon.provides_users > 0">
+                  +{{ addon.provides_users }} {{ t('app.subscription.users').toLowerCase() }}
                 </span>
-                <span v-else-if="addon.addon_type === 'extra_tables'">
-                  +{{ addon.extra_tables || 10 }} {{ t('app.subscription.tables').toLowerCase() }}
+                <span v-else-if="addon.provides_tables > 0">
+                  +{{ addon.provides_tables }} {{ t('app.subscription.tables').toLowerCase() }}
                 </span>
-                <span v-else-if="addon.addon_type === 'extra_menu_items'">
-                  +{{ addon.extra_menu_items || 100 }} {{ t('app.subscription.menu_items').toLowerCase() }}
+                <span v-else-if="addon.provides_menu_items > 0">
+                  +{{ addon.provides_menu_items }} {{ t('app.subscription.menu_items').toLowerCase() }}
                 </span>
               </div>
 
@@ -353,6 +344,22 @@
         <div v-if="addons && addons.length === 0 && subscription?.has_subscription" class="text-center py-12">
           <p class="text-gray-500 dark:text-gray-400">
             {{ t('app.subscription.no_addons_available') }}
+          </p>
+        </div>
+      </div>
+
+      <!-- Alerts Tab -->
+      <div v-if="activeTab === 'alerts'">
+        <div v-if="subscription?.has_subscription">
+          <SubscriptionAlerts 
+            :unread-only="false"
+            :auto-refresh="true"
+            @update:count="handleAlertCountUpdate"
+          />
+        </div>
+        <div v-else class="text-center py-12">
+          <p class="text-gray-500 dark:text-gray-400">
+            {{ t('app.subscription.no_subscription') }}
           </p>
         </div>
       </div>
@@ -399,6 +406,7 @@ const addons = ref<SubscriptionAddon[]>([]);
 const showUpgradeModal = ref(false);
 const showRenewalModal = ref(false);
 const availablePlans = ref<any[]>([]);
+const unreadAlertCount = ref(0);
 
 // Active tab from URL query
 const activeTab = computed({

@@ -490,19 +490,15 @@ def request_renewal(
     
     # Bank details (TODO: move to config)
     bank_details = {
-        "bank": "BBVA",
-        "account": "1234567890",
-        "clabe": "012345678901234567",
-        "beneficiary": "CloudRestaurant SA de CV"
+        "bank": "Banorte",
+        "clabe": "072778011569810433",
     }
     
     instructions = f"""
 Realiza una transferencia bancaria con los siguientes datos:
 
 Banco: {bank_details['bank']}
-Cuenta: {bank_details['account']}
 CLABE: {bank_details['clabe']}
-Beneficiario: {bank_details['beneficiary']}
 
 IMPORTANTE: Incluye el número de referencia en tu transferencia.
 Número de Referencia: {payment.reference_number}

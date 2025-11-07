@@ -27,9 +27,9 @@ class PaymentService:
             plan_id=plan_id,
             amount=amount,
             billing_cycle=billing_cycle,
-            payment_method=PaymentMethod.TRANSFER,
+            payment_method='transfer',
             reference_number=reference_number,
-            status=PaymentStatus.PENDING
+            status='pending'
         )
         
         self.db.add(payment)
@@ -48,13 +48,13 @@ class PaymentService:
         if not payment:
             raise ValueError("Payment not found")
         
-        if payment.status != PaymentStatus.PENDING:
+        if payment.status != 'pending':
             raise ValueError("Payment already processed")
         
         payment.payment_date = payment_date
         payment.proof_image_url = proof_url
         payment.notes = notes
-        payment.status = PaymentStatus.PENDING
+        payment.status = 'pending'
         
         # Update subscription status
         subscription = self.db.query(RestaurantSubscription).filter(
@@ -79,11 +79,11 @@ class PaymentService:
         if not payment:
             raise ValueError("Payment not found")
         
-        if payment.status != PaymentStatus.PENDING:
+        if payment.status != 'pending':
             raise ValueError("Payment already processed")
         
         # Approve payment
-        payment.status = PaymentStatus.APPROVED
+        payment.status = 'approved'
         payment.reviewed_by = reviewer_id
         payment.reviewed_at = datetime.utcnow()
         
@@ -129,11 +129,11 @@ class PaymentService:
         if not payment:
             raise ValueError("Payment not found")
         
-        if payment.status != PaymentStatus.PENDING:
+        if payment.status != 'pending':
             raise ValueError("Payment already processed")
         
         # Reject payment
-        payment.status = PaymentStatus.REJECTED
+        payment.status = 'rejected'
         payment.reviewed_by = reviewer_id
         payment.reviewed_at = datetime.utcnow()
         payment.rejection_reason = reason
@@ -166,7 +166,7 @@ class PaymentService:
     def get_pending_payments(self, restaurant_id: int = None):
         """Get all pending payments, optionally filtered by restaurant"""
         query = self.db.query(SubscriptionPayment).filter(
-            SubscriptionPayment.status == PaymentStatus.PENDING,
+            SubscriptionPayment.status == 'pending',
             SubscriptionPayment.deleted_at.is_(None)
         )
         

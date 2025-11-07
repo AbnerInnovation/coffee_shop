@@ -952,7 +952,8 @@
       "view_addons": "Ver Complementos",
       "tabs": {
         "overview": "Resumen",
-        "addons": "Complementos"
+        "addons": "Complementos",
+        "alerts": "Alertas"
       },
       "addons_require_plan": "Necesitas un plan activo para agregar complementos",
       "add_addon": "Agregar Complemento",
@@ -1021,7 +1022,11 @@
         "payment_rejected": "Pago rechazado",
         "marked_read": "Alerta marcada como leída",
         "title": "Alertas de Suscripción",
-        "no_alerts": "No hay alertas"
+        "no_alerts": "No hay alertas",
+        "unread": "No Leídas",
+        "read": "Leídas",
+        "no_unread": "No hay alertas sin leer",
+        "no_read": "No hay alertas leídas"
       }
     },
     "users": {

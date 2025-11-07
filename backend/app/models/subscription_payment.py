@@ -45,7 +45,7 @@ class SubscriptionPayment(BaseModel):
     # Payment details
     amount: Mapped[float] = mapped_column(Float, nullable=False)
     billing_cycle: Mapped[str] = mapped_column(String(20), nullable=False)  # 'monthly' | 'annual'
-    payment_method: Mapped[PaymentMethod] = mapped_column(SQLEnum(PaymentMethod), nullable=False)
+    payment_method: Mapped[str] = mapped_column(String(20), nullable=False)
     
     # Manual payment fields
     reference_number: Mapped[Optional[str]] = mapped_column(String(100), nullable=True, unique=True, index=True)
@@ -61,7 +61,7 @@ class SubscriptionPayment(BaseModel):
     auto_approved: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     
     # Status
-    status: Mapped[PaymentStatus] = mapped_column(SQLEnum(PaymentStatus), default=PaymentStatus.PENDING, nullable=False, index=True)
+    status: Mapped[str] = mapped_column(String(20), default='pending', nullable=False, index=True)
     
     # Review information
     reviewed_by: Mapped[Optional[int]] = mapped_column(ForeignKey("users.id"), nullable=True)

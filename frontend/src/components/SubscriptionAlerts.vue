@@ -1,38 +1,80 @@
 <template>
-  <div v-if="alerts.length > 0" class="space-y-2">
-    <div
-      v-for="alert in alerts"
-      :key="alert.id"
-      :class="[
-        'p-4 rounded-lg border-l-4 flex items-start justify-between',
-        getAlertClass(alert.alert_type)
-      ]"
-    >
-      <div class="flex items-start flex-1">
-        <component 
-          :is="getAlertIcon(alert.alert_type)" 
-          class="w-5 h-5 mr-3 flex-shrink-0 mt-0.5"
-        />
-        <div class="flex-1">
-          <h4 class="text-sm font-semibold mb-1">
-            {{ alert.title }}
-          </h4>
-          <p class="text-sm">
-            {{ alert.message }}
-          </p>
-          <p class="text-xs mt-1 opacity-75">
-            {{ formatDate(alert.created_at) }}
-          </p>
-        </div>
-      </div>
+  <div>
+    <!-- Tabs -->
+    <div class="border-b border-gray-200 dark:border-gray-700 mb-4">
+      <nav class="-mb-px flex space-x-8">
+        <button
+          @click="activeTab = 'unread'"
+          :class="[
+            'py-2 px-1 border-b-2 font-medium text-sm',
+            activeTab === 'unread'
+              ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
+              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+          ]"
+        >
+          {{ t('app.subscription.alerts.unread') }}
+          <span v-if="unreadCount > 0" class="ml-2 py-0.5 px-2 rounded-full text-xs bg-indigo-100 text-indigo-600 dark:bg-indigo-900 dark:text-indigo-300">
+            {{ unreadCount }}
+          </span>
+        </button>
+        <button
+          @click="activeTab = 'read'"
+          :class="[
+            'py-2 px-1 border-b-2 font-medium text-sm',
+            activeTab === 'read'
+              ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
+              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+          ]"
+        >
+          {{ t('app.subscription.alerts.read') }}
+        </button>
+      </nav>
+    </div>
 
-      <button
-        v-if="!alert.is_read"
-        @click="markAsRead(alert.id)"
-        class="ml-4 text-sm hover:underline flex-shrink-0"
+    <!-- Alerts List -->
+    <div v-if="filteredAlerts.length > 0" class="space-y-2">
+      <div
+        v-for="alert in filteredAlerts"
+        :key="alert.id"
+        :class="[
+          'p-4 rounded-lg border-l-4 flex items-start justify-between',
+          getAlertClass(alert.alert_type)
+        ]"
       >
-        {{ t('app.common.mark_read') }}
-      </button>
+        <div class="flex items-start flex-1">
+          <component 
+            :is="getAlertIcon(alert.alert_type)" 
+            class="w-5 h-5 mr-3 flex-shrink-0 mt-0.5"
+          />
+          <div class="flex-1">
+            <h4 class="text-sm font-semibold mb-1">
+              {{ alert.title }}
+            </h4>
+            <p class="text-sm">
+              {{ alert.message }}
+            </p>
+            <p class="text-xs mt-1 opacity-75">
+              {{ formatDate(alert.created_at) }}
+            </p>
+          </div>
+        </div>
+
+        <button
+          v-if="!alert.is_read"
+          @click="markAsRead(alert.id)"
+          class="ml-4 text-sm hover:underline flex-shrink-0"
+        >
+          {{ t('app.common.mark_read') }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div v-else class="text-center py-8">
+      <BellAlertIcon class="mx-auto h-12 w-12 text-gray-400" />
+      <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+        {{ activeTab === 'unread' ? t('app.subscription.alerts.no_unread') : t('app.subscription.alerts.no_read') }}
+      </p>
     </div>
   </div>
 </template>
@@ -69,16 +111,26 @@ const emit = defineEmits(['update:count'])
 
 const alerts = ref<SubscriptionAlert[]>([])
 const loading = ref(false)
+const activeTab = ref<'unread' | 'read'>('unread')
 let refreshTimer: number | null = null
 
 const unreadCount = computed(() => {
   return alerts.value.filter(a => !a.is_read).length
 })
 
+const filteredAlerts = computed(() => {
+  if (activeTab.value === 'unread') {
+    return alerts.value.filter(a => !a.is_read)
+  } else {
+    return alerts.value.filter(a => a.is_read)
+  }
+})
+
 const loadAlerts = async () => {
   loading.value = true
   try {
-    alerts.value = await alertService.getAlerts(props.unreadOnly)
+    // Always load all alerts to support both tabs
+    alerts.value = await alertService.getAlerts(false)
     emit('update:count', unreadCount.value)
   } catch (error) {
     console.error('Error loading alerts:', error)
