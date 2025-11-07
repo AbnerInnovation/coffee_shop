@@ -30,8 +30,14 @@ async def get_current_user(
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
+    
+    # Check if token is None (no cookie and no Authorization header)
+    if not token:
+        logger.error("No token provided (no cookie or Authorization header)")
+        raise credentials_exception
+    
     try:
-        logger.debug(f"Decoding token: {token}")
+        logger.debug(f"Decoding token: {token[:20]}...")
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         logger.debug(f"Decoded payload: {payload}")
         
