@@ -1,4 +1,5 @@
 import api from './api';
+import { safeStorage } from '@/utils/storage';
 
 export interface LoginCredentials {
   email: string;
@@ -24,17 +25,8 @@ export interface AuthResponse {
 }
 
 export const authService = {
-  // Decide which storage to use. If explicit persistence provided, use it; otherwise detect existing.
-  getPersistence(): 'local' | 'session' {
-    // Prefer session if tokens exist there
-    if (sessionStorage.getItem('access_token') || sessionStorage.getItem('refresh_token')) return 'session';
-    return 'local';
-  },
-
-  getStorage(persistence?: 'local' | 'session'): Storage {
-    const mode = persistence || authService.getPersistence();
-    return mode === 'session' ? sessionStorage : localStorage;
-  },
+  // Note: Storage is now handled by safeStorage utility
+  // which provides fallback for iOS/Safari restrictions
 
   // Login user
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
@@ -71,40 +63,40 @@ export const authService = {
 
   // Logout (client-side only)
   logout(): void {
-    // Clear both storages to be safe
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
-    localStorage.removeItem('user');
-    sessionStorage.removeItem('access_token');
-    sessionStorage.removeItem('refresh_token');
-    sessionStorage.removeItem('user');
+    // Clear storage using safe storage
+    safeStorage.removeItem('access_token');
+    safeStorage.removeItem('refresh_token');
+    safeStorage.removeItem('user');
+    safeStorage.removeItem('access_token', true);
+    safeStorage.removeItem('refresh_token', true);
+    safeStorage.removeItem('user', true);
   },
 
   // Check if user is authenticated
   isAuthenticated(): boolean {
-    return !!(sessionStorage.getItem('access_token') || localStorage.getItem('access_token'));
+    return !!(safeStorage.getItem('access_token') || safeStorage.getItem('access_token', true));
   },
 
   // Get stored auth token
   getToken(): string | null {
-    return sessionStorage.getItem('access_token') || localStorage.getItem('access_token');
+    return safeStorage.getItem('access_token') || safeStorage.getItem('access_token', true);
   },
 
   // Store auth data
   storeAuthData(data: AuthResponse, persistence?: 'local' | 'session'): void {
-    const storage = authService.getStorage(persistence);
-    storage.setItem('access_token', data.access_token);
+    const useSession = persistence === 'session';
+    safeStorage.setItem('access_token', data.access_token, useSession);
     if (data.refresh_token) {
-      storage.setItem('refresh_token', data.refresh_token);
+      safeStorage.setItem('refresh_token', data.refresh_token, useSession);
     }
     if (data.user) {
-      storage.setItem('user', JSON.stringify(data.user));
+      safeStorage.setItem('user', JSON.stringify(data.user), useSession);
     }
   },
 
   // Refresh access token
   async refreshToken(): Promise<AuthResponse | null> {
-    const refreshToken = sessionStorage.getItem('refresh_token') || localStorage.getItem('refresh_token');
+    const refreshToken = safeStorage.getItem('refresh_token') || safeStorage.getItem('refresh_token', true);
     if (!refreshToken) return null;
 
     try {
@@ -127,7 +119,7 @@ export const authService = {
 
   // Get stored user data
   getStoredUser() {
-    const user = sessionStorage.getItem('user') || localStorage.getItem('user');
+    const user = safeStorage.getItem('user') || safeStorage.getItem('user', true);
     return user ? JSON.parse(user) : null;
   },
 };

@@ -7,6 +7,7 @@ import './assets/main.css';
 import { i18n } from '@/plugins/i18n';
 import Toast, { PluginOptions as ToastOptions } from 'vue-toastification';
 import 'vue-toastification/dist/index.css';
+import { safeStorage } from './utils/storage';
 
 // Configure axios
 axios.defaults.baseURL = import.meta.env.VITE_API_URL || 'http://localhost:8001';
@@ -14,7 +15,7 @@ axios.defaults.baseURL = import.meta.env.VITE_API_URL || 'http://localhost:8001'
 // Request interceptor - add auth token
 axios.interceptors.request.use(
   (config) => {
-    const token = sessionStorage.getItem('access_token') || localStorage.getItem('access_token');
+    const token = safeStorage.getItem('access_token') || safeStorage.getItem('access_token', true);
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -35,12 +36,12 @@ axios.interceptors.response.use(
       originalRequest._retry = true;
       
       // Clear invalid token and redirect to login
-      sessionStorage.removeItem('access_token');
-      sessionStorage.removeItem('refresh_token');
-      sessionStorage.removeItem('user');
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('refresh_token');
-      localStorage.removeItem('user');
+      safeStorage.removeItem('access_token');
+      safeStorage.removeItem('refresh_token');
+      safeStorage.removeItem('user');
+      safeStorage.removeItem('access_token', true);
+      safeStorage.removeItem('refresh_token', true);
+      safeStorage.removeItem('user', true);
       
       // Redirect to login
       window.location.href = '/login';

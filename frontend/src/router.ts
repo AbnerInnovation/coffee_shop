@@ -4,6 +4,7 @@ import { useAuthStore } from './stores/auth';
 import { subscriptionService } from './services/subscriptionService';
 import * as permissions from './utils/permissions';
 import { hasRestaurantContext } from './utils/subdomain';
+import { safeStorage } from './utils/storage';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -24,7 +25,7 @@ router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore();
   
   // Wait for auth check to complete if there's a token but no user yet
-  const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
+  const token = safeStorage.getItem('access_token') || safeStorage.getItem('access_token', true);
   
   if (token && !authStore.user && !authCheckAttempted) {
     // Mark that we're attempting auth check to prevent multiple simultaneous attempts

@@ -2,6 +2,7 @@ import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
+import { safeStorage, checkStorageAndWarn } from '@/utils/storage';
 
 // Types
 export interface LoginCredentials {
@@ -66,12 +67,11 @@ export const useAuthStore = defineStore('auth', () => {
         throw new Error('No access token received');
       }
       
-      // ALWAYS use localStorage for tokens to ensure they persist across refreshes
-      // sessionStorage can be cleared by browsers/extensions
-      localStorage.setItem('access_token', access_token);
+      // Use safe storage (handles iOS/Safari restrictions)
+      safeStorage.setItem('access_token', access_token);
       
       if (refresh_token) {
-        localStorage.setItem('refresh_token', refresh_token);
+        safeStorage.setItem('refresh_token', refresh_token);
       }
       
       try {
@@ -84,7 +84,7 @@ export const useAuthStore = defineStore('auth', () => {
           // Update store state FIRST
           const userData = userResponse.data;
           user.value = userData;
-          localStorage.setItem('user', JSON.stringify(userData));
+          safeStorage.setItem('user', JSON.stringify(userData));
           
           // Wait a moment to ensure state is fully updated
           await new Promise(resolve => setTimeout(resolve, 50));
@@ -121,10 +121,10 @@ export const useAuthStore = defineStore('auth', () => {
         console.error('Failed to fetch user data:', userError);
         error.value = 'Failed to load user data';
         // Clear tokens if user fetch fails
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
-        sessionStorage.removeItem('access_token');
-        sessionStorage.removeItem('refresh_token');
+        safeStorage.removeItem('access_token');
+        safeStorage.removeItem('refresh_token');
+        safeStorage.removeItem('access_token', true);
+        safeStorage.removeItem('refresh_token', true);
         return false;
       }
     } catch (err: any) {
@@ -167,16 +167,16 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       loading.value = true;
       
-      // Clear user state FIRST
+      // Clear user state
       user.value = null;
       
-      // Clear from both storages
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('refresh_token');
-      localStorage.removeItem('user');
-      sessionStorage.removeItem('access_token');
-      sessionStorage.removeItem('refresh_token');
-      sessionStorage.removeItem('user');
+      // Clear tokens from storage
+      safeStorage.removeItem('access_token');
+      safeStorage.removeItem('refresh_token');
+      safeStorage.removeItem('user');
+      safeStorage.removeItem('access_token', true);
+      safeStorage.removeItem('refresh_token', true);
+      safeStorage.removeItem('user', true);
       
       // Use window.location to force a full page reload
       // This avoids issues with dynamic module loading after logout
@@ -195,13 +195,13 @@ export const useAuthStore = defineStore('auth', () => {
   async function checkAuth() {
     try {
       loading.value = true;
-      const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
+      const token = safeStorage.getItem('access_token') || safeStorage.getItem('access_token', true);
       
       if (!token) {
         // No token means not authenticated
         user.value = null;
-        localStorage.removeItem('user');
-        sessionStorage.removeItem('user');
+        safeStorage.removeItem('user');
+        safeStorage.removeItem('user', true);
         return false;
       }
       
@@ -213,21 +213,17 @@ export const useAuthStore = defineStore('auth', () => {
       if (response.data) {
         // Update store state with fresh user data
         user.value = response.data;
-        // Persist user to the same storage as token
-        if (sessionStorage.getItem('access_token')) {
-          sessionStorage.setItem('user', JSON.stringify(user.value));
-        } else {
-          localStorage.setItem('user', JSON.stringify(user.value));
-        }
+        // Persist user to storage
+        safeStorage.setItem('user', JSON.stringify(user.value));
         return true;
       }
       
       // If no user data, clear auth state
       user.value = null;
-      localStorage.removeItem('user');
-      sessionStorage.removeItem('user');
-      localStorage.removeItem('access_token');
-      sessionStorage.removeItem('access_token');
+      safeStorage.removeItem('user');
+      safeStorage.removeItem('user', true);
+      safeStorage.removeItem('access_token');
+      safeStorage.removeItem('access_token', true);
       return false;
     } catch (err: any) {
       console.error('Auth check failed:', err);
@@ -236,12 +232,12 @@ export const useAuthStore = defineStore('auth', () => {
       // Don't clear on network errors or other temporary issues
       if (err.response?.status === 401) {
         user.value = null;
-        localStorage.removeItem('user');
-        sessionStorage.removeItem('user');
-        localStorage.removeItem('access_token');
-        sessionStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
-        sessionStorage.removeItem('refresh_token');
+        safeStorage.removeItem('user');
+        safeStorage.removeItem('user', true);
+        safeStorage.removeItem('access_token');
+        safeStorage.removeItem('access_token', true);
+        safeStorage.removeItem('refresh_token');
+        safeStorage.removeItem('refresh_token', true);
       } else {
         // For other errors (network, 500, etc), keep the token
         // Just clear the user from memory
@@ -256,9 +252,12 @@ export const useAuthStore = defineStore('auth', () => {
   
   // Initialize the store
   function init() {
-    // Prefer localStorage (more reliable across refreshes)
-    const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
-    const storedUser = localStorage.getItem('user') || sessionStorage.getItem('user');
+    // Check storage availability and warn if needed
+    checkStorageAndWarn();
+    
+    // Get token and user from safe storage
+    const token = safeStorage.getItem('access_token') || safeStorage.getItem('access_token', true);
+    const storedUser = safeStorage.getItem('user') || safeStorage.getItem('user', true);
     
     if (token && storedUser) {
       try {
@@ -269,41 +268,33 @@ export const useAuthStore = defineStore('auth', () => {
       } catch (err) {
         console.error('Failed to parse stored user data:', err);
         // Clear invalid data
-        localStorage.removeItem('user');
-        sessionStorage.removeItem('user');
-        localStorage.removeItem('access_token');
-        sessionStorage.removeItem('access_token');
+        safeStorage.removeItem('user');
+        safeStorage.removeItem('user', true);
+        safeStorage.removeItem('access_token');
+        safeStorage.removeItem('access_token', true);
         user.value = null;
       }
     } else if (!token && storedUser) {
       // If we have user data but no token, clear the stale user data
-      localStorage.removeItem('user');
-      sessionStorage.removeItem('user');
+      safeStorage.removeItem('user');
+      safeStorage.removeItem('user', true);
       user.value = null;
     }
     
     // Removed automatic refresh token logic to prevent race conditions
     // Refresh should be handled explicitly when needed
-    const refreshToken = localStorage.getItem('refresh_token') || sessionStorage.getItem('refresh_token');
+    const refreshToken = safeStorage.getItem('refresh_token') || safeStorage.getItem('refresh_token', true);
     if (!token && refreshToken) {
       // Attempt silent refresh to keep session
       axios.post(`${API_BASE_URL}/auth/refresh-token`, { refresh_token: refreshToken })
         .then((resp) => {
           const { access_token: newAccess, refresh_token: newRefresh } = resp.data || {};
           if (newAccess) {
-            // Persist new token where refresh token was found
-            if (sessionStorage.getItem('refresh_token')) {
-              sessionStorage.setItem('access_token', newAccess);
-            } else {
-              localStorage.setItem('access_token', newAccess);
-            }
+            // Persist new token
+            safeStorage.setItem('access_token', newAccess);
           }
           if (newRefresh) {
-            if (sessionStorage.getItem('refresh_token')) {
-              sessionStorage.setItem('refresh_token', newRefresh);
-            } else {
-              localStorage.setItem('refresh_token', newRefresh);
-            }
+            safeStorage.setItem('refresh_token', newRefresh);
           }
           // After obtaining new token, try loading user
           return axios.get(`${API_BASE_URL}/users/me`, {
@@ -313,21 +304,17 @@ export const useAuthStore = defineStore('auth', () => {
         .then((userResp) => {
           if (userResp && userResp.data) {
             user.value = userResp.data;
-            if (sessionStorage.getItem('access_token')) {
-              sessionStorage.setItem('user', JSON.stringify(user.value));
-            } else {
-              localStorage.setItem('user', JSON.stringify(user.value));
-            }
+            safeStorage.setItem('user', JSON.stringify(user.value));
           }
         })
         .catch(() => {
           // If refresh fails, clear stored tokens
-          localStorage.removeItem('access_token');
-          localStorage.removeItem('refresh_token');
-          localStorage.removeItem('user');
-          sessionStorage.removeItem('access_token');
-          sessionStorage.removeItem('refresh_token');
-          sessionStorage.removeItem('user');
+          safeStorage.removeItem('access_token');
+          safeStorage.removeItem('refresh_token');
+          safeStorage.removeItem('user');
+          safeStorage.removeItem('access_token', true);
+          safeStorage.removeItem('refresh_token', true);
+          safeStorage.removeItem('user', true);
           user.value = null;
         });
     }

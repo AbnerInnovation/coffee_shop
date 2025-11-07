@@ -2,6 +2,7 @@ import api from './api';
 import API_CONFIG from '@/config/api';
 import type { AxiosResponse } from 'axios';
 import type { MenuItem, MenuItemVariant, MenuCategory } from '@/types/menu';
+import { safeStorage } from '@/utils/storage';
 
 export interface ApiResponse<T = any> {
   data: T;
@@ -50,7 +51,7 @@ const CATEGORIES_BASE_PATH = '/categories';
 // Add request interceptor to include auth token
 apiInstance.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('access_token');
+    const token = safeStorage.getItem('access_token') || safeStorage.getItem('access_token', true);
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }

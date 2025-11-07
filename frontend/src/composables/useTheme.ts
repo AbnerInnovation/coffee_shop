@@ -1,4 +1,5 @@
 import { ref, onMounted } from 'vue';
+import { safeStorage } from '@/utils/storage';
 
 const STORAGE_KEY = 'app_theme'; // 'light' | 'dark'
 
@@ -9,10 +10,10 @@ export function useTheme() {
     const root = document.documentElement;
     if (dark) {
       root.classList.add('dark');
-      localStorage.setItem(STORAGE_KEY, 'dark');
+      safeStorage.setItem(STORAGE_KEY, 'dark');
     } else {
       root.classList.remove('dark');
-      localStorage.setItem(STORAGE_KEY, 'light');
+      safeStorage.setItem(STORAGE_KEY, 'light');
     }
     isDark.value = dark;
   }
@@ -26,7 +27,7 @@ export function useTheme() {
   }
 
   function initTheme() {
-    const stored = localStorage.getItem(STORAGE_KEY);
+    const stored = safeStorage.getItem(STORAGE_KEY);
     if (stored === 'light' || stored === 'dark') {
       applyTheme(stored === 'dark');
       return;
