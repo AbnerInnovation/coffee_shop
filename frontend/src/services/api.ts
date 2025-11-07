@@ -1,5 +1,7 @@
 import axios, { AxiosError, type AxiosInstance, type InternalAxiosRequestConfig, type AxiosRequestConfig } from 'axios';
 import API_CONFIG from '@/config/api';
+import { safeStorage } from '@/utils/storage';
+import { getGlobalToken } from '@/main';
 
 declare module 'axios' {
   export interface AxiosRequestConfig {
@@ -15,12 +17,18 @@ const api: AxiosInstance = axios.create({
     'Content-Type': 'application/json',
     'Accept': 'application/json',
   },
+  withCredentials: true, // Send cookies with requests
 });
 
 // Request interceptor to add auth token to requests
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    const token = authService.getToken();
+    // Try in-memory token first (for Safari), then storage, then authService
+    const token = getGlobalToken() || 
+                  safeStorage.getItem('access_token') || 
+                  safeStorage.getItem('access_token', true) ||
+                  authService.getToken();
+    
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
