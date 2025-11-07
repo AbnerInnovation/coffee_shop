@@ -210,10 +210,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:3000",
-        "http://*.shopacoffee.local:3000",
         "https://www.shopacoffee.com",
-        "https://*.shopacoffee.com",
-    ],  # explicit safe origins
+    ],  # explicit safe origins (wildcards don't work here)
     allow_origin_regex=r"^https?://([a-z0-9-]+\.)?localhost(:\d+)?$|^https?://([a-z0-9-]+\.)?shopacoffee\.com$|^https?://([a-z0-9-]+\.)?shopacoffee\.local(:\d+)?$",
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
