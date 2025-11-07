@@ -33,18 +33,14 @@ async def get_current_user(
     
     # Check if token is None (no cookie and no Authorization header)
     if not token:
-        logger.error("No token provided (no cookie or Authorization header)")
         raise credentials_exception
     
     try:
-        logger.debug(f"Decoding token: {token[:20]}...")
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        logger.debug(f"Decoded payload: {payload}")
         
         # Check if the token has an email or user_id in the subject
         subject = payload.get("sub")
         if not subject:
-            logger.error("No subject in token payload")
             raise credentials_exception
             
         # First try to get user by ID (if subject is numeric)
@@ -57,14 +53,11 @@ async def get_current_user(
             user = get_user_by_email(db, email=subject)
             
         if user is None:
-            logger.error(f"User not found with subject: {subject}")
             raise credentials_exception
             
-        logger.debug(f"Found user: {user.email} with role: {user.role}")
         return user
         
-    except JWTError as e:
-        logger.error(f"JWT Error: {str(e)}")
+    except JWTError:
         raise credentials_exception
 
 def get_current_active_user(

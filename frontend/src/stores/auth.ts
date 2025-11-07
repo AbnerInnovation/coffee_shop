@@ -81,7 +81,6 @@ export const useAuthStore = defineStore('auth', () => {
       
       try {
         // Fetch user data
-        console.log('🔍 Fetching user data...');
         const userResponse = await axios.get(`${API_BASE_URL}/users/me`, {
           headers: { Authorization: `Bearer ${access_token}` },
         });
@@ -104,19 +103,7 @@ export const useAuthStore = defineStore('auth', () => {
             safeStorage.setItem('refresh_token', refresh_token, true); // sessionStorage
           }
           
-          console.log('✅ User data saved:', {
-            email: userData.email,
-            role: userData.role,
-            staff_type: userData.staff_type
-          });
-          
-          console.log('💾 Storage check:', {
-            localStorage: safeStorage.getItem('access_token'),
-            sessionStorage: safeStorage.getItem('access_token', true),
-            storageType: safeStorage.getStorageType()
-          });
-          
-          // Wait longer to ensure Safari persists the data
+          // Wait to ensure Safari persists the data
           await new Promise(resolve => setTimeout(resolve, 300));
           
           // Navigate based on user role and staff type
@@ -139,8 +126,6 @@ export const useAuthStore = defineStore('auth', () => {
                   redirectRoute = 'Dashboard';
               }
             }
-            
-            console.log('🚀 Redirecting to:', redirectRoute);
             
             // Use router.replace instead of push to avoid back button issues
             await router.replace({ name: redirectRoute });
@@ -309,8 +294,6 @@ export const useAuthStore = defineStore('auth', () => {
         setGlobalToken(token);
         
         user.value = JSON.parse(storedUser);
-        console.log('✅ User loaded from storage:', user.value?.email);
-        console.log('✅ Token restored to memory cache');
       } catch (err) {
         console.error('Failed to parse stored user data:', err);
         // Clear invalid data

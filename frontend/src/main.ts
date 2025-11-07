@@ -34,15 +34,11 @@ axios.interceptors.request.use(
     
     // If token found in storage but not in memory, restore it to memory
     if (!_cachedToken && token) {
-      console.log('🔄 Restoring token to memory cache from storage');
       _cachedToken = token;
     }
     
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
-      console.log('🔑 Token attached to request:', config.url);
-    } else {
-      console.warn('⚠️ No token found for request:', config.url);
     }
     return config;
   },
@@ -54,48 +50,27 @@ axios.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
-    
-    // Don't handle 401 errors during login/register
-    const isAuthEndpoint = originalRequest.url?.includes('/auth/token') || 
-                          originalRequest.url?.includes('/auth/register');
-    
-    // Log 401 errors for debugging
-    if (error.response?.status === 401) {
-      console.error('❌ 401 Error:', {
-        url: originalRequest.url,
-        isAuthEndpoint,
-        hasToken: !!originalRequest.headers?.Authorization,
-        errorData: error.response?.data
-      });
-    }
+    const isAuthEndpoint = originalRequest.url?.includes('/auth/token') ||
+                           originalRequest.url?.includes('/auth/register');
     
     // Only clear tokens if we get a 401 response from the server
     // Don't clear on network errors, auth endpoints, or other issues
     if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
       originalRequest._retry = true;
       
-      console.log('🔒 401 Unauthorized - Session would be cleared (DISABLED FOR DEBUGGING)');
-      console.log('🔍 Debug info:', {
-        url: originalRequest.url,
-        hasAuthHeader: !!originalRequest.headers?.Authorization,
-        authHeader: originalRequest.headers?.Authorization?.substring(0, 30) + '...',
-        errorDetail: error.response?.data
-      });
-      
-      // TEMPORARILY DISABLED FOR DEBUGGING
       // Clear invalid token and redirect to login
-      // setGlobalToken(null);
-      // safeStorage.removeItem('access_token');
-      // safeStorage.removeItem('refresh_token');
-      // safeStorage.removeItem('user');
-      // safeStorage.removeItem('access_token', true);
-      // safeStorage.removeItem('refresh_token', true);
-      // safeStorage.removeItem('user', true);
+      setGlobalToken(null);
+      safeStorage.removeItem('access_token');
+      safeStorage.removeItem('refresh_token');
+      safeStorage.removeItem('user');
+      safeStorage.removeItem('access_token', true);
+      safeStorage.removeItem('refresh_token', true);
+      safeStorage.removeItem('user', true);
       
       // Redirect to login only if not already there
-      // if (!window.location.pathname.includes('/login')) {
-      //   window.location.href = '/login';
-      // }
+      if (!window.location.pathname.includes('/login')) {
+        window.location.href = '/login';
+      }
     }
     
     return Promise.reject(error);
