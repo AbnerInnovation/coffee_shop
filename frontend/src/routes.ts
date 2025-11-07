@@ -1,6 +1,25 @@
 import type { RouteRecordRaw } from 'vue-router';
 import type { User } from '@/stores/auth';
 
+// Static imports for all views
+import DashboardView from './views/DashboardView.vue';
+import TablesView from './views/TablesView.vue';
+import MenuView from './views/MenuView.vue';
+import CategoriesView from './views/CategoriesView.vue';
+import CashRegisterView from './views/CashRegisterView.vue';
+import OrdersView from './views/OrdersView.vue';
+import KitchenView from './views/KitchenView.vue';
+import SysAdminView from './views/SysAdminView.vue';
+import PendingPaymentsView from './views/PendingPaymentsView.vue';
+import SubscriptionView from './views/SubscriptionView.vue';
+import UsersManagementView from './views/UsersManagementView.vue';
+import ReportsView from './views/ReportsView.vue';
+import ProfileView from './views/ProfileView.vue';
+import LoginView from './views/LoginView.vue';
+import RegisterView from './views/RegisterView.vue';
+import LandingView from './views/LandingView.vue';
+import NotFoundView from './views/NotFoundView.vue';
+
 // Permission check function type
 export type PermissionCheck = (user: User | null) => boolean;
 
@@ -9,13 +28,13 @@ export const routes: RouteRecordRaw[] = [
   {
     path: '/',
     name: 'Dashboard',
-    component: () => import('./views/DashboardView.vue'),
+    component: DashboardView,
     meta: { requiresAuth: true }
   },
   {
     path: '/tables',
     name: 'Tables',
-    component: () => import('./views/TablesView.vue'),
+    component: TablesView,
     meta: { 
       requiresAuth: true,
       requiresRestaurantContext: true,
@@ -25,7 +44,7 @@ export const routes: RouteRecordRaw[] = [
   {
     path: '/menu',
     name: 'Menu',
-    component: () => import('./views/MenuView.vue'),
+    component: MenuView,
     meta: { 
       requiresAuth: true,
       requiresRestaurantContext: true
@@ -34,7 +53,7 @@ export const routes: RouteRecordRaw[] = [
   {
     path: '/categories',
     name: 'Categories',
-    component: () => import('./views/CategoriesView.vue'),
+    component: CategoriesView,
     meta: { 
       requiresAuth: true,
       requiresRestaurantContext: true,
@@ -44,7 +63,7 @@ export const routes: RouteRecordRaw[] = [
   {
     path: '/cash-register',
     name: 'CashRegister',
-    component: () => import('./views/CashRegisterView.vue'),
+    component: CashRegisterView,
     meta: { 
       requiresAuth: true,
       requiresRestaurantContext: true,
@@ -54,7 +73,7 @@ export const routes: RouteRecordRaw[] = [
   {
     path: '/orders',
     name: 'Orders',
-    component: () => import('./views/OrdersView.vue'),
+    component: OrdersView,
     meta: { 
       requiresAuth: true,
       requiresRestaurantContext: true
@@ -63,7 +82,7 @@ export const routes: RouteRecordRaw[] = [
   {
     path: '/kitchen',
     name: 'Kitchen',
-    component: () => import('./views/KitchenView.vue'),
+    component: KitchenView,
     meta: { 
       requiresAuth: true,
       requiresRestaurantContext: true,
@@ -74,7 +93,7 @@ export const routes: RouteRecordRaw[] = [
   {
     path: '/sysadmin',
     name: 'SysAdmin',
-    component: () => import('./views/SysAdminView.vue'),
+    component: SysAdminView,
     meta: { 
       requiresAuth: true,
       permissionCheck: 'isSysAdmin' // SysAdmin only
@@ -83,7 +102,7 @@ export const routes: RouteRecordRaw[] = [
   {
     path: '/sysadmin/payments',
     name: 'PendingPayments',
-    component: () => import('./views/PendingPaymentsView.vue'),
+    component: PendingPaymentsView,
     meta: { 
       requiresAuth: true,
       permissionCheck: 'isSysAdmin' // SysAdmin only
@@ -92,7 +111,7 @@ export const routes: RouteRecordRaw[] = [
   {
     path: '/subscription',
     name: 'Subscription',
-    component: () => import('./views/SubscriptionView.vue'),
+    component: SubscriptionView,
     meta: { 
       requiresAuth: true,
       requiresRestaurantContext: true, // Only accessible in restaurant subdomains
@@ -102,7 +121,7 @@ export const routes: RouteRecordRaw[] = [
   {
     path: '/users',
     name: 'Users',
-    component: () => import('./views/UsersManagementView.vue'),
+    component: UsersManagementView,
     meta: { 
       requiresAuth: true,
       requiresRestaurantContext: true,
@@ -112,7 +131,7 @@ export const routes: RouteRecordRaw[] = [
   {
     path: '/reports',
     name: 'Reports',
-    component: () => import('./views/ReportsView.vue'),
+    component: ReportsView,
     meta: { 
       requiresAuth: true,
       requiresRestaurantContext: true,
@@ -122,7 +141,7 @@ export const routes: RouteRecordRaw[] = [
   {
     path: '/profile',
     name: 'Profile',
-    component: () => import('./views/ProfileView.vue'),
+    component: ProfileView,
     meta: { 
       requiresAuth: true // All authenticated users can view their profile
     }
@@ -132,13 +151,13 @@ export const routes: RouteRecordRaw[] = [
   {
     path: '/login',
     name: 'Login',
-    component: () => import('./views/LoginView.vue'),
+    component: LoginView,
     meta: { requiresAuth: false }
   },
   {
     path: '/register',
     name: 'Register',
-    component: () => import('./views/RegisterView.vue'),
+    component: RegisterView,
     meta: { requiresAuth: false }
   },
 
@@ -146,7 +165,7 @@ export const routes: RouteRecordRaw[] = [
   {
     path: '/plans',
     name: 'Plans',
-    component: () => import('./views/LandingView.vue'),
+    component: LandingView,
     meta: { requiresAuth: false, hideNavbar: true }
   },
 
@@ -154,6 +173,6 @@ export const routes: RouteRecordRaw[] = [
   {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
-    component: () => import('./views/NotFoundView.vue')
+    component: NotFoundView
   }
 ];
