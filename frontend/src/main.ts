@@ -18,6 +18,9 @@ axios.interceptors.request.use(
     const token = safeStorage.getItem('access_token') || safeStorage.getItem('access_token', true);
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+      console.log('🔑 Token attached to request:', config.url);
+    } else {
+      console.warn('⚠️ No token found for request:', config.url);
     }
     return config;
   },
