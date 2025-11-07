@@ -68,21 +68,28 @@ axios.interceptors.response.use(
     if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
       originalRequest._retry = true;
       
-      console.log('🔒 401 Unauthorized - Clearing session');
+      console.log('🔒 401 Unauthorized - Session would be cleared (DISABLED FOR DEBUGGING)');
+      console.log('🔍 Debug info:', {
+        url: originalRequest.url,
+        hasAuthHeader: !!originalRequest.headers?.Authorization,
+        authHeader: originalRequest.headers?.Authorization?.substring(0, 30) + '...',
+        errorDetail: error.response?.data
+      });
       
+      // TEMPORARILY DISABLED FOR DEBUGGING
       // Clear invalid token and redirect to login
-      setGlobalToken(null);
-      safeStorage.removeItem('access_token');
-      safeStorage.removeItem('refresh_token');
-      safeStorage.removeItem('user');
-      safeStorage.removeItem('access_token', true);
-      safeStorage.removeItem('refresh_token', true);
-      safeStorage.removeItem('user', true);
+      // setGlobalToken(null);
+      // safeStorage.removeItem('access_token');
+      // safeStorage.removeItem('refresh_token');
+      // safeStorage.removeItem('user');
+      // safeStorage.removeItem('access_token', true);
+      // safeStorage.removeItem('refresh_token', true);
+      // safeStorage.removeItem('user', true);
       
       // Redirect to login only if not already there
-      if (!window.location.pathname.includes('/login')) {
-        window.location.href = '/login';
-      }
+      // if (!window.location.pathname.includes('/login')) {
+      //   window.location.href = '/login';
+      // }
     }
     
     return Promise.reject(error);
