@@ -304,8 +304,13 @@ export const useAuthStore = defineStore('auth', () => {
     
     if (token && storedUser) {
       try {
+        // Restore token to memory cache (CRITICAL for Safari)
+        accessToken.value = token;
+        setGlobalToken(token);
+        
         user.value = JSON.parse(storedUser);
         console.log('✅ User loaded from storage:', user.value?.email);
+        console.log('✅ Token restored to memory cache');
       } catch (err) {
         console.error('Failed to parse stored user data:', err);
         // Clear invalid data
