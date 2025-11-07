@@ -37,6 +37,16 @@ axios.interceptors.response.use(
     const isAuthEndpoint = originalRequest.url?.includes('/auth/token') || 
                           originalRequest.url?.includes('/auth/register');
     
+    // Log 401 errors for debugging
+    if (error.response?.status === 401) {
+      console.error('❌ 401 Error:', {
+        url: originalRequest.url,
+        isAuthEndpoint,
+        hasToken: !!originalRequest.headers?.Authorization,
+        errorData: error.response?.data
+      });
+    }
+    
     // Only clear tokens if we get a 401 response from the server
     // Don't clear on network errors, auth endpoints, or other issues
     if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
