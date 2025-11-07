@@ -32,6 +32,12 @@ axios.interceptors.request.use(
     // Try in-memory token first (for Safari), then storage
     let token = _cachedToken || safeStorage.getItem('access_token') || safeStorage.getItem('access_token', true);
     
+    // If token found in storage but not in memory, restore it to memory
+    if (!_cachedToken && token) {
+      console.log('🔄 Restoring token to memory cache from storage');
+      _cachedToken = token;
+    }
+    
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
       console.log('🔑 Token attached to request:', config.url);
