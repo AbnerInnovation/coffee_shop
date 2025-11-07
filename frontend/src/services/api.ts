@@ -59,18 +59,27 @@ api.interceptors.response.use(
         }
       } catch (refreshError) {
         console.error('Token refresh failed:', refreshError);
+        console.log('🔒 REDIRECT DISABLED FOR DEBUGGING - api.ts interceptor');
+        // TEMPORARILY DISABLED FOR DEBUGGING
         // If refresh fails, clear auth and redirect to login
-        authService.logout();
-        window.location.href = '/login';
+        // authService.logout();
+        // window.location.href = '/login';
         return Promise.reject(refreshError);
       }
     }
     
     // If we've already tried to refresh or it's a 401 error
     if (error.response?.status === 401) {
+      console.log('🔒 401 in api.ts - REDIRECT DISABLED FOR DEBUGGING');
+      console.log('🔍 Error details:', {
+        url: originalRequest.url,
+        hasToken: !!originalRequest.headers?.Authorization,
+        errorData: error.response?.data
+      });
+      // TEMPORARILY DISABLED FOR DEBUGGING
       // Clear auth and redirect to login
-      authService.logout();
-      window.location.href = '/login';
+      // authService.logout();
+      // window.location.href = '/login';
     }
     
     // For 403 errors, check if it's a subscription issue
