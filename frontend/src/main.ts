@@ -53,19 +53,21 @@ axios.interceptors.response.use(
       originalRequest._retry = true;
       
       console.log('🔒 401 Unauthorized - Clearing session');
+      console.log('⏸️ REDIRECT DISABLED FOR DEBUGGING - Check the error above');
       
+      // TEMPORARILY DISABLED FOR DEBUGGING
       // Clear invalid token and redirect to login
-      safeStorage.removeItem('access_token');
-      safeStorage.removeItem('refresh_token');
-      safeStorage.removeItem('user');
-      safeStorage.removeItem('access_token', true);
-      safeStorage.removeItem('refresh_token', true);
-      safeStorage.removeItem('user', true);
+      // safeStorage.removeItem('access_token');
+      // safeStorage.removeItem('refresh_token');
+      // safeStorage.removeItem('user');
+      // safeStorage.removeItem('access_token', true);
+      // safeStorage.removeItem('refresh_token', true);
+      // safeStorage.removeItem('user', true);
       
       // Redirect to login only if not already there
-      if (!window.location.pathname.includes('/login')) {
-        window.location.href = '/login';
-      }
+      // if (!window.location.pathname.includes('/login')) {
+      //   window.location.href = '/login';
+      // }
     }
     
     return Promise.reject(error);
