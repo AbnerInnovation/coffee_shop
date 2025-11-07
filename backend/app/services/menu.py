@@ -250,22 +250,6 @@ def get_categories(db: Session, restaurant_id: int) -> List[CategoryModel]:
         CategoryModel.restaurant_id == restaurant_id
     ).all()
 
-    # If no categories exist, return some defaults
-    if not categories:
-        category_names = ["COFFEE", "TEA", "BREAKFAST", "LUNCH", "DESSERTS", "DRINKS"]
-
-        # Create the default categories in the database
-        for name in category_names:
-            if not db.query(CategoryModel).filter_by(name=name, restaurant_id=restaurant_id, deleted_at=None).first():
-                db.add(CategoryModel(name=name, restaurant_id=restaurant_id))
-        db.commit()
-
-        # Fetch the newly created categories
-        categories = db.query(CategoryModel).filter(
-            CategoryModel.deleted_at.is_(None),
-            CategoryModel.restaurant_id == restaurant_id
-        ).all()
-
     return categories
 
 
