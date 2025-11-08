@@ -114,7 +114,63 @@
                 
                 <div class="mb-4">
                   <h4 class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">{{$t('app.views.orders.modals.details.order_items')}}</h4>
-                  <div class="overflow-x-auto -mx-4 sm:mx-0">
+                  
+                  <!-- If order has persons, show grouped by person -->
+                  <div v-if="order.persons && order.persons.length > 0" class="space-y-4">
+                    <div v-for="person in order.persons" :key="person.id" class="border-l-2 border-indigo-500 pl-3">
+                      <h5 class="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-1">
+                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                        {{ person.name || $t('app.views.orders.modals.new_order.persons.person_label', { position: person.position }) }}
+                      </h5>
+                      
+                      <div class="overflow-x-auto -mx-4 sm:mx-0">
+                        <div class="inline-block min-w-full align-middle px-4 sm:px-0">
+                          <div class="overflow-hidden border border-gray-200 dark:border-gray-800 rounded-lg">
+                            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
+                              <thead class="bg-gray-50 dark:bg-gray-800">
+                                <tr>
+                                  <th scope="col" class="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{$t('app.views.orders.modals.details.headers.item')}}</th>
+                                  <th scope="col" class="px-2 sm:px-4 py-2 sm:py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{$t('app.views.orders.modals.details.headers.qty')}}</th>
+                                  <th scope="col" class="hidden sm:table-cell px-2 sm:px-4 py-2 sm:py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{$t('app.views.orders.modals.details.headers.price')}}</th>
+                                  <th scope="col" class="px-2 sm:px-4 py-2 sm:py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{$t('app.views.orders.modals.details.headers.total')}}</th>
+                                </tr>
+                              </thead>
+                              <tbody class="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-800">
+                                <tr v-for="item in person.items" :key="item.id">
+                                  <td class="px-2 sm:px-4 py-2 sm:py-3 text-sm text-gray-900 dark:text-gray-100">
+                                    <div class="font-medium text-gray-900 dark:text-gray-100 text-xs sm:text-sm">{{ item.menu_item?.name || 'Unknown' }}</div>
+                                    <div v-if="item.variant" class="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
+                                      {{ item.variant.name }}
+                                    </div>
+                                    <div v-if="item.special_instructions" class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                      <span class="font-medium">{{$t('app.views.orders.modals.details.special_instructions')}}</span> {{ item.special_instructions }}
+                                    </div>
+                                    <div class="sm:hidden text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                      ${{ (item.unit_price || 0).toFixed(2) }} c/u
+                                    </div>
+                                  </td>
+                                  <td class="px-2 sm:px-4 py-2 sm:py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 text-right align-top">
+                                    {{ item.quantity }}
+                                  </td>
+                                  <td class="hidden sm:table-cell px-2 sm:px-4 py-2 sm:py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 text-right align-top">
+                                    ${{ (item.unit_price || 0).toFixed(2) }}
+                                  </td>
+                                  <td class="px-2 sm:px-4 py-2 sm:py-3 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100 text-right align-top">
+                                    ${{ ((item.unit_price || 0) * item.quantity).toFixed(2) }}
+                                  </td>
+                                </tr>
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Legacy view: show all items without grouping -->
+                  <div v-else class="overflow-x-auto -mx-4 sm:mx-0">
                     <div class="inline-block min-w-full align-middle px-4 sm:px-0">
                       <div class="overflow-hidden border border-gray-200 dark:border-gray-800 rounded-lg">
                         <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
@@ -192,6 +248,17 @@
                               </td>
                             </tr>
                           </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Totals Section -->
+                <div class="overflow-x-auto -mx-4 sm:mx-0">
+                  <div class="inline-block min-w-full align-middle px-4 sm:px-0">
+                    <div class="overflow-hidden border border-gray-200 dark:border-gray-800 rounded-lg">
+                      <table class="min-w-full">
                           <tfoot>
                             <tr v-if="totalSavings > 0">
                               <td colspan="2" class="sm:colspan-3 px-2 sm:px-4 py-2 text-xs sm:text-sm text-green-600 dark:text-green-400 text-right">
@@ -234,7 +301,6 @@
                       </div>
                     </div>
                   </div>
-                </div>
                 
                 <div v-if="order.notes" class="mb-4">
                   <h4 class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">{{$t('app.views.orders.modals.details.order_notes')}}</h4>
@@ -308,11 +374,11 @@
                   </div>
                 </div>
                 
-                <div class="flex flex-col gap-2 sm:grid sm:grid-flow-row-dense sm:grid-cols-3 sm:gap-3">
+                <div class="flex flex-col gap-2 sm:flex sm:flex-row sm:justify-center sm:gap-3 mt-6">
                   <button
                     v-if="!order.is_paid"
                     type="button"
-                    class="inline-flex w-full justify-center rounded-md border border-gray-300 bg-white px-3 py-2 sm:px-4 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:col-start-1 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700 dark:hover:bg-gray-700"
+                    class="inline-flex w-full sm:w-auto justify-center rounded-md border border-gray-300 bg-white px-3 py-2 sm:px-4 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700 dark:hover:bg-gray-700"
                     @click="emit('edit-order', order)"
                   >
                     {{$t('app.forms.edit')}}
@@ -320,7 +386,7 @@
                   <button
                     v-if="!order.is_paid && order.status !== 'cancelled' && canProcessPayments"
                     type="button"
-                    class="inline-flex w-full justify-center rounded-md border border-transparent bg-indigo-600 px-3 py-2 sm:px-4 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:col-start-2"
+                    class="inline-flex w-full sm:w-auto justify-center rounded-md border border-transparent bg-indigo-600 px-3 py-2 sm:px-4 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                     @click="showPaymentMethodSelector ? completePayment() : showPaymentMethodSelector = true"
                   >
                     {{showPaymentMethodSelector ? $t('app.views.orders.payment.confirm_payment') || 'Confirm Payment' : $t('app.views.orders.modals.details.complete_payment') || 'Complete Payment'}}
@@ -328,7 +394,7 @@
                   <button
                     v-if="order.status === 'Preparing'"
                     type="button"
-                    class="inline-flex w-full justify-center rounded-md border border-transparent bg-green-600 px-3 py-2 sm:px-4 text-sm font-medium text-white shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 sm:col-start-2"
+                    class="inline-flex w-full sm:w-auto justify-center rounded-md border border-transparent bg-green-600 px-3 py-2 sm:px-4 text-sm font-medium text-white shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
                     @click="updateStatus('Ready')"
                   >
                     {{$t('app.views.orders.modals.details.mark_ready')}}
@@ -336,14 +402,14 @@
                   <button
                     v-else-if="order.status === 'ready'"
                     type="button"
-                    class="inline-flex w-full justify-center rounded-md border border-transparent bg-green-600 px-3 py-2 sm:px-4 text-sm font-medium text-white shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 sm:col-start-2"
+                    class="inline-flex w-full sm:w-auto justify-center rounded-md border border-transparent bg-green-600 px-3 py-2 sm:px-4 text-sm font-medium text-white shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
                     @click="updateStatus('completed')"
                   >
                     {{$t('app.views.orders.modals.details.mark_completed')}}
                   </button>
                   <button
                     type="button"
-                    class="inline-flex w-full justify-center rounded-md border border-gray-300 bg-white dark:bg-gray-800 px-3 py-2 sm:px-4 text-sm font-medium text-gray-700 dark:text-gray-200 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:col-start-1 dark:border-gray-700"
+                    class="inline-flex w-full sm:w-auto justify-center rounded-md border border-gray-300 bg-white dark:bg-gray-800 px-3 py-2 sm:px-4 text-sm font-medium text-gray-700 dark:text-gray-200 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:border-gray-700"
                     @click="printOrder"
                   >
                     {{$t('app.views.orders.modals.details.print_receipt')}}

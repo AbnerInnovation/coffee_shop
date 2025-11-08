@@ -90,6 +90,14 @@
               <RectangleGroupIcon class="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400 dark:text-gray-500" />
               <span class="truncate">{{ order.table }}</span>
             </div>
+            <!-- Show customer name for takeaway/delivery orders -->
+            <div 
+              v-if="showCustomerName" 
+              class="flex items-center text-sm text-gray-500 dark:text-gray-400"
+            >
+              <UserIcon class="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400 dark:text-gray-500" />
+              <span class="truncate">{{ order.customer_name || 'Cliente' }}</span>
+            </div>
             <div class="flex items-center text-sm text-gray-500 dark:text-gray-400">
               <ClockIcon class="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400 dark:text-gray-500" />
               <span>{{ formattedTime }}</span>
@@ -129,7 +137,8 @@ import {
   CheckCircleIcon, 
   XMarkIcon,
   RectangleGroupIcon,
-  ClockIcon
+  ClockIcon,
+  UserIcon
 } from '@heroicons/vue/24/outline';
 import { getStatusBadgeClass, formatTime, getOrderItemsSummary, getOrderTypeLabel, canCancelOrder } from '@/utils/orderHelpers';
 import type { OrderWithLocalFields } from '@/utils/orderHelpers';
@@ -152,5 +161,10 @@ const canCancel = computed(() => canCancelOrder(props.order));
 const orderType = computed(() => {
   const type = (props.order as any).order_type;
   return type ? getOrderTypeLabel(type) : null;
+});
+const showCustomerName = computed(() => {
+  const type = (props.order as any).order_type;
+  // Show customer name for takeaway and delivery orders
+  return type === 'takeaway' || type === 'delivery';
 });
 </script>

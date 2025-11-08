@@ -389,6 +389,11 @@
           "new_order": {
             "title": "Nueva orden",
             "title_edit_order": "Editar orden {id}",
+            "tabs": {
+              "order_info": "Tipo",
+              "menu_items": "Menú",
+              "summary": "Resumen"
+            },
             "order_type": "Tipo de orden",
             "dine_in": "Para comer aquí",
             "takeaway": "Para llevar",
@@ -424,6 +429,18 @@
             "base_item": "Artículo base",
             "item_description_placeholder": "Ej.: sin cebolla, salsa extra, etc.",
             "item_locked": "Este item ya está en preparación y no puede modificarse",
+            "persons": {
+              "title": "Comensales",
+              "add_person": "Agregar Persona",
+              "person_label": "Persona {position}",
+              "person_name_placeholder": "Nombre (opcional)",
+              "remove_person": "Eliminar persona",
+              "items_for_person": "Items para {name}",
+              "no_items": "Sin items aún",
+              "confirm_remove": "¿Eliminar esta persona y sus items?",
+              "single_order": "Orden Simple",
+              "multiple_diners": "Múltiples Comensales"
+            },
             "errors": {
               "add_one_item": "Agrega al menos un artículo a la orden",
               "create_failed": "Error al crear la orden"

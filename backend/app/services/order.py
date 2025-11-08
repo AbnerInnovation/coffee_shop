@@ -7,6 +7,7 @@ import sqlalchemy as sa
 
 from ..models.order import Order as OrderModel, OrderStatus
 from ..models.order_item import OrderItem as OrderItemModel
+from ..models.order_person import OrderPerson as OrderPersonModel
 from ..models.menu import MenuItem, MenuItemVariant
 from ..schemas.order import OrderCreate, OrderUpdate, OrderItemCreate, OrderItemUpdate
 
@@ -64,6 +65,7 @@ def serialize_order_item(item: OrderItemModel) -> dict:
     return {
         "id": item.id,
         "order_id": item.order_id,
+        "person_id": item.person_id,
         "menu_item_id": item.menu_item_id,
         "quantity": item.quantity,
         "special_instructions": item.special_instructions,
@@ -75,6 +77,18 @@ def serialize_order_item(item: OrderItemModel) -> dict:
         "updated_at": item.updated_at,
         "menu_item": serialize_menu_item(item.menu_item),
         "extras": extras,
+    }
+
+def serialize_order_person(person: OrderPersonModel) -> dict:
+    """Serialize an order person with their items"""
+    return {
+        "id": person.id,
+        "order_id": person.order_id,
+        "name": person.name,
+        "position": person.position,
+        "created_at": person.created_at,
+        "updated_at": person.updated_at,
+        "items": [serialize_order_item(item) for item in person.items] if hasattr(person, 'items') else [],
     }
 
 def serialize_order(order: OrderModel) -> dict:
@@ -92,6 +106,11 @@ def serialize_order(order: OrderModel) -> dict:
     # For now, tax is 0 (can be configured later)
     tax = 0.0
     total = subtotal + tax
+    
+    # Serialize persons if they exist
+    persons = []
+    if hasattr(order, 'persons') and order.persons:
+        persons = [serialize_order_person(person) for person in order.persons]
     
     return {
         "id": order.id,
@@ -115,6 +134,7 @@ def serialize_order(order: OrderModel) -> dict:
         "sort": order.sort if hasattr(order, 'sort') else 50,
         "deleted_at": order.deleted_at,
         "items": [serialize_order_item(item) for item in items],
+        "persons": persons,
     }
 
 # -----------------------------
@@ -173,6 +193,8 @@ def get_orders(
         query = db.query(OrderModel).options(
             joinedload(OrderModel.items).joinedload(OrderItemModel.menu_item),
             joinedload(OrderModel.items).joinedload(OrderItemModel.variant),
+            joinedload(OrderModel.persons).joinedload(OrderPersonModel.items).joinedload(OrderItemModel.menu_item),
+            joinedload(OrderModel.persons).joinedload(OrderPersonModel.items).joinedload(OrderItemModel.variant),
             joinedload(OrderModel.table),
             joinedload(OrderModel.user),
         )
@@ -216,6 +238,9 @@ def get_order(db: Session, order_id: int, restaurant_id: int, include_deleted: b
             joinedload(OrderModel.items).joinedload(OrderItemModel.menu_item),
             joinedload(OrderModel.items).joinedload(OrderItemModel.variant),
             joinedload(OrderModel.items).joinedload(OrderItemModel.extras),
+            joinedload(OrderModel.persons).joinedload(OrderPersonModel.items).joinedload(OrderItemModel.menu_item),
+            joinedload(OrderModel.persons).joinedload(OrderPersonModel.items).joinedload(OrderItemModel.variant),
+            joinedload(OrderModel.persons).joinedload(OrderPersonModel.items).joinedload(OrderItemModel.extras),
             joinedload(OrderModel.table),
             joinedload(OrderModel.user),
         ).filter(
@@ -263,29 +288,33 @@ def create_order_with_items(db: Session, order: OrderCreate, restaurant_id: int,
 
     total_amount = 0.0
 
-    for item in order.items:
-        menu_item = db.query(MenuItem).filter(MenuItem.id == item.menu_item_id).first()
+    # Helper function to create order items
+    def create_order_item(item_data: OrderItemCreate, person_id: Optional[int] = None):
+        nonlocal total_amount
+        
+        menu_item = db.query(MenuItem).filter(MenuItem.id == item_data.menu_item_id).first()
         if not menu_item:
-            raise ValueError(f"Menu item {item.menu_item_id} not found")
+            raise ValueError(f"Menu item {item_data.menu_item_id} not found")
 
         variant = None
         unit_price = menu_item.get_effective_price()  # Use discount price if available
-        if item.variant_id:
+        if item_data.variant_id:
             variant = db.query(MenuItemVariant).filter(
-                MenuItemVariant.id == item.variant_id,
-                MenuItemVariant.menu_item_id == item.menu_item_id,
+                MenuItemVariant.id == item_data.variant_id,
+                MenuItemVariant.menu_item_id == item_data.menu_item_id,
             ).first()
             if not variant:
-                raise ValueError(f"Variant {item.variant_id} not found for menu item {item.menu_item_id}")
+                raise ValueError(f"Variant {item_data.variant_id} not found for menu item {item_data.menu_item_id}")
             unit_price = variant.get_effective_price()  # Use discount price if available
 
         db_item = OrderItemModel(
             order_id=db_order.id,
-            menu_item_id=item.menu_item_id,
-            variant_id=item.variant_id,
-            quantity=item.quantity,
+            person_id=person_id,  # Assign to person if provided
+            menu_item_id=item_data.menu_item_id,
+            variant_id=item_data.variant_id,
+            quantity=item_data.quantity,
             unit_price=unit_price,
-            special_instructions=item.special_instructions,
+            special_instructions=item_data.special_instructions,
             status=OrderStatus.PENDING,
             created_at=datetime.now(timezone.utc),
             updated_at=datetime.now(timezone.utc),
@@ -294,12 +323,12 @@ def create_order_with_items(db: Session, order: OrderCreate, restaurant_id: int,
         db.flush()  # Flush to get the item ID for extras
         
         # Add item price to total
-        total_amount += unit_price * item.quantity
+        total_amount += unit_price * item_data.quantity
         
         # Add extras if provided
-        if hasattr(item, 'extras') and item.extras:
+        if hasattr(item_data, 'extras') and item_data.extras:
             from ..models.order_item_extra import OrderItemExtra
-            for extra_data in item.extras:
+            for extra_data in item_data.extras:
                 db_extra = OrderItemExtra(
                     order_item_id=db_item.id,
                     name=extra_data.name,
@@ -311,6 +340,29 @@ def create_order_with_items(db: Session, order: OrderCreate, restaurant_id: int,
                 db.add(db_extra)
                 # Add extra price to total
                 total_amount += extra_data.price * extra_data.quantity
+
+    # Process persons with their items (new multi-diner approach)
+    if hasattr(order, 'persons') and order.persons:
+        for person_data in order.persons:
+            # Create person
+            db_person = OrderPersonModel(
+                order_id=db_order.id,
+                name=person_data.name,
+                position=person_data.position,
+                created_at=datetime.now(timezone.utc),
+                updated_at=datetime.now(timezone.utc),
+            )
+            db.add(db_person)
+            db.flush()  # Flush to get person ID
+            
+            # Create items for this person
+            for item_data in person_data.items:
+                create_order_item(item_data, person_id=db_person.id)
+    
+    # Process direct items (legacy support - items without person assignment)
+    if hasattr(order, 'items') and order.items:
+        for item_data in order.items:
+            create_order_item(item_data, person_id=None)
 
     db_order.total_amount = total_amount
     db_order.updated_at = datetime.now(timezone.utc)

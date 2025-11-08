@@ -85,10 +85,19 @@ async def create_order(
         if not db_table:
             raise ResourceNotFoundError("Table", order.table_id)
     
+    # Validate direct items (legacy support)
     for item in order.items:
         db_item = db.query(MenuItemModel).filter(MenuItemModel.id == item.menu_item_id).first()
         if not db_item:
             raise ResourceNotFoundError("MenuItem", item.menu_item_id)
+    
+    # Validate items in persons (new multi-diner approach)
+    if hasattr(order, 'persons') and order.persons:
+        for person in order.persons:
+            for item in person.items:
+                db_item = db.query(MenuItemModel).filter(MenuItemModel.id == item.menu_item_id).first()
+                if not db_item:
+                    raise ResourceNotFoundError("MenuItem", item.menu_item_id)
     
     return order_service.create_order_with_items(db=db, order=order, restaurant_id=restaurant.id, user_id=current_user.id)
 
@@ -420,29 +429,13 @@ async def mark_order_as_paid(
             payment_method=payment_method
         )
 
-        # Mark order as paid
+        # Mark order as paid (but keep the current status - don't auto-complete)
         db_order.is_paid = True
         db_order.payment_method = payment_method_enum
-        db_order.status = OrderStatus.COMPLETED
+        # Don't change status - let kitchen workflow handle status transitions
 
-        # Mark table as available if this is a dine-in order
-        if db_order.table_id:
-            from ...models.table import Table as TableModel
-            from datetime import datetime, timezone
-            table = db.query(TableModel).filter(TableModel.id == db_order.table_id).first()
-            if table:
-                # Check if there are other active orders for this table
-                other_active_orders = db.query(OrderModel).filter(
-                    OrderModel.table_id == db_order.table_id,
-                    OrderModel.id != order_id,
-                    OrderModel.status.in_([OrderStatus.PENDING, OrderStatus.PREPARING, OrderStatus.READY]),
-                    OrderModel.is_paid == False
-                ).count()
-                
-                # Only mark as available if no other active orders
-                if other_active_orders == 0:
-                    table.is_occupied = False
-                    table.updated_at = datetime.now(timezone.utc)
+        # Don't free the table when marking as paid - table should only be freed when order is completed
+        # The table freeing logic will be handled in the order completion endpoint
 
         db.commit()
         db.refresh(db_order)

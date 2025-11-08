@@ -10,6 +10,7 @@ from .order_item import OrderItem
 
 if TYPE_CHECKING:
     from .restaurant import Restaurant
+    from .order_person import OrderPerson
 
 # Enum for order status
 class OrderStatus(str, PyEnum):
@@ -60,6 +61,12 @@ class Order(BaseModel):
         "app.models.order_item.OrderItem",  # fully-qualified to avoid registry conflicts
         back_populates="order",
         cascade="all, delete-orphan"
+    )
+    persons: Mapped[List["OrderPerson"]] = relationship(
+        "OrderPerson",
+        back_populates="order",
+        cascade="all, delete-orphan",
+        order_by="OrderPerson.position"
     )
     user: Mapped[Optional["User"]] = relationship("User", back_populates="orders")
 

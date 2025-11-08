@@ -1,7 +1,7 @@
 import axios, { AxiosError, type AxiosInstance, type InternalAxiosRequestConfig, type AxiosRequestConfig } from 'axios';
 import API_CONFIG from '@/config/api';
 import { safeStorage } from '@/utils/storage';
-import { getGlobalToken } from '@/main';
+import { getGlobalToken } from '@/utils/tokenCache';
 
 declare module 'axios' {
   export interface AxiosRequestConfig {

@@ -1,0 +1,156 @@
+{
+  "restaurant_id": 1,
+  "clear_existing": false,
+  "force": false,
+  "menu_data": {
+    "categories": [
+      {
+        "name": "TACOS",
+        "description": "Tacos tradicionales mexicanos",
+        "visible_in_kitchen": true,
+        "items": [
+          {
+            "name": "Tacos al Pastor",
+            "description": "",
+            "price": 45.00,
+            "is_available": true,
+            "ingredients": {
+              "options": [
+                {
+                  "name": "Tortilla",
+                  "choices": ["Maíz", "Harina"],
+                  "default": "Maíz"
+                }
+              ],
+              "removable": ["Cebolla", "Cilantro", "Piña"]
+            }
+          }
+        ]
+      },
+      {
+        "name": "QUESADILLAS",
+        "description": "",
+        "visible_in_kitchen": true,
+        "items": [
+          {
+            "name": "Quesadilla Sencilla",
+            "description": "",
+            "price": 35.00,
+            "is_available": true,
+            "ingredients": {
+              "options": [
+                {
+                  "name": "Tortilla",
+                  "choices": ["Maíz", "Harina"],
+                  "default": "Harina"
+                }
+              ],
+              "removable": []
+            }
+          },
+          {
+            "name": "Quesadilla con Carne",
+            "description": "",
+            "price": 55.00,
+            "is_available": true,
+            "ingredients": {
+              "options": [
+                {
+                  "name": "Tortilla",
+                  "choices": ["Maíz", "Harina"],
+                  "default": "Harina"
+                }
+              ],
+              "removable": []
+            }
+          }
+        ]
+      },
+      {
+        "name": "GRINGAS",
+        "description": "",
+        "visible_in_kitchen": true,
+        "items": [
+          {
+            "name": "Gringa",
+            "description": "",
+            "price": 60.00,
+            "is_available": true,
+            "ingredients": {
+              "removable": ["Cebolla", "Cilantro"]
+            }
+          }
+        ]
+      },
+      {
+        "name": "ALAMBRES",
+        "description": "",
+        "visible_in_kitchen": true,
+        "items": [
+          {
+            "name": "Alambre",
+            "description": "",
+            "price": 85.00,
+            "is_available": true,
+            "ingredients": {
+              "options": [
+                {
+                  "name": "Tortillas",
+                  "choices": ["Maíz", "Harina", "Ambas"],
+                  "default": "Maíz"
+                }
+              ],
+              "removable": ["Tocino", "Pimientos", "Cebolla"]
+            }
+          }
+        ]
+      },
+      {
+        "name": "REFRESCOS",
+        "description": "",
+        "visible_in_kitchen": false,
+        "items": [
+          {
+            "name": "Refresco",
+            "description": "Refresco de 355ml",
+            "price": 30,
+            "is_available": true,
+            "ingredients": {
+              "options": [
+                {
+                  "name": "Sabor",
+                  "choices": ["Coca-Cola", "Sprite", "Fanta", "Manzanita"],
+                  "default": "Coca-Cola"
+                }
+              ],
+              "removable": []
+            }
+          }
+        ]
+      },
+      {
+        "name": "AGUAS FRESCAS",
+        "description": "",
+        "visible_in_kitchen": false,
+        "items": [
+          {
+            "name": "Agua Fresca",
+            "description": "Agua fresca natural del día",
+            "price": 30.00,
+            "is_available": true,
+            "ingredients": {
+              "options": [
+                {
+                  "name": "Sabor",
+                  "choices": ["Jamaica", "Horchata", "Tamarindo", "Limón"],
+                  "default": "Jamaica"
+                }
+              ],
+              "removable": []
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

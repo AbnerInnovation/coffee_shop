@@ -29,6 +29,31 @@ const selections = ref<SpecialNoteSelection>({
   customNote: ''
 });
 
+// Computed note for preview
+const previewNote = computed(() => {
+  const parts: string[] = [];
+  
+  if (props.ingredients?.options) {
+    props.ingredients.options.forEach(option => {
+      const selected = selections.value.optionSelections[option.name];
+      if (selected) {
+        parts.push(`${option.name}: ${selected}`);
+      }
+    });
+  }
+  
+  if (selections.value.removedIngredients.length > 0) {
+    const removed = selections.value.removedIngredients.map(item => `Sin ${item}`).join(', ');
+    parts.push(removed);
+  }
+  
+  if (selections.value.customNote.trim()) {
+    parts.push(selections.value.customNote.trim());
+  }
+  
+  return parts.join(' | ');
+});
+
 // Initialize selections with defaults
 onMounted(() => {
   if (props.ingredients?.options) {
@@ -140,6 +165,12 @@ const isRemoved = (ingredient: string) => {
       </button>
     </div>
 
+    <!-- Preview of constructed note -->
+    <div v-if="previewNote" class="p-3 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 rounded-lg">
+      <p class="text-xs font-medium text-indigo-700 dark:text-indigo-300 mb-1">Vista previa:</p>
+      <p class="text-sm text-indigo-900 dark:text-indigo-100">{{ previewNote }}</p>
+    </div>
+
     <!-- Top Notes (if available) -->
     <div v-if="topNotes && topNotes.length > 0" class="space-y-2">
       <p class="text-xs text-gray-600 dark:text-gray-400">
@@ -218,7 +249,7 @@ const isRemoved = (ingredient: string) => {
       </label>
       <textarea
         v-model="selections.customNote"
-        @input="updateCustomNote"
+        @input="buildSpecialNote"
         rows="2"
         :placeholder="t('app.views.orders.special_notes.custom_placeholder')"
         class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100 dark:placeholder-gray-400"

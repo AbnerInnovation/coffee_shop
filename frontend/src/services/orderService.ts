@@ -20,6 +20,7 @@ export interface OrderItem {
   special_instructions: string | null;
   status: string;
   order_id: number;
+  person_id?: number | null;
   created_at: string;
   updated_at: string;
   variant: {
@@ -48,6 +49,7 @@ export interface CreateOrderItemData {
   quantity: number;
   special_instructions: string | null;
   unit_price: number;
+  person_id?: number | null;
   extras?: Array<{
     name: string;
     price: number;
@@ -55,11 +57,28 @@ export interface CreateOrderItemData {
   }>;
 }
 
+export interface OrderPerson {
+  id?: number;
+  order_id?: number;
+  name?: string | null;
+  position: number;
+  items: OrderItem[];
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface CreateOrderPersonData {
+  name?: string | null;
+  position: number;
+  items: CreateOrderItemData[];
+}
+
 export interface CreateOrderData {
   table_id?: number | null;  // Optional for takeaway/delivery orders
   customer_name?: string | null;  // For takeaway/delivery orders
   notes?: string | null;
-  items: CreateOrderItemData[];
+  items?: CreateOrderItemData[];  // Legacy support
+  persons?: CreateOrderPersonData[];  // New multi-diner approach
 }
 
 export interface Variant {
@@ -97,6 +116,7 @@ export interface Order {
   is_paid?: boolean;
   order_type?: string;
   items: OrderItem[];
+  persons?: OrderPerson[];  // New multi-diner support
 }
 
 // Menu item variant for the frontend

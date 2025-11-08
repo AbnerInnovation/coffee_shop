@@ -9,6 +9,7 @@ if TYPE_CHECKING:
     from .order import Order
     from .menu import MenuItem, MenuItemVariant
     from .order_item_extra import OrderItemExtra
+    from .order_person import OrderPerson
 
 # Enum for item status
 class OrderItemStatus(str, Enum):
@@ -25,6 +26,9 @@ class OrderItem(BaseModel):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     order_id: Mapped[int] = mapped_column(
         ForeignKey("orders.id", ondelete="CASCADE"), nullable=False
+    )
+    person_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("order_persons.id", ondelete="CASCADE"), nullable=True, index=True
     )
     menu_item_id: Mapped[int] = mapped_column(
         ForeignKey("menu_items.id"), nullable=False
@@ -44,6 +48,7 @@ class OrderItem(BaseModel):
 
     # Relationships
     order: Mapped["Order"] = relationship("Order", back_populates="items")
+    person: Mapped[Optional["OrderPerson"]] = relationship("OrderPerson", back_populates="items")
     menu_item: Mapped["MenuItem"] = relationship("MenuItem", back_populates="order_items")
     variant: Mapped[Optional["MenuItemVariant"]] = relationship(
         "MenuItemVariant", back_populates="order_items"

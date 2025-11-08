@@ -5,36 +5,24 @@ import App from './App.vue';
 import router from './router';
 import './assets/main.css';
 import { i18n } from '@/plugins/i18n';
-import Toast, { PluginOptions as ToastOptions } from 'vue-toastification';
+import Toast, { PluginOptions as ToastOptions, POSITION } from 'vue-toastification';
 import 'vue-toastification/dist/index.css';
 import { safeStorage } from './utils/storage';
+import { setGlobalToken, getGlobalToken } from './utils/tokenCache';
 
 // Configure axios
 axios.defaults.baseURL = import.meta.env.VITE_API_URL || 'http://localhost:8001';
 axios.defaults.withCredentials = true; // Send cookies with requests
 
-// Global in-memory token cache for Safari compatibility
-// Safari sometimes blocks localStorage access during navigation
-let _cachedToken: string | null = null;
-
-export function setGlobalToken(token: string | null) {
-  _cachedToken = token;
-  console.log('🔐 Global token set:', !!token);
-}
-
-export function getGlobalToken(): string | null {
-  return _cachedToken;
-}
-
 // Request interceptor - add auth token
 axios.interceptors.request.use(
   (config) => {
     // Try in-memory token first (for Safari), then storage
-    let token = _cachedToken || safeStorage.getItem('access_token') || safeStorage.getItem('access_token', true);
+    let token = getGlobalToken() || safeStorage.getItem('access_token') || safeStorage.getItem('access_token', true);
     
     // If token found in storage but not in memory, restore it to memory
-    if (!_cachedToken && token) {
-      _cachedToken = token;
+    if (!getGlobalToken() && token) {
+      setGlobalToken(token);
     }
     
     if (token) {
@@ -85,7 +73,7 @@ app.use(router);
 app.use(i18n);
 // Configure Vue Toastification with sensible defaults
 const toastOptions: ToastOptions = {
-  position: 'top-right',
+  position: POSITION.BOTTOM_RIGHT,
   timeout: 3500,
   closeOnClick: true,
   pauseOnFocusLoss: true,
@@ -100,5 +88,3 @@ const toastOptions: ToastOptions = {
 };
 app.use(Toast, toastOptions);
 app.mount('#app');
-
-export { app, router, pinia };

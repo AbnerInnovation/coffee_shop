@@ -136,6 +136,71 @@
           </div>
 
           <div class="divide-y divide-gray-200 dark:divide-gray-700">
+            <!-- If order has persons, show grouped by person -->
+            <template v-if="order.persons && order.persons.length > 0">
+              <div v-for="person in order.persons" :key="person.id" class="border-l-4 border-indigo-500 pl-3 py-3">
+                <h5 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-1">
+                  <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                  {{ person.name || $t('app.views.orders.modals.new_order.persons.person_label', { position: person.position }) }}
+                </h5>
+                
+                <div class="space-y-2">
+                  <div 
+                    v-for="item in person.items" 
+                    :key="item.id"
+                    class="p-3 sm:p-4 rounded-md"
+                    :class="{
+                      'bg-yellow-50 dark:bg-yellow-900/20': item.status === 'pending',
+                      'bg-blue-50 dark:bg-blue-900/20': item.status === 'preparing',
+                      'bg-green-50 dark:bg-green-900/20': item.status === 'ready'
+                    }"
+                  >
+                    <div class="flex justify-between items-start gap-2">
+                      <div class="flex-1 min-w-0">
+                        <div class="flex items-center flex-wrap gap-2">
+                          <span class="font-bold text-2xl sm:text-3xl text-gray-900 dark:text-white">{{ item.quantity }}x</span>
+                          <span class="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-white">{{ item.menu_item.name }}</span>
+                          <span v-if="item.variant" class="text-lg sm:text-xl text-gray-600 dark:text-gray-400">({{ item.variant.name }})</span>
+                          
+                          <span 
+                            class="inline-flex items-center rounded-full px-3 py-1 text-sm font-semibold"
+                            :class="getItemStatusBadgeClass(item.status)"
+                          >
+                            {{ t(`app.status.${item.status}`) }}
+                          </span>
+                        </div>
+                        
+                        <div v-if="item.special_instructions" class="mt-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded text-base sm:text-lg font-medium text-blue-700 dark:text-blue-300">
+                          {{ item.special_instructions }}
+                        </div>
+                        
+                        <div class="mt-2 flex gap-2">
+                          <button
+                            v-if="item.status === 'pending'"
+                            @click="markItemPreparing(order, item)"
+                            class="text-sm sm:text-base font-semibold px-4 py-2 rounded-md bg-indigo-600 text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                          >
+                            {{ t('app.views.kitchen.actions.start_preparing') }}
+                          </button>
+                          <button
+                            v-if="item.status === 'preparing'"
+                            @click="markItemReady(order, item)"
+                            class="text-sm sm:text-base font-semibold px-4 py-2 rounded-md bg-green-600 text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+                          >
+                            {{ t('app.views.kitchen.actions.item_ready') }}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </template>
+
+            <!-- Legacy view: show items without grouping -->
+            <template v-else>
             <div 
               v-for="item in getPendingItems(order)" 
               :key="item.id"
@@ -198,6 +263,7 @@
                 </div>
               </div>
             </div>
+            </template>
           </div>
 
           <div class="p-3 sm:p-4 bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
@@ -253,7 +319,7 @@ interface GroupedItem {
   orders: Array<{
     order_id: number;
     order_number?: number;
-    table_number?: number;
+    table_number: number | null;
     quantity: number;
   }>;
 }

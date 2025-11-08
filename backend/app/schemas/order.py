@@ -1,9 +1,40 @@
 from .base import PhoenixBaseModel as BaseModel
-from pydantic import Field, validator
+from pydantic import Field, validator, model_validator
 from datetime import datetime
 from typing import List, Optional
 from enum import Enum
 from ..core.validators import sanitize_text, validate_name
+
+# OrderPerson Schemas
+class OrderPersonBase(BaseModel):
+    name: Optional[str] = Field(None, max_length=100, description="Person name (e.g., 'Persona 1', 'Juan')")
+    position: int = Field(1, ge=1, le=20, description="Position/order of person (1-20)")
+    
+    @validator('name')
+    def sanitize_person_name(cls, v):
+        """Remove potentially dangerous characters from person name."""
+        return sanitize_text(v) if v else v
+
+class OrderPersonCreate(OrderPersonBase):
+    items: List['OrderItemCreate'] = Field(default_factory=list, description="Items for this person")
+
+class OrderPersonUpdate(BaseModel):
+    name: Optional[str] = Field(None, max_length=100)
+    position: Optional[int] = Field(None, ge=1, le=20)
+    
+    @validator('name')
+    def sanitize_person_name_update(cls, v):
+        return sanitize_text(v) if v else v
+
+class OrderPerson(OrderPersonBase):
+    id: int
+    order_id: int
+    created_at: datetime
+    updated_at: datetime
+    items: List['OrderItem'] = []
+    
+    class Config:
+        orm_mode = True
 
 # Order Item Extra Schemas
 class OrderItemExtraBase(BaseModel):
@@ -57,6 +88,7 @@ class OrderItemBase(BaseModel):
     quantity: int = Field(..., ge=1, le=100, description="Quantity must be between 1 and 100")
     special_instructions: Optional[str] = Field(None, max_length=200)
     status: OrderStatus = OrderStatus.PENDING
+    person_id: Optional[int] = Field(None, ge=1, description="Person ID for multi-diner orders")
     
     @validator('special_instructions')
     def sanitize_instructions(cls, v):
@@ -74,6 +106,7 @@ class OrderItemUpdate(BaseModel):
 class OrderItemInDBBase(OrderItemBase):
     id: int
     order_id: int
+    person_id: Optional[int] = None
     created_at: datetime
     updated_at: datetime
 
@@ -125,7 +158,26 @@ class OrderBase(BaseModel):
 
 class OrderCreate(OrderBase):
     customer_name: Optional[str] = Field(None, max_length=100)
-    items: List[OrderItemCreate] = Field(..., min_items=1, max_items=50, description="Order must have 1-50 items")
+    items: List[OrderItemCreate] = Field(default_factory=list, description="Direct items (legacy support)")
+    persons: List[OrderPersonCreate] = Field(default_factory=list, description="Persons with their items")
+    
+    @model_validator(mode='after')
+    def validate_has_items(self):
+        """Ensure order has items either directly or through persons."""
+        items = self.items or []
+        persons = self.persons or []
+        
+        if not items and not persons:
+            raise ValueError('Order must have items either directly or through persons')
+        
+        # Check total items don't exceed limit
+        total_items = len(items)
+        for person in persons:
+            total_items += len(person.items)
+        if total_items > 50:
+            raise ValueError('Order cannot have more than 50 total items')
+        
+        return self
     
     @validator('customer_name')
     def validate_customer_name(cls, v):
@@ -163,6 +215,7 @@ class OrderInDBBase(OrderBase):
     sort: int = 50
     deleted_at: Optional[datetime] = None
     items: List[OrderItem] = []
+    persons: List[OrderPerson] = []
 
     class Config:
         orm_mode = True
@@ -172,3 +225,8 @@ class Order(OrderInDBBase):
 
 class OrderInDB(OrderInDBBase):
     pass
+
+# Update forward references for circular dependencies
+OrderPersonCreate.update_forward_refs()
+OrderPerson.update_forward_refs()
+OrderItem.update_forward_refs()

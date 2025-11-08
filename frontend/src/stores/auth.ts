@@ -3,7 +3,7 @@ import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
 import { safeStorage, checkStorageAndWarn } from '@/utils/storage';
-import { setGlobalToken } from '@/main';
+import { setGlobalToken } from '@/utils/tokenCache';
 
 // Types
 export interface LoginCredentials {
