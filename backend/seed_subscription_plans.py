@@ -68,15 +68,15 @@ def seed_plans(db):
             "monthly_price": 399.0,
             "annual_price": 3591.0,  # 25% discount (299.25/month)
             "max_admin_users": 1,
-            "max_waiter_users": 2,
-            "max_cashier_users": 0,
-            "max_kitchen_users": 0,
+            "max_waiter_users": 1,
+            "max_cashier_users": 1,
+            "max_kitchen_users": 1,
             "max_owner_users": 0,
             "max_tables": 10,
-            "max_menu_items": 50,
+            "max_menu_items": 20,
             "max_categories": 10,
-            "has_kitchen_module": False,
-            "has_ingredients_module": False,
+            "has_kitchen_module": True,
+            "has_ingredients_module": True,
             "has_inventory_module": False,
             "has_advanced_reports": False,
             "has_multi_branch": False,
@@ -91,11 +91,11 @@ def seed_plans(db):
             "features": {
                 "included": [
                     "Módulos básicos: Mesas, Pedidos, Menú, Caja",
+                    "Módulo de Cocina incluido",
+                    "Módulo de Ingredientes incluido",
                     "Reportes básicos (7 días)",
                 ],
                 "not_included": [
-                    "Módulo de Cocina",
-                    "Módulo de Ingredientes",
                     "Inventario",
                     "Reportes avanzados"
                 ]

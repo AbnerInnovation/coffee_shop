@@ -264,10 +264,11 @@ const plans = [
         subtitle: 'Food trucks y cafeterías pequeñas',
         price: '$399 / mes',
         features: [
-            '1 admin + 2 meseros',
+            '1 admin + 1 mesero + 1 cajero + 1 cocina',
             'Hasta 10 mesas',
-            '50 productos en menú',
-            'Módulos: Mesas, Pedidos, Menú, Caja',
+            '20 productos en menú',
+            'Módulo de Cocina incluido 🎁',
+            'Módulo de Ingredientes incluido 🎁',
             'Reportes básicos (7 días)',
         ],
     },
@@ -369,7 +370,6 @@ const addons = [
         items: [
             'Inventario: $199/mes',
             'Reportes Avanzados: $149/mes',
-            'Módulo de Cocina (solo Starter): $99/mes',
         ],
     },
     {
