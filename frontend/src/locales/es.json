@@ -599,7 +599,7 @@
         "order_type_filter": {
           "all": "Todos los Tipos",
           "dine_in": "Para Comer Aquí",
-          "takeout": "Para Llevar",
+          "takeaway": "Para Llevar",
           "delivery": "A Domicilio"
         }
       },

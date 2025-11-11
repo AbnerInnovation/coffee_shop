@@ -45,7 +45,7 @@
             <button
               v-for="typeTab in orderTypeTabs"
               :key="typeTab.value"
-              @click="selectedOrderType = typeTab.value as 'all' | 'dine_in' | 'takeout' | 'delivery'"
+              @click="selectedOrderType = typeTab.value as 'all' | 'dine_in' | 'takeaway' | 'delivery'"
               :class="[
                 selectedOrderType === typeTab.value
                   ? 'border-green-500 text-green-600 dark:text-green-400'
@@ -344,7 +344,7 @@ import type { Order, OrderItem } from '@/services/orderService';
 const loading = ref(true);
 const activeOrders = ref<Order[]>([]);
 const selectedStatus = ref<'all' | 'pending' | 'preparing' | 'grouped'>('pending');
-const selectedOrderType = useLocalStorage<'all' | 'dine_in' | 'takeout' | 'delivery'>('kitchen-order-type-filter', 'all');
+const selectedOrderType = useLocalStorage<'all' | 'dine_in' | 'takeaway' | 'delivery'>('kitchen-order-type-filter', 'all');
 let refreshInterval: number | null = null;
 
 const { t } = useI18n();
@@ -467,9 +467,9 @@ const orderTypeTabs = computed(() => {
       count: ordersWithVisibleItems.filter(o => o.order_type === 'dine_in').length
     },
     {
-      value: 'takeout',
-      label: t('app.views.kitchen.order_type_filter.takeout'),
-      count: ordersWithVisibleItems.filter(o => o.order_type === 'takeout').length
+      value: 'takeaway',
+      label: t('app.views.kitchen.order_type_filter.takeaway'),
+      count: ordersWithVisibleItems.filter(o => o.order_type === 'takeaway').length
     },
     {
       value: 'delivery',
