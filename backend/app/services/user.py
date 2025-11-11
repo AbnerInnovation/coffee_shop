@@ -80,20 +80,24 @@ def get_user(db: Session, user_id: int) -> Optional[UserModel]:
     """
     return db.query(UserModel).filter(UserModel.id == user_id).first()
 
-def get_user_by_email(db: Session, email: str) -> Optional[UserModel]:
+def get_user_by_email(db: Session, email: str, include_deleted: bool = False) -> Optional[UserModel]:
     """
     Get a user by email.
     
     Args:
         db: Database session
         email: Email of the user to retrieve
+        include_deleted: If True, include deleted users in search
         
     Returns:
         User object if found, None otherwise
     """
-    return db.query(UserModel).filter(UserModel.email == email).first()
+    query = db.query(UserModel).filter(UserModel.email == email)
+    if not include_deleted:
+        query = query.filter(UserModel.deleted_at.is_(None))
+    return query.first()
 
-def get_users(db: Session, skip: int = 0, limit: int = 100) -> List[UserModel]:
+def get_users(db: Session, skip: int = 0, limit: int = 100, include_deleted: bool = False) -> List[UserModel]:
     """
     Get a list of users with pagination.
     
@@ -101,11 +105,15 @@ def get_users(db: Session, skip: int = 0, limit: int = 100) -> List[UserModel]:
         db: Database session
         skip: Number of records to skip
         limit: Maximum number of records to return
+        include_deleted: If True, include deleted users in results
         
     Returns:
         List of User objects
     """
-    return db.query(UserModel).offset(skip).limit(limit).all()
+    query = db.query(UserModel)
+    if not include_deleted:
+        query = query.filter(UserModel.deleted_at.is_(None))
+    return query.offset(skip).limit(limit).all()
 
 def create_user(db: Session, user: UserCreate) -> UserModel:
     """
@@ -173,14 +181,19 @@ def update_user(
 
 def delete_user(db: Session, db_user: UserModel) -> None:
     """
-    Delete a user.
+    Soft delete a user by setting deleted_at timestamp.
+    This prevents issues with foreign key constraints on related records.
+    The user remains in the database but is marked as deleted.
     
     Args:
         db: Database session
-        db_user: User object to delete
+        db_user: User object to soft delete
     """
-    db.delete(db_user)
+    from datetime import datetime, timezone
+    db_user.deleted_at = datetime.now(timezone.utc)
+    db.add(db_user)
     db.commit()
+    db.refresh(db_user)
 
 def authenticate_user(db: Session, email: str, password: str) -> Optional[UserModel]:
     """

@@ -340,6 +340,7 @@ import { useI18n } from 'vue-i18n'
 import { cashRegisterService } from '@/services/cashRegisterService'
 import { useToast } from '@/composables/useToast'
 import LastCutDisplay from '@/components/LastCutDisplay.vue'
+import { formatDateTime as formatDate } from '@/utils/dateHelpers'
 
 interface Props {
   isVisible: boolean
@@ -529,10 +530,7 @@ const translateDescription = (description: string) => {
   return description
 }
 
-const formatDate = (dateString: string) => {
-  if (!dateString) return t('app.common.na')
-  return new Date(dateString).toLocaleString()
-}
+// formatDate is now imported from @/utils/dateHelpers (as formatDateTime)
 
 const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat('es-MX', {

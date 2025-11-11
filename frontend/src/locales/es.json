@@ -1073,7 +1073,8 @@
       "filter_staff": "Personal",
       "filter_customer": "Clientes",
       "empty_state": "No hay usuarios registrados",
-      "confirm_delete": "¿Estás seguro de eliminar a {name}?",
+      "confirm_delete_title": "Confirmar eliminación",
+      "confirm_delete_message": "¿Estás seguro de que deseas eliminar a {name}? Esta acción no se puede deshacer.",
       "table": {
         "name": "Nombre",
         "email": "Correo",
@@ -1131,6 +1132,11 @@
         "save_failed": "Error al guardar el usuario",
         "delete_failed": "Error al eliminar el usuario",
         "toggle_status_failed": "Error al cambiar el estado del usuario"
+      },
+      "success": {
+        "deleted": "Usuario eliminado correctamente",
+        "activated": "Usuario activado correctamente",
+        "deactivated": "Usuario desactivado correctamente"
       }
     },
     "reports": {

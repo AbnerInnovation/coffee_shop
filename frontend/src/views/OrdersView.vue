@@ -223,6 +223,7 @@ const formatStatus = (status: OrderStatus): string => {
 
 // Map of status to display names
 const statusMap: Record<OrderStatus, string> = {
+  'all': 'All Orders',
   'pending': 'Pending',
   'preparing': 'Preparing',
   'ready': 'Ready for Pickup',
@@ -401,7 +402,11 @@ const cancelOrder = async (orderId: number) => {
 
   // Validate if order can be cancelled
   if (!canCancelOrder(order)) {
-    showError('No se puede cancelar una orden que ya está en preparación o lista. Solo se pueden cancelar órdenes pendientes con todos sus items pendientes.');
+    if (order.is_paid) {
+      showError('No se puede cancelar un pedido que ya está pagado.');
+    } else {
+      showError('No se puede cancelar una orden que ya está en preparación o lista. Solo se pueden cancelar órdenes pendientes con todos sus items pendientes.');
+    }
     return;
   }
 

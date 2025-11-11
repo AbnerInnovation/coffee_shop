@@ -29,6 +29,7 @@ router = APIRouter(
 async def list_restaurant_users(
     skip: int = 0,
     limit: int = 100,
+    include_deleted: bool = False,
     db: Session = Depends(get_db),
     restaurant: Restaurant = Depends(get_current_restaurant),
     current_user: UserModel = Depends(require_admin_or_sysadmin)
@@ -37,9 +38,13 @@ async def list_restaurant_users(
     List all users for the current restaurant.
     Only accessible by restaurant admin or sysadmin.
     When in a restaurant context (subdomain), shows only that restaurant's users.
+    By default, only non-deleted users are shown. Set include_deleted=true to see all.
     """
-    # Filter by current restaurant context
+    # Filter by current restaurant context and deleted status
     query = db.query(UserModel).filter(UserModel.restaurant_id == restaurant.id)
+    
+    if not include_deleted:
+        query = query.filter(UserModel.deleted_at.is_(None))
     
     users = query.offset(skip).limit(limit).all()
     return users
@@ -50,6 +55,7 @@ async def list_users_by_role(
     role: UserRole,
     skip: int = 0,
     limit: int = 100,
+    include_deleted: bool = False,
     db: Session = Depends(get_db),
     restaurant: Restaurant = Depends(get_current_restaurant),
     current_user: UserModel = Depends(require_admin_or_sysadmin)
@@ -57,11 +63,15 @@ async def list_users_by_role(
     """
     List users by role for the current restaurant.
     Only accessible by restaurant admin or sysadmin.
+    By default, only non-deleted users are shown.
     """
     query = db.query(UserModel).filter(
         UserModel.restaurant_id == restaurant.id,
         UserModel.role == role
     )
+    
+    if not include_deleted:
+        query = query.filter(UserModel.deleted_at.is_(None))
     
     users = query.offset(skip).limit(limit).all()
     return users
@@ -69,6 +79,7 @@ async def list_users_by_role(
 
 @router.get("/count-by-role")
 async def count_users_by_role(
+    include_deleted: bool = False,
     db: Session = Depends(get_db),
     restaurant: Restaurant = Depends(get_current_restaurant),
     current_user: UserModel = Depends(require_admin_or_sysadmin)
@@ -76,16 +87,22 @@ async def count_users_by_role(
     """
     Get count of users by role for the current restaurant.
     Useful for checking subscription limits.
+    By default, only counts non-deleted users.
     """
     counts = {}
     for role in UserRole:
         if role == UserRole.SYSADMIN:
             continue  # Don't count sysadmins
         
-        count = db.query(UserModel).filter(
+        query = db.query(UserModel).filter(
             UserModel.restaurant_id == restaurant.id,
             UserModel.role == role
-        ).count()
+        )
+        
+        if not include_deleted:
+            query = query.filter(UserModel.deleted_at.is_(None))
+        
+        count = query.count()
         counts[role.value] = count
     
     return counts
@@ -220,7 +237,9 @@ async def delete_restaurant_user(
     current_user: UserModel = Depends(require_admin_or_sysadmin)
 ) -> None:
     """
-    Delete a user.
+    Soft delete a user by setting deleted_at timestamp.
+    This prevents issues with foreign key constraints on related records (orders, sessions, etc.).
+    The user remains in the database but is marked as deleted.
     Only accessible by restaurant admin or sysadmin.
     Users can only delete users from their own restaurant (except sysadmin).
     Cannot delete yourself.

@@ -1,6 +1,6 @@
 import api from './api';
 
-export type OrderStatus = 'pending' | 'preparing' | 'ready' | 'completed' | 'cancelled';
+export type OrderStatus = 'pending' | 'preparing' | 'ready' | 'completed' | 'cancelled' | 'all';
 
 export interface OrderItemExtra {
   id: number;

@@ -181,6 +181,7 @@ import { cashRegisterService } from '@/services/cashRegisterService'
 import { useToast } from '@/composables/useToast'
 import SessionDetailsModal from '@/components/SessionDetailsModal.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
+import { formatDateTimeShort as formatDate } from '@/utils/dateHelpers'
 
 const { t } = useI18n()
 const toast = useToast()
@@ -230,16 +231,13 @@ const loadPastSessions = async () => {
 
     const response = await cashRegisterService.getPastSessions(filters)
 
-    // Handle both direct array response and paginated response
+    // Backend returns a simple array (interceptor already flattened response.data)
     if (Array.isArray(response)) {
       pastSessions.value = response
       pagination.value.total = response.length
       pagination.value.totalPages = Math.ceil(response.length / pagination.value.limit)
-    } else if (response && response.data) {
-      pastSessions.value = Array.isArray(response.data) ? response.data : response.data.sessions || []
-      pagination.value.total = response.total || response.data?.total || pastSessions.value.length
-      pagination.value.totalPages = response.totalPages || response.data?.totalPages || Math.ceil(pagination.value.total / pagination.value.limit)
     } else {
+      // Fallback for unexpected response format
       pastSessions.value = []
       pagination.value.total = 0
       pagination.value.totalPages = 0
@@ -302,10 +300,7 @@ const getStatusBadgeClass = (status: string) => {
   }
 }
 
-const formatDate = (dateString: string) => {
-  if (!dateString) return 'N/A'
-  return new Date(dateString).toLocaleDateString() + ' ' + new Date(dateString).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-}
+// formatDate is now imported from @/utils/dateHelpers (as formatDateTimeShort)
 
 const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat('es-MX', {

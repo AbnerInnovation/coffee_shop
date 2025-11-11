@@ -1,5 +1,6 @@
 import { computed, type Ref } from 'vue';
 import type { OrderWithLocalFields, OrderStatus } from '@/utils/orderHelpers';
+import { getOrderCount as getOrderCountHelper } from '@/utils/orderHelpers';
 
 export type PaymentFilter = 'all' | 'paid' | 'unpaid';
 export type OrderTypeFilter = 'all' | 'dine_in' | 'takeaway' | 'delivery';
@@ -52,10 +53,11 @@ export function useOrderFilters(
     return filtered;
   });
 
+  // Use centralized helper, with special handling for 'all' status
   const getOrderCount = (status: OrderStatus): number => {
     if (!orders.value || !orders.value.length) return 0;
     if (status === 'all') return orders.value.length;
-    return orders.value.filter(order => order.status === status).length;
+    return getOrderCountHelper(orders.value, status);
   };
 
   return {

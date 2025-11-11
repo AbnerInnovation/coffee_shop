@@ -95,7 +95,7 @@
 <script setup lang="ts">
 import type { Table } from '@/services/tableService';
 
-type OrderStatus = 'pending' | 'preparing' | 'ready' | 'completed' | 'cancelled';
+type OrderStatus = 'pending' | 'preparing' | 'ready' | 'completed' | 'cancelled' | 'all';
 type PaymentFilter = 'all' | 'paid' | 'unpaid';
 type OrderTypeFilter = 'all' | 'dine_in' | 'takeaway' | 'delivery';
 type TableFilter = number | 'all';

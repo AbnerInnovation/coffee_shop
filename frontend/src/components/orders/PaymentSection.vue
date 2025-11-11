@@ -113,13 +113,15 @@ interface Props {
   markAsPaid: boolean;
   selectedPaymentMethod: 'cash' | 'card' | 'digital' | 'other';
   orderTotal: number;
+  cashReceived?: number;
 }
 
 const props = defineProps<Props>();
 
-defineEmits<{
+const emit = defineEmits<{
   'update:mark-as-paid': [value: boolean];
   'update:selected-payment-method': [value: 'cash' | 'card' | 'digital' | 'other'];
+  'update:cash-received': [value: number];
 }>();
 
 const paymentMethods = [
@@ -130,10 +132,15 @@ const paymentMethods = [
 ];
 
 // Cash change calculator
-const cashReceived = ref<number>(0);
+const cashReceived = ref<number>(props.cashReceived || 0);
 
 const changeAmount = computed(() => {
   return cashReceived.value - props.orderTotal;
+});
+
+// Emit changes to parent
+watch(cashReceived, (newValue) => {
+  emit('update:cash-received', newValue);
 });
 
 // Reset cash received when payment method changes

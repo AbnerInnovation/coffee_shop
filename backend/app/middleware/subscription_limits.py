@@ -24,7 +24,7 @@ class SubscriptionLimitsMiddleware:
         # For other roles, we check by role (admin, customer, etc.)
         check_type = staff_type if staff_type and role == 'staff' else role
         
-        # Count current users
+        # Count current non-deleted users only
         if staff_type and role == 'staff':
             # Count staff users by staff_type
             current_count = db.query(User).filter(

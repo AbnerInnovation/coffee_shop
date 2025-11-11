@@ -4,6 +4,25 @@ import { authService } from './authService';
 
 const CASH_REGISTER_ENDPOINT = API_CONFIG.ENDPOINTS.CASH_REGISTER;
 
+// TypeScript interfaces for cash register data
+export interface CashRegisterSession {
+  id: number;
+  restaurant_id: number;
+  cashier_id: number;
+  opened_by_user_id: number;
+  closed_by_user_id?: number;
+  status: 'OPEN' | 'CLOSED';
+  initial_balance: number;
+  final_balance?: number;
+  expected_balance?: number;
+  difference?: number;
+  notes?: string;
+  opened_at: string;
+  closed_at?: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export const cashRegisterService = {
   // Past sessions endpoints
   async getPastSessions(filters?: {
@@ -12,7 +31,7 @@ export const cashRegisterService = {
     start_date?: string;
     end_date?: string;
     status?: string;
-  }) {
+  }): Promise<CashRegisterSession[]> {
     const params = new URLSearchParams();
     if (filters?.page) params.append('page', filters.page.toString());
     if (filters?.limit) params.append('limit', filters.limit.toString());
@@ -23,8 +42,9 @@ export const cashRegisterService = {
     const queryString = params.toString();
     const url = `${CASH_REGISTER_ENDPOINT}/sessions${queryString ? `?${queryString}` : ''}`;
 
-    const response = await api.get(url);
-    return response;
+    // Backend returns List[CashRegisterSession], interceptor flattens to array
+    // The api.get() interceptor returns response.data directly, so we get the array
+    return await api.get(url) as unknown as CashRegisterSession[];
   },
 
   // Session endpoints

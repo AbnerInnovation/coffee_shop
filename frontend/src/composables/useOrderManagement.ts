@@ -5,6 +5,7 @@ import { useToast } from '@/composables/useToast';
 import { useConfirm } from '@/composables/useConfirm';
 import orderService from '@/services/orderService';
 import type { Order } from '@/services/orderService';
+import { canCancelOrder as canCancelOrderHelper } from '@/utils/orderHelpers';
 
 // Types
 type BackendOrderStatus = 'pending' | 'preparing' | 'ready' | 'completed' | 'cancelled';
@@ -186,12 +187,8 @@ export function useOrderManagement() {
     }
   }
 
-  // Check if order can be cancelled
-  function canCancelOrder(order: OrderWithLocalFields): boolean {
-    if (order.status !== 'pending') return false;
-    if (!order.items || order.items.length === 0) return true;
-    return order.items.every(item => !item.status || item.status === 'pending');
-  }
+  // Use centralized helper for order cancellation validation
+  const canCancelOrder = canCancelOrderHelper;
 
   // Cancel order
   async function cancelOrder(orderId: number) {
@@ -203,7 +200,11 @@ export function useOrderManagement() {
     }
     
     if (!canCancelOrder(order)) {
-      showError('No se puede cancelar una orden que ya está en preparación o lista.');
+      if (order.is_paid) {
+        showError('No se puede cancelar un pedido que ya está pagado.');
+      } else {
+        showError('No se puede cancelar una orden que ya está en preparación o lista. Solo se pueden cancelar órdenes pendientes con todos sus items pendientes.');
+      }
       return;
     }
     

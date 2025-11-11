@@ -94,7 +94,8 @@
                   <!-- Payment Section in Tab 3 -->
                   <PaymentSection :is-edit-mode="isEditMode" :can-process-payments="canProcessPayments"
                     :order-total="orderTotal" v-model:mark-as-paid="markAsPaid"
-                    v-model:selected-payment-method="selectedPaymentMethod" />
+                    v-model:selected-payment-method="selectedPaymentMethod"
+                    v-model:cash-received="cashReceived" />
                 </div>
               </div>
 
@@ -249,6 +250,7 @@ const { menuItems, availableTables, loading, error } = dataFetching;
 // Payment state
 const markAsPaid = ref(false);
 const selectedPaymentMethod = ref<'cash' | 'card' | 'digital' | 'other'>('cash');
+const cashReceived = ref<number>(0);
 
 // Use composables
 const {
@@ -510,9 +512,12 @@ async function createOrder() {
         validItems,
         markAsPaid.value,
         selectedPaymentMethod.value,
+        cashReceived.value,
+        orderTotal.value,
         t,
         showSuccess,
-        showWarning
+        showWarning,
+        showError
       );
 
       // Always emit and close, regardless of payment success
@@ -520,9 +525,12 @@ async function createOrder() {
       emit('order-created', order);
       emit('close');
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error creating order:', error);
-    showError(t('app.views.orders.modals.new_order.errors.create_failed'));
+    // Don't show generic error if it's a validation error (user already saw specific message)
+    if (error.message !== 'VALIDATION_ERROR') {
+      showError(t('app.views.orders.modals.new_order.errors.create_failed'));
+    }
   }
 }
 

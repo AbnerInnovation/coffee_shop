@@ -103,7 +103,7 @@ def get_subscription_usage(
     service = SubscriptionService(db)
     limits = service.get_subscription_limits(restaurant.id)
     
-    # Get current usage
+    # Get current usage (only non-deleted users)
     usage = {
         "users": {
             "admin": db.query(User).filter(

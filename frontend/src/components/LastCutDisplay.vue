@@ -89,6 +89,7 @@
 
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
+import { formatDateTime as formatDate } from '@/utils/dateHelpers'
 
 interface Props {
   lastCut?: any
@@ -102,13 +103,5 @@ const props = withDefaults(defineProps<Props>(), {
 
 const { t } = useI18n()
 
-const formatDate = (dateString: string) => {
-  if (!dateString) return t('app.common.na')
-  try {
-    return new Date(dateString).toLocaleString()
-  } catch (error) {
-    console.error('Error formatting date:', dateString, error)
-    return t('app.common.na')
-  }
-}
+// formatDate is now imported from @/utils/dateHelpers (as formatDateTime)
 </script>

@@ -2,7 +2,7 @@ import { useI18n } from 'vue-i18n';
 
 // Types
 export type BackendOrderStatus = 'pending' | 'preparing' | 'ready' | 'completed' | 'cancelled';
-export type OrderStatus = BackendOrderStatus
+export type OrderStatus = BackendOrderStatus | 'all'
 
 export interface OrderItemLocal {
   id: number;
@@ -116,8 +116,13 @@ export function getOrderCount(orders: OrderWithLocalFields[], status: OrderStatu
 
 // Check if order can be cancelled
 export function canCancelOrder(order: OrderWithLocalFields): boolean {
+  // Cannot cancel paid orders
+  if (order.is_paid) return false;
+  // Cannot cancel non-pending orders
   if (order.status !== 'pending') return false;
+  // If no items, can cancel
   if (!order.items || order.items.length === 0) return true;
+  // All items must be pending
   return order.items.every(item => !item.status || item.status === 'pending');
 }
 

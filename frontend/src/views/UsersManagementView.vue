@@ -285,6 +285,7 @@
 <script setup lang="ts">
 import { ref, onMounted, reactive } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useToast } from 'vue-toastification';
 import {
   UserPlusIcon,
   UserGroupIcon,
@@ -300,8 +301,11 @@ import DropdownMenu from '@/components/ui/DropdownMenu.vue';
 import DropdownMenuItem from '@/components/ui/DropdownMenuItem.vue';
 import DropdownMenuDivider from '@/components/ui/DropdownMenuDivider.vue';
 import UserFormModal from '@/components/users/UserFormModal.vue';
+import { useConfirm } from '@/composables/useConfirm';
 
 const { t } = useI18n();
+const toast = useToast();
+const { confirm } = useConfirm();
 
 const users = ref<RestaurantUser[]>([]);
 const usage = ref<SubscriptionUsage | null>(null);
@@ -386,21 +390,35 @@ async function toggleUserStatus(user: RestaurantUser) {
       is_active: !user.is_active
     });
     await loadUsers();
+    toast.success(
+      user.is_active 
+        ? t('app.users.success.deactivated') 
+        : t('app.users.success.activated')
+    );
   } catch (error: any) {
     console.error('Error toggling user status:', error);
-    alert(error.response?.data?.detail || t('app.users.errors.toggle_status_failed'));
+    toast.error(error.response?.data?.detail || t('app.users.errors.toggle_status_failed'));
   }
 }
 
 async function confirmDelete(user: RestaurantUser) {
-  if (confirm(t('app.users.confirm_delete', { name: user.full_name }))) {
+  const confirmed = await confirm(
+    t('app.users.confirm_delete_title'),
+    t('app.users.confirm_delete_message', { name: user.full_name }),
+    t('app.actions.delete'),
+    t('app.actions.cancel'),
+    'bg-red-600 hover:bg-red-700 focus:ring-red-500'
+  );
+
+  if (confirmed) {
     try {
       await restaurantUsersService.deleteUser(user.id);
       await loadUsers();
       await loadUsage();
+      toast.success(t('app.users.success.deleted'));
     } catch (error: any) {
       console.error('Error deleting user:', error);
-      alert(error.response?.data?.detail || t('app.users.errors.delete_failed'));
+      toast.error(error.response?.data?.detail || t('app.users.errors.delete_failed'));
     }
   }
 }

@@ -340,6 +340,7 @@ import MainLayout from '@/components/layout/MainLayout.vue';
 import PageHeader from '@/components/layout/PageHeader.vue';
 import orderService from '@/services/orderService';
 import type { Order, OrderItem } from '@/services/orderService';
+import { formatTime } from '@/utils/dateHelpers';
 
 const loading = ref(true);
 const activeOrders = ref<Order[]>([]);
@@ -503,10 +504,7 @@ const filteredOrders = computed(() => {
   return orders;
 });
 
-// Format time for display
-const formatTime = (dateString: string) => {
-  return new Date(dateString).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-};
+// formatTime is now imported from @/utils/dateHelpers
 
 // Format status for display
 const formatStatus = (status: string) => {

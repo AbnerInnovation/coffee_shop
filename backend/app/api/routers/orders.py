@@ -126,6 +126,10 @@ async def update_order(order_id: int, order: OrderUpdate, db: Session = Depends(
     # Only admin and sysadmin can cancel orders
     if order.status == 'cancelled' and current_user.role not in ['admin', 'sysadmin']:
         raise ForbiddenError("Solo los administradores pueden cancelar pedidos")
+    
+    # Cannot cancel paid orders
+    if order.status == 'cancelled' and db_order.is_paid:
+        raise ValidationError("No se puede cancelar un pedido que ya está pagado")
 
     # Handle table availability when order type changes
     from ...models.table import Table as TableModel

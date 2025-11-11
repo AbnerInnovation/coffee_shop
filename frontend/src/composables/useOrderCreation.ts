@@ -183,13 +183,29 @@ export function useOrderCreation() {
     orderId: number,
     markAsPaid: boolean,
     paymentMethod: 'cash' | 'card' | 'digital' | 'other',
+    cashReceived: number,
+    orderTotal: number,
     t: (key: string) => string,
     showSuccess: (msg: string) => void,
-    showWarning: (msg: string, duration?: number) => void
+    showWarning: (msg: string, duration?: number) => void,
+    showError: (msg: string) => void
   ): Promise<boolean> {
     if (!markAsPaid) {
       showSuccess(t('app.views.orders.messages.order_created_success'));
       return true;
+    }
+
+    // Validate cash payment has sufficient amount
+    if (paymentMethod === 'cash') {
+      if (!cashReceived || cashReceived <= 0) {
+        showError(t('app.views.orders.payment.enter_amount') || 'Por favor ingresa el monto recibido');
+        return false;
+      }
+      
+      if (cashReceived < orderTotal) {
+        showError(t('app.views.orders.payment.insufficient_amount') || 'El monto recibido es insuficiente');
+        return false;
+      }
     }
 
     try {
@@ -246,24 +262,43 @@ export function useOrderCreation() {
     validItems: any[],
     markAsPaid: boolean,
     paymentMethod: 'cash' | 'card' | 'digital' | 'other',
+    cashReceived: number,
+    orderTotal: number,
     t: (key: string) => string,
     showSuccess: (msg: string) => void,
-    showWarning: (msg: string, duration?: number) => void
+    showWarning: (msg: string, duration?: number) => void,
+    showError: (msg: string) => void
   ): Promise<{ order: any; paymentSuccess: boolean }> {
+    // Validate cash payment BEFORE creating the order
+    if (markAsPaid && paymentMethod === 'cash') {
+      if (!cashReceived || cashReceived <= 0) {
+        showError(t('app.views.orders.payment.enter_amount') || 'Por favor ingresa el monto recibido');
+        throw new Error('VALIDATION_ERROR'); // Prevent order creation
+      }
+      
+      if (cashReceived < orderTotal) {
+        showError(t('app.views.orders.payment.insufficient_amount') || 'El monto recibido es insuficiente');
+        throw new Error('VALIDATION_ERROR'); // Prevent order creation
+      }
+    }
+
     // Build payload
     const orderPayload = buildOrderPayload(form, isMultipleDinersMode, persons, validItems);
 
     // Create order
     const created = await orderService.createOrder(orderPayload);
 
-    // Handle payment
+    // Handle payment (validation already done above)
     const paymentSuccess = await handleOrderPayment(
       created.id,
       markAsPaid,
       paymentMethod,
+      cashReceived,
+      orderTotal,
       t,
       showSuccess,
-      showWarning
+      showWarning,
+      showError
     );
 
     return { order: created, paymentSuccess };
