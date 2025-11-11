@@ -68,7 +68,9 @@
                   <!-- Active Diner Items Summary -->
                   <DinerItemsSummary v-if="isMultipleDinersMode && persons[activePersonIndex]"
                     :title="persons[activePersonIndex].name || $t('app.views.orders.modals.new_order.persons.person_label', { position: persons[activePersonIndex].position })"
-                    :items="persons[activePersonIndex].items" :get-menu-item-name="getMenuItemName"
+                    :items="persons[activePersonIndex].items" 
+                    :get-menu-item-name="getMenuItemName"
+                    :get-menu-item-category="getMenuItemCategory"
                     :empty-message="$t('app.views.orders.modals.new_order.persons.no_items')" />
 
                   <!-- Menu Items Selector - Buttons View -->
@@ -80,9 +82,13 @@
                 <!-- TAB 3: Summary & Payment -->
                 <div v-else-if="activeTab === 2" class="mt-6 space-y-6">
                   <OrderSummary :use-multiple-diners="isMultipleDinersMode" :persons="persons"
-                    :selectedItems="selectedItems" :getMenuItemName="getMenuItemName"
-                    :calculateItemTotal="calculateItemTotal" :isItemLocked="isItemLocked"
-                    @removeItem="removeItemFromPerson" @decreaseQuantity="decreaseQuantity"
+                    :selectedItems="selectedItems" 
+                    :getMenuItemName="getMenuItemName"
+                    :getMenuItemCategory="getMenuItemCategory"
+                    :calculateItemTotal="calculateItemTotal" 
+                    :isItemLocked="isItemLocked"
+                    @removeItem="removeItemFromPerson" 
+                    @decreaseQuantity="decreaseQuantity"
                     @increaseQuantity="increaseQuantity" />
 
                   <!-- Payment Section in Tab 3 -->
@@ -159,7 +165,7 @@ import { useItemSelection } from '@/composables/useItemSelection';
 import { useMultipleDiners } from '@/composables/useMultipleDiners';
 import { useOrderCreation } from '@/composables/useOrderCreation';
 import { useDataFetching } from '@/composables/useDataFetching';
-import { getEffectivePrice, getVariantPrice, getMenuItemName as getMenuItemNameUtil } from '@/utils/priceHelpers';
+import { getEffectivePrice, getVariantPrice, getMenuItemName as getMenuItemNameUtil, getMenuItemCategory as getMenuItemCategoryUtil } from '@/utils/priceHelpers';
 import {
   transformMenuItemFromAPI,
   transformTableFromAPI,
@@ -232,7 +238,7 @@ const {
   addItemToActivePerson
 } = multipleDinersComposable;
 
-const { showError, showSuccess, showToast } = useToast();
+const { showError, showSuccess, showWarning, showToast } = useToast();
 const { canProcessPayments } = usePermissions();
 const { t } = useI18n();
 
@@ -506,18 +512,13 @@ async function createOrder() {
         selectedPaymentMethod.value,
         t,
         showSuccess,
-        showError
+        showWarning
       );
 
-      // Emit and close only if payment succeeded or wasn't attempted
-      if (paymentSuccess || !markAsPaid.value) {
-        emit('order-created', order);
-        emit('close');
-      } else {
-        // Payment failed but order was created
-        emit('order-created', order);
-        emit('close');
-      }
+      // Always emit and close, regardless of payment success
+      // If payment failed, the user already saw a warning message explaining what happened
+      emit('order-created', order);
+      emit('close');
     }
   } catch (error) {
     console.error('Error creating order:', error);
@@ -700,6 +701,11 @@ watch(() => props.open, (isOpen, wasOpen) => {
 // Helper function to get menu item name
 function getMenuItemName(menuItemId: number): string {
   return getMenuItemNameUtil(menuItems.value, menuItemId);
+}
+
+// Helper function to get menu item category
+function getMenuItemCategory(menuItemId: number): string {
+  return getMenuItemCategoryUtil(menuItems.value, menuItemId);
 }
 
 </script>

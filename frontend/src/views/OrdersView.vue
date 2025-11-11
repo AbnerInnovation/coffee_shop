@@ -1,6 +1,6 @@
 <template>
   <MainLayout>
-    <div class="space-y-6">
+    <div class="space-y-3 sm:space-y-6">
       <!-- Loading State -->
       <div v-if="loading" class="flex justify-center items-center py-12">
         <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
@@ -27,16 +27,19 @@
           :subtitle="t('app.status.' + selectedStatus) + ' ' + t('app.views.orders.title').toLowerCase()">
           <template #actions>
             <button type="button" @click="openNewOrderModal"
-              class="block rounded-md bg-indigo-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-              <PlusIcon class="-ml-1 mr-2 h-5 w-5 inline" aria-hidden="true" />
+              class="flex items-center justify-center rounded-md bg-indigo-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 whitespace-nowrap">
+              <PlusIcon class="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
               {{ t('app.views.orders.new_order') }}
             </button>
           </template>
         </PageHeader>
         <!-- Filters Component -->
         <OrderFilters :tabs="tabs" :selected-status="selectedStatus" :payment-filter="selectedPaymentFilter"
-          :order-type="selectedOrderType" @select-tab="selectTab"
-          @update:payment-filter="selectedPaymentFilter = $event" @update:order-type="selectedOrderType = $event" />
+          :order-type="selectedOrderType" :table-filter="selectedTableFilter" :tables="tables"
+          @select-tab="selectTab"
+          @update:payment-filter="selectedPaymentFilter = $event" 
+          @update:order-type="selectedOrderType = $event"
+          @update:table-filter="selectedTableFilter = $event" />
 
         <!-- Order List Component -->
         <OrderList :orders="filteredOrders" @new-order="openNewOrderModal" @view="viewOrderDetails"
@@ -72,7 +75,8 @@ import type { Order } from '@/services/orderService';
 import { PlusIcon } from '@heroicons/vue/24/outline';
 import { useToast } from '@/composables/useToast';
 import { useConfirm } from '@/composables/useConfirm';
-import { useOrderFilters, type PaymentFilter, type OrderTypeFilter } from '@/composables/useOrderFilters';
+import { useOrderFilters, type PaymentFilter, type OrderTypeFilter, type TableFilter } from '@/composables/useOrderFilters';
+import tableService, { type Table } from '@/services/tableService';
 import {
   canCancelOrder as canCancelOrderHelper,
   transformOrderToLocal,
@@ -127,7 +131,7 @@ function handleOrderUpdated(updated: any) {
     showSuccess(t('app.views.orders.messages.order_updated_success', { id: updated.id }) as string);
     // Ensure full consistency by refetching
     fetchOrders(true);
-    fetchTabCounts(); // Update all tab counts after updating an order
+    invalidateTabCounts(); // Invalidate all tab counts to force reload on next access
     // Reset edit state
     selectedOrderForEdit.value = null;
     newOrderMode.value = 'create';
@@ -158,6 +162,8 @@ const error = ref<string | null>(null);
 const selectedStatus = ref<OrderStatus>('pending');
 const selectedPaymentFilter = ref<PaymentFilter>('all');
 const selectedOrderType = ref<OrderTypeFilter>('all');
+const selectedTableFilter = ref<TableFilter>('all');
+const tables = ref<Table[]>([]);
 const isNewOrderModalOpen = ref(false);
 const newOrderMode = ref<'create' | 'edit'>('create');
 const selectedOrderForEdit = ref<Order | null>(null);
@@ -166,40 +172,43 @@ const hasAutoOpenedFromTable = ref(false);
 const selectedOrder = ref<OrderWithLocalFields | null>(null);
 const orders = ref<OrderWithLocalFields[]>([]);
 
-// Tab definitions
+// Tab definitions with cache tracking
 const tabs = [
-  { id: 'pending' as const, name: 'Pending', count: 0 },
-  { id: 'preparing' as const, name: 'Preparing', count: 0 },
-  { id: 'ready' as const, name: 'Ready', count: 0 },
-  { id: 'completed' as const, name: 'Completed', count: 0 },
+  { id: 'pending' as const, name: 'Pending', count: 0, loaded: false },
+  { id: 'preparing' as const, name: 'Preparing', count: 0, loaded: false },
+  { id: 'ready' as const, name: 'Ready', count: 0, loaded: false },
+  { id: 'completed' as const, name: 'Completed', count: 0, loaded: false },
 ];
 
-// Fetch counts for all tabs
-const fetchTabCounts = async () => {
+// Fetch count for a specific tab (lazy loading)
+const fetchTabCount = async (tabId: OrderStatus) => {
   try {
-    // Fetch counts for each status in parallel
-    const countPromises = tabs.map(async (tab) => {
-      const response = await orderService.getActiveOrders(tab.id, undefined);
-      return { status: tab.id, count: response.length };
-    });
+    const tab = tabs.find(t => t.id === tabId);
+    if (!tab) return;
     
-    const counts = await Promise.all(countPromises);
+    // Skip if already loaded
+    if (tab.loaded) return;
     
-    // Update tab counts
-    counts.forEach(({ status, count }) => {
-      const tab = tabs.find(t => t.id === status);
-      if (tab) {
-        tab.count = count;
-      }
-    });
+    const response = await orderService.getActiveOrders(tabId, undefined);
+    tab.count = response.length;
+    tab.loaded = true;
   } catch (error) {
-    console.error('Error fetching tab counts:', error);
+    console.error(`Error fetching count for tab ${tabId}:`, error);
   }
 };
 
-// Tab selection
-const selectTab = (tabId: OrderStatus) => {
+// Invalidate all tab counts (force reload on next access)
+const invalidateTabCounts = () => {
+  tabs.forEach(tab => {
+    tab.loaded = false;
+  });
+};
+
+// Tab selection with lazy count loading
+const selectTab = async (tabId: OrderStatus) => {
   selectedStatus.value = tabId;
+  // Fetch count for this tab if not loaded yet
+  await fetchTabCount(tabId);
 };
 
 // Format status for display (using i18n status keys when possible)
@@ -227,7 +236,8 @@ const { filteredOrders, getOrderCount } = useOrderFilters(
   orders,
   selectedStatus,
   selectedPaymentFilter,
-  selectedOrderType
+  selectedOrderType,
+  selectedTableFilter
 );
 
 const viewOrderDetails = (order: OrderWithLocalFields) => {
@@ -268,7 +278,7 @@ function closeNewOrderModal() {
 const handleNewOrder = async (newOrder: Order) => {
   try {
     await fetchOrders();
-    await fetchTabCounts(); // Update all tab counts after creating an order
+    invalidateTabCounts(); // Invalidate all tab counts to force reload on next access
     closeNewOrderModal();
   } catch (err) {
     console.error('Error processing new order:', err);
@@ -294,8 +304,8 @@ const handlePaymentCompleted = async (updatedOrder: any) => {
     // Refresh the orders list
     await fetchOrders(true);
     
-    // Update all tab counts after payment completion
-    await fetchTabCounts();
+    // Invalidate all tab counts to force reload on next access
+    invalidateTabCounts();
 
     // Emit event to refresh cash register if it's open
     window.dispatchEvent(new CustomEvent('orderPaymentCompleted', {
@@ -337,6 +347,7 @@ const fetchOrders = async (fetchAll = false) => {
     const currentTab = tabs.find(t => t.id === selectedStatus.value);
     if (currentTab) {
       currentTab.count = processedOrders.length;
+      currentTab.loaded = true; // Mark as loaded
     }
 
     // If filtered by table_id and there is at least one order, auto-open it for quick edit/view
@@ -365,8 +376,8 @@ const updateOrderStatus = async (orderId: number, newStatus: BackendOrderStatus)
       orders.value.splice(orderIndex, 1, updatedOrder);
     }
 
-    // Update all tab counts after status change
-    await fetchTabCounts();
+    // Invalidate all tab counts to force reload on next access
+    invalidateTabCounts();
 
     showSuccess(t('app.views.orders.messages.status_updated_success', { id: orderId, status: formatStatus(newStatus) }) as string);
   } catch (err) {
@@ -411,8 +422,8 @@ const cancelOrder = async (orderId: number) => {
       orders.value.splice(orderIndex, 1, updatedOrder);
     }
 
-    // Update all tab counts after cancelling
-    await fetchTabCounts();
+    // Invalidate all tab counts to force reload on next access
+    invalidateTabCounts();
 
     showSuccess(t('app.views.orders.messages.order_cancelled_success') as string);
   } catch (err) {
@@ -426,9 +437,20 @@ watch(selectedStatus, () => {
   fetchOrders();
 });
 
+// Fetch tables for filter
+const fetchTables = async () => {
+  try {
+    tables.value = await tableService.getTables();
+  } catch (err) {
+    console.error('Error fetching tables for filter:', err);
+  }
+};
+
 // Initialize component
 onMounted(() => {
-  fetchOrders();
+  fetchOrders(); // Only fetch orders for current tab
+  fetchTables();
+  // Tab counts will be loaded lazily when user clicks on each tab
 });
 
 // Cleanup on unmount

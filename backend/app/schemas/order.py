@@ -3,6 +3,7 @@ from pydantic import Field, validator, model_validator
 from datetime import datetime
 from typing import List, Optional
 from enum import Enum
+import re
 from ..core.validators import sanitize_text, validate_name
 
 # OrderPerson Schemas
@@ -150,6 +151,7 @@ class OrderBase(BaseModel):
     status: OrderStatus = OrderStatus.PENDING
     is_paid: bool = False
     payment_method: Optional[PaymentMethod] = None
+    order_type: Optional[str] = Field(None, max_length=50, description="Order type: dine_in, takeaway, or delivery")
     
     @validator('notes')
     def sanitize_notes(cls, v):
@@ -181,8 +183,17 @@ class OrderCreate(OrderBase):
     
     @validator('customer_name')
     def validate_customer_name(cls, v):
-        """Validate customer name contains only allowed characters."""
-        return validate_name(v, 'Customer name') if v else v
+        """Validate customer name/address contains only allowed characters."""
+        # Allow more characters for addresses (numbers, commas, etc.)
+        # This field is used for both customer names (takeaway) and addresses (delivery)
+        if v:
+            v = sanitize_text(v)
+            # Allow letters, numbers, spaces, and common punctuation for addresses
+            if not re.match(r'^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s\-\'.#,/]+$', v):
+                raise ValueError('Customer name contiene caracteres no permitidos')
+            if not v.strip():
+                raise ValueError('Customer name no puede estar vacío')
+        return v
 
 class OrderUpdate(BaseModel):
     table_id: Optional[int] = None
@@ -195,8 +206,16 @@ class OrderUpdate(BaseModel):
     
     @validator('customer_name')
     def validate_customer_name_update(cls, v):
-        """Validate customer name contains only allowed characters."""
-        return validate_name(v, 'Customer name') if v else v
+        """Validate customer name/address contains only allowed characters."""
+        # Allow more characters for addresses (numbers, commas, etc.)
+        if v:
+            v = sanitize_text(v)
+            # Allow letters, numbers, spaces, and common punctuation for addresses
+            if not re.match(r'^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s\-\'.#,/]+$', v):
+                raise ValueError('Customer name contiene caracteres no permitidos')
+            if not v.strip():
+                raise ValueError('Customer name no puede estar vacío')
+        return v
 
 class OrderInDBBase(OrderBase):
     id: int

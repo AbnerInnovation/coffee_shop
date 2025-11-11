@@ -3,9 +3,9 @@
     :data-dropdown-container="`order-${order.id}`" 
     class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
   >
-    <div class="p-4 sm:p-6 border-b border-gray-100 dark:border-gray-700 relative">
+    <div class="p-3 sm:p-6 border-b border-gray-100 dark:border-gray-700 relative">
       <!-- Three Dots Menu -->
-      <div class="absolute top-4 right-4" @click.stop>
+      <div class="absolute top-3 right-3 sm:top-4 sm:right-4" @click.stop>
         <DropdownMenu
           :id="`order-${order.id}`"
           button-label="Order actions"
@@ -56,21 +56,21 @@
         </DropdownMenu>
       </div>
       
-      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0 pr-12">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 pr-10 sm:pr-12">
         <div class="flex-1 min-w-0">
           <!-- Order Info -->
-          <div class="flex items-center flex-wrap gap-2">
-            <p class="text-base sm:text-sm font-semibold text-indigo-600 dark:text-indigo-400">
+          <div class="flex items-center flex-wrap gap-1.5 sm:gap-2">
+            <p class="text-sm font-semibold text-indigo-600 dark:text-indigo-400">
               #{{ order.order_number || order.id }}
             </p>
             <span 
-              class="inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium"
+              class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium"
               :class="statusBadgeClass"
             >
               {{ $t('app.status.' + order.status) }}
             </span>
             <span
-              class="inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium"
+              class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium"
               :class="order.is_paid 
                 ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200' 
                 : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-200'"
@@ -79,13 +79,13 @@
             </span>
             <span
               v-if="orderType"
-              class="inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-200"
+              class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-200"
             >
               {{ orderType }}
             </span>
           </div>
           
-          <div class="mt-2 flex flex-wrap gap-x-4 gap-y-2">
+          <div class="mt-1.5 sm:mt-2 flex flex-wrap gap-x-3 sm:gap-x-4 gap-y-1 sm:gap-y-2">
             <div class="flex items-center text-sm text-gray-500 dark:text-gray-400">
               <RectangleGroupIcon class="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400 dark:text-gray-500" />
               <span class="truncate">{{ order.table }}</span>
@@ -105,16 +105,16 @@
           </div>
         </div>
         
-        <div class="mt-3 sm:mt-0 sm:ml-4 flex-shrink-0 pr-2">
-          <p class="text-xl sm:text-lg font-semibold text-gray-900 dark:text-white">
+        <div class="mt-2 sm:mt-0 sm:ml-4 flex-shrink-0">
+          <p class="text-lg sm:text-lg font-semibold text-gray-900 dark:text-white">
             ${{ order.total.toFixed(2) }}
           </p>
         </div>
       </div>
 
       <!-- Order Items Summary -->
-      <div class="mt-3 pt-3">
-        <div class="text-sm text-gray-500 flex flex-col sm:flex-row sm:items-center">
+      <div class="mt-2 sm:mt-3 pt-2 sm:pt-3 border-t border-gray-100 dark:border-gray-700">
+        <div class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
           <span class="font-medium text-gray-900 dark:text-gray-100">
             {{ order.items.length }} {{ order.items.length === 1 ? $t('app.views.orders.summary.item') : $t('app.views.orders.summary.items') }}
           </span>
@@ -142,6 +142,10 @@ import {
 } from '@heroicons/vue/24/outline';
 import { getStatusBadgeClass, formatTime, getOrderItemsSummary, getOrderTypeLabel, canCancelOrder } from '@/utils/orderHelpers';
 import type { OrderWithLocalFields } from '@/utils/orderHelpers';
+import { canCancelOrders } from '@/utils/permissions';
+import { useAuthStore } from '@/stores/auth';
+
+const authStore = useAuthStore();
 
 const props = defineProps<{
   order: OrderWithLocalFields;
@@ -157,7 +161,10 @@ defineEmits<{
 const statusBadgeClass = computed(() => getStatusBadgeClass(props.order.status));
 const formattedTime = computed(() => formatTime(props.order.createdAt));
 const itemsSummary = computed(() => getOrderItemsSummary(props.order.items));
-const canCancel = computed(() => canCancelOrder(props.order));
+const canCancel = computed(() => {
+  // Only admin/sysadmin can cancel orders AND order must be cancellable
+  return canCancelOrders(authStore.user) && canCancelOrder(props.order);
+});
 const orderType = computed(() => {
   const type = (props.order as any).order_type;
   return type ? getOrderTypeLabel(type) : null;

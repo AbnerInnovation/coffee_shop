@@ -20,6 +20,12 @@
               <p class="font-medium text-gray-900 dark:text-gray-100">
                 {{ getMenuItemName(item.menu_item_id) }}
               </p>
+              <div v-if="getMenuItemCategory" class="mt-1">
+                <span
+                  class="inline-flex items-center rounded-full bg-gray-100 dark:bg-gray-700 px-2 py-0.5 text-xs font-medium text-gray-600 dark:text-gray-300">
+                  {{ getMenuItemCategory(item.menu_item_id) }}
+                </span>
+              </div>
               <p v-if="item.special_instructions" class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ item.special_instructions }}</p>
             </div>
 
@@ -155,6 +161,7 @@ interface Props {
   persons: Person[];
   selectedItems: OrderItem[];
   getMenuItemName: (itemId: number) => string;
+  getMenuItemCategory?: (itemId: number) => string;
   calculateItemTotal: (item: OrderItem) => string;
   isItemLocked: (item: OrderItem) => boolean;
 }

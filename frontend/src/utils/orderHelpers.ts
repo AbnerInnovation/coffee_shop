@@ -72,31 +72,27 @@ export function formatTime(date: string | Date): string {
 export function getOrderItemsSummary(items: OrderItemLocal[]): string {
   if (!items || !Array.isArray(items)) return '';
   return items.map(item => {
-    let itemText = `${item.quantity}x ${item.name}`;
+    let parts: string[] = [];
     
-    // Add variant if present
+    // Base: quantity and name
+    let baseText = `${item.quantity}x ${item.name}`;
+    
+    // Add variant if present (using dash for cleaner look)
     if (item.variant_name) {
-      itemText += ` (${item.variant_name})`;
+      baseText += ` - ${item.variant_name}`;
     }
     
-    // Calculate item total including extras
-    let itemTotal = (item.unit_price || 0) * item.quantity;
+    parts.push(baseText);
     
-    // Add extras to the summary
+    // Add extras if present (using "con" for natural Spanish)
     if (item.extras && item.extras.length > 0) {
-      const extrasText = item.extras.map(extra => 
-        `+${extra.name} ($${extra.price.toFixed(2)})`
-      ).join(', ');
-      itemText += ` [${extrasText}]`;
-      
-      // Add extras to total
-      item.extras.forEach(extra => {
-        itemTotal += extra.price * extra.quantity;
-      });
+      const extrasText = item.extras
+        .map(extra => extra.name)
+        .join(', ');
+      parts.push(`con ${extrasText}`);
     }
     
-    itemText += ` = $${itemTotal.toFixed(2)}`;
-    return itemText;
+    return parts.join(' ');
   }).join(', ');
 }
 
@@ -133,7 +129,6 @@ export function transformOrderToLocal(order: any, t: any): OrderWithLocalFields 
     const variant = item.variant;
     const menuItemName = item.menu_item?.name || 'Unknown Item';
     const variantName = variant?.name;
-    const itemName = variantName ? `${menuItemName} (${variantName})` : menuItemName;
 
     const unitPrice = item.unit_price || 0;
     const quantity = item.quantity || 0;
@@ -149,7 +144,7 @@ export function transformOrderToLocal(order: any, t: any): OrderWithLocalFields 
     return {
       id: item.id,
       menu_item_id: item.menu_item_id,
-      name: itemName,
+      name: menuItemName,
       variant_id: item.variant_id,
       variant_name: variantName,
       quantity: quantity,

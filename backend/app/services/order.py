@@ -262,8 +262,8 @@ def get_order(db: Session, order_id: int, restaurant_id: int, include_deleted: b
 # -----------------------------
 
 def create_order_with_items(db: Session, order: OrderCreate, restaurant_id: int, user_id: int = None) -> dict:
-    # Set order_type based on whether table_id is provided
-    order_type = "dine_in" if order.table_id is not None else "delivery"
+    # Use order_type from request, or infer from table_id if not provided
+    order_type = order.order_type if order.order_type else ("dine_in" if order.table_id is not None else "delivery")
 
     # Get the next order number for this restaurant
     max_order_number = db.query(sa.func.max(OrderModel.order_number)).filter(

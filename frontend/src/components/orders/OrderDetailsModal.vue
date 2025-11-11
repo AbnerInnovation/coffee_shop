@@ -407,6 +407,7 @@
                   >
                     {{$t('app.views.orders.modals.details.mark_completed')}}
                   </button>
+                  <!-- Print button hidden per user request
                   <button
                     type="button"
                     class="inline-flex w-full sm:w-auto justify-center rounded-md border border-gray-300 bg-white dark:bg-gray-800 px-3 py-2 sm:px-4 text-sm font-medium text-gray-700 dark:text-gray-200 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:border-gray-700"
@@ -414,6 +415,7 @@
                   >
                     {{$t('app.views.orders.modals.details.print_receipt')}}
                   </button>
+                  -->
                 </div>
               </div>
             </DialogPanel>
@@ -609,11 +611,6 @@ async function cancelOrder() {
   if (confirmed) {
     updateStatus('Cancelled');
   }
-}
-
-function printOrder() {
-  // In a real app, this would open a print dialog with a formatted receipt
-  window.print();
 }
 
 const showPaymentMethodSelector = ref(false)

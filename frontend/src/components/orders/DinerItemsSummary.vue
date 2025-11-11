@@ -15,11 +15,16 @@
         class="flex items-center justify-between text-sm bg-white dark:bg-gray-800 rounded px-2 py-1.5"
       >
         <div class="flex-1 min-w-0">
-          <span class="text-gray-900 dark:text-gray-100 font-medium">
-            {{ getMenuItemName(item.menu_item_id) }}
-          </span>
-          <span v-if="item.notes" class="text-xs text-gray-500 dark:text-gray-400 ml-1">
-            ({{ item.notes }})
+          <div class="flex flex-col">
+            <span class="text-gray-900 dark:text-gray-100 font-medium">
+              {{ getMenuItemName(item.menu_item_id) }}
+            </span>
+            <span class="text-xs text-gray-500 dark:text-gray-400">
+              {{ getMenuItemCategory(item.menu_item_id) }}
+            </span>
+          </div>
+          <span v-if="item.notes" class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 block">
+            {{ item.notes }}
           </span>
         </div>
         <div class="flex items-center gap-2 ml-2">
@@ -62,6 +67,7 @@ interface Props {
   title: string;
   items: Item[];
   getMenuItemName: (itemId: number) => string;
+  getMenuItemCategory: (itemId: number) => string;
   emptyMessage?: string;
 }
 

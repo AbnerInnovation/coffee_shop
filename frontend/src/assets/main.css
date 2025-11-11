@@ -133,9 +133,41 @@
   .dark * {
     scrollbar-color: #4b5563 #1f2937;
   }
+}
 
-  /* Vue Toastification z-index override to appear above modals */
-  .Vue-Toastification__container {
-    z-index: 10002 !important;
-  }
+/* Vue Toastification styles - outside layers for maximum priority */
+.Vue-Toastification__container {
+  z-index: 10002 !important;
+}
+
+/* Improve contrast for warning toasts - HIGH PRIORITY STYLES */
+.Vue-Toastification__toast--warning {
+  background-color: #fbbf24 !important; /* Amber-400 for better visibility */
+}
+
+.Vue-Toastification__toast--warning,
+.Vue-Toastification__toast--warning * {
+  color: #1f2937 !important; /* Gray-800 for high contrast on all text */
+}
+
+.Vue-Toastification__toast--warning .Vue-Toastification__toast-body {
+  color: #1f2937 !important; /* Ensure body text is dark */
+}
+
+.Vue-Toastification__toast--warning .Vue-Toastification__icon {
+  color: #92400e !important; /* Amber-800 for icon */
+}
+
+.Vue-Toastification__toast--warning .Vue-Toastification__close-button {
+  color: #1f2937 !important; /* Gray-800 for close button */
+  opacity: 0.7;
+}
+
+.Vue-Toastification__toast--warning .Vue-Toastification__close-button:hover {
+  opacity: 1;
+  color: #000000 !important;
+}
+
+.Vue-Toastification__toast--warning .Vue-Toastification__progress-bar {
+  background-color: #92400e !important; /* Amber-800 for progress bar */
 }

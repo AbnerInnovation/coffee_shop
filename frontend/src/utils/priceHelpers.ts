@@ -43,3 +43,17 @@ export function getMenuItemName(menuItems: any[], menuItemId: number): string {
   const item = menuItems.find(m => m.id === menuItemId);
   return item?.name || 'Unknown';
 }
+
+/**
+ * Get menu item category name by ID
+ */
+export function getMenuItemCategory(menuItems: any[], menuItemId: number): string {
+  const item = menuItems.find(m => m.id === menuItemId);
+  if (!item?.category) return '';
+  
+  // Handle both object and string category formats
+  if (typeof item.category === 'string') {
+    return item.category;
+  }
+  return item.category?.name || '';
+}

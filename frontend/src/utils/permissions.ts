@@ -173,6 +173,14 @@ export function canDeleteOrders(user: User | null | undefined): boolean {
 }
 
 /**
+ * Check if user can cancel orders
+ * Only admin and sysadmin can cancel orders
+ */
+export function canCancelOrders(user: User | null | undefined): boolean {
+  return isAdminOrSysAdmin(user);
+}
+
+/**
  * Check if user can process payments
  * Admin, sysadmin, and staff (cashier) can process payments
  */

@@ -9,7 +9,7 @@
       <!-- Status Tabs -->
       <div class="bg-white dark:bg-gray-900 rounded-lg shadow">
         <div class="border-b border-gray-200 dark:border-gray-700 overflow-x-auto">
-          <nav class="-mb-px flex space-x-2 sm:space-x-8 px-2 sm:px-4 min-w-max" aria-label="Tabs">
+          <nav class="-mb-px flex space-x-2 sm:space-x-6 px-2 sm:px-3 min-w-max" aria-label="Tabs">
             <button
               v-for="tab in statusTabs"
               :key="tab.value"
@@ -18,7 +18,7 @@
                 selectedStatus === tab.value
                   ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300',
-                'whitespace-nowrap py-3 sm:py-4 px-2 sm:px-3 border-b-2 font-semibold text-sm sm:text-lg flex-shrink-0'
+                'whitespace-nowrap py-2 sm:py-3 px-2 border-b-2 font-semibold text-xs sm:text-base flex-shrink-0'
               ]"
             >
               {{ tab.label }}
@@ -28,10 +28,42 @@
                   selectedStatus === tab.value
                     ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400'
                     : 'bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-gray-300',
-                  'ml-1 sm:ml-2 py-0.5 px-1.5 sm:px-2.5 rounded-full text-xs font-medium'
+                  'ml-1 py-0.5 px-1.5 sm:px-2 rounded-full text-xs font-medium'
                 ]"
               >
                 {{ tab.count }}
+              </span>
+            </button>
+          </nav>
+        </div>
+      </div>
+
+      <!-- Order Type Filter Tabs -->
+      <div class="bg-white dark:bg-gray-900 rounded-lg shadow">
+        <div class="border-b border-gray-200 dark:border-gray-700 overflow-x-auto">
+          <nav class="-mb-px flex space-x-2 sm:space-x-4 px-2 sm:px-3 min-w-max" aria-label="Order Type Filter">
+            <button
+              v-for="typeTab in orderTypeTabs"
+              :key="typeTab.value"
+              @click="selectedOrderType = typeTab.value as 'all' | 'dine_in' | 'takeout' | 'delivery'"
+              :class="[
+                selectedOrderType === typeTab.value
+                  ? 'border-green-500 text-green-600 dark:text-green-400'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300',
+                'whitespace-nowrap py-2 px-2 border-b-2 font-medium text-xs sm:text-sm flex-shrink-0'
+              ]"
+            >
+              {{ typeTab.label }}
+              <span
+                v-if="typeTab.count > 0"
+                :class="[
+                  selectedOrderType === typeTab.value
+                    ? 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400'
+                    : 'bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-gray-300',
+                  'ml-1 py-0.5 px-1.5 rounded-full text-xs font-medium'
+                ]"
+              >
+                {{ typeTab.count }}
               </span>
             </button>
           </nav>
@@ -112,25 +144,25 @@
           <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ t('app.views.kitchen.no_active_description') }}</p>
         </div>
 
-        <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+        <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
         <div v-for="order in filteredOrders" :key="order.id" class="bg-white dark:bg-gray-900 dark:border-gray-700 border-gray-200 border-2 rounded-lg shadow-md overflow-hidden">
-          <div class="p-3 sm:p-4 border-b border-gray-200 dark:border-gray-700">
+          <div class="p-2 sm:p-3 border-b border-gray-200 dark:border-gray-700">
             <div class="flex justify-between items-start gap-2">
               <div class="flex-1 min-w-0">
-                <h3 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white truncate">{{ t('app.views.kitchen.order', { id: order.order_number || order.id }) }}</h3>
-                <p class="text-sm sm:text-base text-gray-500 dark:text-gray-400">
+                <h3 class="text-lg sm:text-xl font-bold text-gray-900 dark:text-white truncate">{{ t('app.views.kitchen.order', { id: order.order_number || order.id }) }}</h3>
+                <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
                   {{ formatTime(order.created_at) }}
                   <span v-if="order.table_number" class="ml-1 sm:ml-2">• {{ t('app.views.kitchen.table', { number: order.table_number }) }}</span>
                 </p>
               </div>
               <span 
-                class="flex-shrink-0 px-3 py-1 text-sm font-semibold rounded-full"
+                class="flex-shrink-0 px-2 py-0.5 text-xs font-semibold rounded-full"
                 :class="getStatusBadgeClass(order.status)"
               >
                 {{ t(`app.status.${order.status}`) }}
               </span>
             </div>
-            <div v-if="order.notes" class="mt-2 p-2 bg-yellow-50 dark:bg-yellow-900/20 text-sm sm:text-base text-yellow-700 dark:text-yellow-300 rounded">
+            <div v-if="order.notes" class="mt-1.5 p-2 bg-yellow-50 dark:bg-yellow-900/20 text-sm sm:text-base text-yellow-700 dark:text-yellow-300 rounded font-medium">
               {{ order.notes }}
             </div>
           </div>
@@ -138,60 +170,70 @@
           <div class="divide-y divide-gray-200 dark:divide-gray-700">
             <!-- If order has persons, show grouped by person -->
             <template v-if="order.persons && order.persons.length > 0">
-              <div v-for="person in order.persons" :key="person.id" class="border-l-4 border-indigo-500 pl-3 py-3">
-                <h5 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-1">
-                  <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div v-for="person in order.persons" :key="person.id" class="border-l-4 border-indigo-500 pl-2 py-2">
+                <h5 class="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5 flex items-center gap-1">
+                  <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                   </svg>
                   {{ person.name || $t('app.views.orders.modals.new_order.persons.person_label', { position: person.position }) }}
                 </h5>
                 
-                <div class="space-y-2">
+                <div class="space-y-1.5">
                   <div 
                     v-for="item in person.items" 
                     :key="item.id"
-                    class="p-3 sm:p-4 rounded-md"
+                    class="p-2 sm:p-3 rounded-md"
                     :class="{
                       'bg-yellow-50 dark:bg-yellow-900/20': item.status === 'pending',
                       'bg-blue-50 dark:bg-blue-900/20': item.status === 'preparing',
                       'bg-green-50 dark:bg-green-900/20': item.status === 'ready'
                     }"
                   >
-                    <div class="flex justify-between items-start gap-2">
-                      <div class="flex-1 min-w-0">
-                        <div class="flex items-center flex-wrap gap-2">
-                          <span class="font-bold text-2xl sm:text-3xl text-gray-900 dark:text-white">{{ item.quantity }}x</span>
-                          <span class="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-white">{{ item.menu_item.name }}</span>
-                          <span v-if="item.variant" class="text-lg sm:text-xl text-gray-600 dark:text-gray-400">({{ item.variant.name }})</span>
-                          
-                          <span 
-                            class="inline-flex items-center rounded-full px-3 py-1 text-sm font-semibold"
-                            :class="getItemStatusBadgeClass(item.status)"
-                          >
-                            {{ t(`app.status.${item.status}`) }}
+                    <div class="flex flex-col gap-1.5">
+                      <div class="flex items-center flex-wrap gap-1.5">
+                        <span class="font-bold text-xl sm:text-2xl text-gray-900 dark:text-white">{{ item.quantity }}x</span>
+                        <span class="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">{{ item.menu_item.name }}</span>
+                        <span v-if="item.variant" class="text-sm sm:text-base text-gray-600 dark:text-gray-400">({{ item.variant.name }})</span>
+                        
+                        <span 
+                          class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold"
+                          :class="getItemStatusBadgeClass(item.status)"
+                        >
+                          {{ t(`app.status.${item.status}`) }}
+                        </span>
+                        
+                        <span class="text-xs sm:text-sm text-gray-500 dark:text-gray-400 font-semibold ml-auto">
+                          {{ getTimeElapsed(item.created_at) }}
+                        </span>
+                      </div>
+                      
+                      <!-- Category and Action Button on same line -->
+                      <div class="flex items-center justify-between gap-2">
+                        <div v-if="item.menu_item.category">
+                          <span class="inline-flex items-center rounded-full bg-gray-100 dark:bg-gray-700 px-2 py-0.5 text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">
+                            {{ item.menu_item.category }}
                           </span>
                         </div>
                         
-                        <div v-if="item.special_instructions" class="mt-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded text-base sm:text-lg font-medium text-blue-700 dark:text-blue-300">
-                          {{ item.special_instructions }}
-                        </div>
-                        
-                        <div class="mt-2 flex gap-2">
-                          <button
-                            v-if="item.status === 'pending'"
-                            @click="markItemPreparing(order, item)"
-                            class="text-sm sm:text-base font-semibold px-4 py-2 rounded-md bg-indigo-600 text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                          >
-                            {{ t('app.views.kitchen.actions.start_preparing') }}
-                          </button>
-                          <button
-                            v-if="item.status === 'preparing'"
-                            @click="markItemReady(order, item)"
-                            class="text-sm sm:text-base font-semibold px-4 py-2 rounded-md bg-green-600 text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
-                          >
-                            {{ t('app.views.kitchen.actions.item_ready') }}
-                          </button>
-                        </div>
+                        <!-- Item Action Button -->
+                        <button
+                          v-if="item.status === 'pending'"
+                          @click="markItemPreparing(order, item)"
+                          class="text-xs sm:text-sm font-semibold px-3 py-1.5 rounded-md bg-indigo-600 text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 flex-shrink-0"
+                        >
+                          {{ t('app.views.kitchen.actions.start_preparing') }}
+                        </button>
+                        <button
+                          v-if="item.status === 'preparing'"
+                          @click="markItemReady(order, item)"
+                          class="text-xs sm:text-sm font-semibold px-3 py-1.5 rounded-md bg-green-600 text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 flex-shrink-0"
+                        >
+                          {{ t('app.views.kitchen.actions.item_ready') }}
+                        </button>
+                      </div>
+                      
+                      <div v-if="item.special_instructions" class="p-2 bg-blue-50 dark:bg-blue-900/20 rounded text-sm sm:text-base font-semibold text-blue-700 dark:text-blue-300">
+                        {{ item.special_instructions }}
                       </div>
                     </div>
                   </div>
@@ -204,82 +246,79 @@
             <div 
               v-for="item in getPendingItems(order)" 
               :key="item.id"
-              class="p-3 sm:p-4"
+              class="p-2 sm:p-3"
               :class="{
                 'bg-yellow-50 dark:bg-yellow-900/20': item.status === 'pending',
                 'bg-blue-50 dark:bg-blue-900/20': item.status === 'preparing',
                 'bg-green-50 dark:bg-green-900/20': item.status === 'ready'
               }"
             >
-              <div class="flex justify-between items-start gap-2">
-                <div class="flex-1 min-w-0">
-                  <div class="flex items-center flex-wrap gap-2">
-                    <span class="font-bold text-2xl sm:text-3xl text-gray-900 dark:text-white">{{ item.quantity }}x</span>
-                    <span class="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-white">{{ item.menu_item.name }}</span>
-                    <span v-if="item.variant" class="text-lg sm:text-xl text-gray-600 dark:text-gray-400">({{ item.variant.name }})</span>
-                    
-                    <!-- Item Status Badge -->
-                    <span 
-                      class="inline-flex items-center rounded-full px-3 py-1 text-sm font-semibold"
-                      :class="getItemStatusBadgeClass(item.status)"
-                    >
-                      {{ t(`app.status.${item.status}`) }}
-                    </span>
-                  </div>
+              <div class="flex flex-col gap-1.5">
+                <div class="flex items-center flex-wrap gap-1.5">
+                  <span class="font-bold text-xl sm:text-2xl text-gray-900 dark:text-white">{{ item.quantity }}x</span>
+                  <span class="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">{{ item.menu_item.name }}</span>
+                  <span v-if="item.variant" class="text-sm sm:text-base text-gray-600 dark:text-gray-400">({{ item.variant.name }})</span>
                   
-                  <div v-if="item.menu_item.category" class="mt-1">
-                    <span class="inline-flex items-center rounded-full bg-gray-100 dark:bg-gray-700 px-3 py-1 text-sm font-semibold text-gray-600 dark:text-gray-300 uppercase">
+                  <!-- Item Status Badge -->
+                  <span 
+                    class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold"
+                    :class="getItemStatusBadgeClass(item.status)"
+                  >
+                    {{ t(`app.status.${item.status}`) }}
+                  </span>
+                  
+                  <span class="text-xs sm:text-sm text-gray-500 dark:text-gray-400 font-semibold ml-auto">
+                    {{ getTimeElapsed(item.created_at) }}
+                  </span>
+                </div>
+                
+                <!-- Category and Action Button on same line -->
+                <div class="flex items-center justify-between gap-2">
+                  <div v-if="item.menu_item.category">
+                    <span class="inline-flex items-center rounded-full bg-gray-100 dark:bg-gray-700 px-2 py-0.5 text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase">
                       {{ item.menu_item.category }}
                     </span>
                   </div>
                   
-                  <div v-if="item.special_instructions" class="mt-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded text-base sm:text-lg font-medium text-blue-700 dark:text-blue-300">
-                     {{ item.special_instructions }}
-                  </div>
-                  
-                  <!-- Item Action Buttons -->
-                  <div class="mt-2 flex gap-2">
-                    <button
-                      v-if="item.status === 'pending'"
-                      @click="markItemPreparing(order, item)"
-                      class="text-sm sm:text-base font-semibold px-4 py-2 rounded-md bg-indigo-600 text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    >
-                      {{ t('app.views.kitchen.actions.start_preparing') }}
-                    </button>
-                    <button
-                      v-if="item.status === 'preparing'"
-                      @click="markItemReady(order, item)"
-                      class="text-sm sm:text-base font-semibold px-4 py-2 rounded-md bg-green-600 text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
-                    >
-                      {{ t('app.views.kitchen.actions.item_ready') }}
-                    </button>
-                  </div>
+                  <!-- Item Action Button -->
+                  <button
+                    v-if="item.status === 'pending'"
+                    @click="markItemPreparing(order, item)"
+                    class="text-xs sm:text-sm font-semibold px-3 py-1.5 rounded-md bg-indigo-600 text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 flex-shrink-0"
+                  >
+                    {{ t('app.views.kitchen.actions.start_preparing') }}
+                  </button>
+                  <button
+                    v-if="item.status === 'preparing'"
+                    @click="markItemReady(order, item)"
+                    class="text-xs sm:text-sm font-semibold px-3 py-1.5 rounded-md bg-green-600 text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 flex-shrink-0"
+                  >
+                    {{ t('app.views.kitchen.actions.item_ready') }}
+                  </button>
                 </div>
                 
-                <div class="flex items-center flex-shrink-0">
-                  <span class="text-sm sm:text-base text-gray-500 dark:text-gray-400 font-semibold">
-                    {{ getTimeElapsed(item.created_at) }}
-                  </span>
+                <div v-if="item.special_instructions" class="p-2 bg-blue-50 dark:bg-blue-900/20 rounded text-sm sm:text-base font-semibold text-blue-700 dark:text-blue-300">
+                   {{ item.special_instructions }}
                 </div>
               </div>
             </div>
             </template>
           </div>
 
-          <div class="p-3 sm:p-4 bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
+          <div class="p-2 sm:p-3 bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
             <!-- Bulk Actions for All Items -->
-            <div class="space-y-2">
+            <div class="space-y-1.5">
               <button
                 v-if="hasPendingItems(order)"
                 @click="startPreparingAllItems(order)"
-                class="w-full bg-indigo-600 text-white py-3 sm:py-3 px-4 rounded-md hover:bg-indigo-700 active:bg-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 font-bold text-base sm:text-lg touch-manipulation"
+                class="w-full bg-indigo-600 text-white py-2 sm:py-2.5 px-3 rounded-md hover:bg-indigo-700 active:bg-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 font-bold text-sm sm:text-base touch-manipulation"
               >
                 {{ t('app.views.kitchen.actions.start_preparing_all') }}
               </button>
               <button
                 v-if="hasPreparingItems(order)"
                 @click="markAllItemsReady(order)"
-                class="w-full bg-green-600 text-white py-3 sm:py-3 px-4 rounded-md hover:bg-green-700 active:bg-green-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 font-bold text-base sm:text-lg touch-manipulation"
+                class="w-full bg-green-600 text-white py-2 sm:py-2.5 px-3 rounded-md hover:bg-green-700 active:bg-green-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 font-bold text-sm sm:text-base touch-manipulation"
               >
                 {{ t('app.views.kitchen.actions.all_items_ready') }}
               </button>
@@ -296,6 +335,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useLocalStorage } from '@vueuse/core';
 import MainLayout from '@/components/layout/MainLayout.vue';
 import PageHeader from '@/components/layout/PageHeader.vue';
 import orderService from '@/services/orderService';
@@ -304,6 +344,7 @@ import type { Order, OrderItem } from '@/services/orderService';
 const loading = ref(true);
 const activeOrders = ref<Order[]>([]);
 const selectedStatus = ref<'all' | 'pending' | 'preparing' | 'grouped'>('pending');
+const selectedOrderType = useLocalStorage<'all' | 'dine_in' | 'takeout' | 'delivery'>('kitchen-order-type-filter', 'all');
 let refreshInterval: number | null = null;
 
 const { t } = useI18n();
@@ -325,11 +366,18 @@ interface GroupedItem {
 }
 
 // Computed: Group all active kitchen items by menu item and variant
+// Also respects order type filter
 const groupedItems = computed(() => {
   const groups = new Map<string, GroupedItem>();
   
-  // Iterate through all active orders
-  activeOrders.value.forEach(order => {
+  // Filter orders by order type first
+  let ordersToGroup = activeOrders.value;
+  if (selectedOrderType.value !== 'all') {
+    ordersToGroup = ordersToGroup.filter(order => order.order_type === selectedOrderType.value);
+  }
+  
+  // Iterate through filtered orders
+  ordersToGroup.forEach(order => {
     const kitchenItems = getPendingItems(order);
     
     kitchenItems.forEach(item => {
@@ -365,11 +413,19 @@ const groupedItems = computed(() => {
 
 // Status tabs with counts
 // Only count orders that have visible items in kitchen
+// Also respects order type filter
 const statusTabs = computed(() => {
-  const ordersWithVisibleItems = activeOrders.value.filter(order => {
+  let ordersWithVisibleItems = activeOrders.value.filter(order => {
     const visibleItems = getPendingItems(order);
     return visibleItems.length > 0;
   });
+  
+  // Apply order type filter to counts
+  if (selectedOrderType.value !== 'all') {
+    ordersWithVisibleItems = ordersWithVisibleItems.filter(order => 
+      order.order_type === selectedOrderType.value
+    );
+  }
   
   const totalGroupedItems = groupedItems.value.length;
   
@@ -392,7 +448,38 @@ const statusTabs = computed(() => {
   ];
 });
 
-// Filtered orders based on selected status
+// Order type tabs with counts
+const orderTypeTabs = computed(() => {
+  const ordersWithVisibleItems = activeOrders.value.filter(order => {
+    const visibleItems = getPendingItems(order);
+    return visibleItems.length > 0;
+  });
+  
+  return [
+    {
+      value: 'all',
+      label: t('app.views.kitchen.order_type_filter.all'),
+      count: ordersWithVisibleItems.length
+    },
+    {
+      value: 'dine_in',
+      label: t('app.views.kitchen.order_type_filter.dine_in'),
+      count: ordersWithVisibleItems.filter(o => o.order_type === 'dine_in').length
+    },
+    {
+      value: 'takeout',
+      label: t('app.views.kitchen.order_type_filter.takeout'),
+      count: ordersWithVisibleItems.filter(o => o.order_type === 'takeout').length
+    },
+    {
+      value: 'delivery',
+      label: t('app.views.kitchen.order_type_filter.delivery'),
+      count: ordersWithVisibleItems.filter(o => o.order_type === 'delivery').length
+    }
+  ];
+});
+
+// Filtered orders based on selected status and order type
 // Also filter out orders that have no visible items in kitchen
 const filteredOrders = computed(() => {
   let orders = activeOrders.value;
@@ -400,6 +487,11 @@ const filteredOrders = computed(() => {
   // Filter by status (skip filtering for grouped view)
   if (selectedStatus.value !== 'all' && selectedStatus.value !== 'grouped') {
     orders = orders.filter(order => order.status === selectedStatus.value);
+  }
+  
+  // Filter by order type
+  if (selectedOrderType.value !== 'all') {
+    orders = orders.filter(order => order.order_type === selectedOrderType.value);
   }
   
   // Filter out orders with no kitchen-visible items

@@ -20,7 +20,7 @@
               class="h-8 sm:h-12 w-auto cursor-pointer hover:opacity-80 transition-opacity"
             />
           </router-link>
-          <div class="hidden md:block">
+          <div v-if="authStore.isAuthenticated" class="hidden md:block">
             <div class="ml-10 flex items-baseline space-x-4">
               <router-link
                 v-for="item in navigation"
@@ -41,7 +41,7 @@
         </div>
 
         <!-- Desktop user menu -->
-        <div class="hidden md:block">
+        <div v-if="authStore.isAuthenticated" class="hidden md:block">
           <div class="ml-4 flex items-center md:ml-6 gap-2 sm:gap-3">
             <!-- Alerts Badge - Only show in restaurant subdomains -->
             <router-link
@@ -151,8 +151,9 @@
             <SunIcon v-if="isDark" class="h-6 w-6" />
             <MoonIcon v-else class="h-6 w-6" />
           </button>
-          <!-- Mobile menu button -->
+          <!-- Mobile menu button - Only show when authenticated -->
           <button
+            v-if="authStore.isAuthenticated"
             type="button"
             class="inline-flex items-center justify-center rounded-md bg-gray-200 dark:bg-gray-800 p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 hover:text-gray-900 dark:hover:bg-gray-700 dark:hover:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-gray-100 dark:focus:ring-offset-gray-900 touch-manipulation"
             aria-controls="mobile-menu"
@@ -168,7 +169,7 @@
     </div>
 
     <!-- Mobile menu, show/hide based on menu state. -->
-    <div v-if="isMobileMenuOpen" class="md:hidden border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900" id="mobile-menu">
+    <div v-if="isMobileMenuOpen && authStore.isAuthenticated" class="md:hidden border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900" id="mobile-menu">
       <div class="space-y-1 px-3 pb-3 pt-2">
         <router-link
           v-for="item in navigation"

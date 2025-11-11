@@ -76,6 +76,7 @@ export interface CreateOrderPersonData {
 export interface CreateOrderData {
   table_id?: number | null;  // Optional for takeaway/delivery orders
   customer_name?: string | null;  // For takeaway/delivery orders
+  order_type?: string;  // Order type: dine_in, takeaway, or delivery
   notes?: string | null;
   items?: CreateOrderItemData[];  // Legacy support
   persons?: CreateOrderPersonData[];  // New multi-diner approach

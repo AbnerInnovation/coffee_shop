@@ -1,5 +1,5 @@
 <template>
-  <div class="space-y-4">
+  <div class="space-y-2 sm:space-y-4">
     <!-- Status Tabs -->
     <div class="border-b border-gray-200 dark:border-gray-700 overflow-x-auto overflow-y-hidden -mx-3 sm:mx-0">
       <nav class="flex -mb-px" aria-label="Tabs">
@@ -35,17 +35,17 @@
     </div>
 
     <!-- Additional Filters -->
-    <div class="flex flex-col sm:flex-row gap-3 sm:gap-4">
+    <div class="grid grid-cols-3 gap-2 sm:flex sm:flex-row sm:gap-4">
       <!-- Payment Status Filter -->
       <div class="flex-1">
-        <label for="payment-filter" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+        <label for="payment-filter" class="hidden sm:block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
           {{ $t('app.views.orders.filters.payment_status') || 'Estado de Pago' }}
         </label>
         <select
           id="payment-filter"
           :value="paymentFilter"
           @change="$emit('update:payment-filter', ($event.target as HTMLSelectElement).value as PaymentFilter)"
-          class="block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
+          class="block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white py-1.5 sm:py-2 pl-2 sm:pl-3 pr-8 sm:pr-10 text-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500"
         >
           <option value="all">{{ $t('app.views.orders.filters.all_payments') || 'Todos' }}</option>
           <option value="paid">{{ $t('app.views.orders.filters.paid') || 'Pagados' }}</option>
@@ -55,14 +55,14 @@
 
       <!-- Order Type Filter -->
       <div class="flex-1">
-        <label for="type-filter" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+        <label for="type-filter" class="hidden sm:block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
           {{ $t('app.views.orders.filters.order_type') || 'Tipo de Orden' }}
         </label>
         <select
           id="type-filter"
           :value="orderType"
           @change="$emit('update:order-type', ($event.target as HTMLSelectElement).value as OrderTypeFilter)"
-          class="block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
+          class="block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white py-1.5 sm:py-2 pl-2 sm:pl-3 pr-8 sm:pr-10 text-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500"
         >
           <option value="all">{{ $t('app.views.orders.filters.all_types') || 'Todos' }}</option>
           <option value="dine_in">{{ $t('app.views.orders.filters.dine_in') || 'Comer Aquí' }}</option>
@@ -70,14 +70,35 @@
           <option value="delivery">{{ $t('app.views.orders.filters.delivery') || 'A Domicilio' }}</option>
         </select>
       </div>
+
+      <!-- Table Filter -->
+      <div class="flex-1">
+        <label for="table-filter" class="hidden sm:block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          {{ $t('app.views.orders.filters.table') || 'Mesa' }}
+        </label>
+        <select
+          id="table-filter"
+          :value="tableFilter"
+          @change="$emit('update:table-filter', ($event.target as HTMLSelectElement).value === 'all' ? 'all' : Number(($event.target as HTMLSelectElement).value))"
+          class="block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white py-1.5 sm:py-2 pl-2 sm:pl-3 pr-8 sm:pr-10 text-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500"
+        >
+          <option value="all">{{ $t('app.views.orders.filters.all_tables') || 'Todas' }}</option>
+          <option v-for="table in tables" :key="table.id" :value="table.id">
+            {{ table.number }}
+          </option>
+        </select>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import type { Table } from '@/services/tableService';
+
 type OrderStatus = 'pending' | 'preparing' | 'ready' | 'completed' | 'cancelled';
 type PaymentFilter = 'all' | 'paid' | 'unpaid';
 type OrderTypeFilter = 'all' | 'dine_in' | 'takeaway' | 'delivery';
+type TableFilter = number | 'all';
 
 interface Tab {
   id: string;
@@ -89,11 +110,14 @@ defineProps<{
   selectedStatus: OrderStatus;
   paymentFilter: PaymentFilter;
   orderType: OrderTypeFilter;
+  tableFilter: TableFilter;
+  tables: Table[];
 }>();
 
 defineEmits<{
   'select-tab': [tabId: OrderStatus];
   'update:payment-filter': [value: PaymentFilter];
   'update:order-type': [value: OrderTypeFilter];
+  'update:table-filter': [value: TableFilter];
 }>();
 </script>

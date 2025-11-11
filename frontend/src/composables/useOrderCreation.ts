@@ -139,6 +139,7 @@ export function useOrderCreation() {
     const basePayload = {
       table_id: form.type === 'Dine-in' ? (form.tableId as number | null) : null,
       customer_name: form.type !== 'Dine-in' ? (form.customerName || null) : null,
+      order_type: mapOrderTypeToBackend(form.type),
       notes: form.notes || null,
     };
 
@@ -184,7 +185,7 @@ export function useOrderCreation() {
     paymentMethod: 'cash' | 'card' | 'digital' | 'other',
     t: (key: string) => string,
     showSuccess: (msg: string) => void,
-    showError: (msg: string) => void
+    showWarning: (msg: string, duration?: number) => void
   ): Promise<boolean> {
     if (!markAsPaid) {
       showSuccess(t('app.views.orders.messages.order_created_success'));
@@ -199,10 +200,15 @@ export function useOrderCreation() {
       console.error('Failed to mark order as paid:', paymentError);
       
       const errorDetail = paymentError.response?.data?.detail || '';
-      if (errorDetail.includes('No open cash register session found') || errorDetail.includes('cash register session')) {
-        showError(t('app.views.cashRegister.cashRegisterSessionRequiredMessage') || 'Please open a cash register session first');
+      const errorMessage = paymentError.response?.data?.error?.message || '';
+      
+      if (errorDetail.includes('No open cash register session') || 
+          errorDetail.includes('cash register session') ||
+          errorMessage.includes('No open cash register session') ||
+          errorMessage.includes('cash register session')) {
+        showWarning('La orden se creó correctamente pero no se pudo marcar como pagada. No hay una sesión de caja abierta. Por favor abre una sesión de caja y marca la orden como pagada manualmente.', 8000);
       } else {
-        showError(t('app.views.cashRegister.paymentFailedGeneric') || 'Failed to complete payment');
+        showWarning('La orden se creó correctamente pero no se pudo procesar el pago. Por favor marca la orden como pagada manualmente desde los detalles de la orden.', 8000);
       }
       return false;
     }
@@ -242,7 +248,7 @@ export function useOrderCreation() {
     paymentMethod: 'cash' | 'card' | 'digital' | 'other',
     t: (key: string) => string,
     showSuccess: (msg: string) => void,
-    showError: (msg: string) => void
+    showWarning: (msg: string, duration?: number) => void
   ): Promise<{ order: any; paymentSuccess: boolean }> {
     // Build payload
     const orderPayload = buildOrderPayload(form, isMultipleDinersMode, persons, validItems);
@@ -257,7 +263,7 @@ export function useOrderCreation() {
       paymentMethod,
       t,
       showSuccess,
-      showError
+      showWarning
     );
 
     return { order: created, paymentSuccess };

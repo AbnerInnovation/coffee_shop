@@ -3,15 +3,17 @@ import type { OrderWithLocalFields, OrderStatus } from '@/utils/orderHelpers';
 
 export type PaymentFilter = 'all' | 'paid' | 'unpaid';
 export type OrderTypeFilter = 'all' | 'dine_in' | 'takeaway' | 'delivery';
+export type TableFilter = number | 'all';
 
 /**
- * Composable for filtering orders based on status, payment, and order type
+ * Composable for filtering orders based on status, payment, order type, and table
  */
 export function useOrderFilters(
   orders: Ref<OrderWithLocalFields[]>,
   selectedStatus: Ref<OrderStatus>,
   selectedPaymentFilter: Ref<PaymentFilter>,
-  selectedOrderType: Ref<OrderTypeFilter>
+  selectedOrderType: Ref<OrderTypeFilter>,
+  selectedTableFilter: Ref<TableFilter>
 ) {
   const filteredOrders = computed<OrderWithLocalFields[]>(() => {
     let filtered = orders.value;
@@ -40,6 +42,11 @@ export function useOrderFilters(
         const orderType = (order as any).order_type;
         return orderType === targetType;
       });
+    }
+    
+    // Filter by table
+    if (selectedTableFilter.value !== 'all') {
+      filtered = filtered.filter(order => order.table_id === selectedTableFilter.value);
     }
     
     return filtered;

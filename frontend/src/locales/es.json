@@ -323,7 +323,10 @@
           "all_types": "Todos",
           "dine_in": "Comer Aquí",
           "takeaway": "Para Llevar",
-          "delivery": "A Domicilio"
+          "delivery": "A Domicilio",
+          "table": "Mesa",
+          "all_tables": "Todas las mesas",
+          "table_number": "Mesa {number}"
         },
         "status_menu": {
           "mark_preparing": "Marcar como preparando",
@@ -397,7 +400,7 @@
             "order_type": "Tipo de orden",
             "dine_in": "Para comer aquí",
             "takeaway": "Para llevar",
-            "delivery": "Delivery",
+            "delivery": "A Domicilio",
             "table": "Mesa",
             "loading_tables": "Cargando mesas...",
             "error_tables": "Error al cargar mesas",
@@ -592,6 +595,12 @@
           "just_now": "Justo ahora",
           "minutes_ago": "Hace {m}m",
           "hours_minutes_ago": "Hace {h}h {m}m"
+        },
+        "order_type_filter": {
+          "all": "Todos los Tipos",
+          "dine_in": "Para Comer Aquí",
+          "takeout": "Para Llevar",
+          "delivery": "A Domicilio"
         }
       },
       "auth": {
