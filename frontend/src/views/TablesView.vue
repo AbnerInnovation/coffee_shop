@@ -55,7 +55,7 @@
     </div>
 
     <!-- Tables Grid -->
-    <div v-else class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+    <div v-else class="grid grid-cols-1 gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       <div 
         v-for="table in tables" 
         :key="table.id"
@@ -141,26 +141,23 @@
 
         <!-- Table Status Badge -->
         <div 
-          class="absolute top-2 right-12 px-2 py-1 rounded-full text-xs font-medium"
+          class="absolute top-2 right-10 px-2 py-0.5 rounded-full text-xs font-medium"
           :class="table.is_occupied ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-200' : 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200'"
         >
           {{ table.is_occupied ? t('app.views.tables.occupied') : t('app.views.tables.available') }}
         </div>
 
-        <div class="p-4 pb-3">
-          <div class="flex items-start justify-between pr-16 sm:pr-20">
+        <div class="p-3">
+          <div class="flex items-start justify-between pr-14">
             <div>
-              <h3 class="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100">{{ t('app.views.tables.table_number_header', { number: table.number }) }}</h3>
-              <span class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">{{ t('app.views.tables.seats', { count: table.capacity }) }}</span>
+              <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100">{{ t('app.views.tables.table_number_header', { number: table.number }) }}</h3>
+              <span class="text-xs text-gray-500 dark:text-gray-400">{{ t('app.views.tables.seats', { count: table.capacity }) }}</span>
             </div>
           </div>
           
-          <div class="mt-3">
-            <div class="text-sm text-gray-600 dark:text-gray-300">
+          <div class="mt-2">
+            <div class="text-xs sm:text-sm text-gray-600 dark:text-gray-300">
               {{ t('app.views.tables.location', { location: translateLocation(table.location) }) }}
-            </div>
-            <div class="mt-1 text-xs text-gray-400 dark:text-gray-500">
-              {{ t('app.views.tables.last_updated', { time: formatTimeAgo(table.updated_at) }) }}
             </div>
           </div>
           

@@ -1,24 +1,24 @@
 <template>
-  <div class="space-y-2">
+  <div class="space-y-1">
     <div class="flex justify-between items-center">
-      <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
+      <span class="text-xs font-medium text-gray-700 dark:text-gray-300">
         {{ label }}
       </span>
-      <span class="text-sm text-gray-500 dark:text-gray-400">
+      <span class="text-xs text-gray-500 dark:text-gray-400">
         {{ current }} / {{ maxDisplay }}
       </span>
     </div>
     
-    <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
+    <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
       <div
         :class="getBarColor(percentage)"
-        class="h-2.5 rounded-full transition-all duration-300"
+        class="h-2 rounded-full transition-all duration-300"
         :style="{ width: `${Math.min(percentage, 100)}%` }"
       ></div>
     </div>
     
     <div v-if="percentage >= 80" class="flex items-center gap-1 text-xs">
-      <ExclamationTriangleIcon class="h-4 w-4 text-yellow-500" />
+      <ExclamationTriangleIcon class="h-3 w-3 text-yellow-500" />
       <span class="text-yellow-600 dark:text-yellow-400">
         {{ percentage >= 100 ? 'Límite alcanzado' : 'Cerca del límite' }}
       </span>

@@ -1,22 +1,22 @@
 <template>
-  <div class="min-h-screen py-8">
+  <div class="min-h-screen py-4 sm:py-8">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <!-- Header -->
-      <div class="mb-6 sm:mb-8">
-        <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
+      <div class="mb-4 sm:mb-6">
+        <h1 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
           {{ t('app.users.title') }}
         </h1>
-        <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
+        <p class="mt-1 text-xs sm:text-sm text-gray-600 dark:text-gray-400">
           {{ t('app.users.subtitle') }}
         </p>
       </div>
 
       <!-- Usage Stats Card -->
-      <div v-if="usage" class="mb-4 sm:mb-6 bg-white dark:bg-gray-800 rounded-lg shadow p-4 sm:p-6">
-        <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+      <div v-if="usage" class="mb-3 sm:mb-4 bg-white dark:bg-gray-800 rounded-lg shadow p-3 sm:p-4">
+        <h2 class="text-base font-semibold text-gray-900 dark:text-white mb-3">
           {{ t('app.users.usage_limits') }}
         </h2>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
           <!-- Admin Users -->
           <UsageBar
             :label="t('app.subscription.admin_users')"
@@ -52,7 +52,7 @@
       </div>
 
       <!-- Actions Bar -->
-      <div class="mb-4 sm:mb-6 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+      <div class="mb-3 sm:mb-4 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
         <!-- Filter Dropdown -->
         <div class="relative">
           <select
@@ -193,14 +193,14 @@
         </div>
 
         <!-- Mobile Cards (visible on mobile) -->
-        <div class="md:hidden space-y-4">
+        <div class="md:hidden space-y-3">
           <div
             v-for="user in users"
             :key="user.id"
-            class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 relative"
+            class="bg-white dark:bg-gray-800 rounded-lg shadow p-3 relative"
           >
             <!-- Actions Menu - Top Right -->
-            <div class="absolute top-3 right-3">
+            <div class="absolute top-2 right-2">
               <DropdownMenu 
                 :id="`user-menu-mobile-${user.id}`"
                 button-label="Actions" 
@@ -235,16 +235,16 @@
             </div>
 
             <!-- User Info -->
-            <div class="pr-10">
-              <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-1">
+            <div class="pr-8">
+              <h3 class="text-base font-semibold text-gray-900 dark:text-white mb-0.5">
                 {{ user.full_name }}
               </h3>
-              <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">
+              <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">
                 {{ user.email }}
               </p>
 
               <!-- Badges Row -->
-              <div class="flex flex-wrap gap-2 mb-3">
+              <div class="flex flex-wrap gap-1.5">
                 <span :class="getRoleBadgeClass(user.role)" class="px-2 py-1 text-xs font-semibold rounded-full">
                   {{ t(`app.users.roles.${user.role}`) }}
                 </span>

@@ -13,6 +13,7 @@
     />
     
     <StatsCard
+      class="col-span-2 sm:col-span-1"
       :label="t('app.dashboard.longest_wait')"
       :value="kitchenStats.longestWait"
       :subtitle="t('app.dashboard.minutes')"

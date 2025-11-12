@@ -79,10 +79,10 @@ function isItemAvailable(item: MenuItem): boolean {
     </PageHeader>
     
     <!-- Category Filter -->
-    <div class="mt-4 flex flex-col sm:flex-row sm:items-center gap-3">
+    <div class="mt-3 sm:mt-4 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
       <div class="flex items-center gap-2">
-        <FunnelIcon class="h-5 w-5 text-gray-400 dark:text-gray-500" />
-        <label for="category-filter" class="text-sm font-medium text-gray-700 dark:text-gray-300">
+        <FunnelIcon class="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 dark:text-gray-500" />
+        <label for="category-filter" class="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">
           {{ t('app.views.menu.list.filter_by_category') }}
         </label>
       </div>
@@ -90,7 +90,7 @@ function isItemAvailable(item: MenuItem): boolean {
         id="category-filter"
         :value="selectedCategoryId || ''"
         @change="$emit('filter-category', ($event.target as HTMLSelectElement).value ? Number(($event.target as HTMLSelectElement).value) : null)"
-        class="flex-1 sm:flex-initial rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
+        class="flex-1 sm:flex-initial rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 py-1.5 sm:py-2 pl-3 pr-10 text-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500"
       >
         <option value="">{{ t('app.views.menu.list.all_categories') }}</option>
         <option v-for="category in categories" :key="category.id" :value="category.id">
@@ -98,7 +98,7 @@ function isItemAvailable(item: MenuItem): boolean {
         </option>
       </select>
     </div>
-    <div class="mt-8 flow-root">
+    <div class="mt-4 sm:mt-6 flow-root">
       <div class="overflow-x-auto">
         <div class="inline-block min-w-full py-2 align-middle">
           <div v-if="loading" class="text-center py-4">
@@ -123,15 +123,15 @@ function isItemAvailable(item: MenuItem): boolean {
             <div v-if="menuItems.length === 0" class="text-center py-8 text-sm text-gray-500 dark:text-gray-400">
               {{ t('app.views.menu.list.empty') }}
             </div>
-            <div v-else class="space-y-4">
+            <div v-else class="space-y-3">
               <div 
                 v-for="item in menuItems" 
                 :key="item.id"
                 :data-dropdown-container="`menu-item-${item.id}`"
-                class="bg-white dark:bg-gray-900 rounded-lg shadow border border-gray-200 dark:border-gray-800 p-4 relative"
+                class="bg-white dark:bg-gray-900 rounded-lg shadow border border-gray-200 dark:border-gray-800 p-3 relative"
               >
                 <!-- Three Dots Menu (only for admin/sysadmin) -->
-                <div v-if="item.id && canEditMenu" class="absolute top-3 right-3 z-30" @click.stop>
+                <div v-if="item.id && canEditMenu" class="absolute top-2 right-2 z-30" @click.stop>
                   <DropdownMenu
                     :id="`menu-item-${item.id}`"
                     button-label="Menu item actions"
@@ -166,13 +166,13 @@ function isItemAvailable(item: MenuItem): boolean {
                 </div>
                 
                 <!-- Item Header -->
-                <div class="flex items-start gap-3 mb-3">
+                <div class="flex items-start gap-2 mb-2">
                   <div v-if="getImageUrl(item)" class="flex-shrink-0">
-                    <img class="h-16 w-16 rounded-lg object-cover" :src="getImageUrl(item)" :alt="item.name" />
+                    <img class="h-14 w-14 rounded-lg object-cover" :src="getImageUrl(item)" :alt="item.name" />
                   </div>
-                  <div class="flex-1 min-w-0 pr-8">
-                    <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100">{{ item.name }}</h3>
-                    <div class="mt-1 flex items-center gap-2 flex-wrap">
+                  <div class="flex-1 min-w-0 pr-7">
+                    <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">{{ item.name }}</h3>
+                    <div class="mt-0.5 flex items-center gap-1.5 flex-wrap">
                       <span 
                         v-if="item.category"
                         class="inline-flex items-center rounded-md bg-blue-50 dark:bg-blue-950 px-2 py-0.5 text-xs font-medium text-blue-700 dark:text-blue-100"
@@ -193,7 +193,7 @@ function isItemAvailable(item: MenuItem): boolean {
                 </div>
 
                 <!-- Pricing -->
-                <div class="mb-3 space-y-1">
+                <div class="mb-2 space-y-0.5">
                   <template v-if="item.variants && item.variants.length > 0">
                     <div v-if="item.price" class="flex justify-between items-center text-sm">
                       <span class="text-gray-600 dark:text-gray-400">Base:</span>

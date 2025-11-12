@@ -239,6 +239,7 @@
         "takeaway": "Para llevar",
         "table_number": "Mesa {number}",
         "addExpense": "Agregar Gasto",
+        "expense": "Gasto",
         "expenseAmount": "Monto",
         "expenseDescription": "Descripción",
         "expenseCategory": "Categoría (Opcional)",

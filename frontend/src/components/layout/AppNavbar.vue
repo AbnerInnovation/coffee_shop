@@ -1,9 +1,23 @@
 <template>
-  <nav class="bg-white/80 dark:bg-gray-900/80 backdrop-blur border-b border-gray-200 dark:border-gray-800 sticky top-0 z-40">
+  <nav class="bg-white/80 dark:bg-gray-900/80 backdrop-blur border-b border-gray-200 dark:border-gray-800 sticky top-0 z-30">
     <div class="mx-auto max-w-7xl px-3 sm:px-4 lg:px-8 w-full">
       <div class="flex h-14 sm:h-16 items-center justify-between">
-        <!-- Logo and desktop navigation -->
-        <div class="flex items-center">
+        <!-- Mobile menu button (left side) and Logo -->
+        <div class="flex items-center gap-2">
+          <!-- Mobile menu button - Only show when authenticated -->
+          <button
+            v-if="authStore.isAuthenticated"
+            type="button"
+            class="inline-flex md:hidden items-center justify-center rounded-md bg-gray-200 dark:bg-gray-800 p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 hover:text-gray-900 dark:hover:bg-gray-700 dark:hover:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-gray-100 dark:focus:ring-offset-gray-900 touch-manipulation"
+            aria-controls="mobile-menu"
+            aria-expanded="false"
+            @click="toggleMobileMenu"
+          >
+            <span class="sr-only">{{ t('app.actions.open_main_menu') }}</span>
+            <Bars3Icon v-if="!isMobileMenuOpen" class="block h-6 w-6" aria-hidden="true" />
+            <XMarkIcon v-else class="block h-6 w-6" aria-hidden="true" />
+          </button>
+          
           <router-link to="/" class="flex-shrink-0">
             <!-- Logo for dark mode -->
             <img 
@@ -20,6 +34,7 @@
               class="h-8 sm:h-12 w-auto cursor-pointer hover:opacity-80 transition-opacity"
             />
           </router-link>
+          
           <div v-if="authStore.isAuthenticated" class="hidden md:block">
             <div class="ml-10 flex items-baseline space-x-4">
               <router-link
@@ -139,9 +154,8 @@
           </div>
         </div>
 
-        <!-- Mobile menu button and theme toggle -->
-        <div class="-mr-2 flex md:hidden gap-2">
-          <!-- Theme toggle mobile -->
+        <!-- Theme toggle mobile -->
+        <div class="-mr-2 flex md:hidden">
           <button
             type="button"
             class="rounded-full p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-300 dark:hover:text-white dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-primary-500 touch-manipulation"
@@ -151,80 +165,128 @@
             <SunIcon v-if="isDark" class="h-6 w-6" />
             <MoonIcon v-else class="h-6 w-6" />
           </button>
-          <!-- Mobile menu button - Only show when authenticated -->
-          <button
-            v-if="authStore.isAuthenticated"
-            type="button"
-            class="inline-flex items-center justify-center rounded-md bg-gray-200 dark:bg-gray-800 p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 hover:text-gray-900 dark:hover:bg-gray-700 dark:hover:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-gray-100 dark:focus:ring-offset-gray-900 touch-manipulation"
-            aria-controls="mobile-menu"
-            aria-expanded="false"
-            @click="toggleMobileMenu"
-          >
-            <span class="sr-only">{{ t('app.actions.open_main_menu') }}</span>
-            <Bars3Icon v-if="!isMobileMenuOpen" class="block h-6 w-6" aria-hidden="true" />
-            <XMarkIcon v-else class="block h-6 w-6" aria-hidden="true" />
-          </button>
         </div>
       </div>
     </div>
 
+  </nav>
+
+  <!-- Mobile menu overlay and sidebar (using Teleport to render outside nav) -->
+  <Teleport to="body">
+    <!-- Mobile menu overlay -->
+    <transition
+      enter-active-class="transition-opacity ease-linear duration-200"
+      enter-from-class="opacity-0"
+      enter-to-class="opacity-100"
+      leave-active-class="transition-opacity ease-linear duration-200"
+      leave-from-class="opacity-100"
+      leave-to-class="opacity-0"
+    >
+      <div
+        v-if="isMobileMenuOpen && authStore.isAuthenticated"
+        class="fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-[100] md:hidden"
+        @click="isMobileMenuOpen = false"
+      ></div>
+    </transition>
+
     <!-- Mobile menu, show/hide based on menu state. -->
-    <div v-if="isMobileMenuOpen && authStore.isAuthenticated" class="md:hidden border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900" id="mobile-menu">
-      <div class="space-y-1 px-3 pb-3 pt-2">
-        <router-link
-          v-for="item in navigation"
-          :key="item.name"
-          :to="item.to"
-          :class="[
-            item.current
-              ? 'bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-white'
-              : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white',
-            'block rounded-md px-3 py-2 text-base font-medium'
-          ]"
-          :aria-current="item.current ? 'page' : undefined"
-        >
-          {{ $t(item.labelKey) }}
-        </router-link>
-      </div>
-      <div class="border-t border-gray-200 dark:border-gray-700 pb-3 pt-4">
-        <div class="flex items-center px-5">
-          <div class="flex-shrink-0">
-            <div class="h-10 w-10 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center text-gray-900 dark:text-white">
-              {{ userInitials }}
+    <transition
+      enter-active-class="transition ease-out duration-200"
+      enter-from-class="transform -translate-x-full"
+      enter-to-class="transform translate-x-0"
+      leave-active-class="transition ease-in duration-150"
+      leave-from-class="transform translate-x-0"
+      leave-to-class="transform -translate-x-full"
+    >
+      <div
+        v-if="isMobileMenuOpen && authStore.isAuthenticated"
+        class="fixed top-0 left-0 bottom-0 w-72 bg-white dark:bg-gray-900 shadow-xl z-[110] md:hidden overflow-y-auto"
+        id="mobile-menu"
+      >
+        <!-- Header with close button -->
+        <div class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+          <router-link to="/" class="flex-shrink-0" @click="isMobileMenuOpen = false">
+            <img 
+              v-if="isDark" 
+              src="@/assets/DarkModeLogo.png" 
+              alt="Logo" 
+              class="h-8 w-auto"
+            />
+            <img 
+              v-else 
+              src="@/assets/Logo.png" 
+              alt="Logo" 
+              class="h-8 w-auto"
+            />
+          </router-link>
+          <button
+            @click="isMobileMenuOpen = false"
+            class="rounded-md p-2 text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+          >
+            <XMarkIcon class="h-6 w-6" />
+          </button>
+        </div>
+
+        <!-- Navigation links -->
+        <div class="space-y-1 px-3 py-3">
+          <router-link
+            v-for="item in navigation"
+            :key="item.name"
+            :to="item.to"
+            :class="[
+              item.current
+                ? 'bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-white'
+                : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white',
+              'block rounded-md px-3 py-2 text-sm font-medium'
+            ]"
+            :aria-current="item.current ? 'page' : undefined"
+            @click="isMobileMenuOpen = false"
+          >
+            {{ $t(item.labelKey) }}
+          </router-link>
+        </div>
+
+        <!-- User section -->
+        <div class="border-t border-gray-200 dark:border-gray-700 py-3">
+          <div class="flex items-center px-4 mb-3">
+            <div class="flex-shrink-0">
+              <div class="h-10 w-10 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center text-gray-900 dark:text-white">
+                {{ userInitials }}
+              </div>
+            </div>
+            <div class="ml-3 min-w-0 flex-1">
+              <div class="text-sm font-medium text-gray-900 dark:text-white truncate">{{ userName }}</div>
+              <div class="text-xs font-medium text-gray-500 dark:text-gray-400 truncate">{{ userEmail }}</div>
             </div>
           </div>
-          <div class="ml-3">
-            <div class="text-base font-medium text-gray-900 dark:text-white">{{ userName }}</div>
-            <div class="text-sm font-medium text-gray-500 dark:text-gray-400">{{ userEmail }}</div>
+          <div class="space-y-1 px-3">
+            <router-link
+              v-if="(authStore.user?.role === 'admin' || authStore.user?.role === 'sysadmin') && hasRestaurantContext()"
+              to="/subscription"
+              class="block rounded-md px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white"
+              @click="isMobileMenuOpen = false"
+            >
+              {{ $t('app.nav.subscription') }}
+            </router-link>
+            <router-link
+              to="/profile"
+              class="block rounded-md px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white"
+              @click="isMobileMenuOpen = false"
+            >
+              {{ t('app.profile.view_profile') }}
+            </router-link>
+            <a
+              href="#"
+              class="block rounded-md px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white"
+              @click="handleLogout"
+            >
+              {{ $t('app.actions.sign_out') }}
+            </a>
           </div>
         </div>
-        <div class="mt-3 space-y-1 px-2">
-          <router-link
-            v-if="(authStore.user?.role === 'admin' || authStore.user?.role === 'sysadmin') && hasRestaurantContext()"
-            to="/subscription"
-            class="block rounded-md px-3 py-2 text-base font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white"
-            @click="isMobileMenuOpen = false"
-          >
-            {{ $t('app.nav.subscription') }}
-          </router-link>
-          <router-link
-            to="/profile"
-            class="block rounded-md px-3 py-2 text-base font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white"
-            @click="isMobileMenuOpen = false"
-          >
-            {{ t('app.profile.view_profile') }}
-          </router-link>
-          <a
-            href="#"
-            class="block rounded-md px-3 py-2 text-base font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white"
-            @click="handleLogout"
-          >
-            {{ $t('app.actions.sign_out') }}
-          </a>
-        </div>
       </div>
-    </div>
-  </nav>
+    </transition>
+  </Teleport>
 </template>
 
 <script setup>

@@ -482,6 +482,7 @@
       "takeaway": "Takeaway",
       "table_number": "Table {number}",
       "addExpense": "Add Expense",
+      "expense": "Expense",
       "expenseAmount": "Amount",
       "expenseDescription": "Description",
       "expenseCategory": "Category (Optional)",

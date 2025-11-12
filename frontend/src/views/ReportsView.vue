@@ -1,17 +1,17 @@
 <template>
-  <div class="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
+  <div class="min-h-screen bg-gray-50 dark:bg-gray-900 py-4 sm:py-8">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <!-- Header -->
-      <div class="mb-8">
+      <div class="mb-4 sm:mb-6">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 class="text-3xl font-bold text-gray-900 dark:text-white">
+            <h1 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
               {{ t('app.reports.title') }}
             </h1>
-            <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
+            <p class="mt-1 text-xs sm:text-sm text-gray-600 dark:text-gray-400">
               {{ t('app.reports.subtitle') }}
             </p>
-            <p v-if="dashboard" class="mt-1 text-sm font-medium text-indigo-600 dark:text-indigo-400 print:text-black">
+            <p v-if="dashboard" class="mt-0.5 text-xs sm:text-sm font-medium text-indigo-600 dark:text-indigo-400 print:text-black">
               {{ dashboard.period.start_date }} - {{ dashboard.period.end_date }}
             </p>
           </div>
@@ -38,7 +38,7 @@
         </div>
 
         <!-- Period Selector -->
-        <div class="mt-6 flex flex-wrap items-center gap-2 sm:gap-4">
+        <div class="mt-3 sm:mt-4 flex flex-wrap items-center gap-2 sm:gap-4">
           <div class="flex flex-wrap sm:flex-nowrap rounded-md shadow-sm gap-1 sm:gap-0">
             <button
               v-for="period in periods"
@@ -108,25 +108,23 @@
       </div>
 
       <!-- Dashboard Content -->
-      <div v-else-if="dashboard" class="space-y-6">
+      <div v-else-if="dashboard" class="space-y-4 sm:space-y-6">
         <!-- Sales Summary Cards -->
-        <div class="grid grid-cols-1 gap-5 sm:grid-cols-3">
+        <div class="grid grid-cols-2 gap-3 sm:gap-4 sm:grid-cols-3">
           <!-- Total Sales -->
           <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
-            <div class="p-5">
-              <div class="flex items-center">
+            <div class="p-3">
+              <div class="flex items-center gap-2">
                 <div class="flex-shrink-0">
-                  <CurrencyDollarIcon class="h-6 w-6 text-green-600" />
+                  <CurrencyDollarIcon class="h-5 w-5 text-green-600" />
                 </div>
-                <div class="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
-                      {{ t('app.reports.total_sales') }}
-                    </dt>
-                    <dd class="text-2xl font-semibold text-gray-900 dark:text-white">
-                      ${{ formatNumber(dashboard.sales_summary.total_sales) }}
-                    </dd>
-                  </dl>
+                <div class="flex-1 min-w-0">
+                  <p class="text-xs font-medium text-gray-500 dark:text-gray-400 truncate mb-0.5">
+                    {{ t('app.reports.total_sales') }}
+                  </p>
+                  <p class="text-lg font-bold text-gray-900 dark:text-white">
+                    ${{ formatNumber(dashboard.sales_summary.total_sales) }}
+                  </p>
                 </div>
               </div>
             </div>
@@ -134,41 +132,37 @@
 
           <!-- Total Tickets -->
           <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
-            <div class="p-5">
-              <div class="flex items-center">
+            <div class="p-3">
+              <div class="flex items-center gap-2">
                 <div class="flex-shrink-0">
-                  <ReceiptPercentIcon class="h-6 w-6 text-blue-600" />
+                  <ReceiptPercentIcon class="h-5 w-5 text-blue-600" />
                 </div>
-                <div class="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
-                      {{ t('app.reports.total_tickets') }}
-                    </dt>
-                    <dd class="text-2xl font-semibold text-gray-900 dark:text-white">
-                      {{ formatNumber(dashboard.sales_summary.total_tickets, 0) }}
-                    </dd>
-                  </dl>
+                <div class="flex-1 min-w-0">
+                  <p class="text-xs font-medium text-gray-500 dark:text-gray-400 truncate mb-0.5">
+                    {{ t('app.reports.total_tickets') }}
+                  </p>
+                  <p class="text-lg font-bold text-gray-900 dark:text-white">
+                    {{ formatNumber(dashboard.sales_summary.total_tickets, 0) }}
+                  </p>
                 </div>
               </div>
             </div>
           </div>
 
           <!-- Average Ticket -->
-          <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
-            <div class="p-5">
-              <div class="flex items-center">
+          <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg col-span-2 sm:col-span-1">
+            <div class="p-3">
+              <div class="flex items-center gap-2">
                 <div class="flex-shrink-0">
-                  <ChartBarIcon class="h-6 w-6 text-purple-600" />
+                  <ChartBarIcon class="h-5 w-5 text-purple-600" />
                 </div>
-                <div class="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
-                      {{ t('app.reports.average_ticket') }}
-                    </dt>
-                    <dd class="text-2xl font-semibold text-gray-900 dark:text-white">
-                      ${{ formatNumber(dashboard.sales_summary.average_ticket) }}
-                    </dd>
-                  </dl>
+                <div class="flex-1 min-w-0">
+                  <p class="text-xs font-medium text-gray-500 dark:text-gray-400 truncate mb-0.5">
+                    {{ t('app.reports.average_ticket') }}
+                  </p>
+                  <p class="text-lg font-bold text-gray-900 dark:text-white">
+                    ${{ formatNumber(dashboard.sales_summary.average_ticket) }}
+                  </p>
                 </div>
               </div>
             </div>
@@ -176,13 +170,13 @@
         </div>
 
         <!-- Charts Row -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
           <!-- Top Products Chart -->
-          <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-4 sm:p-6">
-            <h3 class="text-base sm:text-lg font-medium text-gray-900 dark:text-white mb-4">
+          <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-3 sm:p-4">
+            <h3 class="text-sm sm:text-base font-medium text-gray-900 dark:text-white mb-3">
               {{ t('app.reports.top_products') }}
             </h3>
-            <div v-if="dashboard.top_products.length > 0" class="h-64 sm:h-80">
+            <div v-if="dashboard.top_products.length > 0" class="h-56 sm:h-64">
               <Bar :data="topProductsChartData" :options="chartOptions" />
             </div>
             <div v-else class="text-center py-8 text-gray-500 dark:text-gray-400">
@@ -191,8 +185,8 @@
           </div>
 
           <!-- Payment Breakdown Chart -->
-          <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
-            <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">
+          <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-3 sm:p-4">
+            <h3 class="text-sm sm:text-base font-medium text-gray-900 dark:text-white mb-3">
               {{ t('app.reports.payment_breakdown') }}
             </h3>
             <div v-if="Object.keys(dashboard.payment_breakdown).length > 0">
