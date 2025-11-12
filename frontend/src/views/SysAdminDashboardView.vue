@@ -336,6 +336,7 @@ import {
 } from '@heroicons/vue/24/outline';
 import { adminService, type GlobalStats } from '@/services/adminService';
 import { useToast } from '@/composables/useToast';
+import { formatCurrency } from '@/utils/priceHelpers';
 
 const { t } = useI18n();
 const { showError } = useToast();
@@ -344,12 +345,6 @@ const stats = ref<GlobalStats | null>(null);
 const loading = ref(false);
 const error = ref<string | null>(null);
 
-const formatCurrency = (value: number): string => {
-  return new Intl.NumberFormat('es-MX', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  }).format(value);
-};
 
 const loadStats = async () => {
   loading.value = true;

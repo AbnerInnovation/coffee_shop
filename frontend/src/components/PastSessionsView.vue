@@ -179,6 +179,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { cashRegisterService } from '@/services/cashRegisterService'
 import { useToast } from '@/composables/useToast'
+import { formatCurrency } from '@/utils/priceHelpers'
 import SessionDetailsModal from '@/components/SessionDetailsModal.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import { formatDateTimeShort as formatDate } from '@/utils/dateHelpers'
@@ -301,13 +302,7 @@ const getStatusBadgeClass = (status: string) => {
 }
 
 // formatDate is now imported from @/utils/dateHelpers (as formatDateTimeShort)
-
-const formatCurrency = (amount: number) => {
-  return new Intl.NumberFormat('es-MX', {
-    style: 'currency',
-    currency: 'MXN'
-  }).format(amount)
-}
+// formatCurrency is now imported from @/utils/priceHelpers
 
 // Watch for filter changes to reload data
 watch([searchTerm, statusFilter, startDate, endDate], () => {

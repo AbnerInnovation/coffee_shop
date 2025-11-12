@@ -57,3 +57,21 @@ export function getMenuItemCategory(menuItems: any[], menuItemId: number): strin
   }
   return item.category?.name || '';
 }
+
+/**
+ * Format currency with thousands separator
+ * @param amount - Amount to format
+ * @param currency - Currency code (default: MXN)
+ * @param locale - Locale for formatting (default: es-MX)
+ * @returns Formatted currency string with thousands separator
+ */
+export function formatCurrency(
+  amount: number, 
+  currency: string = 'MXN', 
+  locale: string = 'es-MX'
+): string {
+  return new Intl.NumberFormat(locale, {
+    style: 'currency',
+    currency: currency
+  }).format(amount);
+}

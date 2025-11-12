@@ -20,6 +20,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { ArrowUpIcon, ArrowDownIcon } from '@heroicons/vue/24/outline';
+import { formatCurrency } from '@/utils/priceHelpers';
 
 const props = defineProps<{
   label: string;
@@ -37,9 +38,14 @@ const comparisonClass = computed(() => {
 const comparisonText = computed(() => {
   if (props.comparison === null || props.comparison === undefined) return '';
   const absValue = Math.abs(props.comparison);
-  const formattedValue = props.comparisonLabel?.includes('$') 
-    ? `$${absValue.toFixed(2)}` 
-    : absValue.toString();
+  
+  // Check if the main value is a currency string (starts with $ or contains currency format)
+  const isCurrencyValue = typeof props.value === 'string' && props.value.includes('$');
+  
+  const formattedValue = isCurrencyValue
+    ? formatCurrency(absValue).replace('$', '') // Remove $ since label doesn't need it
+    : absValue.toLocaleString('es-MX'); // Use locale formatting for numbers
+  
   return `${formattedValue} ${props.comparisonLabel || ''}`;
 });
 </script>

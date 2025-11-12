@@ -74,7 +74,7 @@
               </svg>
             </div>
             <p class="text-2xl font-bold text-green-600 dark:text-green-400">
-              ${{ currentSession.initial_balance?.toFixed(2) || '0.00' }}
+              {{ formatCurrency(currentSession.initial_balance || 0) }}
             </p>
           </div>
           <div class="bg-blue-50 dark:bg-blue-900/30 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
@@ -87,7 +87,7 @@
               </svg>
             </div>
             <p class="text-2xl font-bold text-blue-600 dark:text-blue-400">
-              ${{ currentBalance.toFixed(2) }}
+              {{ formatCurrency(currentBalance) }}
             </p>
           </div>
           <div class="bg-purple-50 dark:bg-purple-900/30 p-4 rounded-lg border border-purple-200 dark:border-purple-800">
@@ -114,7 +114,7 @@
               </svg>
             </div>
             <p class="text-2xl font-bold text-amber-600 dark:text-amber-400">
-              ${{ sessionExpenses.toFixed(2) }}
+              {{ formatCurrency(sessionExpenses) }}
             </p>
           </div>
         </div>
@@ -177,7 +177,7 @@
                 <div>
                   <p class="text-lg font-semibold"
                     :class="transaction.amount >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'">
-                    {{ transaction.amount >= 0 ? '+' : '-' }}${{ Math.abs(transaction.amount)?.toFixed(2) || '0.00' }}
+                    {{ transaction.amount >= 0 ? '+' : '' }}{{ formatCurrency(Math.abs(transaction.amount) || 0) }}
                   </p>
                   <p class="text-sm text-gray-500 dark:text-gray-400">
                     {{ translateTransactionType(transaction.transaction_type) }}
@@ -337,31 +337,31 @@
               <span class="text-gray-600 dark:text-gray-400">
                 {{ t('app.views.cashRegister.totalSales') || 'Total Sales' }}
               </span>
-              <span class="font-medium">${{ cutReport.total_sales?.toFixed(2) || '0.00' }}</span>
+              <span class="font-medium">{{ formatCurrency(cutReport.total_sales || 0) }}</span>
             </div>
             <div class="flex justify-between">
               <span class="text-gray-600 dark:text-gray-400">
                 {{ t('app.views.cashRegister.totalRefunds') || 'Total Refunds' }}
               </span>
-              <span class="font-medium">${{ cutReport.total_refunds?.toFixed(2) || '0.00' }}</span>
+              <span class="font-medium">{{ formatCurrency(cutReport.total_refunds || 0) }}</span>
             </div>
             <div class="flex justify-between">
               <span class="text-gray-600 dark:text-gray-400">
                 {{ t('app.views.cashRegister.totalTips') || 'Total Tips' }}
               </span>
-              <span class="font-medium">${{ cutReport.total_tips?.toFixed(2) || '0.00' }}</span>
+              <span class="font-medium">{{ formatCurrency(cutReport.total_tips || 0) }}</span>
             </div>
             <div class="flex justify-between">
               <span class="text-gray-600 dark:text-gray-400">
                 {{ t('app.views.cashRegister.totalExpenses') || 'Total Expenses' }}
               </span>
-              <span class="font-medium text-red-600 dark:text-red-400">${{ cutReport.total_expenses?.toFixed(2) || '0.00' }}</span>
+              <span class="font-medium text-red-600 dark:text-red-400">{{ formatCurrency(cutReport.total_expenses || 0) }}</span>
             </div>
             <div class="flex justify-between font-bold">
               <span class="text-gray-900 dark:text-gray-100">
                 {{ t('app.views.cashRegister.netCashFlow') || 'Net Cash Flow' }}
               </span>
-              <span>${{ cutReport.net_cash_flow?.toFixed(2) || '0.00' }}</span>
+              <span>{{ formatCurrency(cutReport.net_cash_flow || 0) }}</span>
             </div>
           </div>
         </div>
@@ -427,7 +427,7 @@
           {{ transactionToDelete.description }}
         </p>
         <p class="text-sm text-gray-500 dark:text-gray-400">
-          {{ transactionToDelete.amount >= 0 ? '+' : '-' }}${{ Math.abs(transactionToDelete.amount)?.toFixed(2) || '0.00' }}
+          {{ transactionToDelete.amount >= 0 ? '+' : '' }}{{ formatCurrency(Math.abs(transactionToDelete.amount) || 0) }}
         </p>
       </div>
       <div class="flex justify-end space-x-3">
@@ -479,31 +479,31 @@
             <span class="text-gray-600 dark:text-gray-400">
               {{ t('app.views.cashRegister.totalSales') || 'Total Sales' }}
             </span>
-            <span class="font-medium">${{ cutReport.total_sales?.toFixed(2) || '0.00' }}</span>
+            <span class="font-medium">{{ formatCurrency(cutReport.total_sales || 0) }}</span>
           </div>
           <div class="flex justify-between">
             <span class="text-gray-600 dark:text-gray-400">
               {{ t('app.views.cashRegister.totalRefunds') || 'Total Refunds' }}
             </span>
-            <span class="font-medium">${{ cutReport.total_refunds?.toFixed(2) || '0.00' }}</span>
+            <span class="font-medium">{{ formatCurrency(cutReport.total_refunds || 0) }}</span>
           </div>
           <div class="flex justify-between">
             <span class="text-gray-600 dark:text-gray-400">
               {{ t('app.views.cashRegister.totalTips') || 'Total Tips' }}
             </span>
-            <span class="font-medium">${{ cutReport.total_tips?.toFixed(2) || '0.00' }}</span>
+            <span class="font-medium">{{ formatCurrency(cutReport.total_tips || 0) }}</span>
           </div>
           <div class="flex justify-between">
             <span class="text-gray-600 dark:text-gray-400">
               {{ t('app.views.cashRegister.totalExpenses') || 'Total Expenses' }}
             </span>
-            <span class="font-medium text-red-600 dark:text-red-400">${{ cutReport.total_expenses?.toFixed(2) || '0.00' }}</span>
+            <span class="font-medium text-red-600 dark:text-red-400">{{ formatCurrency(cutReport.total_expenses || 0) }}</span>
           </div>
           <div class="flex justify-between font-bold">
             <span class="text-gray-900 dark:text-gray-100">
               {{ t('app.views.cashRegister.netCashFlow') || 'Net Cash Flow' }}
             </span>
-            <span>${{ cutReport.net_cash_flow?.toFixed(2) || '0.00' }}</span>
+            <span>{{ formatCurrency(cutReport.net_cash_flow || 0) }}</span>
           </div>
         </div>
       </div>
@@ -569,7 +569,7 @@
         {{ transactionToDelete.description }}
       </p>
       <p class="text-sm text-gray-500 dark:text-gray-400">
-        {{ transactionToDelete.amount >= 0 ? '+' : '-' }}${{ Math.abs(transactionToDelete.amount)?.toFixed(2) || '0.00' }}
+        {{ transactionToDelete.amount >= 0 ? '+' : '' }}{{ formatCurrency(Math.abs(transactionToDelete.amount) || 0) }}
       </p>
     </div>
     <div class="flex justify-end space-x-3">
@@ -587,6 +587,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { formatCurrency } from '@/utils/priceHelpers';
 import MainLayout from '@/components/layout/MainLayout.vue';
 import PageHeader from '@/components/layout/PageHeader.vue';
 import cashRegisterService from '@/services/cashRegisterService';

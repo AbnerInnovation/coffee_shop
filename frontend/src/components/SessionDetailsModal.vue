@@ -339,6 +339,7 @@ import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { cashRegisterService } from '@/services/cashRegisterService'
 import { useToast } from '@/composables/useToast'
+import { formatCurrency } from '@/utils/priceHelpers'
 import LastCutDisplay from '@/components/LastCutDisplay.vue'
 import { formatDateTime as formatDate } from '@/utils/dateHelpers'
 
@@ -531,13 +532,7 @@ const translateDescription = (description: string) => {
 }
 
 // formatDate is now imported from @/utils/dateHelpers (as formatDateTime)
-
-const formatCurrency = (amount: number) => {
-  return new Intl.NumberFormat('es-MX', {
-    style: 'currency',
-    currency: 'MXN'
-  }).format(amount)
-}
+// formatCurrency is now imported from @/utils/priceHelpers
 
 const formatDifference = (actual: number | null | undefined, expected: number | null | undefined) => {
   if (actual === null || actual === undefined || expected === null || expected === undefined) {

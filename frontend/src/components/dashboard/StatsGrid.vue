@@ -9,7 +9,7 @@
     
     <StatsCard
       :label="t('app.dashboard.revenue_today')"
-      :value="`$${stats.revenueToday.toFixed(2)}`"
+      :value="formatCurrency(stats.revenueToday)"
       :comparison="stats.revenueComparison"
       :comparison-label="t('app.dashboard.vs_yesterday')"
     />
@@ -28,6 +28,7 @@
 
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n';
+import { formatCurrency } from '@/utils/priceHelpers';
 import StatsCard from './StatsCard.vue';
 import type { DashboardStats } from '@/composables/useDashboardStats';
 

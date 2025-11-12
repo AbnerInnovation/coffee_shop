@@ -376,14 +376,6 @@
                 
                 <div class="flex flex-col gap-2 sm:flex sm:flex-row sm:justify-center sm:gap-3 mt-6">
                   <button
-                    v-if="!order.is_paid"
-                    type="button"
-                    class="inline-flex w-full sm:w-auto justify-center rounded-md border border-gray-300 bg-white px-3 py-2 sm:px-4 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700 dark:hover:bg-gray-700"
-                    @click="emit('edit-order', order)"
-                  >
-                    {{$t('app.forms.edit')}}
-                  </button>
-                  <button
                     v-if="!order.is_paid && order.status !== 'cancelled' && canProcessPayments"
                     type="button"
                     class="inline-flex w-full sm:w-auto justify-center rounded-md border border-transparent bg-indigo-600 px-3 py-2 sm:px-4 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
@@ -391,50 +383,6 @@
                   >
                     {{showPaymentMethodSelector ? $t('app.views.orders.payment.confirm_payment') || 'Confirm Payment' : $t('app.views.orders.modals.details.complete_payment') || 'Complete Payment'}}
                   </button>
-                  <!-- Status change buttons for pending orders -->
-                  <button
-                    v-if="order.status === 'pending'"
-                    type="button"
-                    class="inline-flex w-full sm:w-auto justify-center rounded-md border border-transparent bg-green-600 px-3 py-2 sm:px-4 text-sm font-medium text-white shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
-                    @click="updateStatus('ready')"
-                  >
-                    {{$t('app.views.orders.modals.details.mark_ready') || 'Marcar como Listo'}}
-                  </button>
-                  <button
-                    v-if="order.status === 'pending'"
-                    type="button"
-                    class="inline-flex w-full sm:w-auto justify-center rounded-md border border-transparent bg-blue-600 px-3 py-2 sm:px-4 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                    @click="updateStatus('completed')"
-                  >
-                    {{$t('app.views.orders.modals.details.mark_completed') || 'Marcar como Completado'}}
-                  </button>
-                  <!-- Status change buttons for preparing orders -->
-                  <button
-                    v-if="order.status === 'preparing'"
-                    type="button"
-                    class="inline-flex w-full sm:w-auto justify-center rounded-md border border-transparent bg-green-600 px-3 py-2 sm:px-4 text-sm font-medium text-white shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
-                    @click="updateStatus('ready')"
-                  >
-                    {{$t('app.views.orders.modals.details.mark_ready') || 'Marcar como Listo'}}
-                  </button>
-                  <!-- Status change buttons for ready orders -->
-                  <button
-                    v-if="order.status === 'ready'"
-                    type="button"
-                    class="inline-flex w-full sm:w-auto justify-center rounded-md border border-transparent bg-green-600 px-3 py-2 sm:px-4 text-sm font-medium text-white shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
-                    @click="updateStatus('completed')"
-                  >
-                    {{$t('app.views.orders.modals.details.mark_completed') || 'Marcar como Completado'}}
-                  </button>
-                  <!-- Print button hidden per user request
-                  <button
-                    type="button"
-                    class="inline-flex w-full sm:w-auto justify-center rounded-md border border-gray-300 bg-white dark:bg-gray-800 px-3 py-2 sm:px-4 text-sm font-medium text-gray-700 dark:text-gray-200 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:border-gray-700"
-                    @click="printOrder"
-                  >
-                    {{$t('app.views.orders.modals.details.print_receipt')}}
-                  </button>
-                  -->
                 </div>
               </div>
             </DialogPanel>

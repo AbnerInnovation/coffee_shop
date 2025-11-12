@@ -280,6 +280,7 @@ import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { cashRegisterService } from '@/services/cashRegisterService'
 import { useToast } from '@/composables/useToast'
+import { formatCurrency } from '@/utils/priceHelpers'
 import SessionDetailsModal from '@/components/SessionDetailsModal.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
 
@@ -315,12 +316,6 @@ const formatDateTime = (dateString: string) => {
   }
 }
 
-const formatCurrency = (amount: number) => {
-  return new Intl.NumberFormat('es-MX', {
-    style: 'currency',
-    currency: 'MXN'
-  }).format(amount)
-}
 
 const loadReports = async () => {
   loading.value = true

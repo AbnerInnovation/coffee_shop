@@ -404,11 +404,13 @@ async def delete_order_item(order_id: int, item_id: int, db: Session = Depends(g
 async def mark_order_as_paid(
     order_id: int,
     payment_method: str,
+    status: str = None,
     db: Session = Depends(get_db),
     current_user = Depends(get_current_active_user)
 ) -> Order:
     """
     Mark an order as paid and create a cash register transaction.
+    Optionally update the order status (e.g., from 'ready' to 'completed').
     """
     # Get the order
     db_order = db.query(OrderModel).filter(OrderModel.id == order_id).first()
@@ -437,13 +439,36 @@ async def mark_order_as_paid(
             payment_method=payment_method
         )
 
-        # Mark order as paid (but keep the current status - don't auto-complete)
+        # Mark order as paid
         db_order.is_paid = True
         db_order.payment_method = payment_method_enum
-        # Don't change status - let kitchen workflow handle status transitions
-
-        # Don't free the table when marking as paid - table should only be freed when order is completed
-        # The table freeing logic will be handled in the order completion endpoint
+        
+        # Update status if provided (e.g., from 'ready' to 'completed')
+        if status:
+            try:
+                new_status = OrderStatus(status.lower())
+                db_order.status = new_status
+                
+                # If changing to completed, free the table if it's a dine-in order
+                if new_status == OrderStatus.COMPLETED and db_order.table_id:
+                    from ...models.table import Table as TableModel
+                    table = db.query(TableModel).filter(TableModel.id == db_order.table_id).first()
+                    if table:
+                        # Check if there are other active orders for this table
+                        other_active_orders = db.query(OrderModel).filter(
+                            OrderModel.table_id == db_order.table_id,
+                            OrderModel.id != order_id,
+                            OrderModel.status.in_([OrderStatus.PENDING, OrderStatus.PREPARING, OrderStatus.READY]),
+                            OrderModel.is_paid == False
+                        ).count()
+                        
+                        # Only mark as available if no other active orders
+                        if other_active_orders == 0:
+                            table.status = "available"
+                            table.current_order_id = None
+            except ValueError:
+                # Invalid status, just ignore and keep current status
+                pass
 
         db.commit()
         db.refresh(db_order)
