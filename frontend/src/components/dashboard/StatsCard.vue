@@ -1,5 +1,5 @@
 <template>
-  <div class="overflow-hidden rounded-lg bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 px-3 py-4 sm:px-4 sm:py-5 shadow">
+  <div class="overflow-hidden rounded-lg border border-gray-700 dark:border-gray-600 px-3 py-4 sm:px-4 sm:py-5">
     <dt class="truncate text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">
       {{ label }}
     </dt>

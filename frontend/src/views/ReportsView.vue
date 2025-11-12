@@ -16,8 +16,8 @@
             </p>
           </div>
           
-          <!-- Action Buttons -->
-          <div class="mt-4 sm:mt-0 flex space-x-3">
+          <!-- Action Buttons (Hidden) -->
+          <!-- <div class="mt-4 sm:mt-0 flex space-x-3">
             <button
               @click="exportToCSV"
               :disabled="loading"
@@ -34,7 +34,7 @@
               <PrinterIcon class="h-5 w-5 mr-2" />
               {{ t('app.reports.print') }}
             </button>
-          </div>
+          </div> -->
         </div>
 
         <!-- Period Selector -->

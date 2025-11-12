@@ -39,10 +39,16 @@
               </div>
             </div>
 
-            <div class="flex items-center space-x-3">
-              <span class="text-gray-700 dark:text-gray-200 text-xs font-medium">{{ group.quantity }}x</span>
-              <span class="font-medium text-gray-900 dark:text-gray-100 min-w-[60px] text-right">
-                ${{ (group.price * group.quantity).toFixed(2) }}
+            <div class="flex flex-col items-end space-y-0.5">
+              <div class="flex items-center space-x-3">
+                <span class="text-gray-700 dark:text-gray-200 text-xs font-medium">{{ group.quantity }}x</span>
+                <span class="font-medium text-gray-900 dark:text-gray-100 min-w-[60px] text-right">
+                  ${{ (group.price * group.quantity).toFixed(2) }}
+                </span>
+              </div>
+              <!-- Unit Price (if quantity > 1) -->
+              <span v-if="group.quantity > 1" class="text-xs text-gray-500 dark:text-gray-400">
+                ${{ group.price.toFixed(2) }} c/u
               </span>
             </div>
           </div>

@@ -391,21 +391,40 @@
                   >
                     {{showPaymentMethodSelector ? $t('app.views.orders.payment.confirm_payment') || 'Confirm Payment' : $t('app.views.orders.modals.details.complete_payment') || 'Complete Payment'}}
                   </button>
+                  <!-- Status change buttons for pending orders -->
                   <button
-                    v-if="order.status === 'Preparing'"
+                    v-if="order.status === 'pending'"
                     type="button"
                     class="inline-flex w-full sm:w-auto justify-center rounded-md border border-transparent bg-green-600 px-3 py-2 sm:px-4 text-sm font-medium text-white shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
-                    @click="updateStatus('Ready')"
+                    @click="updateStatus('ready')"
                   >
-                    {{$t('app.views.orders.modals.details.mark_ready')}}
+                    {{$t('app.views.orders.modals.details.mark_ready') || 'Marcar como Listo'}}
                   </button>
                   <button
-                    v-else-if="order.status === 'ready'"
+                    v-if="order.status === 'pending'"
+                    type="button"
+                    class="inline-flex w-full sm:w-auto justify-center rounded-md border border-transparent bg-blue-600 px-3 py-2 sm:px-4 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                    @click="updateStatus('completed')"
+                  >
+                    {{$t('app.views.orders.modals.details.mark_completed') || 'Marcar como Completado'}}
+                  </button>
+                  <!-- Status change buttons for preparing orders -->
+                  <button
+                    v-if="order.status === 'preparing'"
+                    type="button"
+                    class="inline-flex w-full sm:w-auto justify-center rounded-md border border-transparent bg-green-600 px-3 py-2 sm:px-4 text-sm font-medium text-white shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+                    @click="updateStatus('ready')"
+                  >
+                    {{$t('app.views.orders.modals.details.mark_ready') || 'Marcar como Listo'}}
+                  </button>
+                  <!-- Status change buttons for ready orders -->
+                  <button
+                    v-if="order.status === 'ready'"
                     type="button"
                     class="inline-flex w-full sm:w-auto justify-center rounded-md border border-transparent bg-green-600 px-3 py-2 sm:px-4 text-sm font-medium text-white shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
                     @click="updateStatus('completed')"
                   >
-                    {{$t('app.views.orders.modals.details.mark_completed')}}
+                    {{$t('app.views.orders.modals.details.mark_completed') || 'Marcar como Completado'}}
                   </button>
                   <!-- Print button hidden per user request
                   <button
@@ -655,7 +674,7 @@ async function completePayment() {
   }
   
   try {
-    await orderService.markOrderPaid(props.order.id, selectedPaymentMethod.value);
+    await orderService.markOrderPaid(props.order.id, selectedPaymentMethod.value, props.order.status);
     showInternalToast(t('app.views.orders.payment.success') || 'Pago completado exitosamente', 'success');
     showPaymentMethodSelector.value = false;
     

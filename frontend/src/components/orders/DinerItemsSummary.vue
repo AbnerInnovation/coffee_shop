@@ -61,6 +61,10 @@
               <span class="text-sm font-semibold text-gray-900 dark:text-gray-100">
                 ${{ (group.price * group.quantity).toFixed(2) }}
               </span>
+              <!-- Unit Price (if quantity > 1) -->
+              <span v-if="group.quantity > 1" class="text-xs text-gray-500 dark:text-gray-400">
+                ${{ group.price.toFixed(2) }} c/u
+              </span>
             </div>
             <!-- Delete Button -->
             <button

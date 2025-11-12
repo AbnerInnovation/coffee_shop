@@ -1,5 +1,5 @@
 <template>
-  <div class="grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-4">
+  <div class="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
     <StatsCard
       :label="t('app.dashboard.total_orders_today')"
       :value="stats.totalOrdersToday"
@@ -19,12 +19,10 @@
       :value="`${stats.activeTables}/${stats.totalTables}`"
     />
     
-    <div class="col-span-2 lg:col-span-1">
-      <StatsCard
-        :label="t('app.dashboard.popular_item')"
-        :value="stats.popularItem || '—'"
-      />
-    </div>
+    <StatsCard
+      :label="t('app.dashboard.popular_item')"
+      :value="stats.popularItem || '—'"
+    />
   </div>
 </template>
 

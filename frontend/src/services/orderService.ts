@@ -202,10 +202,17 @@ const orderService = {
     return Array.isArray(response) ? response : [];
   },
 
-  async markOrderPaid(orderId: number, paymentMethod: 'cash' | 'card' | 'digital' | 'other' = 'cash'): Promise<Order> {
+  async markOrderPaid(orderId: number, paymentMethod: 'cash' | 'card' | 'digital' | 'other' = 'cash', currentStatus?: string): Promise<Order> {
+    // Si la orden está en status "ready", también cambiar a "completed"
+    const params: any = { payment_method: paymentMethod };
+    
+    if (currentStatus === 'ready') {
+      params.status = 'completed';
+    }
+    
     // El interceptor de axios ya devuelve response.data automáticamente
     return await api.patch(`/orders/${orderId}/pay`, null, {
-      params: { payment_method: paymentMethod }
+      params
     }) as Order;
   },
 

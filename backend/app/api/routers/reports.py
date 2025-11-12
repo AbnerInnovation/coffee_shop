@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import func, desc
 from typing import List, Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from enum import Enum
 
 from ...db.base import get_db
@@ -58,7 +58,7 @@ def get_top_products(
         ).join(
             Order, OrderItem.order_id == Order.id
         ).filter(
-            Order.status == OrderStatus.COMPLETED
+            Order.is_paid == True
         )
         
         # Filter by restaurant if user has one
@@ -145,7 +145,8 @@ def get_dashboard_summary(
     """
     try:
         # Calculate date range based on period
-        now = datetime.now()
+        # Use UTC timezone to match database timestamps
+        now = datetime.now(timezone.utc)
         
         if period == PeriodType.TODAY:
             start_datetime = now.replace(hour=0, minute=0, second=0, microsecond=0)
@@ -163,8 +164,9 @@ def get_dashboard_summary(
             end_datetime = datetime.strptime(end_date, "%Y-%m-%d").replace(hour=23, minute=59, second=59)
         
         # Base query for orders
+        # Filter by is_paid instead of status - a sale is a sale regardless of order status
         orders_query = db.query(Order).filter(
-            Order.status == OrderStatus.COMPLETED,
+            Order.is_paid == True,
             Order.created_at >= start_datetime,
             Order.created_at <= end_datetime
         )
@@ -174,9 +176,9 @@ def get_dashboard_summary(
             orders_query = orders_query.filter(Order.restaurant_id == current_user.restaurant_id)
         
         # 1. Total Sales & 2. Number of Tickets
-        completed_orders = orders_query.all()
-        total_sales = sum(order.total_amount for order in completed_orders)
-        total_tickets = len(completed_orders)
+        paid_orders = orders_query.all()
+        total_sales = sum(order.total_amount for order in paid_orders)
+        total_tickets = len(paid_orders)
         
         # 3. Average Ticket
         average_ticket = total_sales / total_tickets if total_tickets > 0 else 0
@@ -194,7 +196,7 @@ def get_dashboard_summary(
         ).join(
             Category, MenuItem.category_id == Category.id
         ).filter(
-            Order.status == OrderStatus.COMPLETED,
+            Order.is_paid == True,
             Order.created_at >= start_datetime,
             Order.created_at <= end_datetime
         )
@@ -211,7 +213,7 @@ def get_dashboard_summary(
         # 5. Sales by Payment Method
         payment_breakdown = {}
         for method in PaymentMethod:
-            method_orders = [o for o in completed_orders if o.payment_method == method]
+            method_orders = [o for o in paid_orders if o.payment_method == method]
             method_total = sum(o.total_amount for o in method_orders)
             payment_breakdown[method.value] = {
                 "amount": round(method_total, 2),
@@ -307,7 +309,8 @@ def get_sales_trend(
     Useful for charts and graphs.
     """
     try:
-        end_date = datetime.now()
+        # Use UTC timezone to match database timestamps
+        end_date = datetime.now(timezone.utc)
         start_date = end_date - timedelta(days=days)
         
         # Query orders grouped by date
@@ -316,7 +319,7 @@ def get_sales_trend(
             func.count(Order.id).label('orders_count'),
             func.sum(Order.total_amount).label('total_sales')
         ).filter(
-            Order.status == OrderStatus.COMPLETED,
+            Order.is_paid == True,
             Order.created_at >= start_date,
             Order.created_at <= end_date
         )
