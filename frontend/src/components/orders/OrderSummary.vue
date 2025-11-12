@@ -4,43 +4,46 @@
 
     <!-- Multiple Diners View -->
     <div v-if="useMultipleDiners">
-      <div v-for="(person, pIndex) in persons" :key="pIndex" class="mb-4">
+      <div v-for="(personData, pIndex) in personsWithGrouping" :key="pIndex" class="mb-4">
         <div class="flex items-center justify-between mb-2 bg-indigo-50 dark:bg-indigo-900/20 px-3 py-2 rounded-md">
           <h5 class="text-sm font-semibold text-indigo-900 dark:text-indigo-100">
-            {{ person.name || `Persona ${person.position}` }}
+            {{ personData.name || `Persona ${personData.position}` }}
           </h5>
           <span class="text-xs text-indigo-600 dark:text-indigo-400">
-            {{ person.items.length }} {{ person.items.length === 1 ? 'item' : 'items' }}
+            {{ personData.totalItemCount }} {{ personData.totalItemCount === 1 ? 'item' : 'items' }}
+            <span v-if="personData.groupCount !== personData.totalItemCount" class="text-indigo-500">
+              ({{ personData.groupCount }} {{ personData.groupCount === 1 ? 'grupo' : 'grupos' }})
+            </span>
           </span>
         </div>
-        <div v-if="person.items.length > 0" class="space-y-2 ml-2">
-          <div v-for="(item, iIndex) in person.items" :key="iIndex"
+        <div v-if="personData.groupedItems.length > 0" class="space-y-2 ml-2">
+          <div v-for="(group, gIndex) in personData.groupedItems" :key="gIndex"
             class="flex justify-between items-start text-sm py-2 border-b border-gray-100 dark:border-gray-800 last:border-0">
             <div class="flex-1">
               <p class="font-medium text-gray-900 dark:text-gray-100">
-                {{ getMenuItemName(item.menu_item_id) }}
+                {{ group.name }}
+                <span v-if="group.variant_name" class="text-xs text-gray-500 ml-1">({{ group.variant_name }})</span>
               </p>
-              <div v-if="getMenuItemCategory" class="mt-1">
+              <div v-if="group.category" class="mt-1">
                 <span
                   class="inline-flex items-center rounded-full bg-gray-100 dark:bg-gray-700 px-2 py-0.5 text-xs font-medium text-gray-600 dark:text-gray-300">
-                  {{ getMenuItemCategory(item.menu_item_id) }}
+                  {{ group.category }}
                 </span>
               </div>
-              <p v-if="item.special_instructions" class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ item.special_instructions }}</p>
+              <!-- Special Instructions -->
+              <div v-if="group.special_instructions" class="mt-1 space-y-0.5">
+                <p v-for="(instruction, idx) in personData.getFormattedInstructions(group)" :key="idx" 
+                  class="text-xs text-gray-500 dark:text-gray-400">
+                  {{ instruction }}
+                </p>
+              </div>
             </div>
 
             <div class="flex items-center space-x-3">
-              <span class="text-gray-700 dark:text-gray-200 text-xs">{{ item.quantity }}x</span>
+              <span class="text-gray-700 dark:text-gray-200 text-xs font-medium">{{ group.quantity }}x</span>
               <span class="font-medium text-gray-900 dark:text-gray-100 min-w-[60px] text-right">
-                ${{ ((item.unit_price || 0) * item.quantity).toFixed(2) }}
+                ${{ (group.price * group.quantity).toFixed(2) }}
               </span>
-              <button type="button" @click="$emit('remove-item', pIndex, iIndex)"
-                class="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 p-1">
-                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
-              </button>
             </div>
           </div>
         </div>
@@ -126,17 +129,22 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
+import { useItemGrouping } from '@/composables/useItemGrouping';
+import type { OrderItem } from '@/services/orderService';
 import { MinusIcon, PlusIcon } from '@heroicons/vue/24/outline';
 
-interface OrderItem {
-  id?: number; // Optional because new items don't have IDs yet
+// Local interface for display items (different from OrderItem)
+interface DisplayOrderItem {
+  id?: number;
   menu_item_id: number;
   variant_id?: number | null;
   name: string;
   variant_name?: string;
   category?: string;
   quantity: number;
-  unit_price: number;
+  unit_price?: number;
   price?: number;
   notes?: string;
   special_instructions?: string;
@@ -149,6 +157,7 @@ interface Person {
   position: number;
   items: Array<{
     menu_item_id: number;
+    variant_id?: number | null;
     quantity: number;
     notes?: string;
     special_instructions?: string;
@@ -159,18 +168,62 @@ interface Person {
 interface Props {
   useMultipleDiners: boolean;
   persons: Person[];
-  selectedItems: OrderItem[];
+  selectedItems: DisplayOrderItem[];
   getMenuItemName: (itemId: number) => string;
   getMenuItemCategory?: (itemId: number) => string;
-  calculateItemTotal: (item: OrderItem) => string;
-  isItemLocked: (item: OrderItem) => boolean;
+  calculateItemTotal: (item: DisplayOrderItem) => string;
+  isItemLocked: (item: DisplayOrderItem) => boolean;
 }
 
-defineProps<Props>();
+const props = defineProps<Props>();
 
 defineEmits<{
   (e: 'remove-item', personIndex: number, itemIndex: number): void;
-  (e: 'decrease-quantity', item: OrderItem): void;
-  (e: 'increase-quantity', item: OrderItem): void;
+  (e: 'decrease-quantity', item: DisplayOrderItem): void;
+  (e: 'increase-quantity', item: DisplayOrderItem): void;
 }>();
+
+// Helper function to convert person items to OrderItem format for grouping
+function convertPersonItemsToOrderItems(personItems: Person['items'], menuItems: any): OrderItem[] {
+  return personItems.map((item, index) => ({
+    id: index,
+    menu_item_id: item.menu_item_id,
+    variant_id: item.variant_id || null,
+    quantity: item.quantity || 1,
+    special_instructions: item.special_instructions || item.notes || null,
+    status: 'pending',
+    order_id: 0,
+    person_id: null,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    unit_price: item.unit_price || 0,
+    variant: null,
+    menu_item: {
+      id: item.menu_item_id,
+      name: props.getMenuItemName(item.menu_item_id),
+      description: '',
+      price: item.unit_price || 0,
+      category: props.getMenuItemCategory ? props.getMenuItemCategory(item.menu_item_id) : '',
+      category_visible_in_kitchen: true,
+      image_url: '',
+      is_available: true
+    },
+    extras: []
+  }));
+}
+
+// Create grouped items for each person
+const personsWithGrouping = computed(() => {
+  return props.persons.map(person => {
+    const orderItems = computed(() => convertPersonItemsToOrderItems(person.items, null));
+    const grouping = useItemGrouping(orderItems);
+    return {
+      ...person,
+      groupedItems: grouping.groupedItems.value,
+      totalItemCount: grouping.totalItemCount.value,
+      groupCount: grouping.groupCount.value,
+      getFormattedInstructions: grouping.getFormattedInstructions
+    };
+  });
+});
 </script>

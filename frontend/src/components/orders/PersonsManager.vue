@@ -4,21 +4,10 @@
       <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
         {{ $t('app.views.orders.modals.new_order.persons.title') }}
       </label>
-      <button
-        type="button"
-        @click="$emit('toggle-multiple-diners')"
-        :disabled="disabled"
-        class="text-xs text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        {{ useMultipleDiners 
-          ? $t('app.views.orders.modals.new_order.persons.single_order')
-          : $t('app.views.orders.modals.new_order.persons.multiple_diners')
-        }}
-      </button>
     </div>
 
-    <!-- Tabs for multiple diners -->
-    <div v-if="useMultipleDiners" class="space-y-2">
+    <!-- Person tabs -->
+    <div class="space-y-2">
       <!-- Person tabs -->
       <div class="flex flex-wrap gap-2">
         <button
@@ -65,7 +54,6 @@ import type { OrderPerson } from '@/composables/useOrderForm';
 
 interface Props {
   orderType: string;
-  useMultipleDiners: boolean;
   persons: OrderPerson[];
   activePersonIndex: number;
   disabled?: boolean;
@@ -74,7 +62,6 @@ interface Props {
 const props = defineProps<Props>();
 
 const emit = defineEmits<{
-  'toggle-multiple-diners': [];
   'update:active-person-index': [index: number];
   'add-person': [];
   'remove-person': [index: number];

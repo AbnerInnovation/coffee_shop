@@ -118,8 +118,8 @@
           <span class="font-medium text-gray-900 dark:text-gray-100">
             {{ order.items.length }} {{ order.items.length === 1 ? $t('app.views.orders.summary.item') : $t('app.views.orders.summary.items') }}
           </span>
-          <span class="hidden sm:inline mx-1">•</span>
-          <span class="truncate">{{ itemsSummary }}</span>
+          <span class="mx-1">•</span>
+          <span class="line-clamp-3">{{ itemsSummary }}</span>
         </div>
       </div>
     </div>

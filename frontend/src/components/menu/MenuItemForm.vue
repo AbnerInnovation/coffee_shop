@@ -569,8 +569,8 @@ defineExpose({
       <!-- Variants Section -->
       <div class="border-t border-gray-200 dark:border-gray-700 pt-4 mt-6">
         <div class="flex items-center justify-between">
-          <h3 class="text-sm font-medium text-gray-700">{{ t('app.forms.variants') }}</h3>
-          <button @click="handleAddVariant" type="button" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+          <h3 class="text-sm font-medium text-gray-700 dark:text-gray-100">{{ t('app.forms.variants') }}</h3>
+          <button @click="handleAddVariant" type="button" class="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
             <PlusIcon class="-ml-0.5 mr-2 h-4 w-4" />
             {{ t('app.forms.add_variant') }}
           </button>
@@ -636,9 +636,133 @@ defineExpose({
             </div>
           </div>
         </div>
-        <p v-else class="mt-2 text-sm text-gray-500">
+        <p v-else class="mt-2 text-sm text-gray-500 dark:text-gray-400">
           {{ t('app.forms.no_variants') }}
         </p>
+
+        <!-- Inline Variant Form (Mobile & Desktop) -->
+        <div v-if="showVariantForm" class="mt-4 rounded-lg border border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-900/20 p-4">
+          <div class="flex items-center justify-between mb-4">
+            <h4 class="text-sm font-medium text-gray-900 dark:text-gray-100">
+              {{ editingVariantIndex !== null ? t('app.forms.variant.edit') : t('app.forms.variant.add') }}
+            </h4>
+            <button
+              type="button"
+              class="rounded-md text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 focus:outline-none"
+              @click="resetVariantForm"
+            >
+              <XMarkIcon class="h-5 w-5" aria-hidden="true" />
+            </button>
+          </div>
+
+          <div class="space-y-4">
+            <!-- Variant name -->
+            <div>
+              <label
+                for="variant-name-inline"
+                class="block text-sm font-medium text-gray-700 dark:text-gray-200"
+              >
+                {{ t('app.forms.variant.name') }}
+              </label>
+              <input
+                type="text"
+                id="variant-name-inline"
+                v-model="variantForm.name"
+                class="mt-1 p-2 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-gray-800 dark:text-gray-100"
+                placeholder="e.g., Small, Large, Iced"
+              />
+            </div>
+
+            <!-- Variant price -->
+            <div>
+              <label
+                for="variant-price-inline"
+                class="block text-sm font-medium text-gray-700 dark:text-gray-200"
+              >
+                {{ t('app.forms.variant.price') }}
+              </label>
+              <div class="mt-1 relative rounded-md shadow-sm">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <span class="text-gray-500 sm:text-sm">
+                    {{ t('app.forms.price_symbol') }}
+                  </span>
+                </div>
+                <input
+                  type="number"
+                  id="variant-price-inline"
+                  v-model.number="variantForm.price"
+                  step="0.01"
+                  min="0"
+                  class="block w-full pl-7 pr-12 py-2 rounded-md border-gray-300 dark:border-gray-600 focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-800 dark:text-gray-100 sm:text-sm"
+                  :placeholder="t('app.forms.placeholder_price')"
+                />
+              </div>
+            </div>
+
+            <!-- Variant discount price -->
+            <div>
+              <label
+                for="variant-discount-price-inline"
+                class="block text-sm font-medium text-gray-700 dark:text-gray-200"
+              >
+                {{ t('app.forms.variant.discount_price') }} ({{ t('app.forms.discount_placeholder').split(' ')[0] }})
+              </label>
+              <div class="mt-1 relative rounded-md shadow-sm">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <span class="text-gray-500 sm:text-sm">
+                    {{ t('app.forms.price_symbol') }}
+                  </span>
+                </div>
+                <input
+                  type="number"
+                  id="variant-discount-price-inline"
+                  v-model.number="variantForm.discount_price"
+                  step="0.01"
+                  min="0"
+                  class="block w-full pl-7 pr-12 py-2 rounded-md border-gray-300 dark:border-gray-600 focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-800 dark:text-gray-100 sm:text-sm"
+                  :placeholder="t('app.forms.discount_placeholder')"
+                />
+              </div>
+              <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                {{ t('app.forms.discount_price_help') }}
+              </p>
+            </div>
+
+            <!-- Available toggle -->
+            <div class="flex items-center">
+              <input
+                id="variant-available-inline"
+                type="checkbox"
+                v-model="variantForm.is_available"
+                class="h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500"
+              />
+              <label
+                for="variant-available-inline"
+                class="ml-2 block text-sm text-gray-700 dark:text-gray-200"
+              >
+                {{ t('app.forms.variant.available') }}
+              </label>
+            </div>
+
+            <!-- Action buttons -->
+            <div class="flex gap-3 pt-2">
+              <button
+                type="button"
+                class="flex-1 inline-flex justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                @click="handleSaveVariant"
+              >
+                {{ t('app.actions.save') }}
+              </button>
+              <button
+                type="button"
+                class="flex-1 inline-flex justify-center rounded-md bg-white dark:bg-gray-800 px-3 py-2 text-sm font-semibold text-gray-900 dark:text-gray-100 shadow-sm ring-1 ring-inset ring-gray-300 dark:ring-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500"
+                @click="resetVariantForm"
+              >
+                {{ t('app.actions.cancel') }}
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -744,173 +868,5 @@ defineExpose({
     </TransitionRoot>
   </form>
 
-<!-- Variant Form Modal -->
-<TransitionRoot as="template" :show="showVariantForm">
-  <Dialog as="div" class="relative z-10" @close="resetVariantForm">
-    <TransitionChild
-      as="template"
-      enter="ease-out duration-300"
-      enter-from="opacity-0"
-      enter-to="opacity-100"
-      leave="ease-in duration-200"
-      leave-from="opacity-100"
-      leave-to="opacity-0"
-    >
-      <div class="fixed inset-0 bg-gray-500 dark:bg-gray-900 bg-opacity-75 transition-opacity" />
-    </TransitionChild>
-
-    <div class="fixed inset-0 z-10 overflow-y-auto">
-      <div class="flex min-h-full items-end justify-center p-0 sm:p-4 text-center sm:items-center">
-        <TransitionChild
-          as="template"
-          enter="ease-out duration-300"
-          enter-from="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-          enter-to="opacity-100 translate-y-0 sm:scale-100"
-          leave="ease-in duration-200"
-          leave-from="opacity-100 translate-y-0 sm:scale-100"
-          leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-        >
-          <DialogPanel
-            class="relative transform overflow-hidden rounded-none sm:rounded-lg bg-white dark:bg-gray-900 px-4 pb-4 pt-5 text-left shadow-xl transition-all w-full min-h-screen sm:min-h-0 sm:my-8 sm:max-w-lg sm:p-6 border-0 sm:border border-gray-200 dark:border-gray-800"
-          >
-            <!-- Close button -->
-            <div class="absolute right-0 top-0 hidden pr-4 pt-4 sm:block">
-              <button
-                type="button"
-                class="rounded-md bg-white dark:bg-gray-900 text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                @click="resetVariantForm"
-              >
-                <span class="sr-only">Close</span>
-                <XMarkIcon class="h-6 w-6" aria-hidden="true" />
-              </button>
-            </div>
-
-            <!-- Content -->
-            <div class="sm:flex sm:items-start">
-              <div class="mt-3 text-center sm:mt-0 sm:text-left w-full">
-                <DialogTitle
-                  as="h3"
-                  class="text-lg font-medium leading-6 text-gray-900 dark:text-gray-100"
-                >
-                  {{ editingVariantIndex !== null ? t('app.forms.variant.edit') : t('app.forms.variant.add') }}
-                </DialogTitle>
-
-                <div class="mt-5">
-                  <div class="space-y-4">
-                    <!-- Variant name -->
-                    <div>
-                      <label
-                        for="variant-name"
-                        class="block text-sm font-medium text-gray-700 dark:text-gray-100"
-                      >
-                        {{ t('app.forms.variant.name') }}
-                      </label>
-                      <input
-                        type="text"
-                        id="variant-name"
-                        v-model="variantForm.name"
-                        class="mt-1 p-1 block w-full rounded-md border-gray-300 dark:border-gray-700 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-gray-800 dark:text-gray-100"
-                        placeholder="e.g., Small, Large, Iced"
-                      />
-                    </div>
-
-                    <!-- Variant price -->
-                    <div>
-                      <label
-                        for="variant-price"
-                        class="block text-sm font-medium text-gray-700 dark:text-gray-100"
-                      >
-                        {{ t('app.forms.variant.price') }}
-                      </label>
-                      <div class="mt-1 relative rounded-md shadow-sm">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                          <span class="text-gray-500 sm:text-sm">
-                            {{ t('app.forms.price_symbol') }}
-                          </span>
-                        </div>
-                        <input
-                          type="number"
-                          id="variant-price"
-                          v-model.number="variantForm.price"
-                          step="0.01"
-                          min="0"
-                          class="block w-full pl-7 pr-12 py-1 rounded-md border-gray-300 dark:border-gray-700 focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-800 dark:text-gray-100 sm:text-sm"
-                          :placeholder="t('app.forms.placeholder_price')"
-                        />
-                      </div>
-                    </div>
-
-                    <!-- Variant discount price -->
-                    <div>
-                      <label
-                        for="variant-discount-price"
-                        class="block text-sm font-medium text-gray-700 dark:text-gray-100"
-                      >
-                        {{ t('app.forms.variant.discount_price') }} ({{ t('app.forms.discount_placeholder').split(' ')[0] }})
-                      </label>
-                      <div class="mt-1 relative rounded-md shadow-sm">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                          <span class="text-gray-500 sm:text-sm">
-                            {{ t('app.forms.price_symbol') }}
-                          </span>
-                        </div>
-                        <input
-                          type="number"
-                          id="variant-discount-price"
-                          v-model.number="variantForm.discount_price"
-                          step="0.01"
-                          min="0"
-                          class="block w-full pl-7 pr-12 py-1 rounded-md border-gray-300 dark:border-gray-700 focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-800 dark:text-gray-100 sm:text-sm"
-                          :placeholder="t('app.forms.discount_placeholder')"
-                        />
-                      </div>
-                      <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                        {{ t('app.forms.discount_price_help') }}
-                      </p>
-                    </div>
-
-                    <!-- Available toggle -->
-                    <div class="flex items-center">
-                      <input
-                        id="variant-available"
-                        type="checkbox"
-                        v-model="variantForm.is_available"
-                        class="h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500"
-                      />
-                      <label
-                        for="variant-available"
-                        class="ml-2 block text-sm text-gray-700 dark:text-gray-100"
-                      >
-                        {{ t('app.forms.variant.available') }}
-                      </label>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Footer buttons -->
-            <div class="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
-              <button
-                type="button"
-                class="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 sm:ml-3 sm:w-auto"
-                @click="handleSaveVariant"
-              >
-                {{ t('app.actions.save') }}
-              </button>
-              <button
-                type="button"
-                class="mt-3 inline-flex w-full justify-center rounded-md bg-white dark:bg-gray-800 px-3 py-2 text-sm font-semibold text-gray-900 dark:text-gray-100 shadow-sm ring-1 ring-inset ring-gray-300 dark:ring-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 sm:mt-0 sm:w-auto"
-                @click="resetVariantForm"
-              >
-                {{ t('app.actions.cancel') }}
-              </button>
-            </div>
-          </DialogPanel>
-        </TransitionChild>
-      </div>
-    </div>
-  </Dialog>
-</TransitionRoot>
 
 </template>

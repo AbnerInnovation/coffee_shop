@@ -58,20 +58,20 @@
                 <!-- TAB 2: Menu Items & Diners -->
                 <div v-else-if="activeTab === 1" class="mt-6 space-y-4">
                   <!-- Persons Manager at the top -->
-                  <PersonsManager :order-type="form.type" :use-multiple-diners="isMultipleDinersMode" :persons="persons"
+                  <PersonsManager :order-type="form.type" :persons="persons"
                     :active-person-index="activePersonIndex"
                     :disabled="isEditMode"
-                    @toggle-multiple-diners="isMultipleDinersMode = !isMultipleDinersMode"
                     @update:active-person-index="activePersonIndex = $event" @add-person="addPerson"
                     @remove-person="removePersonWithConfirm" @update-person-name="updatePersonName" />
 
                   <!-- Active Diner Items Summary -->
-                  <DinerItemsSummary v-if="isMultipleDinersMode && persons[activePersonIndex]"
+                  <DinerItemsSummary v-if="persons[activePersonIndex]"
                     :title="persons[activePersonIndex].name || $t('app.views.orders.modals.new_order.persons.person_label', { position: persons[activePersonIndex].position })"
                     :items="persons[activePersonIndex].items" 
                     :get-menu-item-name="getMenuItemName"
                     :get-menu-item-category="getMenuItemCategory"
-                    :empty-message="$t('app.views.orders.modals.new_order.persons.no_items')" />
+                    :empty-message="$t('app.views.orders.modals.new_order.persons.no_items')"
+                    @remove-group="removeGroupFromPerson" />
 
                   <!-- Menu Items Selector - Buttons View -->
                   <MenuItemsSelectorButtons :loading="loading.menu" :error="error.menu"
@@ -81,7 +81,10 @@
 
                 <!-- TAB 3: Summary & Payment -->
                 <div v-else-if="activeTab === 2" class="mt-6 space-y-6">
-                  <OrderSummary :use-multiple-diners="isMultipleDinersMode" :persons="persons"
+                  <!-- Order Summary -->
+                  <OrderSummary 
+                    :use-multiple-diners="true" 
+                    :persons="persons"
                     :selectedItems="selectedItems" 
                     :getMenuItemName="getMenuItemName"
                     :getMenuItemCategory="getMenuItemCategory"
@@ -89,7 +92,8 @@
                     :isItemLocked="isItemLocked"
                     @removeItem="removeItemFromPerson" 
                     @decreaseQuantity="decreaseQuantity"
-                    @increaseQuantity="increaseQuantity" />
+                    @increaseQuantity="increaseQuantity" 
+                  />
 
                   <!-- Payment Section in Tab 3 -->
                   <PaymentSection :is-edit-mode="isEditMode" :can-process-payments="canProcessPayments"
@@ -157,6 +161,7 @@ import OrderSummary from './OrderSummary.vue';
 import ItemOptionsInline from './ItemOptionsInline.vue';
 import TabNavigation from '../ui/TabNavigation.vue';
 import DinerItemsSummary from './DinerItemsSummary.vue';
+import GroupedItemsList from './GroupedItemsList.vue';
 
 // Import types
 import type { ExtendedMenuItem, MenuItemVariant, OrderItemWithDetails } from '@/types/order';
@@ -166,6 +171,7 @@ import { useItemSelection } from '@/composables/useItemSelection';
 import { useMultipleDiners } from '@/composables/useMultipleDiners';
 import { useOrderCreation } from '@/composables/useOrderCreation';
 import { useDataFetching } from '@/composables/useDataFetching';
+import { useItemGrouping } from '@/composables/useItemGrouping';
 import { getEffectivePrice, getVariantPrice, getMenuItemName as getMenuItemNameUtil, getMenuItemCategory as getMenuItemCategoryUtil } from '@/utils/priceHelpers';
 import {
   transformMenuItemFromAPI,
@@ -226,17 +232,15 @@ onMounted(() => {
   window.addEventListener('resize', checkMobile);
 });
 
-// Use multiple diners composable
+// Use multiple diners composable (always enabled)
 const multipleDinersComposable = useMultipleDiners();
 const {
-  useMultipleDiners: isMultipleDinersMode,
   persons,
   activePersonIndex,
   addPerson,
   removePerson,
   updatePersonName,
-  removeItemFromPerson: removeItemFromPersonComposable,
-  addItemToActivePerson
+  removeItemFromPerson: removeItemFromPersonComposable
 } = multipleDinersComposable;
 
 const { showError, showSuccess, showWarning, showToast } = useToast();
@@ -283,19 +287,13 @@ const {
   selectItem: selectItemFromComposable
 } = useItemSelection();
 
-// Calculate order total
+// Calculate order total (always from persons)
 const orderTotal = computed(() => {
-  if (isMultipleDinersMode.value) {
-    return persons.value.reduce((sum, person) => {
-      return sum + person.items.reduce((itemSum, item) => {
-        return itemSum + ((item.unit_price || 0) * item.quantity);
-      }, 0);
+  return persons.value.reduce((sum, person) => {
+    return sum + person.items.reduce((itemSum, item) => {
+      return itemSum + ((item.unit_price || 0) * item.quantity);
     }, 0);
-  } else {
-    return selectedItems.value.reduce((sum, item) => {
-      return sum + (parseFloat(calculateItemTotal(item)) || 0);
-    }, 0);
-  }
+  }, 0);
 });
 
 // Use order creation composable
@@ -368,16 +366,53 @@ function loadOrderIntoForm(order: OrderType) {
   form.value.customerName = order.customer_name || '';
   form.value.notes = order.notes || '';
 
-  // Build items list
-  form.value.items = (order.items || []).map((it) => ({
-    menu_item_id: it.menu_item_id,
-    variant_id: it.variant_id ?? null,
-    quantity: it.quantity,
-    notes: it.special_instructions || undefined,
-    special_instructions: it.special_instructions || undefined,
-    unit_price: it.unit_price || it.menu_item?.price || 0,
-    status: it.status || 'pending', // Guardar el status del item
-  }));
+  // Load items into persons (always multiple diners mode)
+  // Group items by person_id if available, otherwise put all in first person
+  const itemsByPerson = new Map<number | null, any[]>();
+  
+  (order.items || []).forEach((it) => {
+    const personId = it.person_id ?? null;
+    if (!itemsByPerson.has(personId)) {
+      itemsByPerson.set(personId, []);
+    }
+    itemsByPerson.get(personId)!.push({
+      menu_item_id: it.menu_item_id,
+      variant_id: it.variant_id ?? null,
+      quantity: it.quantity,
+      notes: it.special_instructions || undefined,
+      special_instructions: it.special_instructions || undefined,
+      unit_price: it.unit_price || it.menu_item?.price || 0,
+      status: it.status || 'pending',
+    });
+  });
+
+  // If we have items grouped by person_id, create persons accordingly
+  if (itemsByPerson.size > 0) {
+    // Clear existing persons
+    persons.value = [];
+    
+    // Create a person for each group
+    let position = 1;
+    itemsByPerson.forEach((items, personId) => {
+      persons.value.push({
+        position,
+        name: '',
+        items
+      });
+      position++;
+    });
+    
+    // Ensure at least one person exists
+    if (persons.value.length === 0) {
+      persons.value.push({
+        position: 1,
+        name: '',
+        items: []
+      });
+    }
+    
+    activePersonIndex.value = 0;
+  }
 }
 
 // Computed properties
@@ -387,12 +422,52 @@ const selectedItems = computed<OrderItemWithDetails[]>(() => {
     .map(item => transformToOrderItemWithDetails(item, menuItems.value));
 });
 
-// Check if there are any items in the order (either simple or multiple diners)
+// Convert selectedItems to OrderItem format for grouping composable
+const selectedItemsAsOrderItems = computed(() => {
+  return selectedItems.value.map((item, index) => ({
+    id: item.id || index,
+    menu_item_id: item.menu_item_id,
+    variant_id: item.variant_id || null,
+    quantity: item.quantity || 1,
+    special_instructions: item.special_instructions || item.notes || null,
+    status: (item as any).status || 'pending',
+    order_id: 0,
+    person_id: null,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    unit_price: item.unit_price || item.price || 0,
+    variant: item.variant_name ? {
+      id: item.variant_id || 0,
+      name: item.variant_name,
+      price: item.unit_price || 0,
+      description: null
+    } : null,
+    menu_item: {
+      id: item.menu_item_id,
+      name: item.name || '',
+      description: '',
+      price: item.price || item.unit_price || 0,
+      category: item.category || '',
+      category_visible_in_kitchen: true,
+      image_url: '',
+      is_available: true
+    },
+    extras: []
+  }));
+});
+
+// Use item grouping composable for simple mode
+const { 
+  groupedItems, 
+  totalItemCount, 
+  groupCount, 
+  totalPrice: groupedTotalPrice,
+  getFormattedInstructions 
+} = useItemGrouping(selectedItemsAsOrderItems);
+
+// Check if there are any items in the order
 const hasItems = computed(() => {
-  if (isMultipleDinersMode.value) {
-    return persons.value.some(person => person.items.length > 0);
-  }
-  return selectedItems.value.length > 0;
+  return persons.value.some(person => person.items.length > 0);
 });
 
 // Add item with variant and notes
@@ -408,15 +483,6 @@ function addItemWithDetails() {
   const menuItemId = Number(selectedItem.value.id || 0);
   const variantId = variant ? Number(variant.id) : null;
 
-  // Find existing item with the same menu item and variant
-  const existingItemIndex = form.value.items.findIndex(item => {
-    const sameMenuItem = item.menu_item_id === menuItemId;
-    const sameVariant = variantId !== null ?
-      item.variant_id === variantId :
-      item.variant_id === null || item.variant_id === undefined;
-    return sameMenuItem && sameVariant;
-  });
-
   // Use itemSpecialNote if available, otherwise fallback to itemNotes
   const finalNote = itemSpecialNote.value || itemNotes.value;
 
@@ -430,26 +496,8 @@ function addItemWithDetails() {
     extras: itemExtras.value.length > 0 ? [...itemExtras.value] : []
   };
 
-  if (isMultipleDinersMode.value) {
-    // Agregar a la persona activa
-    persons.value[activePersonIndex.value].items.push(newItem);
-  } else {
-    // Modo legacy: agregar directamente a form.items
-    if (existingItemIndex !== -1) {
-      // Update existing item
-      const existingItem = form.value.items[existingItemIndex];
-      existingItem.quantity += 1;
-      existingItem.unit_price = itemPrice;
-      if (finalNote) {
-        existingItem.notes = finalNote;
-      }
-      if (itemExtras.value.length > 0) {
-        existingItem.extras = [...(existingItem.extras || []), ...itemExtras.value];
-      }
-    } else {
-      form.value.items.push(newItem);
-    }
-  }
+  // Agregar a la persona activa
+  persons.value[activePersonIndex.value].items.push(newItem);
 
   // Reset the form
   showItemModal.value = false;
@@ -469,13 +517,29 @@ function removeItemFromPerson(personIndex: number, itemIndex: number) {
   removeItemFromPersonComposable(personIndex, itemIndex);
 }
 
+// Remove all items in a group from the active person
+function removeGroupFromPerson(group: any) {
+  const person = persons.value[activePersonIndex.value];
+  if (!person) return;
+
+  // Filter out all items that match this group's fingerprint
+  // We need to remove items that have the same menu_item_id, variant_id, and special_instructions
+  person.items = person.items.filter(item => {
+    const itemMatches = 
+      item.menu_item_id === group.menu_item_id &&
+      (item.variant_id || null) === (group.variant_id || null) &&
+      (item.special_instructions || null) === (group.special_instructions || null);
+    return !itemMatches;
+  });
+}
+
 async function createOrder() {
   try {
     const validItems = form.value.items.filter(item => item.quantity > 0);
 
     // Validate items using composable
     const hasItems = orderCreationComposable.validateHasItems(
-      isMultipleDinersMode.value,
+      true, // Always multiple diners mode
       persons.value,
       validItems
     );
@@ -507,7 +571,7 @@ async function createOrder() {
       // Create new order using composable
       const { order, paymentSuccess } = await orderCreationComposable.createNewOrder(
         form.value,
-        isMultipleDinersMode.value,
+        true, // Always multiple diners mode
         persons.value,
         validItems,
         markAsPaid.value,
@@ -563,36 +627,15 @@ function handleAddItemFromModal(data: {
     price = getEffectivePrice(item.price || 0, item.discount_price);
   }
 
-  if (isMultipleDinersMode.value) {
-    // Add to active person
-    const activePerson = persons.value[activePersonIndex.value];
-    if (activePerson) {
+  // Always add to active person (multiple diners mode)
+  const activePerson = persons.value[activePersonIndex.value];
+  if (activePerson) {
+    // Add individual items (quantity times)
+    for (let i = 0; i < quantity; i++) {
       activePerson.items.push({
         menu_item_id: Number(item.id),
         variant_id: variant ? Number(variant.id) : null,
-        quantity,
-        special_instructions: notes || '',
-        unit_price: price,
-        extras: []
-      });
-    }
-  } else {
-    // Add to form.items (simple mode)
-    const existingIndex = form.value.items.findIndex(
-      (i) => Number(i.menu_item_id) === Number(item.id) &&
-        (i.variant_id ? Number(i.variant_id) : null) === (variant ? Number(variant.id) : null)
-    );
-
-    if (existingIndex >= 0) {
-      form.value.items[existingIndex].quantity += quantity;
-      if (notes) {
-        form.value.items[existingIndex].special_instructions = notes;
-      }
-    } else {
-      form.value.items.push({
-        menu_item_id: Number(item.id),
-        variant_id: variant ? Number(variant.id) : null,
-        quantity,
+        quantity: 1, // Always 1 for individual items
         special_instructions: notes || '',
         unit_price: price,
         extras: []

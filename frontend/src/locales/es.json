@@ -36,7 +36,8 @@
       "search": "Buscar",
       "close": "Cerrar",
       "open": "Abrir",
-      "print": "Imprimir"
+      "print": "Imprimir",
+      "remove": "Quitar"
     },
     "status": {
       "loading": "Cargando...",
@@ -44,6 +45,7 @@
       "pending": "Pendiente",
       "preparing": "Preparando",
       "ready": "Listo",
+      "served": "Servido",
       "completed": "Completado",
       "cancelled": "Cancelado",
       "out_of_stock": "Agotado",
@@ -586,10 +588,10 @@
         "table_short": "M{number}",
         "actions": {
           "order_ready": "Orden lista para recoger",
-          "start_preparing": "Comenzar a preparar",
+          "start_preparing": "Preparar",
           "item_ready": "Listo",
-          "start_preparing_all": "Comenzar a preparar todo",
-          "all_items_ready": "Todos los items listos"
+          "start_preparing_all": "Preparar todo",
+          "all_items_ready": "Todo listo"
         },
         "time": {
           "just_now": "Justo ahora",
@@ -597,6 +599,7 @@
           "hours_minutes_ago": "Hace {h}h {m}m"
         },
         "order_type_filter": {
+          "label": "Tipo de Orden",
           "all": "Todos los Tipos",
           "dine_in": "Para Comer Aquí",
           "takeaway": "Para Llevar",
