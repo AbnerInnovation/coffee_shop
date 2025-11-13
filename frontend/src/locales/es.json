@@ -615,6 +615,7 @@
           "cta": "Iniciar sesión",
           "cta_loading": "Iniciando sesión...",
           "register_prompt": "¿No tienes cuenta? Regístrate",
+          "remember": "Recordarme",
           "errors": {
             "failed": "Inicio de sesión fallido",
             "generic": "Ocurrió un error durante el inicio de sesión",
@@ -1177,6 +1178,39 @@
       "error_loading": "Error al cargar los reportes",
       "error_custom_dates": "Por favor selecciona fechas de inicio y fin",
       "error_generic": "Ocurrió un error al cargar los datos"
+    },
+    "pending_payments": {
+      "title": "Pagos Pendientes",
+      "subtitle": "Revisa y aprueba los pagos de suscripción pendientes",
+      "no_payments": "No hay pagos pendientes",
+      "all_processed": "Todos los pagos han sido procesados",
+      "status_pending": "Pendiente",
+      "plan": "Plan",
+      "amount": "Monto",
+      "cycle": "Ciclo",
+      "cycle_monthly": "Mensual",
+      "cycle_annual": "Anual",
+      "reference": "Referencia",
+      "payment_date": "Fecha de Pago",
+      "submitted": "Enviado",
+      "proof": "Comprobante",
+      "view_proof": "Ver comprobante",
+      "notes": "Notas",
+      "approve": "Aprobar",
+      "reject": "Rechazar",
+      "approve_title": "Aprobar Pago",
+      "approve_confirm": "¿Estás seguro de aprobar este pago de",
+      "approve_for": "para",
+      "reject_title": "Rechazar Pago",
+      "reject_reason": "Proporciona una razón para rechazar este pago (mínimo 10 caracteres):",
+      "reject_placeholder": "Ej: El comprobante no es válido, el monto no coincide, etc.",
+      "reject_min_chars": "caracteres",
+      "processing": "Procesando...",
+      "confirm": "Confirmar",
+      "cancel": "Cancelar",
+      "approved_success": "Pago aprobado exitosamente",
+      "rejected_success": "Pago rechazado",
+      "reason_min_length": "La razón debe tener al menos 10 caracteres"
     }
   }
 }

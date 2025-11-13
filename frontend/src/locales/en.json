@@ -339,6 +339,7 @@
         "cta": "Sign in",
         "cta_loading": "Signing in...",
         "register_prompt": "Don't have an account? Sign up",
+        "remember": "Remember me",
         "errors": {
           "failed": "Login failed",
           "generic": "An error occurred during login"

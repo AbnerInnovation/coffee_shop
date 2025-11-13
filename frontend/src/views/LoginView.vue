@@ -39,16 +39,8 @@
         <div class="flex items-center justify-between">
           <label class="flex items-center space-x-2 select-none">
             <input type="checkbox" v-model="rememberMe" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" />
-            <span class="text-sm text-gray-700 dark:text-gray-200">Remember you</span>
+            <span class="text-sm text-gray-700 dark:text-gray-200">{{ t('app.views.auth.login.remember') }}</span>
           </label>
-          <div class="text-sm">
-            <router-link
-              to="/register"
-              class="font-medium text-indigo-600 hover:text-indigo-500"
-            >
-              {{ t('app.views.auth.login.register_prompt') }}
-            </router-link>
-          </div>
         </div>
 
         <div>
@@ -61,7 +53,6 @@
             <span v-else>{{ t('app.views.auth.login.cta_loading') }}</span>
           </button>
         </div>
-        
       </form>
     </div>
   </div>
@@ -81,6 +72,13 @@ const authStore = useAuthStore();
 const { t } = useI18n();
 const { showError } = useToast();
 
+const backendResponseTranslations = {
+  'Incorrect email or password': 'app.views.auth.login.errors.invalid_credentials',
+  'Account is inactive': 'app.views.auth.login.errors.account_inactive',
+  "don't have access to this restaurant": 'app.views.auth.login.errors.wrong_subdomain',
+  'using your restaurant\'s subdomain': 'app.views.auth.login.errors.subdomain_required'
+}
+
 const handleLogin = async () => {
   try {
     loading.value = true;
@@ -92,33 +90,14 @@ const handleLogin = async () => {
     
     if (!success) {
       const errorMessage = authStore.error || '';
-      let translationKey = 'app.views.auth.login.errors.failed';
-      
-      if (errorMessage.includes('Incorrect email or password')) {
-        translationKey = 'app.views.auth.login.errors.invalid_credentials';
-      } else if (errorMessage.includes('Account is inactive')) {
-        translationKey = 'app.views.auth.login.errors.account_inactive';
-      } else if (errorMessage.includes("don't have access to this restaurant")) {
-        translationKey = 'app.views.auth.login.errors.wrong_subdomain';
-      } else if (errorMessage.includes('using your restaurant\'s subdomain')) {
-        translationKey = 'app.views.auth.login.errors.subdomain_required';
-      }
+
+      let translationKey = backendResponseTranslations[errorMessage] || 'app.views.auth.login.errors.failed';
       
       showError(t(translationKey) as string, 6000);
     }
   } catch (err: any) {
     const errorMsg = err?.response?.data?.error?.message || err?.message || '';
-    let translationKey = 'app.views.auth.login.errors.generic';
-    
-    if (errorMsg.includes('Incorrect email or password')) {
-      translationKey = 'app.views.auth.login.errors.invalid_credentials';
-    } else if (errorMsg.includes('Account is inactive')) {
-      translationKey = 'app.views.auth.login.errors.account_inactive';
-    } else if (errorMsg.includes("don't have access to this restaurant")) {
-      translationKey = 'app.views.auth.login.errors.wrong_subdomain';
-    } else if (errorMsg.includes('using your restaurant\'s subdomain')) {
-      translationKey = 'app.views.auth.login.errors.subdomain_required';
-    }
+    let translationKey = backendResponseTranslations[errorMsg] || 'app.views.auth.login.errors.generic';
     
     showError(t(translationKey) as string, 6000);
   } finally {
