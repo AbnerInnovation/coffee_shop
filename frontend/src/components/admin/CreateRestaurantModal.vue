@@ -407,21 +407,27 @@ const handleSubmit = async () => {
   try {
     const response = await adminService.createRestaurant(form.value);
     
-    console.log('🔍 Restaurant creation response:', response);
-    console.log('🔍 Has welcome_message?', !!response.welcome_message);
-    console.log('🔍 Has shareable_message?', !!response.shareable_message);
-    console.log('🔍 Has admin_password?', !!response.admin_password);
+    if (import.meta.env.DEV) {
+      console.log('🔍 Restaurant creation response:', response);
+      console.log('🔍 Has welcome_message?', !!response.welcome_message);
+      console.log('🔍 Has shareable_message?', !!response.shareable_message);
+      console.log('🔍 Has admin_password?', !!response.admin_password);
+    }
     
     // Check if response has welcome message (new format)
     if (response.welcome_message && response.shareable_message && response.admin_password) {
       // New format with complete welcome data
-      console.log('✅ Showing credentials in modal');
+      if (import.meta.env.DEV) {
+        console.log('✅ Showing credentials in modal');
+      }
       restaurantCreationData.value = response;
       createdRestaurant.value = response.restaurant;
     } else {
       // Old format (just restaurant object) or missing data
-      console.warn('⚠️ Response missing welcome data, showing basic success message');
-      console.log('Response keys:', Object.keys(response));
+      if (import.meta.env.DEV) {
+        console.warn('⚠️ Response missing welcome data, showing basic success message');
+        console.log('Response keys:', Object.keys(response));
+      }
       createdRestaurant.value = response.restaurant || response;
       restaurantCreationData.value = null;
     }

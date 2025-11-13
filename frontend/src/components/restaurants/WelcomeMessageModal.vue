@@ -416,7 +416,9 @@ const copyToClipboard = async (text: string | undefined, label: string) => {
   try {
     await navigator.clipboard.writeText(text);
     // TODO: Mostrar toast de éxito
-    console.log(`${label} copiado al portapapeles`);
+    if (import.meta.env.DEV) {
+      console.log(`${label} copiado al portapapeles`);
+    }
   } catch (err) {
     console.error('Error al copiar:', err);
   }
@@ -428,7 +430,9 @@ const copyShareableMessage = async () => {
   try {
     await navigator.clipboard.writeText(props.restaurantData.shareable_message);
     // TODO: Mostrar toast de éxito
-    console.log('Mensaje copiado al portapapeles');
+    if (import.meta.env.DEV) {
+      console.log('Mensaje copiado al portapapeles');
+    }
   } catch (err) {
     console.error('Error al copiar:', err);
   }

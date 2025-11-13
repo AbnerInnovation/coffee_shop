@@ -305,12 +305,16 @@ export const useAuthStore = defineStore('auth', () => {
       }
     } else if (!token && storedUser) {
       // If we have user data but no token, clear the stale user data
-      console.log('⚠️ User data without token, clearing...');
+      if (import.meta.env.DEV) {
+        console.log('⚠️ User data without token, clearing...');
+      }
       safeStorage.removeItem('user');
       safeStorage.removeItem('user', true);
       user.value = null;
     } else if (!token && !storedUser) {
-      console.log('ℹ️ No stored credentials found');
+      if (import.meta.env.DEV) {
+        console.log('ℹ️ No stored credentials found');
+      }
       user.value = null;
     }
   }

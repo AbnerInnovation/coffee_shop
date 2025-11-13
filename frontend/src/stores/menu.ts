@@ -76,11 +76,15 @@ export const useMenuStore = defineStore('menu', () => {
     error.value = null;
     try {
       const response = await menuService.getMenuItem(id);
-      console.log('🔍 Raw response from API:', response);
-      console.log('🔍 Response.ingredients:', response.ingredients);
+      if (import.meta.env.DEV) {
+        console.log('🔍 Raw response from API:', response);
+        console.log('🔍 Response.ingredients:', response.ingredients);
+      }
       const normalized = normalizeMenuItem(response);
-      console.log('🔍 After normalizeMenuItem:', normalized);
-      console.log('🔍 Normalized.ingredients:', normalized.ingredients);
+      if (import.meta.env.DEV) {
+        console.log('🔍 After normalizeMenuItem:', normalized);
+        console.log('🔍 Normalized.ingredients:', normalized.ingredients);
+      }
       return normalized;
     } catch (err: any) {
       const message = err.response?.data?.message || err.message || `Failed to fetch menu item ${id}`;

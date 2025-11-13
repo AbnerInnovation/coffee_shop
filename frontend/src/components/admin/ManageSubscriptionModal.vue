@@ -359,7 +359,9 @@ const hasAdmins = computed(() => admins.value.length > 0);
 const loadPlans = async () => {
   try {
     plans.value = await subscriptionService.getPlans();
-    console.log('Plans loaded:', plans.value);
+    if (import.meta.env.DEV) {
+      console.log('Plans loaded:', plans.value);
+    }
   } catch (error) {
     console.error('Error loading plans:', error);
   }
@@ -494,8 +496,10 @@ const getStatusClass = (status: string) => {
 
 // Watchers
 watch(selectedPlanId, (newId) => {
-  console.log('Selected plan ID changed:', newId);
-  console.log('Selected plan object:', selectedPlan.value);
+  if (import.meta.env.DEV) {
+    console.log('Selected plan ID changed:', newId);
+    console.log('Selected plan object:', selectedPlan.value);
+  }
 });
 
 // Lifecycle
