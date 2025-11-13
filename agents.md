@@ -68,7 +68,104 @@ Use where appropriate: Factory, Singleton, Strategy, Observer, Decorator, etc.
 
 ---
 
-## 6. Context & References
+## 6. Vue.js Architecture Standards
+
+### 6.1 Component Structure
+- **Views** should be < 300 lines (orchestration only)
+- **Components** should be < 200 lines (single responsibility)
+- **Composables** for business logic (reusable, testable)
+
+### 6.2 Composables Pattern
+Create composables for:
+- **Data fetching & state** (`useUsers`, `useTables`)
+- **Business logic** (`useSubscriptionUsage`)
+- **Shared functionality** (permissions, validation)
+
+**Example:**
+```typescript
+// composables/useUsers.ts
+export function useUsers() {
+  const users = ref([]);
+  const loading = ref(false);
+  const error = ref('');
+  
+  const loadUsers = async () => { /* ... */ };
+  const createUser = async (data) => { /* ... */ };
+  
+  return { users, loading, error, loadUsers, createUser };
+}
+```
+
+### 6.3 Component Breakdown
+Extract UI into focused components:
+- **Card components** for list items (`UserCard`, `TableCard`)
+- **Table components** for desktop views (`UsersTable`)
+- **Form components** for modals (`UserFormModal`, `TableFormModal`)
+- **State components** for loading/error/empty (`TableStates`)
+
+### 6.4 Modal Standards
+All modals must:
+- **Full screen on mobile** (`w-full h-full sm:max-w-lg`)
+- **Responsive sizing** (smaller text/padding on mobile)
+- **Dark mode support** (all elements)
+- **Icons in inputs** for better UX
+- **Visual feedback** (loading spinners, error states)
+- **Proper z-index** (`z-[10001]` for modals, `z-[10000]` for dropdowns)
+
+**Mobile optimization:**
+```vue
+<!-- Responsive padding -->
+<div class="p-4 sm:p-8">
+  <!-- Responsive text -->
+  <label class="text-xs sm:text-sm">
+  <!-- Responsive inputs -->
+  <input class="py-2 sm:py-2.5 text-sm">
+</div>
+```
+
+### 6.5 Refactoring Checklist
+When refactoring large components:
+- [ ] Extract business logic to composables
+- [ ] Create reusable UI components
+- [ ] Reduce main view to < 300 lines
+- [ ] Add TypeScript types
+- [ ] Maintain all existing functionality
+- [ ] Test on mobile and desktop
+- [ ] Verify dark mode
+
+### 6.6 File Organization
+```
+frontend/src/
+├── composables/
+│   ├── useUsers.ts          # User business logic
+│   ├── useTables.ts         # Table business logic
+│   └── useSubscriptionUsage.ts
+├── components/
+│   ├── users/
+│   │   ├── UserCard.vue     # Mobile card
+│   │   ├── UsersTable.vue   # Desktop table
+│   │   └── UserFormModal.vue
+│   ├── tables/
+│   │   ├── TableCard.vue
+│   │   ├── TableStates.vue
+│   │   └── TableFormModal.vue
+│   └── ui/                  # Shared components
+└── views/
+    ├── UsersManagementView.vue  # Orchestration only
+    └── TablesView.vue
+```
+
+### 6.7 UI/UX Standards
+- **Icons in inputs** (UserIcon, EnvelopeIcon, LockClosedIcon)
+- **Visual hierarchy** (headers with icons and descriptions)
+- **Error feedback** (icons + colored backgrounds)
+- **Loading states** (spinners with messages)
+- **Consistent spacing** (Tailwind scale: 2, 3, 4, 6, 8)
+- **Backdrop blur** for modals (`bg-black/60 backdrop-blur-sm`)
+
+---
+
+## 7. Context & References
 
 - **Database schema:** `context/database.sql`  
 - **Flows & diagrams:** `doc/*.md`  
@@ -77,7 +174,7 @@ Use where appropriate: Factory, Singleton, Strategy, Observer, Decorator, etc.
 
 ---
 
-## **7. Code Review Checklist**
+## **8. Code Review Checklist**
 
 ```markdown
 ## 7. Code Review Checklist
@@ -120,6 +217,6 @@ Use where appropriate: Factory, Singleton, Strategy, Observer, Decorator, etc.
 - [ ] API documentation updated
 - [ ] Migration guide for breaking changes
 
-## 8. Core Principle
+## 9. Core Principle
 
 > The developer defines the *why* — the agent optimizes the *how*.
