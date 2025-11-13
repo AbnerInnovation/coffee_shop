@@ -1,111 +1,141 @@
 <template>
   <div
     v-if="isOpen"
-    class="fixed inset-0 z-[10001] overflow-y-auto"
+    class="fixed inset-0 z-[10001]"
     @click.self="$emit('close')"
   >
-    <div class="flex min-h-screen items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="flex h-full w-full sm:items-center sm:justify-center sm:p-4">
       <!-- Backdrop -->
-      <div class="fixed inset-0 bg-black bg-opacity-50 transition-opacity"></div>
+      <div class="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity"></div>
 
       <!-- Modal -->
-      <div class="relative bg-white dark:bg-gray-800 rounded-none sm:rounded-lg shadow-xl w-full min-h-screen sm:min-h-0 sm:max-w-md p-4 sm:p-6 border-0 sm:border border-gray-200 dark:border-gray-700">
+      <div class="relative overflow-y-auto bg-white dark:bg-gray-900 rounded-none sm:rounded-xl shadow-2xl w-full h-full sm:h-auto sm:max-w-lg p-4 sm:p-8 border-0 sm:border border-gray-200 dark:border-gray-800">
         <!-- Header -->
-        <div class="mb-6">
-          <h3 class="text-xl font-semibold text-gray-900 dark:text-white">
-            {{ mode === 'create' ? t('app.users.modal.create_title') : t('app.users.modal.edit_title') }}
-          </h3>
+        <div class="mb-4 sm:mb-6 pb-3 sm:pb-4 border-b border-gray-200 dark:border-gray-700">
+          <div class="flex items-center gap-2 sm:gap-3">
+            <div class="flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center">
+              <UserPlusIcon v-if="mode === 'create'" class="h-4 w-4 sm:h-5 sm:w-5 text-indigo-600 dark:text-indigo-400" />
+              <PencilIcon v-else class="h-4 w-4 sm:h-5 sm:w-5 text-indigo-600 dark:text-indigo-400" />
+            </div>
+            <div>
+              <h3 class="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">
+                {{ mode === 'create' ? t('app.users.modal.create_title') : t('app.users.modal.edit_title') }}
+              </h3>
+              <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+                {{ mode === 'create' ? 'Completa los datos del nuevo usuario' : 'Actualiza la información del usuario' }}
+              </p>
+            </div>
+          </div>
         </div>
 
         <!-- Form -->
-        <form @submit.prevent="handleSubmit" class="space-y-4">
+        <form @submit.prevent="handleSubmit" class="space-y-3 sm:space-y-4">
           <!-- Full Name -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label class="block text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5 sm:mb-2">
               {{ t('app.users.modal.full_name') }}
             </label>
-            <input
-              v-model="form.full_name"
-              type="text"
-              required
-              @input="fullNameTouched = true; fullNameError = ''"
-              :class="[
-                'w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white',
-                fullNameError && fullNameTouched ? 'border-red-500 dark:border-red-500' : 'border-gray-300 dark:border-gray-600'
-              ]"
-              :placeholder="t('app.users.modal.full_name_placeholder')"
-            />
-            <p v-if="fullNameError && fullNameTouched" class="mt-1 text-xs text-red-600 dark:text-red-400">
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <UserIcon class="h-5 w-5 text-gray-400" />
+              </div>
+              <input
+                v-model="form.full_name"
+                type="text"
+                required
+                @input="fullNameTouched = true; fullNameError = ''"
+                :class="[
+                  'w-full pl-10 pr-3 py-2 sm:py-2.5 text-sm border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-800 dark:text-white transition-colors',
+                  fullNameError && fullNameTouched ? 'border-red-500 dark:border-red-500' : 'border-gray-300 dark:border-gray-700'
+                ]"
+                :placeholder="t('app.users.modal.full_name_placeholder')"
+              />
+            </div>
+            <p v-if="fullNameError && fullNameTouched" class="mt-1.5 text-xs text-red-600 dark:text-red-400 flex items-center gap-1">
+              <ExclamationCircleIcon class="h-4 w-4" />
               {{ fullNameError }}
             </p>
           </div>
 
           <!-- Email -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label class="block text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5 sm:mb-2">
               {{ t('app.users.modal.email') }}
             </label>
-            <input
-              v-model="form.email"
-              type="email"
-              required
-              @blur="validateEmail"
-              @input="emailTouched = true"
-              :class="[
-                'w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white',
-                emailError && emailTouched ? 'border-red-500 dark:border-red-500' : 'border-gray-300 dark:border-gray-600'
-              ]"
-              :placeholder="t('app.users.modal.email_placeholder')"
-            />
-            <p v-if="emailError && emailTouched" class="mt-1 text-xs text-red-600 dark:text-red-400">
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <EnvelopeIcon class="h-5 w-5 text-gray-400" />
+              </div>
+              <input
+                v-model="form.email"
+                type="email"
+                required
+                @blur="validateEmail"
+                @input="emailTouched = true"
+                :class="[
+                  'w-full pl-10 pr-3 py-2 sm:py-2.5 text-sm border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-800 dark:text-white transition-colors',
+                  emailError && emailTouched ? 'border-red-500 dark:border-red-500' : 'border-gray-300 dark:border-gray-700'
+                ]"
+                :placeholder="t('app.users.modal.email_placeholder')"
+              />
+            </div>
+            <p v-if="emailError && emailTouched" class="mt-1.5 text-xs text-red-600 dark:text-red-400 flex items-center gap-1">
+              <ExclamationCircleIcon class="h-4 w-4" />
               {{ emailError }}
             </p>
           </div>
 
           <!-- Password -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label class="block text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5 sm:mb-2">
               {{ t('app.users.modal.password') }}
-              <span v-if="mode === 'edit'" class="text-xs text-gray-500">
+              <span v-if="mode === 'edit'" class="text-xs font-normal text-gray-500 dark:text-gray-400">
                 ({{ t('app.users.modal.password_optional') }})
               </span>
             </label>
-            <input
-              v-model="form.password"
-              type="password"
-              :required="mode === 'create'"
-              minlength="8"
-              @blur="validatePassword"
-              @input="passwordTouched = true"
-              :class="[
-                'w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white',
-                passwordErrors.length > 0 && passwordTouched ? 'border-red-500 dark:border-red-500' : 'border-gray-300 dark:border-gray-600'
-              ]"
-              :placeholder="t('app.users.modal.password_placeholder')"
-            />
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <LockClosedIcon class="h-5 w-5 text-gray-400" />
+              </div>
+              <input
+                v-model="form.password"
+                type="password"
+                :required="mode === 'create'"
+                minlength="8"
+                @blur="validatePassword"
+                @input="passwordTouched = true"
+                :class="[
+                  'w-full pl-10 pr-3 py-2 sm:py-2.5 text-sm border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-800 dark:text-white transition-colors',
+                  passwordErrors.length > 0 && passwordTouched ? 'border-red-500 dark:border-red-500' : 'border-gray-300 dark:border-gray-700'
+                ]"
+                :placeholder="t('app.users.modal.password_placeholder')"
+              />
+            </div>
             
             <!-- Password validation errors -->
-            <div v-if="passwordErrors.length > 0 && passwordTouched" class="mt-2 space-y-1">
-              <p v-for="(error, index) in passwordErrors" :key="index" class="text-xs text-red-600 dark:text-red-400">
-                • {{ error }}
+            <div v-if="passwordErrors.length > 0 && passwordTouched" class="mt-1.5 sm:mt-2 space-y-0.5 sm:space-y-1 p-2 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
+              <p v-for="(error, index) in passwordErrors" :key="index" class="text-xs text-red-600 dark:text-red-400 flex items-start gap-1.5">
+                <XCircleIcon class="h-3.5 w-3.5 mt-0.5 flex-shrink-0" />
+                <span>{{ error }}</span>
               </p>
             </div>
             
             <!-- Password hint (only show if no errors or not touched) -->
-            <p v-else class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-              {{ t('app.users.modal.password_hint') }}
+            <p v-else class="mt-1.5 text-xs text-gray-500 dark:text-gray-400 flex items-start gap-1.5">
+              <InformationCircleIcon class="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0 mt-0.5" />
+              <span>{{ t('app.users.modal.password_hint') }}</span>
             </p>
           </div>
 
           <!-- Role -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label class="block text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5 sm:mb-2">
               {{ t('app.users.modal.role') }}
             </label>
             <select
               v-model="form.role"
               required
-              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white"
+              class="w-full px-3 py-2 sm:py-2.5 text-sm border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-800 dark:text-white transition-colors"
             >
               <option value="admin">{{ t('app.users.roles.admin') }}</option>
               <option value="staff">{{ t('app.users.roles.staff') }}</option>
@@ -115,13 +145,13 @@
 
           <!-- Staff Type (only show if role is staff) -->
           <div v-if="form.role === 'staff'">
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label class="block text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5 sm:mb-2">
               {{ t('app.users.modal.staff_type') }}
             </label>
             <select
               v-model="form.staff_type"
               required
-              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white"
+              class="w-full px-3 py-2 sm:py-2.5 text-sm border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-800 dark:text-white transition-colors"
             >
               <option value="">{{ t('app.users.modal.select_staff_type') }}</option>
               <option value="waiter">{{ t('app.users.staff_types.waiter') }}</option>
@@ -129,20 +159,21 @@
               <option value="kitchen">{{ t('app.users.staff_types.kitchen') }}</option>
               <option value="general">{{ t('app.users.staff_types.general') }}</option>
             </select>
-            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-              {{ t('app.users.modal.staff_type_hint') }}
+            <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400 flex items-start gap-1.5">
+              <InformationCircleIcon class="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0 mt-0.5" />
+              <span>{{ t('app.users.modal.staff_type_hint') }}</span>
             </p>
           </div>
 
           <!-- Active Status -->
-          <div class="flex items-center">
+          <div class="flex items-center p-2.5 sm:p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
             <input
               v-model="form.is_active"
               type="checkbox"
               id="is_active"
-              class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+              class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 dark:border-gray-600 rounded"
             />
-            <label for="is_active" class="ml-2 block text-sm text-gray-700 dark:text-gray-300">
+            <label for="is_active" class="ml-2.5 sm:ml-3 block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">
               {{ t('app.users.modal.is_active') }}
             </label>
           </div>
@@ -160,20 +191,27 @@
           </div>
 
           <!-- Actions -->
-          <div class="flex gap-3 pt-4">
+          <div class="flex gap-2 sm:gap-3 pt-4 sm:pt-6 border-t border-gray-200 dark:border-gray-700 mt-4 sm:mt-6">
             <button
               type="button"
               @click="$emit('close')"
-              class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              class="flex-1 px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors font-medium"
             >
               {{ t('app.users.modal.cancel') }}
             </button>
             <button
               type="submit"
               :disabled="saving"
-              class="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              class="flex-1 px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium shadow-sm"
             >
-              {{ saving ? t('app.users.modal.saving') : t('app.users.modal.save') }}
+              <span v-if="saving" class="flex items-center justify-center gap-2">
+                <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                {{ t('app.users.modal.saving') }}
+              </span>
+              <span v-else>{{ t('app.users.modal.save') }}</span>
             </button>
           </div>
         </form>
@@ -185,6 +223,16 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import {
+  UserIcon,
+  EnvelopeIcon,
+  LockClosedIcon,
+  UserPlusIcon,
+  PencilIcon,
+  ExclamationCircleIcon,
+  XCircleIcon,
+  InformationCircleIcon
+} from '@heroicons/vue/24/outline';
 import restaurantUsersService, { type RestaurantUser, type CreateRestaurantUser, type UpdateRestaurantUser } from '@/services/restaurantUsersService';
 import SubscriptionLimitAlert from '@/components/subscription/SubscriptionLimitAlert.vue';
 
