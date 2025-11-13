@@ -10,6 +10,7 @@ from slowapi.errors import RateLimitExceeded
 import logging
 
 from .core.config import settings
+from .core.logging_config import setup_logging
 from .db.base import Base, engine, get_db
 from .core.security import oauth2_scheme
 from .middleware.restaurant import RestaurantMiddleware
@@ -29,55 +30,14 @@ from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 
-# Configure logging
-from logging.handlers import RotatingFileHandler
-import os
-from pathlib import Path
-
-# Get the backend directory (parent of app directory)
-BACKEND_DIR = Path(__file__).parent.parent
-LOGS_DIR = BACKEND_DIR / 'logs'
-
-# Create logs directory if it doesn't exist
-LOGS_DIR.mkdir(exist_ok=True)
-
-# Configure rotating file handler (10MB per file, keep 5 backups)
-file_handler = RotatingFileHandler(
-    str(LOGS_DIR / 'app.log'),
-    maxBytes=10*1024*1024,  # 10MB
-    backupCount=5
+# Setup logging using centralized configuration
+setup_logging(
+    log_level=getattr(settings, 'LOG_LEVEL', 'INFO'),
+    log_file_max_bytes=getattr(settings, 'LOG_FILE_MAX_BYTES', 10 * 1024 * 1024),
+    log_file_backup_count=getattr(settings, 'LOG_FILE_BACKUP_COUNT', 5)
 )
-file_handler.setLevel(logging.DEBUG)
-file_handler.setFormatter(logging.Formatter(
-    '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-))
-
-# Console handler
-console_handler = logging.StreamHandler()
-console_handler.setLevel(logging.INFO)
-console_handler.setFormatter(logging.Formatter(
-    '%(asctime)s - %(levelname)s - %(message)s'
-))
-
-# Configure root logger directly (bypassing basicConfig)
-root_logger = logging.getLogger()
-root_logger.setLevel(logging.DEBUG)
-
-# Remove any existing handlers to avoid duplicates
-root_logger.handlers.clear()
-
-# Add our handlers
-root_logger.addHandler(console_handler)
-root_logger.addHandler(file_handler)
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-
-# Log startup message to verify logging is working
-logger.info("=" * 50)
-logger.info("Application starting - Logging initialized")
-logger.info(f"Log file location: {LOGS_DIR / 'app.log'}")
-logger.info("=" * 50)
 
 # Import models to ensure they are registered with SQLAlchemy
 from .models.restaurant import Restaurant

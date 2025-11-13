@@ -12,7 +12,7 @@ from .routers import menu, auth, user, categories, tables, orders, cash_register
 from . import admin
 from .subscription import router as subscription_router
 from .sysadmin_payments import router as sysadmin_payments_router
-from .v1.endpoints import menu_import
+from .v1.endpoints import menu_import, health
 
 # Include all routers
 api_router.include_router(auth.router)
@@ -29,3 +29,4 @@ api_router.include_router(subscription_router)  # Subscription management
 api_router.include_router(sysadmin_payments_router)  # SysAdmin payment management
 api_router.include_router(reports.router)  # Reports and analytics
 api_router.include_router(admin.router)  # SysAdmin management
+api_router.include_router(health.router)  # Health check endpoints
