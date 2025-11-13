@@ -167,5 +167,4 @@ function openChangePasswordModal() {
 function handlePasswordChanged() {
   showSuccess(t('app.profile.change_password.success'));
 }
-
 </script>
