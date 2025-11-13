@@ -13,6 +13,7 @@ from ...schemas.user import UserCreate, User as UserSchema, ChangePasswordReques
 from ...core.security import create_access_token, create_refresh_token, decode_token, verify_password, get_password_hash
 from ...core.config import settings
 from ...services import user as user_service
+from ...services.user import get_current_active_user
 from ...core.exceptions import ValidationError, UnauthorizedError, ConflictError
 from ...middleware.restaurant import get_restaurant_from_request
 
@@ -232,3 +233,20 @@ async def change_password(
     except Exception as e:
         db.rollback()
         raise ValidationError(f"Error al actualizar la contraseña: {str(e)}")
+
+
+@router.get("/me", response_model=UserSchema)
+async def get_current_user_info(
+    current_user: UserModel = Depends(get_current_active_user)
+) -> UserModel:
+    """
+    Get current authenticated user information.
+    
+    Returns the user profile including:
+    - email
+    - full_name
+    - role
+    - restaurant_id (if applicable)
+    - is_active status
+    """
+    return current_user

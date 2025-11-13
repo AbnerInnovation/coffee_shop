@@ -17,15 +17,22 @@ class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
     
     # Security
-    SECRET_KEY: str = Field(..., env='SECRET_KEY')
+    SECRET_KEY: str = Field(default="test-secret-key-min-32-chars-long-for-development-only", env='SECRET_KEY')
     ALGORITHM: str = Field("HS256", env='ALGORITHM')
     ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(30, env='ACCESS_TOKEN_EXPIRE_MINUTES')
     
     # Database
-    MYSQL_SERVER: str = Field(..., env='MYSQL_SERVER')
-    MYSQL_USER: str = Field(..., env='MYSQL_USER')
-    MYSQL_PASSWORD: str = Field(..., env='MYSQL_PASSWORD')
-    MYSQL_DB: str = Field(..., env='MYSQL_DB')
+    MYSQL_SERVER: str = Field(default="localhost", env='MYSQL_SERVER')
+    MYSQL_USER: str = Field(default="root", env='MYSQL_USER')
+    MYSQL_PASSWORD: str = Field(default="", env='MYSQL_PASSWORD')
+    MYSQL_DB: str = Field(default="coffee_shop", env='MYSQL_DB')
+    MYSQL_PORT: int = Field(default=3306, env='MYSQL_PORT')
+    
+    # Database Pool Settings
+    DB_POOL_SIZE: int = Field(default=5, env='DB_POOL_SIZE')
+    DB_MAX_OVERFLOW: int = Field(default=10, env='DB_MAX_OVERFLOW')
+    DB_POOL_RECYCLE: int = Field(default=3600, env='DB_POOL_RECYCLE')
+    DB_ECHO: bool = Field(default=False, env='DB_ECHO')
     
     # Frontend
     FRONTEND_URL: str = Field("http://localhost:3000", env='FRONTEND_URL')

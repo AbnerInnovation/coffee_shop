@@ -9,7 +9,7 @@ from typing import Dict, Any
 from pydantic import BaseModel, Field
 import logging
 
-from app.db.database import get_db
+from app.db.base import get_db
 from app.models.menu import Category, MenuItem
 from app.models.restaurant import Restaurant
 from app.models.order import Order

@@ -14,10 +14,10 @@ class Settings(BaseSettings):
     DEBUG: bool = False
 
     # Database
-    MYSQL_SERVER: str
-    MYSQL_USER: str
-    MYSQL_PASSWORD: str
-    MYSQL_DB: str
+    MYSQL_SERVER: str = "localhost"
+    MYSQL_USER: str = "root"
+    MYSQL_PASSWORD: str = ""
+    MYSQL_DB: str = "coffee_shop"
     MYSQL_PORT: int = 3306
     
     # Database Pool Settings
@@ -27,7 +27,7 @@ class Settings(BaseSettings):
     DB_ECHO: bool = False  # SQL logging
 
     # Security
-    SECRET_KEY: str
+    SECRET_KEY: str = "test-secret-key-min-32-chars-long-for-development-only"
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8  # 8 days
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
