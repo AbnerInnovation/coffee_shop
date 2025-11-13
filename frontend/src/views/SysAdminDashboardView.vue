@@ -21,305 +21,122 @@
     </div>
 
     <!-- Dashboard Content -->
-    <div v-else>
+    <div v-else-if="stats">
       <!-- Quick Stats Grid -->
-      <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        <!-- Total Restaurants -->
-        <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
-          <div class="p-5">
-            <div class="flex items-center">
-              <div class="flex-shrink-0">
-                <BuildingStorefrontIcon class="h-6 w-6 text-gray-400" />
-              </div>
-              <div class="ml-5 w-0 flex-1">
-                <dl>
-                  <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
-                    {{ t('app.sysadmin.dashboard.total_restaurants') }}
-                  </dt>
-                  <dd class="flex items-baseline">
-                    <div class="text-2xl font-semibold text-gray-900 dark:text-white">
-                      {{ stats?.restaurants.total || 0 }}
-                    </div>
-                    <div class="ml-2 flex items-baseline text-sm font-semibold text-green-600">
-                      +{{ stats?.restaurants.new_last_30_days || 0 }} {{ t('app.sysadmin.dashboard.this_month') }}
-                    </div>
-                  </dd>
-                </dl>
-              </div>
-            </div>
-          </div>
-        </div>
+      <div class="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
+        <StatCard
+          :icon="BuildingStorefrontIcon"
+          :label="t('app.sysadmin.dashboard.total_restaurants')"
+          :value="stats.restaurants.total || 0"
+          :subtitle="`+${stats.restaurants.new_last_30_days || 0} ${t('app.sysadmin.dashboard.this_month')}`"
+          subtitle-class="text-green-600"
+        />
 
-        <!-- Active Restaurants -->
-        <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
-          <div class="p-5">
-            <div class="flex items-center">
-              <div class="flex-shrink-0">
-                <CheckCircleIcon class="h-6 w-6 text-green-400" />
-              </div>
-              <div class="ml-5 w-0 flex-1">
-                <dl>
-                  <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
-                    {{ t('app.sysadmin.dashboard.active_restaurants') }}
-                  </dt>
-                  <dd class="flex items-baseline">
-                    <div class="text-2xl font-semibold text-gray-900 dark:text-white">
-                      {{ stats?.restaurants.active || 0 }}
-                    </div>
-                    <div class="ml-2 flex items-baseline text-sm text-gray-500 dark:text-gray-400">
-                      / {{ stats?.restaurants.total || 0 }}
-                    </div>
-                  </dd>
-                </dl>
-              </div>
-            </div>
-          </div>
-        </div>
+        <StatCard
+          :icon="CheckCircleIcon"
+          icon-class="text-green-400"
+          :label="t('app.sysadmin.dashboard.active_restaurants')"
+          :value="stats.restaurants.active || 0"
+          :subtitle="`/ ${stats.restaurants.total || 0}`"
+        />
 
-        <!-- Monthly Recurring Revenue -->
-        <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
-          <div class="p-5">
-            <div class="flex items-center">
-              <div class="flex-shrink-0">
-                <CurrencyDollarIcon class="h-6 w-6 text-green-400" />
-              </div>
-              <div class="ml-5 w-0 flex-1">
-                <dl>
-                  <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
-                    {{ t('app.sysadmin.dashboard.mrr') }}
-                  </dt>
-                  <dd class="text-2xl font-semibold text-gray-900 dark:text-white">
-                    ${{ formatCurrency(stats?.revenue.mrr || 0) }}
-                  </dd>
-                </dl>
-              </div>
-            </div>
-          </div>
-        </div>
+        <StatCard
+          :icon="CurrencyDollarIcon"
+          icon-class="text-green-400"
+          :label="t('app.sysadmin.dashboard.mrr')"
+          :value="`${formatCurrency(stats.revenue.mrr || 0)}`"
+        />
 
-        <!-- Pending Payments -->
-        <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
-          <div class="p-5">
-            <div class="flex items-center">
-              <div class="flex-shrink-0">
-                <ClockIcon class="h-6 w-6 text-amber-400" />
-              </div>
-              <div class="ml-5 w-0 flex-1">
-                <dl>
-                  <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
-                    {{ t('app.sysadmin.dashboard.pending_payments') }}
-                  </dt>
-                  <dd class="text-2xl font-semibold text-gray-900 dark:text-white">
-                    {{ stats?.revenue.pending_payments || 0 }}
-                  </dd>
-                </dl>
-              </div>
-            </div>
-          </div>
-        </div>
+        <StatCard
+          :icon="ClockIcon"
+          icon-class="text-amber-400"
+          :label="t('app.sysadmin.dashboard.pending_payments')"
+          :value="stats.revenue.pending_payments || 0"
+        />
       </div>
 
       <!-- Secondary Stats -->
-      <div class="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        <!-- Trial Restaurants -->
-        <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
-          <div class="p-5">
-            <div class="flex items-center">
-              <div class="flex-shrink-0">
-                <SparklesIcon class="h-6 w-6 text-blue-400" />
-              </div>
-              <div class="ml-5 w-0 flex-1">
-                <dl>
-                  <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
-                    {{ t('app.sysadmin.dashboard.trial_restaurants') }}
-                  </dt>
-                  <dd class="text-2xl font-semibold text-gray-900 dark:text-white">
-                    {{ stats?.restaurants.trial || 0 }}
-                  </dd>
-                </dl>
-              </div>
-            </div>
-          </div>
-        </div>
+      <div class="mt-6 grid grid-cols-2 gap-3 sm:gap-5 sm:grid-cols-3">
+        <StatCard
+          :icon="SparklesIcon"
+          icon-class="text-blue-400"
+          :label="t('app.sysadmin.dashboard.trial_restaurants')"
+          :value="stats.restaurants.trial || 0"
+        />
 
-        <!-- Suspended Restaurants -->
-        <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
-          <div class="p-5">
-            <div class="flex items-center">
-              <div class="flex-shrink-0">
-                <ExclamationTriangleIcon class="h-6 w-6 text-red-400" />
-              </div>
-              <div class="ml-5 w-0 flex-1">
-                <dl>
-                  <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
-                    {{ t('app.sysadmin.dashboard.suspended_restaurants') }}
-                  </dt>
-                  <dd class="text-2xl font-semibold text-gray-900 dark:text-white">
-                    {{ stats?.restaurants.suspended || 0 }}
-                  </dd>
-                </dl>
-              </div>
-            </div>
-          </div>
-        </div>
+        <StatCard
+          :icon="ExclamationTriangleIcon"
+          icon-class="text-red-400"
+          :label="t('app.sysadmin.dashboard.suspended_restaurants')"
+          :value="stats.restaurants.suspended || 0"
+        />
 
-        <!-- Total Users -->
-        <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
-          <div class="p-5">
-            <div class="flex items-center">
-              <div class="flex-shrink-0">
-                <UsersIcon class="h-6 w-6 text-indigo-400" />
-              </div>
-              <div class="ml-5 w-0 flex-1">
-                <dl>
-                  <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
-                    {{ t('app.sysadmin.dashboard.total_users') }}
-                  </dt>
-                  <dd class="text-2xl font-semibold text-gray-900 dark:text-white">
-                    {{ stats?.users.total || 0 }}
-                  </dd>
-                </dl>
-              </div>
-            </div>
-          </div>
-        </div>
+        <StatCard
+          :icon="UsersIcon"
+          icon-class="text-indigo-400"
+          :label="t('app.sysadmin.dashboard.total_users')"
+          :value="stats.users.total || 0"
+        />
       </div>
 
       <!-- Activity Stats -->
-      <div class="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2">
-        <!-- Orders (Last 30 Days) -->
-        <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
-          <div class="p-5">
-            <div class="flex items-center">
-              <div class="flex-shrink-0">
-                <ShoppingBagIcon class="h-6 w-6 text-purple-400" />
-              </div>
-              <div class="ml-5 w-0 flex-1">
-                <dl>
-                  <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
-                    {{ t('app.sysadmin.dashboard.orders_30d') }}
-                  </dt>
-                  <dd class="text-2xl font-semibold text-gray-900 dark:text-white">
-                    {{ stats?.activity.orders_30d || 0 }}
-                  </dd>
-                </dl>
-              </div>
-            </div>
-          </div>
-        </div>
+      <div class="mt-6 grid grid-cols-2 gap-3 sm:gap-5">
+        <StatCard
+          :icon="ShoppingBagIcon"
+          icon-class="text-purple-400"
+          :label="t('app.sysadmin.dashboard.orders_30d')"
+          :value="stats.activity.orders_30d || 0"
+        />
 
-        <!-- Revenue (Last 30 Days) -->
-        <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
-          <div class="p-5">
-            <div class="flex items-center">
-              <div class="flex-shrink-0">
-                <BanknotesIcon class="h-6 w-6 text-green-400" />
-              </div>
-              <div class="ml-5 w-0 flex-1">
-                <dl>
-                  <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
-                    {{ t('app.sysadmin.dashboard.revenue_30d') }}
-                  </dt>
-                  <dd class="text-2xl font-semibold text-gray-900 dark:text-white">
-                    ${{ formatCurrency(stats?.revenue.revenue_30d || 0) }}
-                  </dd>
-                </dl>
-              </div>
-            </div>
-          </div>
-        </div>
+        <StatCard
+          :icon="BanknotesIcon"
+          icon-class="text-green-400"
+          :label="t('app.sysadmin.dashboard.revenue_30d')"
+          :value="`$${formatCurrency(stats.revenue.revenue_30d || 0)}`"
+        />
       </div>
 
       <!-- Subscription Distribution -->
-      <div class="mt-6 bg-white dark:bg-gray-800 shadow rounded-lg">
-        <div class="p-6">
-          <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">
-            {{ t('app.sysadmin.dashboard.subscription_distribution') }}
-          </h3>
-          <div class="space-y-3">
-            <div
-              v-for="(count, plan) in stats?.subscription_distribution"
-              :key="plan"
-              class="flex items-center justify-between"
-            >
-              <span class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ plan }}</span>
-              <div class="flex items-center gap-3">
-                <div class="w-32 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                  <div
-                    class="bg-primary-600 h-2 rounded-full"
-                    :style="{ width: `${(count / (stats?.restaurants.total || 1)) * 100}%` }"
-                  ></div>
-                </div>
-                <span class="text-sm font-semibold text-gray-900 dark:text-white w-8 text-right">
-                  {{ count }}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
+      <div class="mt-6">
+        <SubscriptionDistribution
+          :title="t('app.sysadmin.dashboard.subscription_distribution')"
+          :distribution="stats.subscription_distribution || {}"
+          :total="stats.restaurants.total || 0"
+        />
       </div>
 
       <!-- Quick Actions -->
       <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <router-link
+        <QuickActionCard
+          :icon="BuildingStorefrontIcon"
+          :title="t('app.sysadmin.dashboard.manage_restaurants')"
+          :description="t('app.sysadmin.dashboard.view_all_restaurants')"
           to="/sysadmin"
-          class="relative rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-6 py-5 shadow-sm flex items-center space-x-3 hover:border-gray-400 dark:hover:border-gray-600 focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary-500"
-        >
-          <div class="flex-shrink-0">
-            <BuildingStorefrontIcon class="h-6 w-6 text-primary-600" />
-          </div>
-          <div class="flex-1 min-w-0">
-            <span class="absolute inset-0" aria-hidden="true"></span>
-            <p class="text-sm font-medium text-gray-900 dark:text-white">
-              {{ t('app.sysadmin.dashboard.manage_restaurants') }}
-            </p>
-            <p class="text-sm text-gray-500 dark:text-gray-400 truncate">
-              {{ t('app.sysadmin.dashboard.view_all_restaurants') }}
-            </p>
-          </div>
-        </router-link>
+        />
 
-        <router-link
+        <QuickActionCard
+          :icon="CreditCardIcon"
+          icon-class="text-green-600"
+          :title="t('app.sysadmin.dashboard.pending_payments')"
+          :description="`${stats.revenue.pending_payments || 0} ${t('app.sysadmin.dashboard.payments_due')}`"
           to="/sysadmin/payments"
-          class="relative rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-6 py-5 shadow-sm flex items-center space-x-3 hover:border-gray-400 dark:hover:border-gray-600 focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary-500"
-        >
-          <div class="flex-shrink-0">
-            <CreditCardIcon class="h-6 w-6 text-green-600" />
-          </div>
-          <div class="flex-1 min-w-0">
-            <span class="absolute inset-0" aria-hidden="true"></span>
-            <p class="text-sm font-medium text-gray-900 dark:text-white">
-              {{ t('app.sysadmin.dashboard.pending_payments') }}
-            </p>
-            <p class="text-sm text-gray-500 dark:text-gray-400 truncate">
-              {{ stats?.revenue.pending_payments || 0 }} {{ t('app.sysadmin.dashboard.payments_due') }}
-            </p>
-          </div>
-        </router-link>
+        />
 
-        <button
-          @click="refreshStats"
-          class="relative rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-6 py-5 shadow-sm flex items-center space-x-3 hover:border-gray-400 dark:hover:border-gray-600 focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary-500"
-        >
-          <div class="flex-shrink-0">
-            <ArrowPathIcon class="h-6 w-6 text-gray-600" :class="{ 'animate-spin': loading }" />
-          </div>
-          <div class="flex-1 min-w-0 text-left">
-            <p class="text-sm font-medium text-gray-900 dark:text-white">
-              {{ t('app.sysadmin.dashboard.refresh_stats') }}
-            </p>
-            <p class="text-sm text-gray-500 dark:text-gray-400 truncate">
-              {{ t('app.sysadmin.dashboard.update_data') }}
-            </p>
-          </div>
-        </button>
+        <QuickActionCard
+          :icon="ArrowPathIcon"
+          icon-class="text-gray-600"
+          :title="t('app.sysadmin.dashboard.refresh_stats')"
+          :description="t('app.sysadmin.dashboard.update_data')"
+          is-button
+          @click="handleRefresh"
+        />
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import {
   BuildingStorefrontIcon,
@@ -334,37 +151,34 @@ import {
   CreditCardIcon,
   ArrowPathIcon
 } from '@heroicons/vue/24/outline';
-import { adminService, type GlobalStats } from '@/services/adminService';
+import { useSysAdminStats } from '@/composables/useSysAdminStats';
 import { useToast } from '@/composables/useToast';
 import { formatCurrency } from '@/utils/priceHelpers';
+import StatCard from '@/components/sysadmin/StatCard.vue';
+import SubscriptionDistribution from '@/components/sysadmin/SubscriptionDistribution.vue';
+import QuickActionCard from '@/components/sysadmin/QuickActionCard.vue';
 
 const { t } = useI18n();
 const { showError } = useToast();
 
-const stats = ref<GlobalStats | null>(null);
-const loading = ref(false);
-const error = ref<string | null>(null);
+// Composable
+const {
+  stats,
+  loading,
+  error,
+  loadStats,
+  refreshStats
+} = useSysAdminStats();
 
-
-const loadStats = async () => {
-  loading.value = true;
-  error.value = null;
-  
-  try {
-    stats.value = await adminService.getGlobalStats();
-  } catch (err: any) {
-    const errorMessage: string = err.message || t('app.sysadmin.dashboard.error_loading_stats');
-    error.value = errorMessage;
-    showError(errorMessage);
-  } finally {
-    loading.value = false;
+// Handlers
+const handleRefresh = async () => {
+  await refreshStats();
+  if (error.value) {
+    showError(error.value);
   }
 };
 
-const refreshStats = () => {
-  loadStats();
-};
-
+// Initialize
 onMounted(() => {
   loadStats();
 });
