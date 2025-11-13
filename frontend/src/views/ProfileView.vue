@@ -30,59 +30,48 @@
         <div class="px-4 py-4 sm:px-6 sm:py-6">
           <div class="grid grid-cols-2 gap-3 sm:gap-4">
             <!-- Full Name -->
-            <div class="col-span-2">
-              <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                {{ t('app.profile.fields.full_name') }}
-              </label>
-              <div class="text-sm sm:text-base text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 px-3 py-2 sm:px-4 sm:py-3 rounded-lg">
-                {{ user?.full_name || user?.name || '-' }}
-              </div>
-            </div>
+            <ProfileField 
+              :label="t('app.profile.fields.full_name')" 
+              :value="user?.full_name || user?.name"
+              full-width
+            />
 
             <!-- Email -->
-            <div class="col-span-2">
-              <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                {{ t('app.profile.fields.email') }}
-              </label>
-              <div class="text-sm sm:text-base text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 px-3 py-2 sm:px-4 sm:py-3 rounded-lg">
-                {{ user?.email || '-' }}
-              </div>
-            </div>
+            <ProfileField 
+              :label="t('app.profile.fields.email')" 
+              :value="user?.email"
+              full-width
+            />
 
             <!-- Role -->
-            <div>
-              <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                {{ t('app.profile.fields.role') }}
-              </label>
+            <ProfileField :label="t('app.profile.fields.role')">
               <div class="flex items-center gap-1.5 flex-wrap">
-                <span :class="getRoleBadgeClass(user?.role)" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold">
-                  {{ t(`app.users.roles.${user?.role}`) }}
-                </span>
-                <span v-if="user?.role === 'staff' && user?.staff_type" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                  {{ t(`app.users.staff_types.${user?.staff_type}`) }}
-                </span>
+                <ProfileBadge 
+                  :variant="getRoleBadgeVariant(user?.role)"
+                  :label="t(`app.users.roles.${user?.role}`)"
+                />
+                <ProfileBadge 
+                  v-if="user?.role === 'staff' && user?.staff_type"
+                  variant="staff"
+                  :label="t(`app.users.staff_types.${user?.staff_type}`)"
+                />
               </div>
-            </div>
+            </ProfileField>
 
             <!-- Status -->
-            <div>
-              <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                {{ t('app.profile.fields.status') }}
-              </label>
-              <span :class="user?.is_active ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold">
-                {{ user?.is_active ? t('app.users.status.active') : t('app.users.status.inactive') }}
-              </span>
-            </div>
+            <ProfileField :label="t('app.profile.fields.status')">
+              <ProfileBadge 
+                :variant="getStatusBadgeVariant(user?.is_active)"
+                :label="user?.is_active ? t('app.users.status.active') : t('app.users.status.inactive')"
+              />
+            </ProfileField>
 
             <!-- Created At -->
-            <div class="col-span-2">
-              <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                {{ t('app.profile.fields.member_since') }}
-              </label>
-              <div class="text-sm sm:text-base text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 px-3 py-2 sm:px-4 sm:py-3 rounded-lg">
-                {{ formatDate(user?.created_at) }}
-              </div>
-            </div>
+            <ProfileField 
+              :label="t('app.profile.fields.member_since')" 
+              :value="formatDate(user?.created_at)"
+              full-width
+            />
           </div>
         </div>
 
@@ -109,62 +98,35 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
-import { useI18n } from 'vue-i18n';
-import { KeyIcon } from '@heroicons/vue/24/outline';
-import { useAuthStore } from '@/stores/auth';
-import { useToast } from '@/composables/useToast';
-import ChangePasswordModal from '@/components/profile/ChangePasswordModal.vue';
+import { ref, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { KeyIcon } from '@heroicons/vue/24/outline'
+import { useAuthStore } from '@/stores/auth'
+import { useToast } from '@/composables/useToast'
+import { useProfileHelpers } from '@/composables/useProfileHelpers'
+import ChangePasswordModal from '@/components/profile/ChangePasswordModal.vue'
+import ProfileField from '@/components/profile/ProfileField.vue'
+import ProfileBadge from '@/components/profile/ProfileBadge.vue'
 
-const { t } = useI18n();
-const authStore = useAuthStore();
-const { showSuccess } = useToast();
+const { t } = useI18n()
+const authStore = useAuthStore()
+const { showSuccess } = useToast()
 
-const showChangePasswordModal = ref(false);
+const showChangePasswordModal = ref(false)
+const user = computed(() => authStore.user)
 
-const user = computed(() => authStore.user);
-
-const userInitials = computed(() => {
-  if (!user.value) return 'U';
-  const name = user.value.full_name || user.value.name || user.value.email;
-  return name
-    .split(' ')
-    .map((n) => n[0])
-    .join('')
-    .toUpperCase()
-    .substring(0, 2);
-});
-
-function getRoleBadgeClass(role: string | undefined): string {
-  switch (role) {
-    case 'sysadmin':
-      return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
-    case 'admin':
-      return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200';
-    case 'staff':
-      return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
-    case 'customer':
-      return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
-    default:
-      return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
-  }
-}
-
-function formatDate(dateString: string | undefined): string {
-  if (!dateString) return '-';
-  const date = new Date(dateString);
-  return date.toLocaleDateString('es-ES', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  });
-}
+const { 
+  userInitials, 
+  formatDate, 
+  getRoleBadgeVariant, 
+  getStatusBadgeVariant 
+} = useProfileHelpers(user)
 
 function openChangePasswordModal() {
-  showChangePasswordModal.value = true;
+  showChangePasswordModal.value = true
 }
 
 function handlePasswordChanged() {
-  showSuccess(t('app.profile.change_password.success'));
+  showSuccess(t('app.profile.change_password.success'))
 }
 </script>
