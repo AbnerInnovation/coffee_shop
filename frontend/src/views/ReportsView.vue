@@ -15,26 +15,6 @@
               {{ dashboard.period.start_date }} - {{ dashboard.period.end_date }}
             </p>
           </div>
-          
-          <!-- Action Buttons (Hidden) -->
-          <!-- <div class="mt-4 sm:mt-0 flex space-x-3">
-            <button
-              @click="exportToCSV"
-              :disabled="loading"
-              class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
-            >
-              <ArrowDownTrayIcon class="h-5 w-5 mr-2" />
-              {{ t('app.reports.export_csv') }}
-            </button>
-            <button
-              @click="printReport"
-              :disabled="loading"
-              class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
-            >
-              <PrinterIcon class="h-5 w-5 mr-2" />
-              {{ t('app.reports.print') }}
-            </button>
-          </div> -->
         </div>
 
         <!-- Period Selector -->
@@ -58,26 +38,20 @@
             </button>
           </div>
 
-          <!-- Custom Date Range (shown when custom is selected) -->
+          <!-- Custom Date Range -->
           <div v-if="selectedPeriod === 'custom'" class="w-full">
             <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-2">
-              <div class="flex-1">
-                <input
-                  v-model="customStartDate"
-                  type="date"
-                  class="block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm px-4 py-2.5"
-                  placeholder="Fecha inicio"
-                />
-              </div>
-              <span class="text-gray-500 dark:text-gray-400 text-sm text-center sm:text-left">{{ t('app.reports.to') }}</span>
-              <div class="flex-1">
-                <input
-                  v-model="customEndDate"
-                  type="date"
-                  class="block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm px-4 py-2.5"
-                  placeholder="Fecha fin"
-                />
-              </div>
+              <input
+                v-model="customStartDate"
+                type="date"
+                class="flex-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm px-4 py-2.5"
+              />
+              <span class="text-gray-500 dark:text-gray-400 text-sm">{{ t('app.reports.to') }}</span>
+              <input
+                v-model="customEndDate"
+                type="date"
+                class="flex-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm px-4 py-2.5"
+              />
               <button
                 @click="loadDashboard"
                 class="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 w-full sm:w-auto"
@@ -111,94 +85,52 @@
       <div v-else-if="dashboard" class="space-y-4 sm:space-y-6">
         <!-- Sales Summary Cards -->
         <div class="grid grid-cols-2 gap-3 sm:gap-4 sm:grid-cols-3">
-          <!-- Total Sales -->
-          <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
-            <div class="p-3">
-              <div class="flex items-center gap-2">
-                <div class="flex-shrink-0">
-                  <CurrencyDollarIcon class="h-5 w-5 text-green-600" />
-                </div>
-                <div class="flex-1 min-w-0">
-                  <p class="text-xs font-medium text-gray-500 dark:text-gray-400 truncate mb-0.5">
-                    {{ t('app.reports.total_sales') }}
-                  </p>
-                  <p class="text-lg font-bold text-gray-900 dark:text-white">
-                    ${{ formatNumber(dashboard.sales_summary.total_sales) }}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Total Tickets -->
-          <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
-            <div class="p-3">
-              <div class="flex items-center gap-2">
-                <div class="flex-shrink-0">
-                  <ReceiptPercentIcon class="h-5 w-5 text-blue-600" />
-                </div>
-                <div class="flex-1 min-w-0">
-                  <p class="text-xs font-medium text-gray-500 dark:text-gray-400 truncate mb-0.5">
-                    {{ t('app.reports.total_tickets') }}
-                  </p>
-                  <p class="text-lg font-bold text-gray-900 dark:text-white">
-                    {{ formatNumber(dashboard.sales_summary.total_tickets, 0) }}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Average Ticket -->
-          <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg col-span-2 sm:col-span-1">
-            <div class="p-3">
-              <div class="flex items-center gap-2">
-                <div class="flex-shrink-0">
-                  <ChartBarIcon class="h-5 w-5 text-purple-600" />
-                </div>
-                <div class="flex-1 min-w-0">
-                  <p class="text-xs font-medium text-gray-500 dark:text-gray-400 truncate mb-0.5">
-                    {{ t('app.reports.average_ticket') }}
-                  </p>
-                  <p class="text-lg font-bold text-gray-900 dark:text-white">
-                    ${{ formatNumber(dashboard.sales_summary.average_ticket) }}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
+          <StatCard
+            :icon="CurrencyDollarIcon"
+            :label="t('app.reports.total_sales')"
+            :value="dashboard.sales_summary.total_sales"
+            icon-color="green"
+          />
+          
+          <StatCard
+            :icon="ReceiptPercentIcon"
+            :label="t('app.reports.total_tickets')"
+            :value="dashboard.sales_summary.total_tickets"
+            :decimals="0"
+            prefix=""
+            icon-color="blue"
+          />
+          
+          <StatCard
+            :icon="ChartBarIcon"
+            :label="t('app.reports.average_ticket')"
+            :value="dashboard.sales_summary.average_ticket"
+            icon-color="purple"
+            full-width
+          />
         </div>
 
         <!-- Charts Row -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-          <!-- Top Products Chart -->
-          <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-3 sm:p-4">
-            <h3 class="text-sm sm:text-base font-medium text-gray-900 dark:text-white mb-3">
-              {{ t('app.reports.top_products') }}
-            </h3>
-            <div v-if="dashboard.top_products.length > 0" class="h-56 sm:h-64">
-              <Bar :data="topProductsChartData" :options="chartOptions" />
-            </div>
-            <div v-else class="text-center py-8 text-gray-500 dark:text-gray-400">
-              {{ t('app.reports.no_data') }}
-            </div>
-          </div>
+          <ChartCard
+            :title="t('app.reports.top_products')"
+            :has-data="dashboard.top_products.length > 0"
+            :empty-message="t('app.reports.no_data')"
+          >
+            <Bar :data="topProductsChartData" :options="barChartOptions" />
+          </ChartCard>
 
-          <!-- Payment Breakdown Chart -->
-          <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-3 sm:p-4">
-            <h3 class="text-sm sm:text-base font-medium text-gray-900 dark:text-white mb-3">
-              {{ t('app.reports.payment_breakdown') }}
-            </h3>
-            <div v-if="Object.keys(dashboard.payment_breakdown).length > 0">
-              <Doughnut :data="paymentChartData" :options="doughnutOptions" />
-            </div>
-            <div v-else class="text-center py-8 text-gray-500 dark:text-gray-400">
-              {{ t('app.reports.no_data') }}
-            </div>
-          </div>
+          <ChartCard
+            :title="t('app.reports.payment_breakdown')"
+            :has-data="Object.keys(dashboard.payment_breakdown).length > 0"
+            :empty-message="t('app.reports.no_data')"
+            height="sm"
+          >
+            <Doughnut :data="paymentChartData" :options="doughnutOptions" />
+          </ChartCard>
         </div>
 
-        <!-- Sales Trend Chart (Full Width) -->
+        <!-- Sales Trend Chart -->
         <div v-if="salesTrend" class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
           <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">
             {{ t('app.reports.sales_trend') }}
@@ -277,8 +209,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
-import { useI18n } from 'vue-i18n';
+import { onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -290,19 +222,21 @@ import {
   Title,
   Tooltip,
   Legend
-} from 'chart.js';
-import { Bar, Doughnut, Line } from 'vue-chartjs';
+} from 'chart.js'
+import { Bar, Doughnut, Line } from 'vue-chartjs'
 import {
   CurrencyDollarIcon,
   ReceiptPercentIcon,
   ChartBarIcon,
   BanknotesIcon,
   ExclamationTriangleIcon,
-  CheckCircleIcon,
-  ArrowDownTrayIcon,
-  PrinterIcon
-} from '@heroicons/vue/24/outline';
-import reportsService, { type DashboardSummary, type SalesTrendReport, type PeriodType } from '@/services/reportsService';
+  CheckCircleIcon
+} from '@heroicons/vue/24/outline'
+import { useReportsData } from '@/composables/useReportsData'
+import { useReportsCharts } from '@/composables/useReportsCharts'
+import { useChartConfig } from '@/composables/useChartConfig'
+import StatCard from '@/components/reports/StatCard.vue'
+import ChartCard from '@/components/reports/ChartCard.vue'
 
 // Register Chart.js components
 ChartJS.register(
@@ -315,394 +249,68 @@ ChartJS.register(
   Title,
   Tooltip,
   Legend
-);
+)
 
-const { t } = useI18n();
+const { t } = useI18n()
 
-// Helper function to format numbers with thousands separator
-const formatNumber = (num: number, decimals: number = 2): string => {
-  return num.toLocaleString('es-MX', {
-    minimumFractionDigits: decimals,
-    maximumFractionDigits: decimals
-  });
-};
+// Data management
+const {
+  loading,
+  error,
+  dashboard,
+  salesTrend,
+  selectedPeriod,
+  customStartDate,
+  customEndDate,
+  periods,
+  handlePeriodChange,
+  loadDashboard
+} = useReportsData()
 
-// State
-const loading = ref(false);
-const error = ref<string | null>(null);
-const dashboard = ref<DashboardSummary | null>(null);
-const salesTrend = ref<SalesTrendReport | null>(null);
-const selectedPeriod = ref<PeriodType>('today');
-const customStartDate = ref('');
-const customEndDate = ref('');
+// Chart data
+const {
+  topProductsChartData,
+  paymentChartData,
+  salesTrendChartData
+} = useReportsCharts(dashboard, salesTrend)
 
-// Period options
-const periods = [
-  { value: 'today', label: t('app.reports.today') },
-  { value: 'week', label: t('app.reports.week') },
-  { value: 'month', label: t('app.reports.month') },
-  { value: 'custom', label: t('app.reports.custom') }
-];
-
-// Chart Data
-const topProductsChartData = computed(() => {
-  if (!dashboard.value) return { labels: [], datasets: [] };
-  
-  return {
-    labels: dashboard.value.top_products.map(p => `${p.name} (${p.category_name})`),
-    datasets: [
-      {
-        label: t('app.reports.quantity_sold'),
-        data: dashboard.value.top_products.map(p => p.quantity_sold),
-        backgroundColor: 'rgba(79, 70, 229, 0.8)',
-        borderColor: 'rgba(79, 70, 229, 1)',
-        borderWidth: 1
-      }
-    ]
-  };
-});
-
-const paymentChartData = computed(() => {
-  if (!dashboard.value) return { labels: [], datasets: [] };
-  
-  const breakdown = dashboard.value.payment_breakdown;
-  const labels = Object.keys(breakdown).map(key => t(`app.reports.payment_${key}`));
-  const data = Object.values(breakdown).map(v => v.amount);
-  
-  return {
-    labels,
-    datasets: [
-      {
-        data,
-        backgroundColor: [
-          'rgba(34, 197, 94, 0.8)',
-          'rgba(59, 130, 246, 0.8)',
-          'rgba(168, 85, 247, 0.8)',
-          'rgba(251, 146, 60, 0.8)'
-        ],
-        borderColor: [
-          'rgba(34, 197, 94, 1)',
-          'rgba(59, 130, 246, 1)',
-          'rgba(168, 85, 247, 1)',
-          'rgba(251, 146, 60, 1)'
-        ],
-        borderWidth: 1
-      }
-    ]
-  };
-});
-
-const salesTrendChartData = computed(() => {
-  if (!salesTrend.value) return { labels: [], datasets: [] };
-  
-  return {
-    labels: salesTrend.value.trend.map(t => t.date),
-    datasets: [
-      {
-        label: t('app.reports.daily_sales'),
-        data: salesTrend.value.trend.map(t => t.total_sales),
-        borderColor: 'rgba(79, 70, 229, 1)',
-        backgroundColor: 'rgba(79, 70, 229, 0.1)',
-        tension: 0.4,
-        fill: true
-      }
-    ]
-  };
-});
-
-// Chart Options
-const chartOptions = {
-  responsive: true,
-  maintainAspectRatio: false, // Allow custom height
-  indexAxis: 'y' as const, // Horizontal bar chart for better mobile view
-  plugins: {
-    legend: {
-      display: false
-    },
-    tooltip: {
-      callbacks: {
-        label: function(context: any) {
-          return `${context.dataset.label}: ${context.parsed.x}`;
-        }
-      }
-    }
-  },
-  scales: {
-    x: {
-      beginAtZero: true,
-      ticks: {
-        precision: 0
-      }
-    },
-    y: {
-      ticks: {
-        autoSkip: false,
-        font: {
-          size: 11
-        },
-        color: '#6b7280' // Gray-500: balanced contrast for both light and dark mode
-      }
-    }
-  }
-};
-
-const doughnutOptions = {
-  responsive: true,
-  maintainAspectRatio: true,
-  plugins: {
-    legend: {
-      position: 'bottom' as const,
-      labels: {
-        color: '#6b7280', // Gray-500: balanced contrast for both modes
-        font: {
-          size: 13,
-          weight: 500
-        },
-        padding: 15,
-        generateLabels: function(chart: any) {
-          const data = chart.data;
-          if (data.labels.length && data.datasets.length) {
-            return data.labels.map((label: string, i: number) => {
-              const value = data.datasets[0].data[i];
-              const formattedValue = formatNumber(value);
-              return {
-                text: `${label}: $${formattedValue}`,
-                fillStyle: data.datasets[0].backgroundColor[i],
-                fontColor: '#6b7280', // Gray-500 for each label
-                hidden: false,
-                index: i
-              };
-            });
-          }
-          return [];
-        }
-      }
-    },
-    tooltip: {
-      callbacks: {
-        label: function(context: any) {
-          const label = context.label || '';
-          const value = context.parsed;
-          const formattedValue = formatNumber(value);
-          const percentage = context.dataset.data.reduce((a: number, b: number) => a + b, 0);
-          const percent = ((value / percentage) * 100).toFixed(1);
-          return `${label}: $${formattedValue} (${percent}%)`;
-        }
-      }
-    }
-  }
-};
-
-const lineChartOptions = {
-  responsive: true,
-  maintainAspectRatio: true,
-  plugins: {
-    legend: {
-      display: true,
-      position: 'top' as const,
-      labels: {
-        color: '#6b7280', // Gray-500 for better contrast
-        font: {
-          size: 13
-        }
-      }
-    }
-  },
-  scales: {
-    x: {
-      ticks: {
-        color: '#6b7280' // Gray-500 for x-axis labels (dates)
-      }
-    },
-    y: {
-      beginAtZero: true,
-      ticks: {
-        color: '#6b7280' // Gray-500 for y-axis labels (amounts)
-      }
-    }
-  }
-};
-
-// Methods
-function handlePeriodChange(period: string) {
-  selectedPeriod.value = period as PeriodType;
-  
-  // Only load dashboard automatically if not custom period
-  if (period !== 'custom') {
-    loadDashboard();
-  } else {
-    // Clear error when switching to custom
-    error.value = null;
-  }
-}
-
-async function loadDashboard() {
-  loading.value = true;
-  error.value = null;
-  
-  try {
-    const params: any = { period: selectedPeriod.value };
-    
-    if (selectedPeriod.value === 'custom') {
-      if (!customStartDate.value || !customEndDate.value) {
-        error.value = t('app.reports.error_custom_dates');
-        return;
-      }
-      params.start_date = customStartDate.value;
-      params.end_date = customEndDate.value;
-    }
-    
-    // Load dashboard data
-    dashboard.value = await reportsService.getDashboard(params);
-    
-    // Load sales trend (last 7 days for today, 30 for week/month)
-    const trendDays = selectedPeriod.value === 'today' ? 7 : 30;
-    salesTrend.value = await reportsService.getSalesTrend(trendDays);
-    
-  } catch (err: any) {
-    error.value = err.message || t('app.reports.error_generic');
-    console.error('Error loading dashboard:', err);
-  } finally {
-    loading.value = false;
-  }
-}
-
-function exportToCSV() {
-  if (dashboard.value) {
-    reportsService.exportDashboardToCSV(dashboard.value);
-  }
-}
-
-function printReport() {
-  reportsService.printDashboard();
-}
+// Chart configuration
+const {
+  formatNumber,
+  barChartOptions,
+  doughnutOptions,
+  lineChartOptions
+} = useChartConfig()
 
 // Lifecycle
 onMounted(() => {
-  loadDashboard();
-});
+  loadDashboard()
+})
 </script>
 
 <style scoped>
 @media print {
-  /* Hide buttons and navigation */
   button {
     display: none !important;
   }
   
-  /* Force light background and dark text for print */
   * {
     background: white !important;
     color: black !important;
     border-color: #d1d5db !important;
   }
   
-  /* Ensure cards have visible borders */
   .shadow {
     box-shadow: none !important;
     border: 1px solid #d1d5db !important;
   }
   
-  /* Make sure text is readable */
   h1, h2, h3, h4, h5, h6, p, span, div, dt, dd {
     color: black !important;
   }
   
-  /* Icons should be dark */
   svg {
     color: #374151 !important;
-  }
-  
-  /* Remove page padding for better use of space */
-  .min-h-screen {
-    min-height: auto !important;
-    padding: 0 !important;
-  }
-  
-  /* Reduce spacing */
-  .py-8 {
-    padding-top: 0.5rem !important;
-    padding-bottom: 0.5rem !important;
-  }
-  
-  .mb-8 {
-    margin-bottom: 1rem !important;
-  }
-  
-  .space-y-6 > * + * {
-    margin-top: 1rem !important;
-  }
-  
-  .gap-6 {
-    gap: 0.75rem !important;
-  }
-  
-  .gap-5 {
-    gap: 0.5rem !important;
-  }
-  
-  /* Reduce card padding */
-  .p-6, .p-5, .p-4 {
-    padding: 0.75rem !important;
-  }
-  
-  /* Compact header */
-  h1 {
-    font-size: 1.5rem !important;
-    margin-bottom: 0.25rem !important;
-  }
-  
-  h3 {
-    font-size: 1rem !important;
-    margin-bottom: 0.5rem !important;
-  }
-  
-  /* Adjust page breaks */
-  .grid {
-    page-break-inside: avoid;
-  }
-  
-  /* Compact grid spacing */
-  .grid-cols-1 {
-    gap: 0.5rem !important;
-  }
-}
-</style>
-
-<style>
-/* Global print styles - not scoped */
-@media print {
-  /* Hide navbar and other UI elements */
-  nav,
-  header,
-  .navbar,
-  [role="navigation"] {
-    display: none !important;
-  }
-  
-  /* Remove margins from body */
-  body {
-    margin: 0 !important;
-    padding: 0 !important;
-  }
-  
-  /* Ensure main content uses full width with minimal padding */
-  main {
-    margin: 0 !important;
-    padding: 0.5rem !important;
-  }
-  
-  /* Reduce container padding */
-  .max-w-7xl {
-    max-width: 100% !important;
-    padding-left: 0.5rem !important;
-    padding-right: 0.5rem !important;
-  }
-  
-  /* Compact page layout */
-  .px-4, .px-6, .px-8 {
-    padding-left: 0.5rem !important;
-    padding-right: 0.5rem !important;
   }
 }
 </style>
