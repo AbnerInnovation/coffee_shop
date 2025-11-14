@@ -289,8 +289,7 @@ const submitOrder = async () => {
           unit_price: item.unit_price
         })),
       notes: orderNotes.value || null,
-      customer_name: null,
-      user_id: null
+      customer_name: null
     };
 
     const createdOrder = await orderService.createOrder(orderData);

@@ -34,7 +34,7 @@ export interface OrderItemWithDetails {
   variant_name?: string;
   category?: string;
   quantity: number;
-  unit_price: number;
+  unit_price?: number; // Made optional to match DisplayOrderItem
   price?: number;
   notes?: string;
   special_instructions?: string;

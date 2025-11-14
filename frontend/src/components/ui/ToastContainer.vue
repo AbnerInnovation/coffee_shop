@@ -1,8 +1,12 @@
 <script setup lang="ts">
+import { ref } from 'vue';
 import { XMarkIcon } from '@heroicons/vue/20/solid';
-import { useToast } from '@/composables/useToast';
-
-const { toasts, removeToast } = useToast();
+// Note: This component is not currently used. The app uses vue-toastification instead.
+// If you need to use this, implement a proper toast management system.
+const toasts = ref<any[]>([]);
+const removeToast = (id: any) => {
+  toasts.value = toasts.value.filter(t => t.id !== id);
+};
 </script>
 
 <template>

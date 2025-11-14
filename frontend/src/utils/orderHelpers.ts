@@ -52,6 +52,7 @@ export interface OrderItemLocal {
  */
 export interface OrderWithLocalFields {
   id: number;
+  order_number?: string;
   status: BackendOrderStatus;
   customerName: string;
   table: string;

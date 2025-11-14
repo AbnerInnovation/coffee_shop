@@ -26,7 +26,7 @@ Object.defineProperty(window, 'matchMedia', {
 /**
  * Mock IntersectionObserver for components that use lazy loading
  */
-global.IntersectionObserver = class IntersectionObserver {
+(globalThis as any).IntersectionObserver = class IntersectionObserver {
   constructor() {}
   disconnect() {}
   observe() {}

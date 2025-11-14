@@ -1,6 +1,5 @@
-// Re-export all types from components for easier imports
-export type { MenuItem, MenuItemVariant } from '@/components/menu/MenuList.vue';
-export type { MenuItemFormData } from '@/components/menu/MenuItemForm.vue';
+// Re-export all types from type files for easier imports
+export type { MenuItem, MenuItemVariant, MenuItemFormData, MenuCategory, MenuItemIngredients } from './menu';
 
 // API Response Types
 export interface ApiResponse<T = any> {

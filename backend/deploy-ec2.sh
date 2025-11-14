@@ -356,7 +356,7 @@ verify_deployment() {
     # Health check
     log "Ejecutando health check..."
     if command -v curl &> /dev/null; then
-        if curl -f http://localhost:8001/health 2>/dev/null; then
+        if curl -f http://localhost:8001/api/v1/health 2>/dev/null; then
             echo "" | tee -a "$LOG_FILE"
             success "Health check exitoso"
         else
@@ -366,7 +366,7 @@ verify_deployment() {
         fi
     else
         warning "curl no está instalado, saltando health check"
-        log "Verifica manualmente: curl http://localhost:8001/health"
+        log "Verifica manualmente: curl http://localhost:8001/api/v1/health"
     fi
     
     # Verificar logs recientes

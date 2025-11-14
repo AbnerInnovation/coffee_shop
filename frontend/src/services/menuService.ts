@@ -216,8 +216,12 @@ export const getCategories = async (): Promise<MenuCategory[]> => {
 
 // Category CRUD Operations
 
-export const createCategory = async (data: { name: string; description?: string }): Promise<MenuCategory> => {
-  const payload = { name: data.name, description: data.description ?? '' };
+export const createCategory = async (data: { name: string; description?: string; visible_in_kitchen?: boolean }): Promise<MenuCategory> => {
+  const payload = { 
+    name: data.name, 
+    description: data.description ?? '',
+    visible_in_kitchen: data.visible_in_kitchen ?? true
+  };
   const response = await apiInstance.post<MenuCategory>(`${CATEGORIES_BASE_PATH}/`, payload);
   return response as unknown as MenuCategory;
 };

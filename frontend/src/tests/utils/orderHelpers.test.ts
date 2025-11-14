@@ -236,9 +236,14 @@ describe('orderHelpers', () => {
     it('should not allow cancelling paid order', () => {
       const order = {
         id: 1,
-        status: 'pending',
+        status: 'pending' as const,
         is_paid: true,
-        items: []
+        items: [],
+        customerName: 'Test',
+        table: '1',
+        total: 100,
+        createdAt: new Date(),
+        updated_at: new Date().toISOString()
       } as OrderWithLocalFields
 
       expect(canCancelOrder(order)).toBe(false)
@@ -247,9 +252,14 @@ describe('orderHelpers', () => {
     it('should not allow cancelling non-pending order', () => {
       const order = {
         id: 1,
-        status: 'completed',
+        status: 'completed' as const,
         is_paid: false,
-        items: []
+        items: [],
+        customerName: 'Test',
+        table: '1',
+        total: 100,
+        createdAt: new Date(),
+        updated_at: new Date().toISOString()
       } as OrderWithLocalFields
 
       expect(canCancelOrder(order)).toBe(false)
@@ -258,9 +268,14 @@ describe('orderHelpers', () => {
     it('should allow cancelling order with no items', () => {
       const order = {
         id: 1,
-        status: 'pending',
+        status: 'pending' as const,
         is_paid: false,
-        items: []
+        items: [],
+        customerName: 'Test',
+        table: '1',
+        total: 100,
+        createdAt: new Date(),
+        updated_at: new Date().toISOString()
       } as OrderWithLocalFields
 
       expect(canCancelOrder(order)).toBe(true)

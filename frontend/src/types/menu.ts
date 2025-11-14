@@ -34,7 +34,9 @@ export interface MenuItem {
   price: number;
   discount_price?: number;
   image_url?: string;
+  imageUrl?: string; // Support both snake_case and camelCase
   is_available?: boolean;
+  isAvailable?: boolean; // Support both snake_case and camelCase
   ingredients?: MenuItemIngredients | null;
   variants?: MenuItemVariant[];
   created_at?: string;
