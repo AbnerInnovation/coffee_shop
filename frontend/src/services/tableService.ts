@@ -24,23 +24,20 @@ export const getTables = async (params?: {
   occupied?: boolean;
   capacity?: number;
 }): Promise<Table[]> => {
-  const response = await apiInstance.get<Table[]>(TABLES_BASE_PATH, { params });
+  const response = await apiInstance.get(TABLES_BASE_PATH, { params });
   return Array.isArray(response) ? response : [];
 };
 
 export const getTable = async (id: number): Promise<Table> => {
-  const response = await apiInstance.get<Table>(`${TABLES_BASE_PATH}/${id}`);
-  return response;
+  return await apiInstance.get(`${TABLES_BASE_PATH}/${id}`);
 };
 
 export const createTable = async (tableData: Omit<Table, 'id' | 'created_at' | 'updated_at'>): Promise<Table> => {
-  const response = await apiInstance.post<Table>(TABLES_BASE_PATH, tableData);
-  return response;
+  return await apiInstance.post(TABLES_BASE_PATH, tableData);
 };
 
 export const updateTable = async (id: number, tableData: Partial<Omit<Table, 'id' | 'created_at' | 'updated_at'>>): Promise<Table> => {
-  const response = await apiInstance.put<Table>(`${TABLES_BASE_PATH}/${id}`, tableData);
-  return response;
+  return await apiInstance.put(`${TABLES_BASE_PATH}/${id}`, tableData);
 };
 
 export const deleteTable = async (id: number): Promise<boolean> => {
@@ -49,11 +46,10 @@ export const deleteTable = async (id: number): Promise<boolean> => {
 };
 
 export const updateTableOccupancy = async (id: number, isOccupied: boolean): Promise<Table> => {
-  const response = await apiInstance.patch<Table>(
+  return await apiInstance.patch(
     `${TABLES_BASE_PATH}/${id}/occupancy`,
     { is_occupied: isOccupied }
   );
-  return response;
 };
 
 // Export all functions as default

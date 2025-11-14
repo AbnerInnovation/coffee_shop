@@ -15,20 +15,23 @@ export const useMenuStore = defineStore('menu', () => {
 
   // Helper to normalize menu item data
   function normalizeMenuItem(item: any): MenuItem {
-    // Preserve category as object if it has id, otherwise use string
-    let category: string | { id: string | number; name: string; description?: string };
+    // Preserve category as MenuCategory object if it has id
+    let category: MenuCategory | undefined;
     
-    if (typeof item.category === 'string') {
-      category = item.category;
-    } else if (item.category && typeof item.category === 'object' && 'id' in item.category) {
+    if (item.category && typeof item.category === 'object' && 'id' in item.category) {
       // Preserve the full category object with id
       category = {
         id: item.category.id,
         name: item.category.name || '',
-        description: item.category.description
+        description: item.category.description,
+        visible_in_kitchen: item.category.visible_in_kitchen
       };
-    } else {
-      category = item.category?.name || '';
+    } else if (typeof item.category === 'string' && item.category) {
+      // If it's just a string, create a minimal category object
+      category = {
+        id: 0,
+        name: item.category
+      };
     }
       
     return {

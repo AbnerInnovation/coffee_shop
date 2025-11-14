@@ -16,7 +16,6 @@
     "paths": {
       "@/*": ["./src/*"]
     },
-    "types": ["vite/client", "pinia"],
     "allowJs": true,
     "noImplicitAny": false
   },

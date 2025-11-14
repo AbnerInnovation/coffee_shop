@@ -100,10 +100,11 @@
 import { computed } from 'vue';
 import { useItemGrouping } from '@/composables/useItemGrouping';
 import type { OrderItem } from '@/services/orderService';
+import type { PersonOrderItem } from '@/composables/useMultipleDiners';
 
 interface Props {
   title: string;
-  items: OrderItem[];
+  items: PersonOrderItem[] | OrderItem[];
   getMenuItemName: (itemId: number) => string;
   getMenuItemCategory: (itemId: number) => string;
   emptyMessage?: string;
@@ -119,8 +120,8 @@ defineEmits<{
 }>();
 
 // Enrich items with menu information before grouping
-const enrichedItems = computed(() => {
-  return props.items.map((item, index) => ({
+const enrichedItems = computed((): OrderItem[] => {
+  return props.items.map((item: any, index: number): OrderItem => ({
     id: item.id || index,
     menu_item_id: item.menu_item_id,
     variant_id: item.variant_id || null,
