@@ -27,7 +27,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Variables de configuración
-PROJECT_DIR="/home/ubuntu/coffee-shop-admin"
+PROJECT_DIR="/home/ubuntu/coffee-shop"
 BACKUP_DIR="/home/ubuntu/backups"
 DATE=$(date +%Y%m%d_%H%M%S)
 LOG_FILE="/home/ubuntu/deployment_${DATE}.log"
