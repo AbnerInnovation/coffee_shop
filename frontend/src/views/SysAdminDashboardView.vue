@@ -92,7 +92,7 @@
           :icon="BanknotesIcon"
           icon-class="text-green-400"
           :label="t('app.sysadmin.dashboard.revenue_30d')"
-          :value="`$${formatCurrency(stats.revenue.revenue_30d || 0)}`"
+          :value="`${formatCurrency(stats.revenue.revenue_30d || 0)}`"
         />
       </div>
 
