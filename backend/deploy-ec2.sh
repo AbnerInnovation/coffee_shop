@@ -4,7 +4,7 @@
 # Script de Deployment Automatizado para AWS EC2
 # Coffee Shop Admin - Backend
 # 
-# Uso: ./scripts/deploy-ec2.sh
+# Uso: ./backend/deploy-ec2.sh
 ################################################################################
 
 set -e  # Exit on error
