@@ -228,7 +228,7 @@ step6_run_migrations() {
     fi
     
     # Verificar si hay directorio de migraciones
-    if [ ! -d "alembic" ]; then
+    if [ ! -d "migrations" ] && [ ! -d "alembic" ]; then
         warning "Directorio de migraciones no encontrado, saltando"
         return 0
     fi
@@ -296,7 +296,25 @@ step8_restart_service() {
     log "=========================================="
     
     # Detectar qué sistema de gestión de procesos se usa
-    if command -v pm2 &> /dev/null; then
+    if systemctl is-active --quiet fastapi-2 2>/dev/null; then
+        log "Usando Systemd..."
+        
+        # Reiniciar
+        log "Reiniciando fastapi-2..."
+        if sudo systemctl restart fastapi-2; then
+            success "Servicio reiniciado con Systemd"
+            
+            # Esperar un poco
+            sleep 3
+            
+            # Verificar estado
+            sudo systemctl status fastapi-2 --no-pager | tee -a "$LOG_FILE"
+        else
+            error "Falló el reinicio con Systemd"
+            exit 1
+        fi
+        
+    elif command -v pm2 &> /dev/null; then
         log "Usando PM2..."
         
         # Listar procesos
@@ -317,26 +335,8 @@ step8_restart_service() {
             exit 1
         fi
         
-    elif systemctl is-active --quiet fastapi-2; then
-        log "Usando Systemd..."
-        
-        # Reiniciar
-        log "Reiniciando fastapi-2..."
-        if sudo systemctl restart fastapi-2; then
-            success "Servicio reiniciado con Systemd"
-            
-            # Esperar un poco
-            sleep 3
-            
-            # Verificar estado
-            sudo systemctl status fastapi-2 --no-pager | tee -a "$LOG_FILE"
-        else
-            error "Falló el reinicio con Systemd"
-            exit 1
-        fi
-        
     else
-        warning "No se detectó PM2 ni Systemd"
+        warning "No se detectó Systemd ni PM2"
         warning "Por favor reinicia el servicio manualmente"
     fi
     
@@ -371,10 +371,10 @@ verify_deployment() {
     
     # Verificar logs recientes
     log "Últimas líneas de logs:"
-    if command -v pm2 &> /dev/null; then
-        pm2 logs fastapi-2 --lines 20 --nostream 2>/dev/null | tee -a "$LOG_FILE" || warning "No se pudieron obtener logs de PM2"
-    elif systemctl is-active --quiet fastapi-2 2>/dev/null; then
+    if systemctl is-active --quiet fastapi-2 2>/dev/null; then
         sudo journalctl -u fastapi-2 -n 20 --no-pager | tee -a "$LOG_FILE" || warning "No se pudieron obtener logs de systemd"
+    elif command -v pm2 &> /dev/null; then
+        pm2 logs fastapi-2 --lines 20 --nostream 2>/dev/null | tee -a "$LOG_FILE" || warning "No se pudieron obtener logs de PM2"
     else
         warning "No se pudo determinar el sistema de logs"
     fi
@@ -402,7 +402,7 @@ final_summary() {
     log "cd $PROJECT_DIR"
     log "rm -rf backend"
     log "mv $BACKUP_DIR/backend_$DATE backend"
-    log "pm2 restart fastapi-2"
+    log "sudo systemctl restart fastapi-2"
 }
 
 # Función principal
