@@ -263,18 +263,31 @@ class TestExceptionHandlers:
     
     def test_general_exception_handler(self, app, client):
         """Test general exception handler for unhandled exceptions."""
-        @app.get("/test-unhandled")
+        from fastapi import APIRouter
+        
+        # Create a test router and add it to the app
+        test_router = APIRouter()
+        
+        @test_router.get("/test-unhandled")
         def test_endpoint():
             raise ValueError("Unexpected error")
         
-        response = client.get("/test-unhandled")
-        assert response.status_code == 500
+        # Include the router before making the request
+        app.include_router(test_router)
         
-        data = response.json()
-        assert data["success"] is False
-        assert data["error"]["type"] == "InternalServerError"
-        # Should not expose internal error details
-        assert "ValueError" not in data["error"]["message"]
+        # Rebuild the app's routes
+        app.router.routes = app.router.routes
+        
+        # Now make the request - the exception should be caught
+        with client:
+            response = client.get("/test-unhandled")
+            assert response.status_code == 500
+            
+            data = response.json()
+            assert data["success"] is False
+            assert data["error"]["type"] == "InternalServerError"
+            # Should not expose internal error details
+            assert "ValueError" not in data["error"]["message"]
 
 
 # Integration tests
