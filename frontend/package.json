@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "vite",
-    "build": "vue-tsc && vite build",
+    "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore",
     "format": "prettier --write src/",
@@ -15,7 +15,8 @@
     "audit": "npm audit --audit-level=moderate",
     "audit:fix": "npm audit fix",
     "audit:prod": "npm audit --production --audit-level=high",
-    "audit:report": "npm audit --json > ../reports/npm-audit-report.json"
+    "audit:report": "npm audit --json > ../reports/npm-audit-report.json",
+    "type-check": "vue-tsc --noEmit"
   },
   "dependencies": {
     "@headlessui/vue": "^1.7.23",
