@@ -151,14 +151,9 @@ import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import MainLayout from '@/components/layout/MainLayout.vue';
 import PageHeader from '@/components/layout/PageHeader.vue';
-import cashRegisterService from '@/services/cashRegisterService';
-import { useToast } from '@/composables/useToast';
 import { useCashRegisterSession } from '@/composables/useCashRegisterSession';
 import { useCashRegisterModals } from '@/composables/useCashRegisterModals';
-import {
-  calculateCutReport,
-  calculatePaymentBreakdown
-} from '@/utils/cashRegisterHelpers';
+import { useCashRegisterHandlers } from '@/composables/useCashRegisterHandlers';
 import LastCutDisplay from '@/components/LastCutDisplay.vue';
 import ReportsView from '@/components/ReportsView.vue';
 import BaseButton from '@/components/ui/BaseButton.vue';
@@ -169,10 +164,22 @@ import CloseSessionModal from '@/components/cashRegister/CloseSessionModal.vue';
 import ExpenseModal from '@/components/cashRegister/ExpenseModal.vue';
 import CutModal from '@/components/cashRegister/CutModal.vue';
 
-const { t } = useI18n();
-const toast = useToast();
+/**
+ * CashRegisterView - Main view for cash register management
+ * 
+ * Orchestrates cash register operations including:
+ * - Session management (open/close)
+ * - Transaction tracking
+ * - Expense recording
+ * - Cut operations
+ * - Reports viewing
+ * 
+ * Uses composables for business logic separation following SOLID principles.
+ */
 
-// Composables
+const { t } = useI18n();
+
+// Session management composable
 const {
   currentSession,
   transactions,
@@ -184,10 +191,10 @@ const {
   openSession: openSessionService,
   closeSession: closeSessionService,
   addExpense: addExpenseService,
-  performCut: performCutService,
-  deleteTransaction: deleteTransactionService
+  performCut: performCutService
 } = useCashRegisterSession();
 
+// Modal state management composable
 const {
   openModalOpen,
   closeModalOpen,
@@ -215,113 +222,25 @@ const {
   setPaymentBreakdown
 } = useCashRegisterModals();
 
+// Modal handlers composable
+const {
+  openCutModal,
+  handleOpenSession,
+  handleCloseSession,
+  handleAddExpense,
+  handlePerformCut
+} = useCashRegisterHandlers(
+  currentSession,
+  openSessionService,
+  closeSessionService,
+  addExpenseService,
+  performCutService,
+  closeModals,
+  setCutReport,
+  setPaymentBreakdown,
+  openCutModalBase
+);
+
+// Local UI state
 const activeTab = ref('current');
-
-// Open cut modal with pre-populated data
-const openCutModal = async () => {
-  openCutModalBase();
-
-  if (currentSession.value) {
-    try {
-      const transactionsResponse = await cashRegisterService.getTransactions(currentSession.value.id);
-      const txns = Array.isArray(transactionsResponse) ? transactionsResponse : transactionsResponse.data || [];
-
-      // Calculate and set cut report
-      const report = calculateCutReport(txns);
-      setCutReport(report);
-
-      // Calculate and set payment breakdown
-      const breakdown = calculatePaymentBreakdown(txns);
-      setPaymentBreakdown(breakdown);
-    } catch (error) {
-      console.error('Error loading cut report data:', error);
-    }
-  }
-}
-
-// Modal handlers
-const handleOpenSession = async (balance: number) => {
-  if (!balance) {
-    toast.showToast(t('app.views.cashRegister.initialBalanceRequired') || 'Initial balance is required', 'error');
-    return;
-  }
-
-  try {
-    await openSessionService(balance);
-    closeModals();
-    toast.showToast(t('app.views.cashRegister.sessionOpened') || 'Session opened successfully', 'success');
-  } catch (error: any) {
-    console.error('Error opening session:', error);
-    toast.showToast(error.response?.data?.detail || 'Failed to open session', 'error');
-  }
-}
-
-const handleCloseSession = async (data: { balance: number; notes: string; useDenominations: boolean; denominations: any }) => {
-  if (!data.balance) {
-    toast.showToast(t('app.views.cashRegister.finalBalanceRequired') || 'Final balance is required', 'error');
-    return;
-  }
-
-  try {
-    await closeSessionService(
-      data.balance,
-      data.notes || undefined,
-      data.useDenominations ? data.denominations : undefined
-    );
-    closeModals();
-    toast.showToast(t('app.views.cashRegister.sessionClosed') || 'Session closed successfully', 'success');
-  } catch (error: any) {
-    console.error('Error closing session:', error);
-    toast.showToast(error.response?.data?.detail || 'Failed to close session', 'error');
-  }
-}
-
-const handleAddExpense = async (data: { amount: number; description: string; category: string }) => {
-  if (!data.amount || data.amount <= 0) {
-    toast.showToast(t('app.views.cashRegister.expenseAmountRequired') || 'Expense amount is required', 'error');
-    return;
-  }
-
-  if (!data.description || data.description.trim() === '') {
-    toast.showToast(t('app.views.cashRegister.expenseDescriptionRequired') || 'Expense description is required', 'error');
-    return;
-  }
-
-  if (!currentSession.value) {
-    toast.showToast(t('app.views.cashRegister.noActiveSession') || 'No active session', 'error');
-    return;
-  }
-
-  try {
-    await addExpenseService(data.amount, data.description, data.category || undefined);
-    toast.showToast(t('app.views.cashRegister.expenseAdded') || 'Expense added successfully', 'success');
-    closeModals();
-  } catch (error: any) {
-    console.error('Error adding expense:', error);
-    toast.showToast(error.response?.data?.detail || t('app.views.cashRegister.expenseFailed') || 'Failed to add expense', 'error');
-  }
-}
-
-const handlePerformCut = async (data: { cash: number; card: number; digital: number; other: number }) => {
-  if (!currentSession.value) return;
-
-  try {
-    const resultData = await performCutService(data);
-    
-    setCutReport({
-      total_sales: resultData.total_sales || 0,
-      total_refunds: resultData.total_refunds || 0,
-      total_tips: resultData.total_tips || 0,
-      total_expenses: resultData.total_expenses || 0,
-      total_transactions: resultData.total_transactions || 0,
-      net_cash_flow: resultData.net_cash_flow || 0
-    });
-
-    toast.showToast(t('app.views.cashRegister.cutSuccessful') || 'Cut performed successfully', 'success');
-    closeModals();
-  } catch (error: any) {
-    console.error('Error performing cut:', error);
-    toast.showToast(error.response?.data?.detail || t('app.views.cashRegister.cutFailed') || 'Failed to perform cut', 'error');
-  }
-}
 </script>

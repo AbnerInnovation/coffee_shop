@@ -40,3 +40,8 @@ tmp/
 # Backend logs
 logs/app.log
 dev-dist
+
+# Test coverage
+coverage/
+.nyc_output/
+*.lcov

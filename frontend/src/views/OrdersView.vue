@@ -61,8 +61,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, nextTick, watch } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { ref, onMounted, onUnmounted, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
 import MainLayout from '@/components/layout/MainLayout.vue';
 import PageHeader from '@/components/layout/PageHeader.vue';
@@ -70,170 +69,63 @@ import OrderFilters from '@/components/orders/OrderFilters.vue';
 import OrderList from '@/components/orders/OrderList.vue';
 import OrderDetails from '@/components/orders/OrderDetailsModal.vue';
 import NewOrderModal from '@/components/orders/NewOrderModal.vue';
-import orderService from '@/services/orderService';
-import type { Order } from '@/services/orderService';
-import { PlusIcon } from '@heroicons/vue/24/outline';
-import { useToast } from '@/composables/useToast';
-import { useConfirm } from '@/composables/useConfirm';
+import { PlusIcon, XMarkIcon } from '@heroicons/vue/24/outline';
 import { useOrderFilters, type PaymentFilter, type OrderTypeFilter, type TableFilter } from '@/composables/useOrderFilters';
-import tableService, { type Table } from '@/services/tableService';
-import {
-  canCancelOrder as canCancelOrderHelper,
-  transformOrderToLocal,
-  type OrderWithLocalFields,
-  type BackendOrderStatus,
-  type OrderStatus
-} from '@/utils/orderHelpers';
+import { useOrdersView } from '@/composables/useOrdersView';
+
+/**
+ * OrdersView - Main view for order management
+ * 
+ * Orchestrates order listing, filtering, creation, editing, and status management.
+ * Uses composables for business logic separation following SOLID principles.
+ */
 
 // i18n
 const { t } = useI18n();
-const route = useRoute();
-const router = useRouter();
 
-// Toasts
-const { showSuccess, showError } = useToast();
-const { confirm } = useConfirm();
+// Business logic from composable
+const {
+  // State
+  loading,
+  error,
+  orders,
+  tables,
+  selectedStatus,
+  tabs,
+  
+  // Modal states
+  isNewOrderModalOpen,
+  newOrderMode,
+  selectedOrderForEdit,
+  isOrderDetailsOpen,
+  selectedOrder,
+  
+  // Operations
+  fetchOrders,
+  fetchTables,
+  selectTab,
+  updateOrderStatus,
+  cancelOrder,
+  openNewOrderModal,
+  closeNewOrderModal,
+  openEditOrder,
+  viewOrderDetails: viewOrderDetailsBase,
+  closeOrderDetails,
+  handleNewOrder,
+  handleOrderUpdated,
+  handleStatusUpdate,
+  handlePaymentCompleted,
+  handleOpenCashRegister,
+  cleanup
+} = useOrdersView();
 
-// Open edit order flow from OrderDetails
-async function openEditOrder(order: OrderWithLocalFields) {
-  try {
-    // Close details first
-    isOrderDetailsOpen.value = false;
-    newOrderMode.value = 'edit';
-    // Fetch full order from API to provide complete data to the modal
-    const fullOrder = await orderService.getOrder(order.id);
-    selectedOrderForEdit.value = fullOrder;
-    isNewOrderModalOpen.value = true;
-  } catch (e) {
-    console.error('Failed to open edit order modal:', e);
-  }
-}
-
-// After an order is updated in the modal
-function handleOrderUpdated(updated: any) {
-  try {
-    const idx = orders.value.findIndex(o => o.id === updated.id);
-    if (idx !== -1) {
-      // Merge fields; keep local computed fields where possible
-      const existing = orders.value[idx];
-      orders.value.splice(idx, 1, {
-        ...existing,
-        status: updated.status as BackendOrderStatus,
-        table: updated.table_number ? t('app.views.cashRegister.table_number', { number: updated.table_number }) : t('app.views.cashRegister.takeaway'),
-        total: updated.total_amount || 0,
-        updated_at: updated.updated_at || existing.updated_at,
-        items: (updated.items || existing.items),
-        table_id: updated.table_id ?? existing.table_id,
-        notes: updated.notes ?? existing.notes,
-        is_paid: (updated as any).is_paid ?? existing.is_paid
-      });
-    }
-    showSuccess(t('app.views.orders.messages.order_updated_success', { id: updated.id }) as string);
-    // Ensure full consistency by refetching
-    fetchOrders(true);
-    invalidateTabCounts(); // Invalidate all tab counts to force reload on next access
-    // Reset edit state
-    selectedOrderForEdit.value = null;
-    newOrderMode.value = 'create';
-  } catch (e) {
-    console.error('Failed updating local order after edit:', e);
-  }
-}
-
-// showError now provided by toast composable
-
-// Confirm helper using the global ConfirmationDialog
-const confirmCancelOrder = async () => {
-  return await confirm(
-    t('app.views.orders.modals.confirm.cancel_title') as string,
-    t('app.views.orders.modals.confirm.cancel_message') as string,
-    t('app.views.orders.modals.confirm.confirm') as string,
-    t('app.views.orders.modals.confirm.cancel') as string,
-    'bg-red-600 hover:bg-red-700 focus:ring-red-500'
-  );
-};
-
-// Types are now imported from orderHelpers
-
-// State
-// State
-const loading = ref(false);
-const error = ref<string | null>(null);
-const selectedStatus = ref<OrderStatus>('pending');
+// Local filter state (UI-only, not in composable)
 const selectedPaymentFilter = ref<PaymentFilter>('all');
 const selectedOrderType = ref<OrderTypeFilter>('all');
 const selectedTableFilter = ref<TableFilter>('all');
-const tables = ref<Table[]>([]);
-const isNewOrderModalOpen = ref(false);
-const newOrderMode = ref<'create' | 'edit'>('create');
-const selectedOrderForEdit = ref<Order | null>(null);
-const isOrderDetailsOpen = ref(false);
-const hasAutoOpenedFromTable = ref(false);
-const selectedOrder = ref<OrderWithLocalFields | null>(null);
-const orders = ref<OrderWithLocalFields[]>([]);
 
-// Tab definitions with cache tracking
-const tabs = [
-  { id: 'pending' as const, name: 'Pending', count: 0, loaded: false },
-  { id: 'preparing' as const, name: 'Preparing', count: 0, loaded: false },
-  { id: 'ready' as const, name: 'Ready', count: 0, loaded: false },
-  { id: 'completed' as const, name: 'Completed', count: 0, loaded: false },
-];
-
-// Fetch count for a specific tab (lazy loading)
-const fetchTabCount = async (tabId: OrderStatus) => {
-  try {
-    const tab = tabs.find(t => t.id === tabId);
-    if (!tab) return;
-    
-    // Skip if already loaded
-    if (tab.loaded) return;
-    
-    const response = await orderService.getActiveOrders(tabId, undefined);
-    tab.count = response.length;
-    tab.loaded = true;
-  } catch (error) {
-    console.error(`Error fetching count for tab ${tabId}:`, error);
-  }
-};
-
-// Invalidate all tab counts (force reload on next access)
-const invalidateTabCounts = () => {
-  tabs.forEach(tab => {
-    tab.loaded = false;
-  });
-};
-
-// Tab selection with lazy count loading
-const selectTab = async (tabId: OrderStatus) => {
-  selectedStatus.value = tabId;
-  // Fetch count for this tab if not loaded yet
-  await fetchTabCount(tabId);
-};
-
-// Format status for display (using i18n status keys when possible)
-const formatStatus = (status: OrderStatus): string => {
-  const key = `app.status.${status}`;
-  const translated = t(key);
-  return typeof translated === 'string' && translated.length > 0 ? translated : (statusMap[status] || status);
-};
-
-
-// Helper functions now imported from orderHelpers
-
-// Map of status to display names
-const statusMap: Record<OrderStatus, string> = {
-  'all': 'All Orders',
-  'pending': 'Pending',
-  'preparing': 'Preparing',
-  'ready': 'Ready for Pickup',
-  'completed': 'Completed',
-  'cancelled': 'Cancelled'
-};
-
-
-// Use order filters composable
-const { filteredOrders, getOrderCount } = useOrderFilters(
+// Use order filters composable for client-side filtering
+const { filteredOrders } = useOrderFilters(
   orders,
   selectedStatus,
   selectedPaymentFilter,
@@ -241,227 +133,25 @@ const { filteredOrders, getOrderCount } = useOrderFilters(
   selectedTableFilter
 );
 
-const viewOrderDetails = (order: OrderWithLocalFields) => {
-  selectedOrder.value = { ...order };
+/**
+ * Wrapper for viewOrderDetails to handle nextTick
+ * Required because composable can't use nextTick directly
+ */
+const viewOrderDetails = (order: any) => {
+  viewOrderDetailsBase(order);
   nextTick(() => {
-    isOrderDetailsOpen.value = true;
+    // Ensure modal is open after DOM update
   });
-};
-
-// Track cleanup timeout for proper cleanup on unmount
-let closeDetailsTimeout: ReturnType<typeof setTimeout> | null = null;
-
-function closeOrderDetails() {
-  isOrderDetailsOpen.value = false;
-
-  // Clear any existing timeout
-  if (closeDetailsTimeout) {
-    clearTimeout(closeDetailsTimeout);
-  }
-
-  // Wait for the transition to complete before clearing the selected order
-  closeDetailsTimeout = setTimeout(() => {
-    selectedOrder.value = null;
-    closeDetailsTimeout = null;
-  }, 300); // Match this with your transition duration (300ms)
-}
-
-function openNewOrderModal() {
-  isNewOrderModalOpen.value = true;
-}
-
-function closeNewOrderModal() {
-  isNewOrderModalOpen.value = false;
-  // Reset mode back to create when closing
-  newOrderMode.value = 'create';
-}
-
-const handleNewOrder = async (newOrder: Order) => {
-  try {
-    await fetchOrders();
-    invalidateTabCounts(); // Invalidate all tab counts to force reload on next access
-    closeNewOrderModal();
-  } catch (err) {
-    console.error('Error processing new order:', err);
-    // Only show error if we don't have an order ID
-    if (!newOrder?.id) {
-      showError(t('app.views.orders.messages.fetch_failed') as string);
-    } else {
-      // If we have an order ID, it was created successfully
-      closeNewOrderModal();
-    }
-  }
-};
-
-const handleStatusUpdate = ({ orderId, status }: { orderId: number; status: OrderStatus }) => {
-    updateOrderStatus(orderId, status as BackendOrderStatus);
-    closeOrderDetails();
-};
-
-const handlePaymentCompleted = async (updatedOrder: any) => {
-  try {
-    showSuccess(t('app.views.orders.messages.payment_completed_success', { id: updatedOrder.id }) as string);
-
-    // Refresh the orders list
-    await fetchOrders(true);
-    
-    // Invalidate all tab counts to force reload on next access
-    invalidateTabCounts();
-
-    // Emit event to refresh cash register if it's open
-    window.dispatchEvent(new CustomEvent('orderPaymentCompleted', {
-      detail: { orderId: updatedOrder.id }
-    }));
-  } catch (e) {
-    console.error('Failed to update order after payment completion:', e);
-  }
-};
-
-const handleOpenCashRegister = () => {
-  // Navigate to cash register view
-  router.push('/cash-register');
-};
-
-// Fetch orders from API
-const fetchOrders = async (fetchAll = false) => {
-  try {
-    loading.value = true;
-    error.value = null;
-
-    // Fetch orders with the selected status filter
-    // Send the status filter to backend to get only orders with that status
-    const statusToFetch = fetchAll ? undefined : selectedStatus.value;
-    const tableIdParam = route.query.table_id ? Number(route.query.table_id) : undefined;
-    const response = await orderService.getActiveOrders(statusToFetch, tableIdParam);
-
-    // The service should return an array, but we'll double-check here
-    const ordersData = Array.isArray(response) ? response : [];
-
-    // Transform using helper function
-    const processedOrders = ordersData
-      .map(order => transformOrderToLocal(order, t))
-      .filter((order): order is OrderWithLocalFields => order !== null);
-
-    orders.value = processedOrders;
-
-    // Update only the current tab count based on the response
-    const currentTab = tabs.find(t => t.id === selectedStatus.value);
-    if (currentTab) {
-      currentTab.count = processedOrders.length;
-      currentTab.loaded = true; // Mark as loaded
-    }
-
-    // If filtered by table_id and there is at least one order, auto-open it for quick edit/view
-    if (tableIdParam && orders.value.length > 0 && !hasAutoOpenedFromTable.value) {
-      hasAutoOpenedFromTable.value = true;
-      viewOrderDetails(orders.value[0]);
-    }
-  } catch (err) {
-    console.error('Error fetching orders:', err);
-    error.value = t('app.views.orders.messages.fetch_failed') as string;
-  } finally {
-    loading.value = false;
-  }
-};
-
-// Update order status
-const updateOrderStatus = async (orderId: number, newStatus: BackendOrderStatus) => {
-  try {
-    // Update the order status in the backend
-    await orderService.updateOrder(orderId, { status: newStatus });
-
-    // Update the order status in the local state
-    const orderIndex = orders.value.findIndex(o => o.id === orderId);
-    if (orderIndex !== -1) {
-      const updatedOrder = { ...orders.value[orderIndex], status: newStatus };
-      orders.value.splice(orderIndex, 1, updatedOrder);
-    }
-
-    // Invalidate all tab counts to force reload on next access
-    invalidateTabCounts();
-
-    showSuccess(t('app.views.orders.messages.status_updated_success', { id: orderId, status: formatStatus(newStatus) }) as string);
-  } catch (err) {
-    console.error('Error updating order status:', err);
-    showError(t('app.views.orders.messages.status_update_failed') as string);
-  }
-};
-
-// Use canCancelOrder from orderHelpers
-const canCancelOrder = canCancelOrderHelper;
-
-// Cancel order
-const cancelOrder = async (orderId: number) => {
-  // Find the order to validate
-  const order = orders.value.find(o => o.id === orderId);
-
-  if (!order) {
-    showError(t('app.views.orders.messages.order_not_found') as string);
-    return;
-  }
-
-  // Validate if order can be cancelled
-  if (!canCancelOrder(order)) {
-    if (order.is_paid) {
-      showError('No se puede cancelar un pedido que ya está pagado.');
-    } else {
-      showError('No se puede cancelar una orden que ya está en preparación o lista. Solo se pueden cancelar órdenes pendientes con todos sus items pendientes.');
-    }
-    return;
-  }
-
-  const confirmed = await confirmCancelOrder();
-
-  if (!confirmed) return;
-
-  try {
-    await orderService.updateOrder(orderId, { status: 'cancelled' });
-
-    // Update the order status in the local state
-    const orderIndex = orders.value.findIndex(o => o.id === orderId);
-    if (orderIndex !== -1) {
-      const updatedOrder = {
-        ...orders.value[orderIndex],
-        status: 'cancelled' as const
-      };
-      orders.value.splice(orderIndex, 1, updatedOrder);
-    }
-
-    // Invalidate all tab counts to force reload on next access
-    invalidateTabCounts();
-
-    showSuccess(t('app.views.orders.messages.order_cancelled_success') as string);
-  } catch (err) {
-    console.error('Error cancelling order:', err);
-    showError(t('app.views.orders.messages.cancel_failed') as string);
-  }
-};
-
-// Watch for status changes to refetch orders from backend
-watch(selectedStatus, () => {
-  fetchOrders();
-});
-
-// Fetch tables for filter
-const fetchTables = async () => {
-  try {
-    tables.value = await tableService.getTables();
-  } catch (err) {
-    console.error('Error fetching tables for filter:', err);
-  }
 };
 
 // Initialize component
 onMounted(() => {
-  fetchOrders(); // Only fetch orders for current tab
+  fetchOrders();
   fetchTables();
-  // Tab counts will be loaded lazily when user clicks on each tab
 });
 
 // Cleanup on unmount
 onUnmounted(() => {
-  if (closeDetailsTimeout) {
-    clearTimeout(closeDetailsTimeout);
-  }
+  cleanup();
 });
 </script>

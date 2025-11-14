@@ -18,49 +18,16 @@
         </div>
 
         <!-- Period Selector -->
-        <div class="mt-3 sm:mt-4 flex flex-wrap items-center gap-2 sm:gap-4">
-          <div class="flex flex-wrap sm:flex-nowrap rounded-md shadow-sm gap-1 sm:gap-0">
-            <button
-              v-for="period in periods"
-              :key="period.value"
-              @click="handlePeriodChange(period.value)"
-              :class="[
-                'px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium',
-                selectedPeriod === period.value
-                  ? 'bg-indigo-600 text-white'
-                  : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700',
-                period.value === 'today' ? 'rounded-l-md' : '',
-                period.value === 'custom' ? 'rounded-r-md' : '',
-                'border border-gray-300 dark:border-gray-600'
-              ]"
-            >
-              {{ period.label }}
-            </button>
-          </div>
-
-          <!-- Custom Date Range -->
-          <div v-if="selectedPeriod === 'custom'" class="w-full">
-            <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-2">
-              <input
-                v-model="customStartDate"
-                type="date"
-                class="flex-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm px-4 py-2.5"
-              />
-              <span class="text-gray-500 dark:text-gray-400 text-sm">{{ t('app.reports.to') }}</span>
-              <input
-                v-model="customEndDate"
-                type="date"
-                class="flex-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm px-4 py-2.5"
-              />
-              <button
-                @click="loadDashboard"
-                class="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 w-full sm:w-auto"
-              >
-                {{ t('app.reports.apply') }}
-              </button>
-            </div>
-          </div>
-        </div>
+        <ReportsPeriodSelector
+          :periods="periods"
+          :selected-period="selectedPeriod"
+          :custom-start-date="customStartDate"
+          :custom-end-date="customEndDate"
+          @period-change="handlePeriodChange"
+          @update:custom-start-date="customStartDate = $event"
+          @update:custom-end-date="customEndDate = $event"
+          @apply="loadDashboard"
+        />
       </div>
 
       <!-- Loading State -->
@@ -139,78 +106,19 @@
         </div>
 
         <!-- Additional Info Row -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <!-- Cash Register Summary -->
-          <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
-            <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4 flex items-center">
-              <BanknotesIcon class="h-5 w-5 mr-2 text-green-600" />
-              {{ t('app.reports.cash_register') }}
-            </h3>
-            <dl class="space-y-3">
-              <div class="flex justify-between">
-                <dt class="text-sm text-gray-500 dark:text-gray-400">
-                  {{ t('app.reports.open_sessions') }}
-                </dt>
-                <dd class="text-sm font-medium text-gray-900 dark:text-white">
-                  {{ dashboard.cash_register.open_sessions }}
-                </dd>
-              </div>
-              <div class="flex justify-between">
-                <dt class="text-sm text-gray-500 dark:text-gray-400">
-                  {{ t('app.reports.closed_sessions') }}
-                </dt>
-                <dd class="text-sm font-medium text-gray-900 dark:text-white">
-                  {{ dashboard.cash_register.closed_sessions }}
-                </dd>
-              </div>
-              <div class="flex justify-between pt-3 border-t border-gray-200 dark:border-gray-700">
-                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">
-                  {{ t('app.reports.total_cash_collected') }}
-                </dt>
-                <dd class="text-sm font-semibold text-green-600 dark:text-green-400">
-                  ${{ formatNumber(dashboard.cash_register.total_cash_collected) }}
-                </dd>
-              </div>
-            </dl>
-          </div>
-
-          <!-- Inventory Alerts -->
-          <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
-            <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4 flex items-center">
-              <ExclamationTriangleIcon class="h-5 w-5 mr-2 text-amber-600" />
-              {{ t('app.reports.inventory_alerts') }}
-            </h3>
-            <div v-if="dashboard.inventory_alerts.unavailable_count > 0">
-              <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                {{ t('app.reports.unavailable_products_count', { count: dashboard.inventory_alerts.unavailable_count }) }}
-              </p>
-              <ul class="space-y-2 max-h-40 overflow-y-auto">
-                <li
-                  v-for="product in dashboard.inventory_alerts.unavailable_products"
-                  :key="product.id"
-                  class="text-sm text-gray-700 dark:text-gray-300 flex items-center"
-                >
-                  <span class="h-2 w-2 bg-red-500 rounded-full mr-2"></span>
-                  {{ product.name }}
-                </li>
-              </ul>
-            </div>
-            <div v-else class="text-center py-8">
-              <CheckCircleIcon class="h-12 w-12 text-green-500 mx-auto mb-2" />
-              <p class="text-sm text-gray-600 dark:text-gray-400">
-                {{ t('app.reports.all_products_available') }}
-              </p>
-            </div>
-          </div>
-        </div>
+        <ReportsAdditionalInfo
+          :cash-register="dashboard.cash_register"
+          :inventory-alerts="dashboard.inventory_alerts"
+          :format-number="formatNumber"
+        />
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue'
-import { useI18n } from 'vue-i18n'
+import { onMounted } from 'vue';
+import { useI18n } from 'vue-i18n';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -222,21 +130,35 @@ import {
   Title,
   Tooltip,
   Legend
-} from 'chart.js'
-import { Bar, Doughnut, Line } from 'vue-chartjs'
+} from 'chart.js';
+import { Bar, Doughnut, Line } from 'vue-chartjs';
 import {
   CurrencyDollarIcon,
   ReceiptPercentIcon,
   ChartBarIcon,
-  BanknotesIcon,
-  ExclamationTriangleIcon,
-  CheckCircleIcon
-} from '@heroicons/vue/24/outline'
-import { useReportsData } from '@/composables/useReportsData'
-import { useReportsCharts } from '@/composables/useReportsCharts'
-import { useChartConfig } from '@/composables/useChartConfig'
-import StatCard from '@/components/reports/StatCard.vue'
-import ChartCard from '@/components/reports/ChartCard.vue'
+  ExclamationTriangleIcon
+} from '@heroicons/vue/24/outline';
+import { useReportsData } from '@/composables/useReportsData';
+import { useReportsCharts } from '@/composables/useReportsCharts';
+import { useChartConfig } from '@/composables/useChartConfig';
+import StatCard from '@/components/reports/StatCard.vue';
+import ChartCard from '@/components/reports/ChartCard.vue';
+import ReportsPeriodSelector from '@/components/reports/ReportsPeriodSelector.vue';
+import ReportsAdditionalInfo from '@/components/reports/ReportsAdditionalInfo.vue';
+
+/**
+ * ReportsView - Main view for reports and analytics
+ * 
+ * Displays comprehensive sales and operational reports including:
+ * - Sales summary (total sales, tickets, average ticket)
+ * - Top products chart
+ * - Payment breakdown
+ * - Sales trend over time
+ * - Cash register summary
+ * - Inventory alerts
+ * 
+ * Uses composables for data management, chart configuration, and business logic.
+ */
 
 // Register Chart.js components
 ChartJS.register(
@@ -249,11 +171,11 @@ ChartJS.register(
   Title,
   Tooltip,
   Legend
-)
+);
 
-const { t } = useI18n()
+const { t } = useI18n();
 
-// Data management
+// Data management composable
 const {
   loading,
   error,
@@ -265,27 +187,27 @@ const {
   periods,
   handlePeriodChange,
   loadDashboard
-} = useReportsData()
+} = useReportsData();
 
-// Chart data
+// Chart data composable
 const {
   topProductsChartData,
   paymentChartData,
   salesTrendChartData
-} = useReportsCharts(dashboard, salesTrend)
+} = useReportsCharts(dashboard, salesTrend);
 
-// Chart configuration
+// Chart configuration composable
 const {
   formatNumber,
   barChartOptions,
   doughnutOptions,
   lineChartOptions
-} = useChartConfig()
+} = useChartConfig();
 
 // Lifecycle
 onMounted(() => {
-  loadDashboard()
-})
+  loadDashboard();
+});
 </script>
 
 <style scoped>

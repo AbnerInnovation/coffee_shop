@@ -1,0 +1,7 @@
+{
+  "description": "npm audit configuration",
+  "auditLevel": "moderate",
+  "production": false,
+  "ignoreDevDependencies": false,
+  "excludePackages": []
+}

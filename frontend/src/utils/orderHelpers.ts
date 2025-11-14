@@ -1,9 +1,30 @@
+/**
+ * Order helpers and utilities
+ * 
+ * Provides functions for order management, status handling,
+ * data transformation, and validation.
+ */
+
 import { useI18n } from 'vue-i18n';
 
-// Types
+// ==================== Types ====================
+
+/**
+ * Backend order status values
+ * Represents the actual status stored in the database
+ */
 export type BackendOrderStatus = 'pending' | 'preparing' | 'ready' | 'completed' | 'cancelled';
+
+/**
+ * Frontend order status values
+ * Includes 'all' for filtering purposes in the UI
+ */
 export type OrderStatus = BackendOrderStatus | 'all'
 
+/**
+ * Local representation of an order item
+ * Includes transformed data for UI display
+ */
 export interface OrderItemLocal {
   id: number;
   menu_item_id: number;
@@ -25,6 +46,10 @@ export interface OrderItemLocal {
   }>;
 }
 
+/**
+ * Order with localized fields for UI display
+ * Combines backend data with translated/formatted fields
+ */
 export interface OrderWithLocalFields {
   id: number;
   status: BackendOrderStatus;
@@ -43,7 +68,21 @@ export interface OrderWithLocalFields {
   is_paid?: boolean;
 }
 
-// Status badge classes
+// ==================== Status Functions ====================
+
+/**
+ * Gets Tailwind CSS classes for order status badge
+ * Returns color-coded classes based on order status
+ * 
+ * @param status - The order status
+ * @returns Tailwind CSS classes string
+ * 
+ * @example
+ * ```typescript
+ * const classes = getStatusBadgeClass('pending');
+ * // Returns: 'inline-flex items-center ... bg-yellow-100 text-yellow-800'
+ * ```
+ */
 export function getStatusBadgeClass(status: BackendOrderStatus): string {
   const baseClasses = 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium';
 
@@ -63,12 +102,41 @@ export function getStatusBadgeClass(status: BackendOrderStatus): string {
   }
 }
 
-// Format time
+// ==================== Formatting Functions ====================
+
+/**
+ * Formats a date/time to display only hours and minutes
+ * 
+ * @param date - Date string or Date object
+ * @returns Formatted time string (HH:MM)
+ * 
+ * @example
+ * ```typescript
+ * formatTime('2025-11-14T09:30:00');
+ * // Returns: '09:30'
+ * ```
+ */
 export function formatTime(date: string | Date): string {
   return new Date(date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
-// Get order items summary
+/**
+ * Generates a human-readable summary of order items
+ * Includes quantities, names, variants, and extras
+ * 
+ * @param items - Array of order items
+ * @returns Comma-separated summary string
+ * 
+ * @example
+ * ```typescript
+ * const items = [
+ *   { quantity: 2, name: 'Café', variant_name: 'Grande', extras: [{ name: 'Leche' }] },
+ *   { quantity: 1, name: 'Croissant', variant_name: null, extras: [] }
+ * ];
+ * getOrderItemsSummary(items);
+ * // Returns: '2x Café - Grande con Leche, 1x Croissant'
+ * ```
+ */
 export function getOrderItemsSummary(items: OrderItemLocal[]): string {
   if (!items || !Array.isArray(items)) return '';
   return items.map(item => {
@@ -96,7 +164,18 @@ export function getOrderItemsSummary(items: OrderItemLocal[]): string {
   }).join(', ');
 }
 
-// Get order type label
+/**
+ * Gets translated label for order type
+ * 
+ * @param orderType - Order type code ('dine_in', 'takeaway', 'delivery')
+ * @returns Translated order type label
+ * 
+ * @example
+ * ```typescript
+ * getOrderTypeLabel('dine_in');
+ * // Returns: 'Para comer aquí' (in Spanish)
+ * ```
+ */
 export function getOrderTypeLabel(orderType: string): string {
   const { t } = useI18n();
   const typeMap: Record<string, string> = {
@@ -107,14 +186,46 @@ export function getOrderTypeLabel(orderType: string): string {
   return typeMap[orderType] || orderType;
 }
 
-// Get order count by status
+// ==================== Utility Functions ====================
+
+/**
+ * Counts orders with a specific status
+ * 
+ * @param orders - Array of orders
+ * @param status - Status to count
+ * @returns Number of orders with the given status
+ * 
+ * @example
+ * ```typescript
+ * const pendingCount = getOrderCount(orders, 'pending');
+ * // Returns: 5
+ * ```
+ */
 export function getOrderCount(orders: OrderWithLocalFields[], status: OrderStatus): number {
   if (!orders || !orders.length) return 0;
   
   return orders.filter(order => order.status === status).length;
 }
 
-// Check if order can be cancelled
+/**
+ * Validates if an order can be cancelled
+ * 
+ * Rules:
+ * - Cannot cancel paid orders
+ * - Can only cancel pending orders
+ * - All items must be in pending status
+ * 
+ * @param order - The order to validate
+ * @returns True if order can be cancelled, false otherwise
+ * 
+ * @example
+ * ```typescript
+ * const order = { status: 'pending', is_paid: false, items: [...] };
+ * if (canCancelOrder(order)) {
+ *   // Show cancel button
+ * }
+ * ```
+ */
 export function canCancelOrder(order: OrderWithLocalFields): boolean {
   // Cannot cancel paid orders
   if (order.is_paid) return false;
@@ -126,7 +237,30 @@ export function canCancelOrder(order: OrderWithLocalFields): boolean {
   return order.items.every(item => !item.status || item.status === 'pending');
 }
 
-// Transform API order to local format
+// ==================== Data Transformation ====================
+
+/**
+ * Transforms order from API format to local UI format
+ * 
+ * Performs the following transformations:
+ * - Maps backend field names to frontend conventions
+ * - Translates status and table information
+ * - Calculates item totals including extras
+ * - Formats dates and times
+ * - Adds localized fields for display
+ * 
+ * @param order - Raw order object from API
+ * @param t - i18n translation function
+ * @returns Transformed order with local fields, or null if order is invalid
+ * 
+ * @example
+ * ```typescript
+ * const apiOrder = await orderService.getOrder(123);
+ * const localOrder = transformOrderToLocal(apiOrder, t);
+ * // localOrder.table = 'Mesa 5' (translated)
+ * // localOrder.customerName = 'Walk-in' (default)
+ * ```
+ */
 export function transformOrderToLocal(order: any, t: any): OrderWithLocalFields | null {
   if (!order) return null;
 
