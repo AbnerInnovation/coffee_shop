@@ -3,10 +3,12 @@ import vue from '@vitejs/plugin-vue';
 import { VitePWA } from 'vite-plugin-pwa';
 import { fileURLToPath, URL } from 'node:url';
 import { resolve } from 'node:path';
+import packageJson from './package.json';
 
 export default defineConfig(({ mode }) => {
   // Load env file based on `mode` in the current working directory.
   const env = loadEnv(mode, process.cwd(), '');
+  const appVersion = env.VITE_APP_VERSION || packageJson.version || '1.0.0';
   
   return {
     base: mode === 'production' ? '/' : '/',
@@ -191,6 +193,7 @@ export default defineConfig(({ mode }) => {
     },
     define: {
       __APP_ENV__: JSON.stringify(env.APP_ENV || 'development'),
+      __APP_VERSION__: JSON.stringify(appVersion),
       'process.env': {}
     },
     optimizeDeps: {

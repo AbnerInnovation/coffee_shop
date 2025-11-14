@@ -39,6 +39,9 @@
       "print": "Imprimir",
       "remove": "Quitar"
     },
+    "labels": {
+      "version": "Versión"
+    },
     "status": {
       "loading": "Cargando...",
       "unavailable": "No disponible",
@@ -69,7 +72,8 @@
       "update_item_success": "Artículo del menú actualizado correctamente",
       "form_fill_required": "Por favor completa los campos requeridos",
       "variant_required": "El nombre y precio de la variante son obligatorios",
-      "submit_failed": "Error al enviar el formulario: {message}"
+      "submit_failed": "Error al enviar el formulario: {message}",
+      "new_version_available": "Hay una nueva versión de Cloud Restaurant disponible. Actualizando..."
     },
     "forms": {
       "name": "Nombre",

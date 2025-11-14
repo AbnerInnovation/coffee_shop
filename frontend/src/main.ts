@@ -9,6 +9,7 @@ import Toast, { PluginOptions as ToastOptions, POSITION } from 'vue-toastificati
 import 'vue-toastification/dist/index.css';
 import { safeStorage } from './utils/storage';
 import { setGlobalToken, getGlobalToken } from './utils/tokenCache';
+import { registerSW } from 'virtual:pwa-register';
 
 // Configure axios
 axios.defaults.baseURL = import.meta.env.VITE_API_URL || 'http://localhost:8001';
@@ -88,3 +89,19 @@ const toastOptions: ToastOptions = {
 };
 app.use(Toast, toastOptions);
 app.mount('#app');
+
+// Register PWA Service Worker and notify the app when a new version is available
+if ('serviceWorker' in navigator) {
+  const updateSW = registerSW({
+    onNeedRefresh() {
+      // Notify Vue app so it can show a toast and decide when to reload
+      window.dispatchEvent(
+        new CustomEvent('pwa-update-available', {
+          detail: {
+            updateSW,
+          },
+        })
+      );
+    },
+  });
+}

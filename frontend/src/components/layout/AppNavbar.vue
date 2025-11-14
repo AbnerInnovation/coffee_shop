@@ -112,7 +112,7 @@
               >
                 <div
                   v-if="isProfileMenuOpen"
-                  class="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white dark:bg-gray-800 py-1 shadow-lg ring-1 ring-black/5 dark:ring-white/10 focus:outline-none"
+                  class="absolute right-0 z-10 mt-2 w-52 origin-top-right rounded-md bg-white dark:bg-gray-800 py-1 shadow-lg ring-1 ring-black/5 dark:ring-white/10 focus:outline-none"
                   role="menu"
                   aria-orientation="vertical"
                   aria-labelledby="user-menu-button"
@@ -148,6 +148,11 @@
                   >
                     {{ t('app.actions.sign_out') }}
                   </a>
+                  <div class="border-t border-gray-100 dark:border-gray-700 mt-1 pt-1 px-4 pb-1">
+                    <p class="text-[11px] leading-tight text-gray-400 dark:text-gray-500">
+                      {{ t('app.labels.version') }} {{ appVersion }}
+                    </p>
+                  </div>
                 </div>
               </transition>
             </div>
@@ -282,6 +287,11 @@
             >
               {{ $t('app.actions.sign_out') }}
             </a>
+            <div class="mt-2 pt-2 border-t border-gray-100 dark:border-gray-700">
+              <p class="text-[11px] leading-tight text-gray-400 dark:text-gray-500">
+                {{ $t('app.labels.version') }} {{ appVersion }}
+              </p>
+            </div>
           </div>
         </div>
       </div>
@@ -300,6 +310,7 @@ import { hasRestaurantContext } from '@/utils/subdomain';
 import { useI18n } from 'vue-i18n';
 import { useTheme } from '@/composables/useTheme';
 import { alertService } from '@/services/alertService';
+import { useAppVersion } from '@/composables/useAppVersion';
 
 const props = defineProps({
   subscriptionFeatures: {
@@ -315,10 +326,9 @@ const props = defineProps({
 
 const authStore = useAuthStore();
 const route = useRoute();
-const router = useRouter();
-const { showSuccess } = useToast();
 const { t } = useI18n();
 const { isDark, toggleTheme } = useTheme();
+const { appVersion } = useAppVersion();
 const { 
   canEditCategories, 
   canManageTables, 

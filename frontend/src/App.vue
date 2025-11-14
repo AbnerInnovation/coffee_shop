@@ -43,7 +43,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
@@ -54,10 +54,14 @@ import AccountSuspendedModal from '@/components/subscription/AccountSuspendedMod
 import { subscriptionService } from '@/services/subscriptionService';
 import { hasRestaurantContext } from '@/utils/subdomain';
 import { useSubscriptionCheck } from '@/composables/useSubscriptionCheck';
+import { useToast } from '@/composables/useToast';
+import { useI18n } from 'vue-i18n';
 
 const authStore = useAuthStore();
 const route = useRoute();
 const router = useRouter();
+const { showInfo } = useToast();
+const { t } = useI18n();
 
 // Subscription check
 const { subscriptionStatus, showSuspendedModal, closeSuspendedModal } = useSubscriptionCheck();
@@ -136,12 +140,29 @@ const handleOpenModalEvent = () => {
   showNewOrderModal.value = true;
 };
 
+// Handle PWA update available event (from main.ts registerSW)
+const handlePwaUpdateAvailable = (event) => {
+  const anyEvent = event as CustomEvent<{ updateSW: (reloadPage?: boolean) => void }>;
+  const updateSW = anyEvent.detail?.updateSW;
+  if (!updateSW) return;
+
+  // Show informational toast and then trigger update
+  showInfo(t('app.messages.new_version_available'), 6000);
+
+  // Give user a short moment, then activate new SW and reload
+  setTimeout(() => {
+    updateSW(true);
+  }, 3000);
+};
+
 onMounted(() => {
   window.addEventListener('open-new-order-modal', handleOpenModalEvent);
+  window.addEventListener('pwa-update-available', handlePwaUpdateAvailable as EventListener);
 });
 
 onUnmounted(() => {
   window.removeEventListener('open-new-order-modal', handleOpenModalEvent);
+  window.removeEventListener('pwa-update-available', handlePwaUpdateAvailable as EventListener);
 });
 </script>
 
