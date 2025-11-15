@@ -102,12 +102,12 @@ const loadSubscriptionFeatures = async () => {
   
   try {
     const usage = await subscriptionService.getUsage();
-    if (usage.has_subscription && usage.limits) {
+    if (usage.has_subscription && usage.features) {
       subscriptionFeatures.value = {
-        has_kitchen_module: usage.limits.has_kitchen_module || false,
-        has_ingredients_module: usage.limits.has_ingredients_module || false,
-        has_inventory_module: usage.limits.has_inventory_module || false,
-        has_advanced_reports: usage.limits.has_advanced_reports || false
+        has_kitchen_module: usage.features.has_kitchen_module || false,
+        has_ingredients_module: usage.features.has_ingredients_module || false,
+        has_inventory_module: usage.features.has_inventory_module || false,
+        has_advanced_reports: usage.features.has_advanced_reports || false
       };
     }
   } catch (error) {

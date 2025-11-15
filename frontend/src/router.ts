@@ -74,7 +74,7 @@ router.beforeEach(async (to, from, next) => {
     try {
       const usage = await subscriptionService.getUsage();
       
-      if (!usage.has_subscription || !usage.limits?.has_kitchen_module) {
+      if (!usage.has_subscription || !usage.features?.has_kitchen_module) {
         console.warn('❌ Kitchen module not available in subscription');
         next({ name: 'Subscription' });
         return;
