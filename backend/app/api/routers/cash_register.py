@@ -66,12 +66,30 @@ def get_current_session(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ) -> Optional[CashRegisterSession]:
-    """Get the current open session for the authenticated user."""
+    """
+    Get the current open session.
+    - Cashiers: Only their own session
+    - Admin/SysAdmin: Any open session from their restaurant
+    """
     try:
-        session = cash_register_service.get_current_session(db, current_user.id)
-        if not session:
-            return None
-        return session
+        # If user is a cashier, only return their own session
+        if current_user.role == "staff" and current_user.staff_type == "cashier":
+            session = cash_register_service.get_current_session(db, current_user.id)
+            if not session:
+                return None
+            return session
+        
+        # Admin/SysAdmin: Get any open session from the restaurant
+        if current_user.restaurant_id:
+            sessions = cash_register_service.get_sessions(
+                db, 
+                restaurant_id=current_user.restaurant_id, 
+                status=SessionStatus.OPEN,
+                limit=1
+            )
+            return sessions[0] if sessions else None
+        
+        return None
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error retrieving current session: {str(e)}")
 

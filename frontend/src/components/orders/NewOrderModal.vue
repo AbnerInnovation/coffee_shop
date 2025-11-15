@@ -383,6 +383,7 @@ function loadOrderIntoForm(order: OrderType) {
       special_instructions: it.special_instructions || undefined,
       unit_price: it.unit_price || it.menu_item?.price || 0,
       status: it.status || 'pending',
+      person_id: personId,  // Preserve original person_id
     });
   });
 
@@ -391,10 +392,19 @@ function loadOrderIntoForm(order: OrderType) {
     // Clear existing persons
     persons.value = [];
     
-    // Create a person for each group
+    // Sort person_ids to ensure consistent order (null first, then by numeric value)
+    const sortedPersonIds = Array.from(itemsByPerson.keys()).sort((a, b) => {
+      if (a === null) return -1;
+      if (b === null) return 1;
+      return a - b;
+    });
+    
+    // Create a person for each group in sorted order
     let position = 1;
-    itemsByPerson.forEach((items, personId) => {
+    sortedPersonIds.forEach((personId) => {
+      const items = itemsByPerson.get(personId)!;
       persons.value.push({
+        id: personId ?? undefined,  // Preserve original person_id from backend
         position,
         name: '',
         items
@@ -411,6 +421,7 @@ function loadOrderIntoForm(order: OrderType) {
       });
     }
     
+    // Always start with first person
     activePersonIndex.value = 0;
   }
 }
@@ -535,7 +546,15 @@ function removeGroupFromPerson(group: any) {
 
 async function createOrder() {
   try {
-    const validItems = form.value.items.filter(item => item.quantity > 0);
+    // Collect all items from all persons (multiple diners mode)
+    const validItems: any[] = [];
+    persons.value.forEach(person => {
+      person.items.forEach(item => {
+        if (item.quantity > 0) {
+          validItems.push(item);
+        }
+      });
+    });
 
     // Validate items using composable
     const hasItems = orderCreationComposable.validateHasItems(
@@ -635,10 +654,18 @@ function handleAddItemFromModal(data: {
       activePerson.items.push({
         menu_item_id: Number(item.id),
         variant_id: variant ? Number(variant.id) : null,
+        variant: variant ? {
+          id: Number(variant.id),
+          name: variant.name,
+          price: variant.price,
+          price_adjustment: variant.price_adjustment,
+          discount_price: variant.discount_price
+        } : null,
         quantity: 1, // Always 1 for individual items
         special_instructions: notes || '',
         unit_price: price,
-        extras: []
+        extras: [],
+        person_id: activePerson.id ?? null  // Assign person_id from active person
       });
     }
   }

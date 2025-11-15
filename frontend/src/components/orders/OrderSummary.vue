@@ -203,7 +203,7 @@ function convertPersonItemsToOrderItems(personItems: Person['items'], menuItems:
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
     unit_price: item.unit_price || 0,
-    variant: null,
+    variant: (item as any).variant || null,
     menu_item: {
       id: item.menu_item_id,
       name: props.getMenuItemName(item.menu_item_id),

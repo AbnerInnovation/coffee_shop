@@ -62,6 +62,10 @@ export function useOrderCreation() {
 
   /**
    * Actualiza los items de una orden existente (upsert + delete)
+   * Sincroniza los items de la orden con los items del formulario:
+   * - Actualiza items existentes que están en el formulario
+   * - Agrega items nuevos del formulario
+   * - Elimina items que ya no están en el formulario
    */
   async function updateOrderItems(
     orderId: number,
@@ -115,11 +119,12 @@ export function useOrderCreation() {
           quantity: item.quantity,
           special_instructions: item.special_instructions ?? null,
           unit_price: item.unit_price ?? 0,
+          person_id: item.person_id ?? null,  // Include person_id for new items
         });
       }
     }
 
-    // Deletions: remove items no longer present
+    // Deletions: remove items no longer present in the form
     for (const [key, ex] of existingMap.entries()) {
       if (!validItems.some(it => `${it.menu_item_id}|${(it.variant_id ?? '')}` === key)) {
         await orderService.deleteOrderItem(orderId, ex.id);

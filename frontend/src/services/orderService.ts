@@ -216,7 +216,7 @@ const orderService = {
     }) as Order;
   },
 
-  async addOrderItem(orderId: number, item: { menu_item_id: number; variant_id?: number | null; quantity: number; special_instructions?: string | null; unit_price?: number }): Promise<any> {
+  async addOrderItem(orderId: number, item: { menu_item_id: number; variant_id?: number | null; quantity: number; special_instructions?: string | null; unit_price?: number; person_id?: number | null }): Promise<any> {
     // El interceptor de axios ya devuelve response.data automáticamente
     return await api.post(`/orders/${orderId}/items`, item);
   },

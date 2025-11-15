@@ -10,8 +10,21 @@ from ...models.menu import MenuItem as MenuItemModel
 from ...models.restaurant import Restaurant
 from ...models.user import User
 from ...schemas.order import Order, OrderCreate, OrderUpdate, OrderItemCreate, OrderItemUpdate, OrderItem, OrderItemExtraCreate, OrderItemExtraUpdate, OrderItemExtra
-from ...services import order as order_service
-from ...services.order import serialize_order_item, mark_table_available_if_no_orders
+
+# Order services - New modular imports
+from ...services.orders import (
+    get_orders,
+    get_order,
+    create_order_with_items,
+    update_order,
+    delete_order,
+    get_order_item,
+    add_order_item,
+    update_order_item,
+    delete_order_item,
+    serialize_order_item,
+)
+from ...services.orders.table_manager import mark_table_available_if_no_orders
 from ...services.cash_register import create_transaction_from_order
 from ...services.user import get_current_active_user
 from ...core.dependencies import get_current_restaurant, get_current_user_with_active_subscription
@@ -51,7 +64,7 @@ async def read_orders(
         if current_user.role == "staff" and current_user.staff_type == "waiter":
             waiter_id = current_user.id
         
-        return order_service.get_orders(
+        return get_orders(
             db,
             restaurant_id=restaurant.id,
             skip=skip,
@@ -99,7 +112,7 @@ async def create_order(
                 if not db_item:
                     raise ResourceNotFoundError("MenuItem", item.menu_item_id)
     
-    return order_service.create_order_with_items(db=db, order=order, restaurant_id=restaurant.id, user_id=current_user.id)
+    return create_order_with_items(db=db, order=order, restaurant_id=restaurant.id, user_id=current_user.id)
 
 
 @router.get("/{order_id}", response_model=Order)
@@ -107,14 +120,14 @@ async def read_order(order_id: int, db: Session = Depends(get_db), restaurant: R
     """
     Get a specific order by ID.
     """
-    db_order = order_service.get_order(db, order_id=order_id, restaurant_id=restaurant.id)
+    db_order = get_order(db, order_id=order_id, restaurant_id=restaurant.id)
     if db_order is None:
         raise ResourceNotFoundError("Order", order_id)
     return db_order
 
 
 @router.put("/{order_id}", response_model=Order)
-async def update_order(order_id: int, order: OrderUpdate, db: Session = Depends(get_db), current_user = Depends(get_current_user_with_active_subscription)) -> Order:
+async def update_order_endpoint(order_id: int, order: OrderUpdate, db: Session = Depends(get_db), current_user = Depends(get_current_user_with_active_subscription)) -> Order:
     """
     Update an order.
     """
@@ -207,17 +220,17 @@ async def update_order(order_id: int, order: OrderUpdate, db: Session = Depends(
 
     # Update any other fields from the request
     if order.dict(exclude_unset=True):
-        updated_order = order_service.update_order(db=db, db_order=db_order, order=order)
+        updated_order = update_order(db=db, db_order=db_order, order=order)
         return updated_order
     else:
         # If no other updates, just return the current order
-        return order_service.get_order(db, order_id, db_order.restaurant_id)
+        return get_order(db, order_id, db_order.restaurant_id)
 
 
 
 
 @router.delete("/{order_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_order(order_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user_with_active_subscription)) -> None:
+async def delete_order_endpoint(order_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user_with_active_subscription)) -> None:
     """
     Delete an order.
     """
@@ -225,11 +238,11 @@ async def delete_order(order_id: int, db: Session = Depends(get_db), current_use
     if db_order is None:
         raise ResourceNotFoundError("Order", order_id)
     
-    order_service.delete_order(db, db_order=db_order)
+    delete_order(db, db_order=db_order)
 
 
 @router.post("/{order_id}/items", response_model=OrderItem, status_code=status.HTTP_201_CREATED)
-async def add_order_item(order_id: int, item: OrderItemCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user_with_active_subscription)) -> OrderItem:
+async def add_order_item_endpoint(order_id: int, item: OrderItemCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user_with_active_subscription)) -> OrderItem:
     """
     Add an item to an existing order.
     """
@@ -252,10 +265,12 @@ async def add_order_item(order_id: int, item: OrderItemCreate, db: Session = Dep
     # Always update updated_at when adding items to track latest activity
     from datetime import datetime, timezone
     db_order.updated_at = datetime.now(timezone.utc)
-    db.commit()
     
-    # Add the item (will be created with status=PENDING)
-    result = order_service.add_order_item(db=db, db_order=db_order, item=item, unit_price=db_menu_item.price)
+    # Add the item (will be created with status=PENDING and update total)
+    result = add_order_item(db=db, db_order=db_order, item=item, unit_price=db_menu_item.price)
+    
+    # Refresh order to get updated items relationship
+    db.refresh(db_order)
     
     return result
 
@@ -297,7 +312,7 @@ async def add_multiple_items_to_order(
     # Add all items (they will be created with status=PENDING)
     for item in items:
         db_menu_item = db.query(MenuItemModel).filter(MenuItemModel.id == item.menu_item_id).first()
-        order_service.add_order_item(db=db, db_order=db_order, item=item, unit_price=db_menu_item.price)
+        add_order_item(db=db, db_order=db_order, item=item, unit_price=db_menu_item.price)
     
     # If order was preparing or ready, change it back to pending since there are new items
     if db_order.status in [OrderStatus.PREPARING, OrderStatus.READY]:
@@ -312,19 +327,19 @@ async def add_multiple_items_to_order(
     db.commit()
     
     # Return updated order with all items
-    return order_service.get_order(db, order_id=order_id, restaurant_id=restaurant.id)
+    return get_order(db, order_id=order_id, restaurant_id=restaurant.id)
 
 
 @router.put("/{order_id}/items/{item_id}", response_model=OrderItem)
-async def update_order_item(order_id: int, item_id: int, item: OrderItemUpdate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user_with_active_subscription)) -> OrderItem:
+async def update_order_item_endpoint(order_id: int, item_id: int, item: OrderItemUpdate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user_with_active_subscription)) -> OrderItem:
     """
     Update an order item.
     """
-    db_order_item = order_service.get_order_item(db, item_id=item_id)
+    db_order_item = get_order_item(db, item_id=item_id)
     if not db_order_item or db_order_item.order_id != order_id:
         raise ResourceNotFoundError("OrderItem", item_id)
     
-    return order_service.update_order_item(db=db, db_item=db_order_item, item=item)
+    return update_order_item(db=db, db_item=db_order_item, item=item)
 
 
 @router.patch("/{order_id}/items/{item_id}/status", response_model=OrderItem)
@@ -348,7 +363,7 @@ async def update_order_item_status(
             field="status"
         )
     
-    db_order_item = order_service.get_order_item(db, item_id=item_id)
+    db_order_item = get_order_item(db, item_id=item_id)
     if not db_order_item or db_order_item.order_id != order_id:
         raise ResourceNotFoundError("OrderItem", item_id)
     
@@ -357,19 +372,19 @@ async def update_order_item_status(
     db.commit()
     db.refresh(db_order_item)
     
-    return order_service.serialize_order_item(db_order_item)
+    return serialize_order_item(db_order_item)
 
 
 @router.delete("/{order_id}/items/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_order_item(order_id: int, item_id: int, db: Session = Depends(get_db)) -> None:
+async def delete_order_item_endpoint(order_id: int, item_id: int, db: Session = Depends(get_db)) -> None:
     """
     Remove an item from an order.
     """
-    db_order_item = order_service.get_order_item(db, item_id=item_id)
+    db_order_item = get_order_item(db, item_id=item_id)
     if not db_order_item or db_order_item.order_id != order_id:
         raise ResourceNotFoundError("OrderItem", item_id)
     
-    order_service.delete_order_item(db=db, db_item=db_order_item)
+    delete_order_item(db=db, db_item=db_order_item)
 
 
 @router.patch("/{order_id}/pay", response_model=Order)

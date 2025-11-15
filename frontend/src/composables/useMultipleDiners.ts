@@ -7,11 +7,19 @@ import type { Extra } from '@/components/orders/ExtrasSelector.vue';
 export interface PersonOrderItem {
   menu_item_id: number;
   variant_id?: number | null;
+  variant?: {
+    id: number;
+    name: string;
+    price?: number;
+    price_adjustment?: number;
+    discount_price?: number;
+  } | null;
   quantity: number;
   notes?: string;
   special_instructions?: string;
   unit_price?: number;
   extras?: Extra[];
+  person_id?: number | null;  // ID of the person this item belongs to
 }
 
 /**

@@ -87,6 +87,7 @@ def add_order_item(
         unit_price=unit_price,
         special_instructions=item.special_instructions,
         status=OrderStatus.PENDING,
+        person_id=item.person_id,  # Include person_id for multi-diner orders
         created_at=datetime.now(timezone.utc),
         updated_at=datetime.now(timezone.utc),
     )

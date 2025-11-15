@@ -146,8 +146,9 @@ def serialize_order(order: OrderModel) -> dict:
     Returns:
         Dictionary with complete order data
     """
-    # Calculate subtotal from items including extras
-    items = getattr(order, "items", [])
+    # Calculate subtotal from items including extras (exclude deleted items)
+    all_items = getattr(order, "items", [])
+    items = [item for item in all_items if item.deleted_at is None]
     subtotal = 0.0
     for item in items:
         # Add item price
@@ -155,7 +156,8 @@ def serialize_order(order: OrderModel) -> dict:
         # Add extras price
         if hasattr(item, 'extras') and item.extras:
             for extra in item.extras:
-                subtotal += extra.quantity * (extra.price or 0)
+                if extra.deleted_at is None:  # Also filter deleted extras
+                    subtotal += extra.quantity * (extra.price or 0)
     
     # For now, tax is 0 (can be configured later)
     tax = 0.0
