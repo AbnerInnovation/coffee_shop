@@ -128,13 +128,42 @@ def get_current_usage(db: Session, restaurant_id: int) -> Dict[str, int]:
         Category.deleted_at.is_(None)
     ).count()
     
-    # Users by role
-    for role in ['admin', 'waiter', 'cashier', 'kitchen', 'owner']:
-        usage[f'users_{role}'] = db.query(User).filter(
-            User.restaurant_id == restaurant_id,
-            User.role == role,
-            User.deleted_at.is_(None)
-        ).count()
+    # Users by role/staff_type
+    # Admin users
+    usage['users_admin'] = db.query(User).filter(
+        User.restaurant_id == restaurant_id,
+        User.role == 'admin',
+        User.deleted_at.is_(None)
+    ).count()
+    
+    # Staff users by staff_type
+    usage['users_waiter'] = db.query(User).filter(
+        User.restaurant_id == restaurant_id,
+        User.role == 'staff',
+        User.staff_type == 'waiter',
+        User.deleted_at.is_(None)
+    ).count()
+    
+    usage['users_cashier'] = db.query(User).filter(
+        User.restaurant_id == restaurant_id,
+        User.role == 'staff',
+        User.staff_type == 'cashier',
+        User.deleted_at.is_(None)
+    ).count()
+    
+    usage['users_kitchen'] = db.query(User).filter(
+        User.restaurant_id == restaurant_id,
+        User.role == 'staff',
+        User.staff_type == 'kitchen',
+        User.deleted_at.is_(None)
+    ).count()
+    
+    # Owner users
+    usage['users_owner'] = db.query(User).filter(
+        User.restaurant_id == restaurant_id,
+        User.role == 'owner',
+        User.deleted_at.is_(None)
+    ).count()
     
     return usage
 
@@ -232,11 +261,29 @@ def _check_user_limits(
             return []
     
     for role, (limit_key, role_name) in role_limits.items():
-        current_users = db.query(User).filter(
-            User.restaurant_id == restaurant_id,
-            User.role == role,
-            User.deleted_at.is_(None)
-        ).count()
+        # Count users based on role type
+        if role == 'admin':
+            current_users = db.query(User).filter(
+                User.restaurant_id == restaurant_id,
+                User.role == 'admin',
+                User.deleted_at.is_(None)
+            ).count()
+        elif role in ['waiter', 'cashier', 'kitchen']:
+            # Staff users - check by staff_type
+            current_users = db.query(User).filter(
+                User.restaurant_id == restaurant_id,
+                User.role == 'staff',
+                User.staff_type == role,
+                User.deleted_at.is_(None)
+            ).count()
+        elif role == 'owner':
+            current_users = db.query(User).filter(
+                User.restaurant_id == restaurant_id,
+                User.role == 'owner',
+                User.deleted_at.is_(None)
+            ).count()
+        else:
+            current_users = 0
         
         max_users = getattr(plan, limit_key, -1)
         
