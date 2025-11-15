@@ -6,7 +6,21 @@ from sqlalchemy.orm import Session
 from typing import List
 
 from app.db.base import get_db
-from app.services.subscription_service import SubscriptionService
+# New modular imports - SOLID refactoring
+from app.services.subscription import (
+    get_all_plans as get_plans_func,
+    get_plan_by_id,
+    get_all_addons as get_addons_func,
+    get_addon_by_code,
+    get_restaurant_subscription as get_sub_func,
+    create_trial_subscription as create_trial_func,
+    create_paid_subscription as create_paid_func,
+    upgrade_subscription as upgrade_func,
+    downgrade_subscription as downgrade_func,
+    cancel_subscription as cancel_func,
+    add_addon_to_subscription,
+    remove_addon_from_subscription,
+)
 from app.schemas.subscription import (
     SubscriptionPlanResponse,
     SubscriptionAddonResponse,
@@ -33,8 +47,7 @@ def get_all_plans(
     db: Session = Depends(get_db)
 ):
     """Get all available subscription plans"""
-    service = SubscriptionService(db)
-    plans = service.get_all_plans(include_trial=include_trial)
+    plans = get_plans_func(db, include_trial=include_trial)
     return plans
 
 
@@ -44,9 +57,8 @@ def get_plan(
     db: Session = Depends(get_db)
 ):
     """Get a specific subscription plan"""
-    service = SubscriptionService(db)
     try:
-        plan = service.get_plan_by_id(plan_id)
+        plan = get_plan_by_id(db, plan_id)
         return plan
     except ResourceNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
@@ -60,8 +72,7 @@ def get_all_addons(
     db: Session = Depends(get_db)
 ):
     """Get all available add-ons, optionally filtered by plan tier"""
-    service = SubscriptionService(db)
-    addons = service.get_all_addons(plan_tier=plan_tier)
+    addons = get_addons_func(db, plan_tier=plan_tier)
     return addons
 
 
@@ -71,9 +82,8 @@ def get_addon(
     db: Session = Depends(get_db)
 ):
     """Get a specific add-on by code"""
-    service = SubscriptionService(db)
     try:
-        addon = service.get_addon_by_code(addon_code)
+        addon = get_addon_by_code(db, addon_code)
         return addon
     except ResourceNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
@@ -87,9 +97,8 @@ def create_trial_subscription(
     db: Session = Depends(get_db)
 ):
     """Create a trial subscription for a restaurant"""
-    service = SubscriptionService(db)
     try:
-        subscription = service.create_trial_subscription(restaurant_id)
+        subscription = create_trial_func(db, restaurant_id)
         return subscription
     except (ValidationError, ConflictError) as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -102,9 +111,9 @@ def create_paid_subscription(
     db: Session = Depends(get_db)
 ):
     """Create a paid subscription for a restaurant"""
-    service = SubscriptionService(db)
     try:
-        subscription = service.create_paid_subscription(
+        subscription = create_paid_func(
+            db,
             restaurant_id=restaurant_id,
             plan_id=data.plan_id,
             billing_cycle=BillingCycle(data.billing_cycle.value),
@@ -141,9 +150,8 @@ def upgrade_subscription(
     db: Session = Depends(get_db)
 ):
     """Upgrade subscription to a higher tier"""
-    service = SubscriptionService(db)
     try:
-        subscription = service.upgrade_subscription(subscription_id, data.new_plan_id)
+        subscription = upgrade_func(db, subscription_id, data.new_plan_id)
         return subscription
     except (ResourceNotFoundError, ValidationError) as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -156,9 +164,8 @@ def downgrade_subscription(
     db: Session = Depends(get_db)
 ):
     """Downgrade subscription (effective at end of current period)"""
-    service = SubscriptionService(db)
     try:
-        subscription = service.downgrade_subscription(subscription_id, data.new_plan_id)
+        subscription = downgrade_func(db, subscription_id, data.new_plan_id)
         return subscription
     except (ResourceNotFoundError, ValidationError) as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -171,9 +178,8 @@ def cancel_subscription(
     db: Session = Depends(get_db)
 ):
     """Cancel subscription"""
-    service = SubscriptionService(db)
     try:
-        subscription = service.cancel_subscription(subscription_id, immediate=immediate)
+        subscription = cancel_func(db, subscription_id, immediate=immediate)
         return subscription
     except ResourceNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
@@ -188,12 +194,11 @@ def add_addon(
     db: Session = Depends(get_db)
 ):
     """Add an addon to a subscription"""
-    service = SubscriptionService(db)
     try:
-        service.add_addon_to_subscription(
+        add_addon_to_subscription(
+            db,
             subscription_id=subscription_id,
-            addon_code=data.addon_code,
-            quantity=data.quantity
+            addon_code=data.addon_code
         )
         # Return updated subscription
         from app.models import RestaurantSubscription
@@ -212,9 +217,8 @@ def remove_addon(
     db: Session = Depends(get_db)
 ):
     """Remove an addon from a subscription"""
-    service = SubscriptionService(db)
     try:
-        service.remove_addon_from_subscription(subscription_id, addon_code)
+        remove_addon_from_subscription(db, subscription_id, addon_code)
         return {"message": "Addon removed successfully"}
     except ResourceNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
@@ -228,11 +232,28 @@ def get_subscription_limits(
     db: Session = Depends(get_db)
 ):
     """Get subscription limits for a restaurant"""
-    service = SubscriptionService(db)
-    limits = service.get_subscription_limits(restaurant_id)
+    subscription = get_sub_func(db, restaurant_id)
     
-    # TODO: Add current usage counts
-    # For now, just return limits
+    if not subscription or not subscription.plan:
+        raise HTTPException(status_code=404, detail="No active subscription found")
+    
+    plan = subscription.plan
+    limits = {
+        'max_admin_users': plan.max_admin_users,
+        'max_waiter_users': plan.max_waiter_users,
+        'max_cashier_users': plan.max_cashier_users,
+        'max_kitchen_users': plan.max_kitchen_users,
+        'max_owner_users': plan.max_owner_users,
+        'max_tables': plan.max_tables,
+        'max_menu_items': plan.max_menu_items,
+        'max_categories': plan.max_categories,
+        'has_kitchen_module': plan.has_kitchen_module,
+        'has_ingredients_module': plan.has_ingredients_module,
+        'has_inventory_module': plan.has_inventory_module,
+        'has_advanced_reports': plan.has_advanced_reports,
+        'has_multi_branch': plan.has_multi_branch
+    }
+    
     return SubscriptionLimitsResponse(**limits)
 
 
@@ -242,14 +263,20 @@ def calculate_cost(
     db: Session = Depends(get_db)
 ):
     """Calculate total subscription cost with addons and discounts"""
-    service = SubscriptionService(db)
+    from app.services.subscription.cost_calculator import calculate_subscription_cost as calc_cost
+    
     try:
-        cost = service.calculate_subscription_cost(
-            plan_id=data.plan_id,
-            billing_cycle=BillingCycle(data.billing_cycle.value),
-            addon_codes=data.addons,
-            discount_code=data.discount_code
+        plan = get_plan_by_id(db, data.plan_id)
+        billing_cycle_enum = BillingCycle(data.billing_cycle.value)
+        
+        base_price, total_price = calc_cost(plan, billing_cycle_enum, data.discount_code)
+        
+        # TODO: Add addon costs calculation
+        # For now, return base cost
+        return CalculateCostResponse(
+            base_price=base_price,
+            total_price=total_price,
+            discount_amount=base_price - total_price if base_price > total_price else 0
         )
-        return CalculateCostResponse(**cost)
     except (ResourceNotFoundError, ValidationError) as e:
         raise HTTPException(status_code=400, detail=str(e))

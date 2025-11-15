@@ -129,9 +129,9 @@ async def create_restaurant(
     # Automatically create trial subscription with custom trial_days
     trial_subscription = None
     try:
-        from app.services.subscription_service import SubscriptionService
-        subscription_service = SubscriptionService(db)
-        trial_subscription = subscription_service.create_trial_subscription(db_restaurant.id, trial_days)
+        # New modular import - SOLID refactoring
+        from app.services.subscription import create_trial_subscription
+        trial_subscription = create_trial_subscription(db, db_restaurant.id, trial_days)
         print(f"✅ Trial subscription created for restaurant '{db_restaurant.name}' (ID: {db_restaurant.id})")
         print(f"   Trial duration: {trial_days} days")
         print(f"   Trial expires: {trial_subscription.trial_end_date}")

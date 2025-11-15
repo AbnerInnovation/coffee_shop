@@ -11,7 +11,13 @@ from app.models import (
     User, Restaurant, RestaurantSubscription, SubscriptionPlan,
     MenuItem, Table, Category, SubscriptionStatus
 )
-from app.services.subscription_service import SubscriptionService
+# New modular imports - SOLID refactoring
+from app.services.subscription import (
+    get_all_plans,
+    get_all_addons,
+    get_restaurant_subscription,
+)
+from app.services.subscription.limit_validator import get_current_usage
 from app.services.payment_service import PaymentService
 from app.services.alert_service import AlertService
 from app.api.deps import get_current_user, get_current_restaurant, require_admin_or_sysadmin
@@ -100,48 +106,33 @@ def get_subscription_usage(
     # Check and auto-update expiration status
     subscription.update_status(db)
     
-    service = SubscriptionService(db)
-    limits = service.get_subscription_limits(restaurant.id)
+    # Get current usage using new modular function
+    usage_data = get_current_usage(db, restaurant.id)
     
-    # Get current usage (only non-deleted users)
+    # Get plan limits
+    plan = subscription.plan
+    limits = {
+        "max_admin_users": plan.max_admin_users,
+        "max_waiter_users": plan.max_waiter_users,
+        "max_cashier_users": plan.max_cashier_users,
+        "max_kitchen_users": plan.max_kitchen_users,
+        "max_owner_users": plan.max_owner_users,
+        "max_tables": plan.max_tables,
+        "max_menu_items": plan.max_menu_items,
+        "max_categories": plan.max_categories
+    }
+    
+    # Format usage for response
     usage = {
         "users": {
-            "admin": db.query(User).filter(
-                User.restaurant_id == restaurant.id,
-                User.role == "admin",
-                User.deleted_at.is_(None)
-            ).count(),
-            "waiter": db.query(User).filter(
-                User.restaurant_id == restaurant.id,
-                User.role == "staff",
-                User.staff_type == "waiter",
-                User.deleted_at.is_(None)
-            ).count(),
-            "cashier": db.query(User).filter(
-                User.restaurant_id == restaurant.id,
-                User.role == "staff",
-                User.staff_type == "cashier",
-                User.deleted_at.is_(None)
-            ).count(),
-            "kitchen": db.query(User).filter(
-                User.restaurant_id == restaurant.id,
-                User.role == "staff",
-                User.staff_type == "kitchen",
-                User.deleted_at.is_(None)
-            ).count(),
+            "admin": usage_data.get("users_admin", 0),
+            "waiter": usage_data.get("users_waiter", 0),
+            "cashier": usage_data.get("users_cashier", 0),
+            "kitchen": usage_data.get("users_kitchen", 0),
         },
-        "tables": db.query(Table).filter(
-            Table.restaurant_id == restaurant.id,
-            Table.deleted_at.is_(None)
-        ).count(),
-        "menu_items": db.query(MenuItem).filter(
-            MenuItem.restaurant_id == restaurant.id,
-            MenuItem.deleted_at.is_(None)
-        ).count(),
-        "categories": db.query(Category).filter(
-            Category.restaurant_id == restaurant.id,
-            Category.deleted_at.is_(None)
-        ).count()
+        "tables": usage_data.get("tables", 0),
+        "menu_items": usage_data.get("menu_items", 0),
+        "categories": usage_data.get("categories", 0)
     }
     
     # Calculate percentages
@@ -173,8 +164,7 @@ def get_available_plans(
     db: Session = Depends(get_db)
 ):
     """Get all available subscription plans"""
-    service = SubscriptionService(db)
-    plans = service.get_all_plans(include_trial=False)
+    plans = get_all_plans(db, include_trial=False)
     
     return [
         {
@@ -228,9 +218,8 @@ def get_available_addons(
             detail="No active subscription found"
         )
     
-    service = SubscriptionService(db)
     plan_tier = subscription.plan.tier.value
-    addons = service.get_all_addons(plan_tier=plan_tier)
+    addons = get_all_addons(db, plan_tier=plan_tier)
     
     return [
         {
@@ -265,8 +254,9 @@ def upgrade_subscription(
     Validates downgrade limits before allowing the change.
     Requires admin or sysadmin privileges.
     """
-    from app.services.subscription_service import SubscriptionService
     from app.core.exceptions import ValidationError, ResourceNotFoundError
+    from app.services.subscription import upgrade_subscription as upgrade_sub_func, create_paid_subscription
+    from app.models import BillingCycle
     
     # Validate billing cycle
     if billing_cycle not in ['monthly', 'annual']:
@@ -275,7 +265,7 @@ def upgrade_subscription(
             detail="Invalid billing cycle. Must be 'monthly' or 'annual'"
         )
     
-    service = SubscriptionService(db)
+    billing_cycle_enum = BillingCycle.MONTHLY if billing_cycle == 'monthly' else BillingCycle.ANNUAL
     
     # Get ALL active/trial subscriptions for this restaurant
     existing_subscriptions = db.query(RestaurantSubscription).filter(
@@ -295,8 +285,9 @@ def upgrade_subscription(
                     sub.status = SubscriptionStatus.CANCELLED
                     sub.cancelled_at = datetime.utcnow()
             db.commit()
-            # Use the service method which includes downgrade validation
-            subscription = service.upgrade_subscription(
+            # Use the modular function which includes downgrade validation
+            subscription = upgrade_sub_func(
+                db,
                 existing_subscription.id,
                 plan_id
             )
@@ -315,10 +306,11 @@ def upgrade_subscription(
                 db.refresh(subscription)
         else:
             # Create new subscription
-            subscription = service.create_paid_subscription(
+            subscription = create_paid_subscription(
+                db,
                 restaurant_id=restaurant.id,
                 plan_id=plan_id,
-                billing_cycle=billing_cycle
+                billing_cycle=billing_cycle_enum
             )
         
         return {
