@@ -11,7 +11,7 @@ from ...models.restaurant import Restaurant
 from ...models.user import User
 from ...schemas.order import Order, OrderCreate, OrderUpdate, OrderItemCreate, OrderItemUpdate, OrderItem, OrderItemExtraCreate, OrderItemExtraUpdate, OrderItemExtra
 from ...services import order as order_service
-from ...services.order import serialize_order_item
+from ...services.order import serialize_order_item, mark_table_available_if_no_orders
 from ...services.cash_register import create_transaction_from_order
 from ...services.user import get_current_active_user
 from ...core.dependencies import get_current_restaurant, get_current_user_with_active_subscription
@@ -153,20 +153,7 @@ async def update_order(order_id: int, order: OrderUpdate, db: Session = Depends(
     )
     
     if is_removing_table:
-        old_table = db.query(TableModel).filter(TableModel.id == old_table_id).first()
-        if old_table:
-            # Check if there are other active orders for this table
-            other_active_orders = db.query(OrderModel).filter(
-                OrderModel.table_id == old_table_id,
-                OrderModel.id != order_id,
-                OrderModel.status.in_([OrderStatus.PENDING, OrderStatus.PREPARING, OrderStatus.READY]),
-                OrderModel.is_paid == False
-            ).count()
-            
-            # Only mark as available if no other active orders
-            if other_active_orders == 0:
-                old_table.is_occupied = False
-                old_table.updated_at = datetime.now(timezone.utc)
+        mark_table_available_if_no_orders(db, old_table_id, order_id)
     
     # Scenario 2: Changing from takeaway/delivery to dine-in (adding table)
     is_adding_table = (
@@ -202,22 +189,7 @@ async def update_order(order_id: int, order: OrderUpdate, db: Session = Depends(
 
         # Mark table as available if this is a dine-in order
         if db_order.table_id:
-            from ...models.table import Table as TableModel
-            table = db.query(TableModel).filter(TableModel.id == db_order.table_id).first()
-            if table:
-                # Check if there are other active orders for this table
-                from datetime import datetime, timezone
-                other_active_orders = db.query(OrderModel).filter(
-                    OrderModel.table_id == db_order.table_id,
-                    OrderModel.id != order_id,
-                    OrderModel.status.in_([OrderStatus.PENDING, OrderStatus.PREPARING, OrderStatus.READY]),
-                    OrderModel.is_paid == False
-                ).count()
-                
-                # Only mark as available if no other active orders
-                if other_active_orders == 0:
-                    table.is_occupied = False
-                    table.updated_at = datetime.now(timezone.utc)
+            mark_table_available_if_no_orders(db, db_order.table_id, order_id)
 
         # Create cash register transaction
         try:

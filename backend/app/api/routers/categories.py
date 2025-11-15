@@ -10,6 +10,7 @@ from ...services.user import get_current_active_user
 from ...services.menu import get_categories, get_category, create_category, update_category, delete_category
 from ...schemas.menu import CategoryCreate, CategoryUpdate, CategoryInDB
 from ...core.exceptions import ResourceNotFoundError, ValidationError, ConflictError
+from ...core.error_handlers import handle_duplicate_error
 from ...middleware.subscription_limits import SubscriptionLimitsMiddleware
 
 router = APIRouter(
@@ -45,10 +46,7 @@ async def create_menu_category(
     try:
         return create_category(db, category, restaurant_id=restaurant.id)
     except ValueError as e:
-        # Check if it's a duplicate category error
-        if "already exists" in str(e).lower() or "duplicate" in str(e).lower():
-            raise ConflictError(str(e), resource="Category")
-        raise ValidationError(str(e))
+        handle_duplicate_error(e, "Category")
 
 @router.get("/{category_id}", response_model=CategoryInDB)
 async def get_menu_category(
@@ -83,10 +81,7 @@ async def update_menu_category(
             raise ResourceNotFoundError("Category", category_id)
         return db_category
     except ValueError as e:
-        # Check if it's a duplicate category error
-        if "already exists" in str(e).lower() or "duplicate" in str(e).lower():
-            raise ConflictError(str(e), resource="Category")
-        raise ValidationError(str(e))
+        handle_duplicate_error(e, "Category")
 
 @router.delete("/{category_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_menu_category(

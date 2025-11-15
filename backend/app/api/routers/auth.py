@@ -15,6 +15,7 @@ from ...core.config import settings
 from ...services import user as user_service
 from ...services.user import get_current_active_user
 from ...core.exceptions import ValidationError, UnauthorizedError, ConflictError
+from ...core.error_handlers import handle_duplicate_error
 from ...middleware.restaurant import get_restaurant_from_request
 
 router = APIRouter(
@@ -42,10 +43,7 @@ async def register_user(
         )
         return db_user
     except ValueError as e:
-        # Check if it's a duplicate email error
-        if "already registered" in str(e).lower() or "already exists" in str(e).lower():
-            raise ConflictError(str(e), resource="User")
-        raise ValidationError(str(e))
+        handle_duplicate_error(e, "User")
 
 @router.post("/token", response_model=Token)
 async def login_for_access_token(

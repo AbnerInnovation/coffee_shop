@@ -17,6 +17,7 @@ from ...core.dependencies import (
 )
 from ...middleware.subscription_limits import SubscriptionLimitsMiddleware
 from ...services import user as user_service
+from ...core.exceptions import ConflictError
 
 router = APIRouter(
     prefix="/restaurant-users",
@@ -141,10 +142,7 @@ async def create_restaurant_user(
     # Check if user with this email already exists
     db_user = user_service.get_user_by_email(db, email=user.email)
     if db_user:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email already registered"
-        )
+        raise ConflictError("Email already registered", resource="User")
     
     # Force restaurant_id to current restaurant (prevent cross-restaurant user creation)
     user.restaurant_id = restaurant.id

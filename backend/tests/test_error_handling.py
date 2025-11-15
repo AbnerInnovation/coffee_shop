@@ -32,8 +32,8 @@ def create_test_app():
     
     app = FastAPI()
     
-    # Import exception handlers from main
-    from app.main import (
+    # Import exception handlers from core module
+    from app.core.exception_handlers import (
         app_exception_handler,
         integrity_error_handler,
         sqlalchemy_exception_handler,

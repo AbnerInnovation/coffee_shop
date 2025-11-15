@@ -15,6 +15,7 @@ from ...schemas.user import UserCreate
 from ...services.user import get_current_active_user, create_user
 from ...middleware.restaurant import get_restaurant_from_request
 from ...core.config import settings
+from ...core.exceptions import ConflictError
 
 router = APIRouter(
     prefix="/restaurants",
@@ -102,9 +103,9 @@ async def create_restaurant(
     ).first()
     
     if existing:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Restaurant with subdomain '{restaurant.subdomain}' already exists"
+        raise ConflictError(
+            f"Restaurant with subdomain '{restaurant.subdomain}' already exists",
+            resource="Restaurant"
         )
     
     # Extract trial_days and admin_email before creating restaurant

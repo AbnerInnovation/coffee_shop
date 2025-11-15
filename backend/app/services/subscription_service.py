@@ -180,6 +180,83 @@ class SubscriptionService:
     
     # ==================== SUBSCRIPTION UPDATES ====================
     
+    def _validate_plan_limits(
+        self,
+        restaurant_id: int,
+        new_plan: SubscriptionPlan
+    ) -> List[str]:
+        """
+        Validate current usage against plan limits.
+        Returns list of violation messages.
+        
+        Args:
+            restaurant_id: ID of the restaurant to validate
+            new_plan: The plan to validate against
+            
+        Returns:
+            List of violation messages (empty if no violations)
+        """
+        from app.models import User, Table, MenuItem, Category
+        
+        violations = []
+        
+        # Check tables
+        current_tables = self.db.query(Table).filter(
+            Table.restaurant_id == restaurant_id,
+            Table.deleted_at.is_(None)
+        ).count()
+        if new_plan.max_tables != -1 and current_tables > new_plan.max_tables:
+            violations.append(
+                f"Tienes {current_tables} mesas pero el plan {new_plan.display_name} "
+                f"solo permite {new_plan.max_tables}"
+            )
+        
+        # Check menu items
+        current_items = self.db.query(MenuItem).filter(
+            MenuItem.restaurant_id == restaurant_id,
+            MenuItem.deleted_at.is_(None)
+        ).count()
+        if new_plan.max_menu_items != -1 and current_items > new_plan.max_menu_items:
+            violations.append(
+                f"Tienes {current_items} productos pero el plan {new_plan.display_name} "
+                f"solo permite {new_plan.max_menu_items}"
+            )
+        
+        # Check categories
+        current_categories = self.db.query(Category).filter(
+            Category.restaurant_id == restaurant_id,
+            Category.deleted_at.is_(None)
+        ).count()
+        if new_plan.max_categories != -1 and current_categories > new_plan.max_categories:
+            violations.append(
+                f"Tienes {current_categories} categorías pero el plan {new_plan.display_name} "
+                f"solo permite {new_plan.max_categories}"
+            )
+        
+        # Check users by role
+        role_limits = {
+            'admin': ('max_admin_users', 'administradores'),
+            'waiter': ('max_waiter_users', 'meseros'),
+            'cashier': ('max_cashier_users', 'cajeros'),
+            'kitchen': ('max_kitchen_users', 'usuarios de cocina'),
+            'owner': ('max_owner_users', 'dueños')
+        }
+        
+        for role, (limit_key, role_name) in role_limits.items():
+            current_users = self.db.query(User).filter(
+                User.restaurant_id == restaurant_id,
+                User.role == role,
+                User.deleted_at.is_(None)
+            ).count()
+            max_allowed = getattr(new_plan, limit_key, -1)
+            if max_allowed != -1 and current_users > max_allowed:
+                violations.append(
+                    f"Tienes {current_users} {role_name} pero el plan {new_plan.display_name} "
+                    f"solo permite {max_allowed}"
+                )
+        
+        return violations
+    
     def upgrade_subscription(
         self,
         subscription_id: int,
@@ -205,52 +282,7 @@ class SubscriptionService:
         
         # If downgrade, validate current usage
         if is_downgrade:
-            from app.models import User, Table, MenuItem, Category
-            restaurant_id = subscription.restaurant_id
-            violations = []
-            
-            # Check tables
-            current_tables = self.db.query(Table).filter(
-                Table.restaurant_id == restaurant_id,
-                Table.deleted_at.is_(None)
-            ).count()
-            if new_plan.max_tables != -1 and current_tables > new_plan.max_tables:
-                violations.append(f"Tienes {current_tables} mesas pero el plan {new_plan.display_name} solo permite {new_plan.max_tables}")
-            
-            # Check menu items
-            current_items = self.db.query(MenuItem).filter(
-                MenuItem.restaurant_id == restaurant_id,
-                MenuItem.deleted_at.is_(None)
-            ).count()
-            if new_plan.max_menu_items != -1 and current_items > new_plan.max_menu_items:
-                violations.append(f"Tienes {current_items} productos pero el plan {new_plan.display_name} solo permite {new_plan.max_menu_items}")
-            
-            # Check categories
-            current_categories = self.db.query(Category).filter(
-                Category.restaurant_id == restaurant_id,
-                Category.deleted_at.is_(None)
-            ).count()
-            if new_plan.max_categories != -1 and current_categories > new_plan.max_categories:
-                violations.append(f"Tienes {current_categories} categorías pero el plan {new_plan.display_name} solo permite {new_plan.max_categories}")
-            
-            # Check users by role
-            role_limits = {
-                'admin': ('max_admin_users', 'administradores'),
-                'waiter': ('max_waiter_users', 'meseros'),
-                'cashier': ('max_cashier_users', 'cajeros'),
-                'kitchen': ('max_kitchen_users', 'usuarios de cocina'),
-                'owner': ('max_owner_users', 'dueños')
-            }
-            
-            for role, (limit_key, role_name) in role_limits.items():
-                current_users = self.db.query(User).filter(
-                    User.restaurant_id == restaurant_id,
-                    User.role == role,
-                    User.deleted_at.is_(None)
-                ).count()
-                max_allowed = getattr(new_plan, limit_key, -1)
-                if max_allowed != -1 and current_users > max_allowed:
-                    violations.append(f"Tienes {current_users} {role_name} pero el plan {new_plan.display_name} solo permite {max_allowed}")
+            violations = self._validate_plan_limits(subscription.restaurant_id, new_plan)
             
             # If there are violations, raise error with details
             if violations:
@@ -293,55 +325,9 @@ class SubscriptionService:
             raise ResourceNotFoundError("RestaurantSubscription", subscription_id)
         
         new_plan = self.get_plan_by_id(new_plan_id)
-        restaurant_id = subscription.restaurant_id
         
         # Validate current usage against new plan limits
-        from app.models import User, Table, MenuItem, Category
-        
-        violations = []
-        
-        # Check tables
-        current_tables = self.db.query(Table).filter(
-            Table.restaurant_id == restaurant_id,
-            Table.deleted_at.is_(None)
-        ).count()
-        if new_plan.max_tables != -1 and current_tables > new_plan.max_tables:
-            violations.append(f"Tienes {current_tables} mesas pero el plan {new_plan.display_name} solo permite {new_plan.max_tables}")
-        
-        # Check menu items
-        current_items = self.db.query(MenuItem).filter(
-            MenuItem.restaurant_id == restaurant_id,
-            MenuItem.deleted_at.is_(None)
-        ).count()
-        if new_plan.max_menu_items != -1 and current_items > new_plan.max_menu_items:
-            violations.append(f"Tienes {current_items} productos pero el plan {new_plan.display_name} solo permite {new_plan.max_menu_items}")
-        
-        # Check categories
-        current_categories = self.db.query(Category).filter(
-            Category.restaurant_id == restaurant_id,
-            Category.deleted_at.is_(None)
-        ).count()
-        if new_plan.max_categories != -1 and current_categories > new_plan.max_categories:
-            violations.append(f"Tienes {current_categories} categorías pero el plan {new_plan.display_name} solo permite {new_plan.max_categories}")
-        
-        # Check users by role
-        role_limits = {
-            'admin': ('max_admin_users', 'administradores'),
-            'waiter': ('max_waiter_users', 'meseros'),
-            'cashier': ('max_cashier_users', 'cajeros'),
-            'kitchen': ('max_kitchen_users', 'usuarios de cocina'),
-            'owner': ('max_owner_users', 'dueños')
-        }
-        
-        for role, (limit_key, role_name) in role_limits.items():
-            current_users = self.db.query(User).filter(
-                User.restaurant_id == restaurant_id,
-                User.role == role,
-                User.deleted_at.is_(None)
-            ).count()
-            max_allowed = getattr(new_plan, limit_key, -1)
-            if max_allowed != -1 and current_users > max_allowed:
-                violations.append(f"Tienes {current_users} {role_name} pero el plan {new_plan.display_name} solo permite {max_allowed}")
+        violations = self._validate_plan_limits(subscription.restaurant_id, new_plan)
         
         # If there are violations, raise error with details
         if violations:

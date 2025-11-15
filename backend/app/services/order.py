@@ -258,6 +258,44 @@ def get_order(db: Session, order_id: int, restaurant_id: int, include_deleted: b
         raise
 
 # -----------------------------
+# Table Management Helpers
+# -----------------------------
+
+def mark_table_available_if_no_orders(
+    db: Session,
+    table_id: int,
+    exclude_order_id: int
+) -> None:
+    """
+    Mark table as available if no other active orders exist.
+    
+    Checks if there are any other active (unpaid, not completed/cancelled) orders
+    for the specified table. If no other orders exist, marks the table as available.
+    
+    Args:
+        db: Database session
+        table_id: ID of the table to check
+        exclude_order_id: Order ID to exclude from the check (current order being processed)
+    """
+    from ..models.table import Table as TableModel
+    
+    # Check if there are other active orders for this table
+    other_active_orders = db.query(OrderModel).filter(
+        OrderModel.table_id == table_id,
+        OrderModel.id != exclude_order_id,
+        OrderModel.status.in_([OrderStatus.PENDING, OrderStatus.PREPARING, OrderStatus.READY]),
+        OrderModel.is_paid == False
+    ).count()
+    
+    # Only mark as available if no other active orders
+    if other_active_orders == 0:
+        table = db.query(TableModel).filter(TableModel.id == table_id).first()
+        if table:
+            table.is_occupied = False
+            table.updated_at = datetime.now(timezone.utc)
+
+
+# -----------------------------
 # CRUD
 # -----------------------------
 
