@@ -155,6 +155,13 @@ def get_subscription_usage(
             "tables": calc_percentage(usage["tables"], limits.get("max_tables", -1)),
             "menu_items": calc_percentage(usage["menu_items"], limits.get("max_menu_items", -1)),
             "categories": calc_percentage(usage["categories"], limits.get("max_categories", -1))
+        },
+        "features": {
+            "has_kitchen_module": plan.has_kitchen_module,
+            "has_ingredients_module": plan.has_ingredients_module,
+            "has_inventory_module": plan.has_inventory_module,
+            "has_advanced_reports": plan.has_advanced_reports,
+            "has_multi_branch": plan.has_multi_branch
         }
     }
 
