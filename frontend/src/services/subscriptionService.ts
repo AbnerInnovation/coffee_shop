@@ -109,6 +109,13 @@ export interface SubscriptionUsage {
     menu_items: number;
     categories: number;
   };
+  features?: {
+    has_kitchen_module: boolean;
+    has_ingredients_module: boolean;
+    has_inventory_module: boolean;
+    has_advanced_reports: boolean;
+    has_multi_branch: boolean;
+  };
 }
 
 export interface SubscriptionStatus {

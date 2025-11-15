@@ -155,7 +155,7 @@
                   v-for="feature in features"
                   :key="feature.key"
                   :label="t(feature.label)"
-                  :enabled="usage?.limits?.[feature.key] ?? false"
+                  :enabled="usage?.features?.[feature.key] ?? false"
                 />
               </div>
             </div>
