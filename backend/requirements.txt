@@ -36,7 +36,7 @@ pytest==7.4.3
 pytest-asyncio==0.21.1
 pytest-cov==4.1.0
 python-dotenv==1.0.1
-python-jose==3.5.0
+python-jose[cryptography]==3.5.0
 python-multipart==0.0.20
 pytz==2024.2
 rsa==4.9.1
