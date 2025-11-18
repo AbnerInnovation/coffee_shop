@@ -816,6 +816,7 @@
         "pending_payment": "Pago Pendiente",
         "cancelled": "Cancelado",
         "expired": "Expirado",
+        "none": "Sin suscripción",
         "select_plan": "Seleccionar Plan",
         "select_plan_placeholder": "Selecciona un plan...",
         "billing_cycle": "Ciclo de Facturación",
@@ -861,6 +862,7 @@
       },
       "modal": {
         "manage_title": "Gestionar Restaurante",
+        "select_plan": "Seleccionar Plan",
         "select_plan_placeholder": "Selecciona un plan...",
         "assign_title": "Asignar Plan de Suscripción",
         "admin_users": "Usuarios Administradores",
@@ -873,6 +875,10 @@
         "price": "Precio",
         "renewal": "Renovación",
         "change_plan": "Cambiar Plan",
+        "billing_cycle": "Ciclo de Facturación",
+        "monthly": "Mensual",
+        "annual": "Anual (25% descuento)",
+        "discount": "25% descuento",
         "limits": {
           "users": "Usuarios",
           "tables": "Mesas",
@@ -881,6 +887,11 @@
           "ingredients": "Ingredientes",
           "inventory": "Inventario",
           "reports": "Reportes"
+        },
+        "features": {
+          "kitchen": "Módulo de Cocina",
+          "ingredients": "Módulo de Ingredientes",
+          "reports": "Reportes Avanzados"
         },
         "cancel_subscription": "Cancelar Suscripción",
         "cancel_warning": "Esta acción cancelará la suscripción del restaurante.",

@@ -166,6 +166,12 @@ def list_all_restaurants(
 ):
     """List all restaurants with subscription info (SysAdmin only)"""
     
+    # Subquery to get the most recent subscription for each restaurant
+    latest_subscription_subquery = db.query(
+        RestaurantSubscription.restaurant_id,
+        func.max(RestaurantSubscription.id).label('max_id')
+    ).group_by(RestaurantSubscription.restaurant_id).subquery()
+    
     query = db.query(
         Restaurant.id,
         Restaurant.name,
@@ -183,9 +189,11 @@ def list_all_restaurants(
         RestaurantSubscription.current_period_end,
         SubscriptionPlan.is_trial
     ).outerjoin(
+        latest_subscription_subquery,
+        Restaurant.id == latest_subscription_subquery.c.restaurant_id
+    ).outerjoin(
         RestaurantSubscription,
-        (Restaurant.id == RestaurantSubscription.restaurant_id) &
-        (RestaurantSubscription.status.in_([SubscriptionStatus.ACTIVE, SubscriptionStatus.TRIAL]))
+        RestaurantSubscription.id == latest_subscription_subquery.c.max_id
     ).outerjoin(
         SubscriptionPlan,
         RestaurantSubscription.plan_id == SubscriptionPlan.id
@@ -214,9 +222,13 @@ def list_all_restaurants(
     for row in results:
         # Calculate days until renewal
         days_until_renewal = None
-        if row.current_period_end:
-            delta = row.current_period_end - datetime.utcnow()
-            days_until_renewal = delta.days
+        if row.current_period_end and row.subscription_status:
+            # Only calculate for active/trial subscriptions
+            if row.subscription_status in ['active', 'trial', 'past_due', 'pending_payment']:
+                delta = row.current_period_end - datetime.utcnow()
+                # Only show positive days, if negative it means expired
+                days_until_renewal = max(0, delta.days)
+            # For expired/cancelled subscriptions, don't show days
         
         restaurants.append(RestaurantWithSubscription(
             id=row.id,
@@ -258,13 +270,13 @@ def get_restaurant_subscription(
 
 
 @router.post("/restaurants/{restaurant_id}/subscription", response_model=RestaurantSubscriptionResponse)
-def create_restaurant_subscription(
+def create_or_update_restaurant_subscription(
     restaurant_id: int,
     subscription_data: RestaurantSubscriptionCreate,
     db: Session = Depends(get_db),
     # current_user: User = Depends(get_current_sysadmin)  # Uncomment when auth is ready
 ):
-    """Create a subscription for a restaurant (SysAdmin only)"""
+    """Create or update a subscription for a restaurant (SysAdmin only)"""
     
     # Verify restaurant exists
     restaurant = db.query(Restaurant).filter(Restaurant.id == restaurant_id).first()
@@ -276,18 +288,22 @@ def create_restaurant_subscription(
         RestaurantSubscription.restaurant_id == restaurant_id
     ).first()
     
-    if existing:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=f"Restaurant already has a subscription (ID: {existing.id})"
-        )
-    
     service = SubscriptionService(db)
-    subscription = service.create_paid_subscription(
-        restaurant_id=restaurant_id,
-        plan_id=subscription_data.plan_id,
-        billing_cycle=subscription_data.billing_cycle or BillingCycle.MONTHLY
-    )
+    
+    if existing:
+        # Update existing subscription (upgrade/change plan)
+        subscription = service.upgrade_subscription(
+            restaurant_id=restaurant_id,
+            new_plan_id=subscription_data.plan_id,
+            new_billing_cycle=subscription_data.billing_cycle or BillingCycle.MONTHLY
+        )
+    else:
+        # Create new subscription
+        subscription = service.create_paid_subscription(
+            restaurant_id=restaurant_id,
+            plan_id=subscription_data.plan_id,
+            billing_cycle=subscription_data.billing_cycle or BillingCycle.MONTHLY
+        )
     
     return subscription
 
