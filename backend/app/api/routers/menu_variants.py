@@ -100,7 +100,7 @@ async def create_variant(
     try:
         result = create_variant_service(db=db, variant=variant, menu_item_id=item_id)
         db.commit()
-        db.refresh(result, ['menu_item'])
+        db.refresh(result)  # Refresh to get generated ID and timestamps
         return result
     except ValueError as e:
         db.rollback()
@@ -153,7 +153,7 @@ async def update_variant(
     try:
         result = update_variant_service(db=db, db_variant=db_variant, variant=variant)
         db.commit()
-        db.refresh(result, ['menu_item'])
+        db.refresh(result)  # Refresh to get updated timestamps
         return result
     except Exception as e:
         db.rollback()

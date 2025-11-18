@@ -63,13 +63,8 @@ async def read_menu_items(
         category_id=category_id,
         available=available
     )
-
-    for item in items:
-        if not hasattr(item, 'category'):
-            db.refresh(item, ['category'])
-        if not hasattr(item, 'variants'):
-            db.refresh(item, ['variants'])
-
+    
+    # No need for db.refresh() - relationships are eager loaded with lazy='joined' and lazy='selectin'
     return items
 
 
@@ -98,7 +93,7 @@ async def create_menu_item(
     try:
         db_item = create_menu_item_service(db=db, menu_item=menu_item, restaurant_id=restaurant.id)
         db.commit()
-        db.refresh(db_item, ['category', 'variants'])
+        db.refresh(db_item)  # Refresh to get generated ID and timestamps
         return db_item
     except Exception as e:
         db.rollback()
@@ -122,12 +117,8 @@ async def read_menu_item(
     db_item = get_menu_item(db, item_id=item_id, restaurant_id=restaurant.id)
     if db_item is None:
         raise HTTPException(status_code=404, detail="Menu item not found")
-
-    if not hasattr(db_item, 'category'):
-        db.refresh(db_item, ['category'])
-    if not hasattr(db_item, 'variants'):
-        db.refresh(db_item, ['variants'])
-
+    
+    # Relationships are eager loaded automatically
     return db_item
 
 
@@ -158,7 +149,7 @@ async def update_menu_item_availability(
         db_item.is_available = availability.is_available
         db.add(db_item)
         db.commit()
-        db.refresh(db_item, ['category', 'variants'])
+        db.refresh(db_item)  # Refresh to get updated timestamps
         return db_item
     except Exception as e:
         db.rollback()

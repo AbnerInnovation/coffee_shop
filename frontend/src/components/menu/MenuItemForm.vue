@@ -768,19 +768,6 @@ defineExpose({
 
     <!-- Form Actions -->
     <div class="flex justify-between items-center pt-4">
-      <div v-if="props.menuItem?.id">
-        <button
-          type="button"
-          @click="showDeleteConfirm = true"
-          class="inline-flex items-center px-4 py-2 rounded-md border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-          :disabled="isDeleting"
-        >
-          <TrashIcon v-if="!isDeleting" class="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
-          <ArrowPathIcon v-else class="animate-spin -ml-1 mr-2 h-5 w-5" aria-hidden="true" />
-          {{ isDeleting ? 'Deleting...' : 'Delete Item' }}
-        </button>
-      </div>
-      <div class="flex space-x-3">
         <button
           type="button"
           @click="handleCancel"
@@ -797,7 +784,6 @@ defineExpose({
           <ArrowPathIcon v-if="loading" class="animate-spin -ml-1 mr-2 h-4 w-4" />
           {{ isEditing ? t('app.forms.update_item') : t('app.forms.create_item') }}
         </button>
-      </div>
     </div>
 
     <!-- Delete Confirmation Modal -->

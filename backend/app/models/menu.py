@@ -55,12 +55,17 @@ class MenuItem(BaseModel):
     
     # Relationships
     restaurant: Mapped["Restaurant"] = relationship("Restaurant", back_populates="menu_items")
-    category: Mapped["Category"] = relationship("Category", back_populates="menu_items")
+    category: Mapped["Category"] = relationship(
+        "Category", 
+        back_populates="menu_items",
+        lazy="joined"  # Eager load category with menu item
+    )
     variants: Mapped[List["MenuItemVariant"]] = relationship(
         "MenuItemVariant", 
         back_populates="menu_item", 
         cascade="all, delete-orphan",
-        primaryjoin="and_(MenuItem.id==MenuItemVariant.menu_item_id, MenuItemVariant.deleted_at==None)"
+        primaryjoin="and_(MenuItem.id==MenuItemVariant.menu_item_id, MenuItemVariant.deleted_at==None)",
+        lazy="selectin"  # Efficient eager loading for collections
     )
     order_items: Mapped[List["OrderItem"]] = relationship("OrderItem", back_populates="menu_item")
     
