@@ -31,6 +31,10 @@ PROJECT_DIR="/home/ubuntu/coffee-shop"
 BACKUP_DIR="/home/ubuntu/backups"
 LOG_DIR="$PROJECT_DIR/logs"
 DATE=$(date +%Y%m%d_%H%M%S)
+
+# Crear directorio de logs ANTES de definir LOG_FILE
+mkdir -p "$LOG_DIR" 2>/dev/null || true
+
 LOG_FILE="$LOG_DIR/deployment_${DATE}.log"
 
 # Funciones de utilidad
