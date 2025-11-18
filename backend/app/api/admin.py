@@ -293,10 +293,14 @@ def create_or_update_restaurant_subscription(
     if existing:
         # Update existing subscription (upgrade/change plan)
         subscription = service.upgrade_subscription(
-            restaurant_id=restaurant_id,
-            new_plan_id=subscription_data.plan_id,
-            new_billing_cycle=subscription_data.billing_cycle or BillingCycle.MONTHLY
+            subscription_id=existing.id,
+            new_plan_id=subscription_data.plan_id
         )
+        # Update billing cycle if provided
+        if subscription_data.billing_cycle:
+            existing.billing_cycle = subscription_data.billing_cycle
+            db.commit()
+            db.refresh(existing)
     else:
         # Create new subscription
         subscription = service.create_paid_subscription(
