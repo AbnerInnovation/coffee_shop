@@ -38,8 +38,8 @@ def calculate_expected_balance(
         Expected balance (initial + sum of all transactions)
     """
     transactions = get_transactions_by_session(db, session_id)
-    transaction_sum = sum(t.amount for t in transactions)
-    return initial_balance + transaction_sum
+    transaction_sum = sum(float(t.amount) for t in transactions)
+    return float(initial_balance) + transaction_sum
 
 
 def calculate_session_totals(
@@ -65,7 +65,7 @@ def calculate_session_totals(
     )
     
     total_refunds = sum(
-        t.amount for t in transactions 
+        abs(t.amount) for t in transactions 
         if t.transaction_type in [TransactionType.REFUND, TransactionType.CANCELLATION]
     )
     
@@ -81,6 +81,7 @@ def calculate_session_totals(
     
     # Calculate net cash flow
     # Refunds and expenses reduce cash, so they're subtracted
+    # Note: total_refunds and total_expenses are already positive (abs values)
     net_cash_flow = total_sales - total_refunds + total_tips - total_expenses
     
     return (

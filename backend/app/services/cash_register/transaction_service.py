@@ -107,7 +107,7 @@ def delete_transaction(db: Session, transaction_id: int, user_id: int) -> bool:
         session = get_session(db, transaction.session_id)
         if not session:
             raise ValueError("Session not found")
-        if session.status.value != "open":
+        if session.status.value != "OPEN":
             raise ValueError("Cannot delete transactions from a closed session")
         
         # Delete the transaction

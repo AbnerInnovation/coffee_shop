@@ -42,8 +42,8 @@ const hasIngredientsModule = ref(false);
 const checkSubscriptionFeatures = async () => {
   try {
     const usage = await subscriptionService.getUsage();
-    if (usage.has_subscription && usage.limits) {
-      hasIngredientsModule.value = usage.limits.has_ingredients_module || false;
+    if (usage.has_subscription && usage.features) {
+      hasIngredientsModule.value = usage.features.has_ingredients_module || false;
     }
   } catch (error) {
     console.error('Error checking subscription features:', error);
