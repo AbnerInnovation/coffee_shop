@@ -56,17 +56,23 @@ class Order(BaseModel):
 
     # Relationships
     restaurant: Mapped["Restaurant"] = relationship("Restaurant", back_populates="orders")
-    table: Mapped["Table"] = relationship("Table", back_populates="orders")
+    table: Mapped["Table"] = relationship(
+        "Table", 
+        back_populates="orders",
+        lazy="joined"  # Eager load table info with order
+    )
     items: Mapped[List[OrderItem]] = relationship(
         "app.models.order_item.OrderItem",  # fully-qualified to avoid registry conflicts
         back_populates="order",
-        cascade="all, delete-orphan"
+        cascade="all, delete-orphan",
+        lazy="selectin"  # Efficient eager loading for order items
     )
     persons: Mapped[List["OrderPerson"]] = relationship(
         "OrderPerson",
         back_populates="order",
         cascade="all, delete-orphan",
-        order_by="OrderPerson.position"
+        order_by="OrderPerson.position",
+        lazy="selectin"  # Efficient eager loading for persons
     )
     user: Mapped[Optional["User"]] = relationship("User", back_populates="orders")
 

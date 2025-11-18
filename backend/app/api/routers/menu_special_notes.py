@@ -6,9 +6,11 @@ Separated from menu.py for better organization and maintainability.
 """
 
 import logging
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 from typing import List
+
+from app.core.exceptions import ForbiddenError
 
 from app.db.base import get_db
 from app.services.special_notes import SpecialNotesService
@@ -37,13 +39,10 @@ def check_admin(current_user: User) -> None:
         current_user: The current authenticated user
         
     Raises:
-        HTTPException: If user is not admin or sysadmin
+        ForbiddenError: If user is not admin or sysadmin
     """
     if current_user.role not in [UserRole.ADMIN, UserRole.SYSADMIN]:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Admin privileges required"
-        )
+        raise ForbiddenError("Admin privileges required", required_permission="admin")
 
 
 @router.get("/top", response_model=List[TopSpecialNote])

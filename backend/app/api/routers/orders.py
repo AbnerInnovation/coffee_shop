@@ -269,9 +269,7 @@ async def add_order_item_endpoint(order_id: int, item: OrderItemCreate, db: Sess
     # Add the item (will be created with status=PENDING and update total)
     result = add_order_item(db=db, db_order=db_order, item=item, unit_price=db_menu_item.price)
     
-    # Refresh order to get updated items relationship
-    db.refresh(db_order)
-    
+    # No need to refresh - items relationship is eager loaded with lazy='selectin'
     return result
 
 
@@ -370,7 +368,7 @@ async def update_order_item_status(
     # Update the status
     db_order_item.status = status_enum
     db.commit()
-    db.refresh(db_order_item)
+    db.refresh(db_order_item)  # Refresh to get updated_at timestamp
     
     return serialize_order_item(db_order_item)
 
@@ -458,9 +456,9 @@ async def mark_order_as_paid(
                 pass
 
         db.commit()
-        db.refresh(db_order)
+        db.refresh(db_order)  # Refresh to get updated timestamps
 
-        return order_service.get_order(db, order_id, db_order.restaurant_id)
+        return get_order(db, order_id, db_order.restaurant_id)
 
     except ValueError as e:
         raise ValidationError(str(e))

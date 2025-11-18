@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Request
+from fastapi import APIRouter, Depends, status, Request
 from sqlalchemy.orm import Session
 from sqlalchemy import func, case
 from typing import List, Dict, Any
@@ -15,7 +15,7 @@ from ...schemas.user import UserCreate
 from ...services.user import get_current_active_user, create_user
 from ...middleware.restaurant import get_restaurant_from_request
 from ...core.config import settings
-from ...core.exceptions import ConflictError
+from ...core.exceptions import ConflictError, ForbiddenError, ResourceNotFoundError, DatabaseError
 
 router = APIRouter(
     prefix="/restaurants",
@@ -26,10 +26,7 @@ router = APIRouter(
 def require_sysadmin(current_user: User = Depends(get_current_active_user)) -> User:
     """Dependency to ensure user is a system administrator"""
     if current_user.role != UserRole.SYSADMIN:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only system administrators can perform this action"
-        )
+        raise ForbiddenError("Only system administrators can perform this action", required_permission="sysadmin")
     return current_user
 
 
@@ -42,10 +39,7 @@ async def get_current_restaurant(request: Request):
     restaurant = await get_restaurant_from_request(request)
     
     if not restaurant:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="No restaurant found for this subdomain"
-        )
+        raise ResourceNotFoundError("Restaurant", "subdomain")
     
     return restaurant
 
@@ -76,10 +70,7 @@ async def get_restaurant(
     restaurant = db.query(RestaurantModel).filter(RestaurantModel.id == restaurant_id).first()
     
     if not restaurant:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Restaurant not found"
-        )
+        raise ResourceNotFoundError("Restaurant", restaurant_id)
     
     return restaurant
 
@@ -312,10 +303,7 @@ async def update_restaurant(
     db_restaurant = db.query(RestaurantModel).filter(RestaurantModel.id == restaurant_id).first()
     
     if not db_restaurant:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Restaurant not found"
-        )
+        raise ResourceNotFoundError("Restaurant", restaurant_id)
     
     # Update fields
     update_data = restaurant.dict(exclude_unset=True)
@@ -341,10 +329,7 @@ async def get_restaurant_admins(
     db_restaurant = db.query(RestaurantModel).filter(RestaurantModel.id == restaurant_id).first()
     
     if not db_restaurant:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Restaurant not found"
-        )
+        raise ResourceNotFoundError("Restaurant", restaurant_id)
     
     # Get all admin users for this restaurant
     admins = db.query(UserModel).filter(
@@ -382,10 +367,7 @@ async def create_restaurant_admin(
     db_restaurant = db.query(RestaurantModel).filter(RestaurantModel.id == restaurant_id).first()
     
     if not db_restaurant:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Restaurant not found"
-        )
+        raise ResourceNotFoundError("Restaurant", restaurant_id)
     
     # Force role to be admin
     user_data.role = UserRole.ADMIN
@@ -405,10 +387,7 @@ async def create_restaurant_admin(
             }
         }
     except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
+        raise DatabaseError(f"Failed to create admin user: {str(e)}", operation="create")
 
 
 @router.delete("/{restaurant_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -424,10 +403,7 @@ async def delete_restaurant(
     db_restaurant = db.query(RestaurantModel).filter(RestaurantModel.id == restaurant_id).first()
     
     if not db_restaurant:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Restaurant not found"
-        )
+        raise ResourceNotFoundError("Restaurant", restaurant_id)
     
     db.delete(db_restaurant)
     db.commit()

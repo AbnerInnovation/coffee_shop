@@ -29,8 +29,9 @@ NC='\033[0m' # No Color
 # Variables de configuración
 PROJECT_DIR="/home/ubuntu/coffee-shop"
 BACKUP_DIR="/home/ubuntu/backups"
+LOG_DIR="$PROJECT_DIR/logs"
 DATE=$(date +%Y%m%d_%H%M%S)
-LOG_FILE="/home/ubuntu/deployment_${DATE}.log"
+LOG_FILE="$LOG_DIR/deployment_${DATE}.log"
 
 # Funciones de utilidad
 log() {
@@ -58,10 +59,16 @@ check_environment() {
         exit 1
     fi
     
+    # Crear directorio de logs si no existe
+    if [ ! -d "$LOG_DIR" ]; then
+        mkdir -p "$LOG_DIR"
+        log "Directorio de logs creado: $LOG_DIR"
+    fi
+    
     # Verificar permisos de escritura para logs
     if ! touch "$LOG_FILE" 2>/dev/null; then
         error "No se puede escribir en: $LOG_FILE"
-        error "Verifica permisos en /home/ubuntu/"
+        error "Verifica permisos en $LOG_DIR"
         exit 1
     fi
     

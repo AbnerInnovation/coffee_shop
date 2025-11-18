@@ -6,10 +6,12 @@ Separated from menu.py for better organization and maintainability.
 """
 
 import logging
-from fastapi import APIRouter, Depends, HTTPException, status, Query, Request
+from fastapi import APIRouter, Depends, status, Query, Request
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from typing import List, Optional
+
+from app.core.exceptions import ResourceNotFoundError, ValidationError, DatabaseError
 
 from app.db.base import get_db
 from app.models.menu import MenuItem as MenuItemModel
@@ -85,10 +87,7 @@ async def create_menu_item(
     SubscriptionLimitsMiddleware.check_menu_item_limit(db, restaurant.id)
 
     if not menu_item.category_id:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Category ID is required"
-        )
+        raise ValidationError("Category ID is required", field="category_id")
 
     try:
         db_item = create_menu_item_service(db=db, menu_item=menu_item, restaurant_id=restaurant.id)
@@ -98,10 +97,7 @@ async def create_menu_item(
     except Exception as e:
         db.rollback()
         logger.error(f"Error creating menu item: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
+        raise DatabaseError(f"Failed to create menu item: {str(e)}", operation="create")
 
 
 @router.get("/{item_id}", response_model=MenuItem)
@@ -116,7 +112,7 @@ async def read_menu_item(
     """
     db_item = get_menu_item(db, item_id=item_id, restaurant_id=restaurant.id)
     if db_item is None:
-        raise HTTPException(status_code=404, detail="Menu item not found")
+        raise ResourceNotFoundError("Menu item", item_id)
     
     # Relationships are eager loaded automatically
     return db_item
@@ -141,10 +137,8 @@ async def update_menu_item_availability(
     """
     db_item = get_menu_item(db, item_id=item_id, restaurant_id=restaurant.id)
     if db_item is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Menu item with ID {item_id} not found"
-        )
+        raise ResourceNotFoundError("Menu item", item_id)
+    
     try:
         db_item.is_available = availability.is_available
         db.add(db_item)
@@ -154,10 +148,7 @@ async def update_menu_item_availability(
     except Exception as e:
         db.rollback()
         logger.error(f"Error updating availability for menu item {item_id}: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e) or "Error updating menu item availability"
-        )
+        raise DatabaseError(f"Failed to update menu item availability: {str(e)}", operation="update")
 
 
 @router.put("/{item_id}", response_model=MenuItem)
@@ -174,34 +165,16 @@ async def update_menu_item(
     """
     db_item = get_menu_item(db, item_id=item_id, restaurant_id=restaurant.id)
     if db_item is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Menu item with ID {item_id} not found"
-        )
+        raise ResourceNotFoundError("Menu item", item_id)
 
     try:
-        # Get the existing item first to ensure it exists
-        db_item = get_menu_item(db, item_id=item_id, restaurant_id=restaurant.id)
-        if db_item is None:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Menu item with ID {item_id} not found"
-            )
-            
         # Update the item in a transaction
         updated_item = update_menu_item_service(db=db, item_id=item_id, menu_item=menu_item, restaurant_id=restaurant.id)
         # No need to refresh since we're using the same session and relationships are loaded
         return updated_item
-            
-    except HTTPException:
-        # Re-raise HTTP exceptions as-is
-        raise
     except Exception as e:
         logger.error(f"Error updating menu item: {str(e)}", exc_info=True)
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
+        raise DatabaseError(f"Failed to update menu item: {str(e)}", operation="update")
 
 
 @router.delete("/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -217,7 +190,7 @@ async def delete_menu_item(
     """
     db_item = get_menu_item(db, item_id=item_id, restaurant_id=restaurant.id)
     if db_item is None:
-        raise HTTPException(status_code=404, detail="Menu item not found")
+        raise ResourceNotFoundError("Menu item", item_id)
 
     try:
         delete_menu_item_service(db=db, db_item=db_item)
@@ -226,7 +199,4 @@ async def delete_menu_item(
     except Exception as e:
         db.rollback()
         logger.error(f"Error deleting menu item: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
+        raise DatabaseError(f"Failed to delete menu item: {str(e)}", operation="delete")

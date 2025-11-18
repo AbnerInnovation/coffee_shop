@@ -6,9 +6,11 @@ Separated from menu.py for better organization and maintainability.
 """
 
 import logging
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, status, Query
 from sqlalchemy.orm import Session
 from typing import List, Optional
+
+from app.core.exceptions import ResourceNotFoundError, ValidationError, DatabaseError, ForbiddenError
 
 from app.db.base import get_db
 from app.services.menu import get_menu_item
@@ -48,13 +50,10 @@ def check_admin(current_user: User) -> None:
         current_user: The current authenticated user
         
     Raises:
-        HTTPException: If user is not admin or sysadmin
+        ForbiddenError: If user is not admin or sysadmin
     """
     if current_user.role not in [UserRole.ADMIN, UserRole.SYSADMIN]:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Admin privileges required"
-        )
+        raise ForbiddenError("Admin privileges required", required_permission="admin")
 
 
 @router.get("/", response_model=List[MenuItemVariant])
@@ -72,7 +71,7 @@ async def read_variants(
     """
     menu_item = get_menu_item(db, item_id, restaurant_id=restaurant.id)
     if not menu_item:
-        raise HTTPException(status_code=404, detail="Menu item not found")
+        raise ResourceNotFoundError("Menu item", item_id)
 
     return get_variants_service(
         db=db,
@@ -104,14 +103,11 @@ async def create_variant(
         return result
     except ValueError as e:
         db.rollback()
-        raise HTTPException(status_code=404, detail=str(e))
+        raise ValidationError(str(e))
     except Exception as e:
         db.rollback()
         logger.error(f"Error creating variant: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e) or "Error creating variant"
-        )
+        raise DatabaseError(f"Failed to create variant: {str(e)}", operation="create")
 
 
 @router.get("/{variant_id}", response_model=MenuItemVariant)
@@ -127,7 +123,7 @@ async def read_variant(
     """
     variant = get_variant_service(db, variant_id, menu_item_id=item_id)
     if not variant:
-        raise HTTPException(status_code=404, detail="Variant not found")
+        raise ResourceNotFoundError("Variant", variant_id)
     return variant
 
 
@@ -148,7 +144,7 @@ async def update_variant(
 
     db_variant = get_variant_service(db, variant_id, menu_item_id=item_id)
     if not db_variant:
-        raise HTTPException(status_code=404, detail="Variant not found")
+        raise ResourceNotFoundError("Variant", variant_id)
 
     try:
         result = update_variant_service(db=db, db_variant=db_variant, variant=variant)
@@ -158,10 +154,7 @@ async def update_variant(
     except Exception as e:
         db.rollback()
         logger.error(f"Error updating variant {variant_id}: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e) or "Error updating variant"
-        )
+        raise DatabaseError(f"Failed to update variant: {str(e)}", operation="update")
 
 
 @router.delete("/{variant_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -180,22 +173,13 @@ async def delete_variant(
 
     db_variant = get_variant_service(db, variant_id, menu_item_id=item_id)
     if not db_variant:
-        raise HTTPException(status_code=404, detail="Variant not found")
+        raise ResourceNotFoundError("Variant", variant_id)
 
     try:
         if not delete_variant_service(db=db, db_variant=db_variant):
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to delete variant"
-            )
+            raise DatabaseError("Failed to delete variant", operation="delete")
         db.commit()
-    except HTTPException:
-        db.rollback()
-        raise
     except Exception as e:
         db.rollback()
         logger.error(f"Error deleting variant {variant_id}: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e) or "Error deleting variant"
-        )
+        raise DatabaseError(f"Failed to delete variant: {str(e)}", operation="delete")

@@ -74,6 +74,6 @@ coverage.xml
 .env.*
 !.env.example
 venv
-logs/app.log
-logs
+logs/*
+!logs/.gitkeep
 nul

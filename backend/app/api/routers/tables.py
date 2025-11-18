@@ -105,7 +105,7 @@ async def update_table_occupancy(
     # Update only the is_occupied field
     db_table.is_occupied = is_occupied
     db.commit()
-    db.refresh(db_table)
+    db.refresh(db_table)  # Refresh to get updated_at timestamp
     return db_table
 
 @router.put("/{table_id}", response_model=Table)
