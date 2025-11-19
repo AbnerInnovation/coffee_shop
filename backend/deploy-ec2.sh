@@ -101,17 +101,35 @@ step2_backup() {
     # Crear directorio de backups si no existe
     mkdir -p "$BACKUP_DIR"
     
-    # Backup del código
-    log "Creando backup del código..."
+    # Backup optimizado del código (excluye venv, logs, cache)
+    log "Creando backup optimizado del código..."
     if [ -d "$PROJECT_DIR/backend" ]; then
-        cp -r "$PROJECT_DIR/backend" "$BACKUP_DIR/backend_$DATE"
-        success "Backup del código creado: $BACKUP_DIR/backend_$DATE"
+        BACKUP_PATH="$BACKUP_DIR/backend_$DATE"
+        mkdir -p "$BACKUP_PATH"
+        
+        # Copiar solo archivos necesarios (excluir venv, logs, cache, .pytest_cache)
+        log "Copiando archivos críticos (sin venv, logs, cache)..."
+        rsync -av --progress \
+            --exclude='venv/' \
+            --exclude='logs/' \
+            --exclude='__pycache__/' \
+            --exclude='.pytest_cache/' \
+            --exclude='*.pyc' \
+            --exclude='*.pyo' \
+            --exclude='*.log' \
+            --exclude='*.log.*' \
+            "$PROJECT_DIR/backend/" "$BACKUP_PATH/" | tee -a "$LOG_FILE"
+        
+        # Calcular tamaño del backup
+        BACKUP_SIZE=$(du -sh "$BACKUP_PATH" | cut -f1)
+        success "Backup optimizado creado: $BACKUP_PATH (Tamaño: $BACKUP_SIZE)"
+        log "Archivos excluidos: venv/, logs/, __pycache__/, .pytest_cache/"
     else
         error "Directorio backend no encontrado"
         exit 1
     fi
     
-    # Backup de requirements.txt
+    # Backup de requirements.txt (por si acaso)
     if [ -f "$PROJECT_DIR/backend/requirements.txt" ]; then
         cp "$PROJECT_DIR/backend/requirements.txt" "$PROJECT_DIR/backend/requirements.txt.backup"
         success "Backup de requirements.txt creado"
@@ -121,6 +139,19 @@ step2_backup() {
     # Descomentar si quieres backup de DB
     # log "Creando backup de base de datos..."
     # pg_dump -U postgres coffee_shop > "$BACKUP_DIR/db_backup_$DATE.sql"
+    
+    # Limpiar backups antiguos (mantener solo los últimos 3)
+    log "Limpiando backups antiguos..."
+    cd "$BACKUP_DIR"
+    BACKUP_COUNT=$(ls -t | wc -l)
+    if [ "$BACKUP_COUNT" -gt 3 ]; then
+        BACKUPS_TO_DELETE=$((BACKUP_COUNT - 3))
+        log "Eliminando $BACKUPS_TO_DELETE backups antiguos..."
+        ls -t | tail -n +4 | xargs rm -rf
+        success "Backups antiguos eliminados (manteniendo los últimos 3)"
+    else
+        log "Solo hay $BACKUP_COUNT backups, no se requiere limpieza"
+    fi
     
     success "Paso 2 completado"
 }
@@ -391,6 +422,51 @@ verify_deployment() {
     fi
 }
 
+# Limpieza de logs antiguos
+cleanup_old_logs() {
+    log "=========================================="
+    log "LIMPIEZA DE LOGS ANTIGUOS"
+    log "=========================================="
+    
+    # Limpiar logs de deployment antiguos en /home/ubuntu
+    log "Limpiando logs de deployment antiguos..."
+    cd /home/ubuntu
+    LOG_COUNT=$(ls deployment_*.log 2>/dev/null | wc -l)
+    if [ "$LOG_COUNT" -gt 5 ]; then
+        LOGS_TO_DELETE=$((LOG_COUNT - 5))
+        log "Eliminando $LOGS_TO_DELETE logs antiguos..."
+        ls -t deployment_*.log | tail -n +6 | xargs rm -f
+        success "Logs antiguos eliminados (manteniendo los últimos 5)"
+    else
+        log "Solo hay $LOG_COUNT logs de deployment, no se requiere limpieza"
+    fi
+    
+    # Limpiar logs de la aplicación si son muy grandes
+    if [ -d "$PROJECT_DIR/backend/logs" ]; then
+        log "Verificando tamaño de logs de la aplicación..."
+        cd "$PROJECT_DIR/backend/logs"
+        
+        # Eliminar archivos .log.* (rotados)
+        if ls *.log.* 1> /dev/null 2>&1; then
+            rm -f *.log.*
+            success "Logs rotados eliminados"
+        fi
+        
+        # Truncar logs si son muy grandes (>50MB)
+        for logfile in *.log; do
+            if [ -f "$logfile" ]; then
+                SIZE=$(stat -f%z "$logfile" 2>/dev/null || stat -c%s "$logfile" 2>/dev/null)
+                if [ "$SIZE" -gt 52428800 ]; then  # 50MB en bytes
+                    log "Truncando $logfile (tamaño: $((SIZE/1024/1024))MB)..."
+                    > "$logfile"
+                fi
+            fi
+        done
+    fi
+    
+    success "Limpieza de logs completada"
+}
+
 # Resumen final
 final_summary() {
     log "=========================================="
@@ -411,9 +487,17 @@ final_summary() {
     echo ""
     warning "Si algo sale mal, ejecuta el rollback:"
     log "cd $PROJECT_DIR"
+    log "# Respaldar venv actual (no está en backup)"
+    log "mv backend/venv backend_venv_temp"
+    log "# Restaurar código desde backup"
     log "rm -rf backend"
-    log "mv $BACKUP_DIR/backend_$DATE backend"
+    log "cp -r $BACKUP_DIR/backend_$DATE backend"
+    log "# Restaurar venv"
+    log "mv backend_venv_temp backend/venv"
+    log "# Reiniciar servicio"
     log "sudo systemctl restart fastapi-2"
+    log ""
+    log "NOTA: El backup NO incluye venv, logs ni cache (se preservan del sistema actual)"
 }
 
 # Función principal
@@ -438,6 +522,9 @@ main() {
     
     # Verificación
     verify_deployment
+    
+    # Limpieza
+    cleanup_old_logs
     
     # Resumen
     final_summary
