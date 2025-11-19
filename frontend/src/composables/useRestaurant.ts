@@ -13,6 +13,8 @@ export interface Restaurant {
   address?: string;
   phone?: string;
   email?: string;
+  kitchen_print_enabled?: boolean;
+  kitchen_print_paper_width?: number;
 }
 
 /**

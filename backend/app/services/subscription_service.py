@@ -45,6 +45,7 @@ from .subscription import (
     upgrade_subscription as upgrade_func,
     downgrade_subscription as downgrade_func,
     cancel_subscription as cancel_func,
+    renew_subscription as renew_func,
     
     # Validation
     validate_plan_limits,
@@ -136,6 +137,10 @@ class SubscriptionService:
     def cancel_subscription(self, subscription_id: int, immediate: bool = False) -> RestaurantSubscription:
         """Cancel subscription"""
         return cancel_func(self.db, subscription_id, immediate)
+    
+    def renew_subscription(self, subscription_id: int, billing_cycle: Optional[BillingCycle] = None) -> RestaurantSubscription:
+        """Renew an expired or cancelled subscription"""
+        return renew_func(self.db, subscription_id, billing_cycle)
     
     # ==================== ADDON MANAGEMENT ====================
     

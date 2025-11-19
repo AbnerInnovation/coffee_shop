@@ -390,3 +390,76 @@ def reactivate_subscription(
     
     logger.info(f"Reactivated subscription {subscription_id}")
     return subscription
+
+
+def renew_subscription(
+    db: Session,
+    subscription_id: int,
+    billing_cycle: Optional[BillingCycle] = None
+) -> RestaurantSubscription:
+    """
+    Renew an expired subscription with the same plan.
+    
+    Args:
+        db: Database session
+        subscription_id: ID of the subscription to renew
+        billing_cycle: Optional new billing cycle (keeps current if not provided)
+        
+    Returns:
+        Renewed subscription
+        
+    Raises:
+        ResourceNotFoundError: If subscription not found
+        ValidationError: If subscription is not expired or cancelled
+    """
+    subscription = db.query(RestaurantSubscription).filter(
+        RestaurantSubscription.id == subscription_id
+    ).first()
+    
+    if not subscription:
+        raise ResourceNotFoundError("RestaurantSubscription", subscription_id)
+    
+    # Can only renew if expired or cancelled
+    if subscription.status not in [SubscriptionStatus.EXPIRED, SubscriptionStatus.CANCELLED]:
+        raise ValidationError("Can only renew expired or cancelled subscriptions")
+    
+    # Calculate new period dates
+    now = datetime.utcnow()
+    
+    # Update billing cycle if provided
+    if billing_cycle:
+        subscription.billing_cycle = billing_cycle
+    
+    # Calculate period end based on billing cycle
+    if subscription.billing_cycle == BillingCycle.ANNUAL:
+        period_end = now + timedelta(days=365)
+    else:  # MONTHLY
+        period_end = now + timedelta(days=30)
+    
+    # Recalculate price based on current plan and billing cycle
+    plan = subscription.plan
+    if subscription.billing_cycle == BillingCycle.ANNUAL and plan.annual_price:
+        subscription.base_price = plan.annual_price
+    else:
+        subscription.base_price = plan.monthly_price
+    
+    subscription.total_price = subscription.calculate_total_cost()
+    
+    # Update subscription
+    subscription.status = SubscriptionStatus.ACTIVE
+    subscription.start_date = now
+    subscription.current_period_start = now
+    subscription.current_period_end = period_end
+    subscription.auto_renew = True
+    subscription.cancelled_at = None
+    
+    # Clear any pending actions in metadata
+    if subscription.subscription_metadata:
+        subscription.subscription_metadata.pop('cancel_at_period_end', None)
+        subscription.subscription_metadata.pop('pending_downgrade', None)
+    
+    db.commit()
+    db.refresh(subscription)
+    
+    logger.info(f"Renewed subscription {subscription_id} for {subscription.billing_cycle.value} billing")
+    return subscription

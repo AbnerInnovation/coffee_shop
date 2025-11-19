@@ -264,7 +264,7 @@ def get_restaurant_subscription(
     subscription = service.get_restaurant_subscription(restaurant_id)
     
     if not subscription:
-        raise ResourceNotFoundError("Subscription", f"for restaurant {restaurant_id}")
+        raise ResourceNotFoundError("Subscription", restaurant_id)
     
     return subscription
 
@@ -327,7 +327,7 @@ def upgrade_restaurant_subscription(
     ).first()
     
     if not subscription:
-        raise ResourceNotFoundError("Subscription", f"for restaurant {restaurant_id}")
+        raise ResourceNotFoundError("Subscription", restaurant_id)
     
     service = SubscriptionService(db)
     updated_subscription = service.upgrade_subscription(
@@ -353,7 +353,7 @@ def cancel_restaurant_subscription(
     ).first()
     
     if not subscription:
-        raise ResourceNotFoundError("Subscription", f"for restaurant {restaurant_id}")
+        raise ResourceNotFoundError("Subscription", restaurant_id)
     
     service = SubscriptionService(db)
     cancelled_subscription = service.cancel_subscription(subscription.id, immediate)
@@ -363,3 +363,32 @@ def cancel_restaurant_subscription(
         "message": f"Subscription cancelled {'immediately' if immediate else 'at end of period'}",
         "subscription": cancelled_subscription
     }
+
+
+@router.post("/restaurants/{restaurant_id}/subscription/renew", response_model=RestaurantSubscriptionResponse)
+def renew_restaurant_subscription(
+    restaurant_id: int,
+    db: Session = Depends(get_db),
+    # current_user: User = Depends(get_current_sysadmin)  # Uncomment when auth is ready
+):
+    """Renew an expired or cancelled subscription (SysAdmin only)"""
+    
+    # Get current subscription (including expired/cancelled)
+    subscription = db.query(RestaurantSubscription).filter(
+        RestaurantSubscription.restaurant_id == restaurant_id
+    ).first()
+    
+    if not subscription:
+        raise ResourceNotFoundError("Subscription", restaurant_id)
+    
+    # Verify it's expired or cancelled
+    if subscription.status not in [SubscriptionStatus.EXPIRED, SubscriptionStatus.CANCELLED]:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Cannot renew subscription with status: {subscription.status.value}. Only expired or cancelled subscriptions can be renewed."
+        )
+    
+    service = SubscriptionService(db)
+    renewed_subscription = service.renew_subscription(subscription.id)
+    
+    return renewed_subscription

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Request
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from enum import Enum
@@ -31,8 +31,8 @@ from ...schemas.cash_register import (
 )
 from ...services.user import get_current_active_user
 from ...services import cash_register as cash_register_service
-from ...models.user import User
-from ...core.dependencies import get_current_user_with_active_subscription
+from ...models.user import User, UserRole
+from ...core.dependencies import get_current_user_with_active_subscription, get_current_restaurant
 
 router = APIRouter(
     prefix="/cash-register",
@@ -45,17 +45,38 @@ router = APIRouter(
 # -----------------------------
 
 @router.post("/sessions", response_model=CashRegisterSession, status_code=status.HTTP_201_CREATED)
-def create_session(
+async def create_session(
     session: CashRegisterSessionCreate,
+    request: Request,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user_with_active_subscription)
+    current_user: User = Depends(get_current_active_user)
 ) -> CashRegisterSession:
     try:
-        # Get restaurant_id from current user
-        if not current_user.restaurant_id:
-            raise HTTPException(status_code=400, detail="User must be associated with a restaurant")
+        # Get restaurant from subdomain
+        restaurant = await get_current_restaurant(request)
         
-        return cash_register_service.create_session(db, session, current_user.restaurant_id)
+        # Validate user has access to this restaurant
+        if current_user.role != UserRole.SYSADMIN:
+            if not current_user.restaurant_id:
+                raise HTTPException(
+                    status_code=400, 
+                    detail="User must be associated with a restaurant"
+                )
+            if current_user.restaurant_id != restaurant.id:
+                raise HTTPException(
+                    status_code=403,
+                    detail="You don't have access to this restaurant"
+                )
+        
+        # Check subscription status (SYSADMIN bypasses this check)
+        from ...middleware.subscription_status import SubscriptionStatusMiddleware
+        SubscriptionStatusMiddleware.check_active_subscription(
+            db=db,
+            restaurant_id=restaurant.id,
+            user_role=current_user.role.value
+        )
+        
+        return cash_register_service.create_session(db, session, restaurant.id)
     except HTTPException:
         raise
     except Exception as e:

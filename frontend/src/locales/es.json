@@ -454,7 +454,8 @@
             "errors": {
               "add_one_item": "Agrega al menos un artículo a la orden",
               "create_failed": "Error al crear la orden"
-            }
+            },
+            "print_warning": "La orden se creó correctamente pero no se pudo imprimir el ticket de cocina"
           },
           "details": {
             "order_title": "Orden #{id}",
@@ -596,7 +597,10 @@
           "start_preparing": "Preparar",
           "item_ready": "Listo",
           "start_preparing_all": "Preparar todo",
-          "all_items_ready": "Todo listo"
+          "all_items_ready": "Todo listo",
+          "print_ticket": "Imprimir Ticket",
+          "reprint_ticket": "Reimprimir Ticket",
+          "printing": "Imprimiendo..."
         },
         "time": {
           "just_now": "Justo ahora",
@@ -1007,7 +1011,27 @@
       "tabs": {
         "overview": "Resumen",
         "addons": "Complementos",
-        "alerts": "Alertas"
+        "alerts": "Alertas",
+        "settings": "Configuración"
+      },
+      "settings": {
+        "title": "Configuración del Restaurante",
+        "subtitle": "Administra las configuraciones de tu restaurante",
+        "kitchen_print": {
+          "title": "Impresión de Tickets de Cocina",
+          "description": "Habilita la impresión automática de tickets para la cocina cuando se reciben nuevas órdenes",
+          "enabled": "✓ Impresión de tickets habilitada",
+          "disabled": "Impresión de tickets deshabilitada"
+        },
+        "paper_width": {
+          "title": "Ancho del Papel",
+          "description": "Selecciona el ancho del papel de tu impresora térmica",
+          "compact": "Compacto",
+          "standard": "Estándar",
+          "updated": "Ancho de papel actualizado a {width}"
+        },
+        "saved": "Configuración guardada exitosamente",
+        "error": "Error al guardar la configuración. Intenta de nuevo."
       },
       "addons_require_plan": "Necesitas un plan activo para agregar complementos",
       "add_addon": "Agregar Complemento",

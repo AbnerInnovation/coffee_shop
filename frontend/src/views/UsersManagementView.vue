@@ -1,6 +1,6 @@
 <template>
-  <div class="min-h-screen py-4 sm:py-8">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+  <div class="min-h-screen py-3 sm:py-4">
+    <div class="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6">
       <!-- Header -->
       <div class="mb-4 sm:mb-6">
         <h1 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">

@@ -167,6 +167,8 @@ import GroupedItemsList from './GroupedItemsList.vue';
 import type { ExtendedMenuItem, MenuItemVariant, OrderItemWithDetails } from '@/types/order';
 import { useMenuCategories } from '@/composables/useMenuCategories';
 import { useOrderItems } from '@/composables/useOrderItems';
+import { useKitchenPrint } from '@/composables/useKitchenPrint';
+import { useAuthStore } from '@/stores/auth';
 import { useItemSelection } from '@/composables/useItemSelection';
 import { useMultipleDiners } from '@/composables/useMultipleDiners';
 import { useOrderCreation } from '@/composables/useOrderCreation';
@@ -231,6 +233,12 @@ onMounted(() => {
   checkMobile();
   window.addEventListener('resize', checkMobile);
 });
+
+// Auth store for restaurant settings
+const authStore = useAuthStore();
+
+// Kitchen print composable
+const { printKitchenTicket } = useKitchenPrint();
 
 // Use multiple diners composable (always enabled)
 const multipleDinersComposable = useMultipleDiners();
@@ -602,6 +610,34 @@ async function createOrder() {
         showWarning,
         showError
       );
+
+      // Auto-print kitchen ticket if enabled
+      // Load restaurant settings if not available
+      if (!authStore.restaurant) {
+        console.log('📥 Restaurant not loaded, loading now...');
+        await authStore.loadRestaurant();
+      }
+      
+      console.log('🖨️ Kitchen print check:', {
+        enabled: authStore.restaurant?.kitchen_print_enabled,
+        restaurant: authStore.restaurant,
+        order: order
+      });
+      
+      if (authStore.restaurant?.kitchen_print_enabled) {
+        console.log('🖨️ Attempting to print kitchen ticket...');
+        try {
+          await nextTick(); // Wait for DOM to update
+          await printKitchenTicket(order);
+          console.log('✅ Kitchen ticket printed successfully');
+        } catch (printError) {
+          console.error('❌ Error printing kitchen ticket:', printError);
+          // Don't block the order creation flow if printing fails
+          showWarning(t('app.views.orders.modals.new_order.print_warning'));
+        }
+      } else {
+        console.log('⚠️ Kitchen printing is disabled or restaurant not loaded');
+      }
 
       // Always emit and close, regardless of payment success
       // If payment failed, the user already saw a warning message explaining what happened

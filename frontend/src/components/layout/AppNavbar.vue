@@ -84,7 +84,7 @@
               <SunIcon v-if="isDark" class="h-5 w-5 sm:h-6 sm:w-6" />
               <MoonIcon v-else class="h-5 w-5 sm:h-6 sm:w-6" />
             </button>
-            <div class="relative ml-3">
+            <div class="relative ml-3" ref="profileMenuRef">
               <div>
                 <button
                   type="button"
@@ -342,6 +342,7 @@ const {
 const isMobileMenuOpen = ref(false);
 const isProfileMenuOpen = ref(false);
 const unreadAlertCount = ref(0);
+const profileMenuRef = ref(null);
 let alertCheckInterval = null;
 
 const navigation = computed(() => {
@@ -456,11 +457,21 @@ async function loadAlertCount() {
   }
 }
 
+// Handle click outside profile menu
+function handleClickOutside(event) {
+  if (profileMenuRef.value && !profileMenuRef.value.contains(event.target)) {
+    isProfileMenuOpen.value = false;
+  }
+}
+
 // Start periodic alert check
 onMounted(() => {
   loadAlertCount();
   // Check every 2 minutes
   alertCheckInterval = setInterval(loadAlertCount, 120000);
+  
+  // Add click outside listener for profile menu
+  document.addEventListener('click', handleClickOutside);
 });
 
 // Cleanup
@@ -468,13 +479,17 @@ onUnmounted(() => {
   if (alertCheckInterval) {
     clearInterval(alertCheckInterval);
   }
+  
+  // Remove click outside listener
+  document.removeEventListener('click', handleClickOutside);
 });
 
-// Close mobile menu when route changes
+// Close menus when route changes
 watch(
   () => route.path,
   () => {
     isMobileMenuOpen.value = false;
+    isProfileMenuOpen.value = false;
   }
 );
 </script>

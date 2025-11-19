@@ -119,7 +119,7 @@ function isItemAvailable(item: MenuItem): boolean {
           </div>
           <div v-else>
           <!-- Mobile Card View -->
-          <div class="block md:hidden">
+          <div class="block md:hidden px-4">
             <div v-if="menuItems.length === 0" class="text-center py-8 text-sm text-gray-500 dark:text-gray-400">
               {{ t('app.views.menu.list.empty') }}
             </div>

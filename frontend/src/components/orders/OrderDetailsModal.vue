@@ -87,7 +87,7 @@
                     class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
                     :class="getStatusBadgeClass(order.status)"
                   >
-                    {{ order.status }}
+                    {{ $t('app.status.' + order.status) }}
                   </span>
                   <span
                     class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"

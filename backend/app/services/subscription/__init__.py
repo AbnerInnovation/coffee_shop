@@ -30,6 +30,7 @@ from .subscription_crud import (
     upgrade_subscription,
     downgrade_subscription,
     cancel_subscription,
+    renew_subscription,
 )
 
 from .limit_validator import (
@@ -63,6 +64,7 @@ __all__ = [
     'upgrade_subscription',
     'downgrade_subscription',
     'cancel_subscription',
+    'renew_subscription',
     
     # Validation
     'validate_plan_limits',

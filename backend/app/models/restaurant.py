@@ -1,4 +1,4 @@
-from sqlalchemy import String, Boolean, Column, Text
+from sqlalchemy import String, Boolean, Column, Text, Integer
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from typing import List, Optional, TYPE_CHECKING
 from .base import BaseModel
@@ -34,6 +34,10 @@ class Restaurant(BaseModel):
     # Business settings
     currency: Mapped[str] = mapped_column(String(3), default="MXN", nullable=False)
     tax_rate: Mapped[Optional[float]] = mapped_column(nullable=True, default=0.0)
+    
+    # Kitchen settings
+    kitchen_print_enabled: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    kitchen_print_paper_width: Mapped[int] = mapped_column(Integer, default=80, nullable=False)  # 58mm or 80mm
     
     # Relationships
     users: Mapped[List["User"]] = relationship("User", back_populates="restaurant", cascade="all, delete-orphan")

@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router';
 import axios from 'axios';
 import { safeStorage, checkStorageAndWarn } from '@/utils/storage';
 import { setGlobalToken } from '@/utils/tokenCache';
+import type { Restaurant } from '@/composables/useRestaurant';
 
 // Types
 export interface LoginCredentials {
@@ -38,6 +39,7 @@ export const useAuthStore = defineStore('auth', () => {
   
   // State
   const user = ref<User | null>(null);
+  const restaurant = ref<Restaurant | null>(null);
   const loading = ref<boolean>(false);
   const error = ref<string | null>(null);
   const accessToken = ref<string | null>(null); // In-memory token for Safari
@@ -278,6 +280,17 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
   
+  // Load restaurant information
+  async function loadRestaurant() {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/restaurants/current`);
+      restaurant.value = response.data;
+    } catch (err) {
+      console.error('Failed to load restaurant:', err);
+      restaurant.value = null;
+    }
+  }
+  
   // Initialize the store
   function init() {
     // Check storage availability and warn if needed
@@ -325,6 +338,7 @@ export const useAuthStore = defineStore('auth', () => {
   return {
     // State
     user,
+    restaurant,
     loading,
     error,
     isAuthenticated,
@@ -335,6 +349,7 @@ export const useAuthStore = defineStore('auth', () => {
     register,
     logout,
     checkAuth,
+    loadRestaurant,
   };
 });
 

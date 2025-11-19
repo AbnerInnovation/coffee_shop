@@ -155,6 +155,8 @@ class RestaurantPublic(BaseModel):
     logo_url: Optional[str] = None
     timezone: str
     currency: str
+    kitchen_print_enabled: bool = True
+    kitchen_print_paper_width: int = 80
     
     class Config:
         from_attributes = True

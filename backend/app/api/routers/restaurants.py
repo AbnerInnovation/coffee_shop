@@ -16,6 +16,7 @@ from ...services.user import get_current_active_user, create_user
 from ...middleware.restaurant import get_restaurant_from_request
 from ...core.config import settings
 from ...core.exceptions import ConflictError, ForbiddenError, ResourceNotFoundError, DatabaseError
+from ...core.dependencies import get_current_user_with_restaurant
 
 router = APIRouter(
     prefix="/restaurants",
@@ -40,6 +41,47 @@ async def get_current_restaurant(request: Request):
     
     if not restaurant:
         raise ResourceNotFoundError("Restaurant", "subdomain")
+    
+    return restaurant
+
+
+@router.patch("/current", response_model=RestaurantPublic)
+async def update_current_restaurant(
+    updates: dict,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user_with_restaurant)
+):
+    """
+    Update current restaurant settings (admin only).
+    Allows updating: kitchen_print_enabled and kitchen_print_paper_width.
+    """
+    # Only admin and sysadmin can update restaurant settings
+    if current_user.role not in ['admin', 'sysadmin']:
+        raise ForbiddenError("Only admins can update restaurant settings")
+    
+    # Get restaurant from request to validate subdomain
+    restaurant_from_request = await get_restaurant_from_request(request)
+    
+    if not restaurant_from_request:
+        raise ResourceNotFoundError("Restaurant", "subdomain")
+    
+    # Get restaurant from db session to ensure it's persistent
+    restaurant = db.query(RestaurantModel).filter(
+        RestaurantModel.id == restaurant_from_request.id
+    ).first()
+    
+    if not restaurant:
+        raise ResourceNotFoundError("Restaurant", restaurant_from_request.id)
+    
+    # Update allowed fields
+    allowed_fields = ['kitchen_print_enabled', 'kitchen_print_paper_width']
+    for field, value in updates.items():
+        if field in allowed_fields and hasattr(restaurant, field):
+            setattr(restaurant, field, value)
+    
+    db.commit()
+    db.refresh(restaurant)
     
     return restaurant
 
