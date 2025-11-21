@@ -1055,7 +1055,8 @@
         "logout": "Cerrar Sesión",
         "period_ended": "Tu período de suscripción ha finalizado. Por favor renueva tu plan para continuar usando el sistema.",
         "trial_ended": "Tu período de prueba ha finalizado. Por favor elige un plan de pago para continuar.",
-        "subscription_expired": "Tu suscripción ha expirado. Por favor renueva tu plan para continuar."
+        "subscription_expired": "Tu suscripción ha expirado. Por favor renueva tu plan para continuar.",
+        "reactivation_requires_payment": "Tu suscripción ha expirado. Para reactivarla, debes realizar el pago correspondiente."
       },
       "renewal": {
         "title": "Renovar Suscripción",

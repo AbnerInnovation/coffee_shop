@@ -104,18 +104,9 @@ class SubscriptionLimitsMiddleware:
             return
         
         if current_count >= max_allowed:
-            # Translate role/staff_type names
-            type_names = {
-                'admin': 'administradores',
-                'waiter': 'meseros',
-                'cashier': 'cajeros',
-                'kitchen': 'usuarios de cocina',
-                'customer': 'clientes'
-            }
-            type_es = type_names.get(check_type, check_type)
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Límite de suscripción alcanzado: Máximo {max_allowed} {type_es} permitidos. Por favor mejora tu plan."
+                detail=f"Subscription limit reached: Maximum {max_allowed} {check_type} users allowed. Please upgrade your plan."
             )
     
     @staticmethod
@@ -136,7 +127,7 @@ class SubscriptionLimitsMiddleware:
         if current_count >= max_allowed:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Límite de suscripción alcanzado: Máximo {max_allowed} mesas permitidas. Por favor mejora tu plan."
+                detail=f"Subscription limit reached: Maximum {max_allowed} tables allowed. Please upgrade your plan."
             )
     
     @staticmethod
@@ -157,7 +148,7 @@ class SubscriptionLimitsMiddleware:
         if current_count >= max_allowed:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Límite de suscripción alcanzado: Máximo {max_allowed} productos permitidos. Por favor mejora tu plan."
+                detail=f"Subscription limit reached: Maximum {max_allowed} menu items allowed. Please upgrade your plan."
             )
     
     @staticmethod
@@ -178,7 +169,7 @@ class SubscriptionLimitsMiddleware:
         if current_count >= max_allowed:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Límite de suscripción alcanzado: Máximo {max_allowed} categorías permitidas. Por favor mejora tu plan."
+                detail=f"Subscription limit reached: Maximum {max_allowed} categories allowed. Please upgrade your plan."
             )
     
     @staticmethod
@@ -201,18 +192,9 @@ class SubscriptionLimitsMiddleware:
         has_access = limits.get(limit_key, False)
         
         if not has_access:
-            # Translate feature names
-            feature_names = {
-                'kitchen': 'Módulo de Cocina',
-                'ingredients': 'Módulo de Ingredientes',
-                'inventory': 'Módulo de Inventario',
-                'advanced_reports': 'Reportes Avanzados',
-                'multi_branch': 'Multi-sucursal'
-            }
-            feature_es = feature_names.get(feature, feature)
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Característica no disponible: '{feature_es}' no está incluida en tu plan actual. Por favor mejora tu plan para acceder a esta característica."
+                detail=f"Feature not available: '{feature}' is not included in your current plan. Please upgrade your plan to access this feature."
             )
 
 

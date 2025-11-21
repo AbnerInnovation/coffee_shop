@@ -274,16 +274,34 @@ def upgrade_subscription(
     
     billing_cycle_enum = BillingCycle.MONTHLY if billing_cycle == 'monthly' else BillingCycle.ANNUAL
     
-    # Get ALL active/trial subscriptions for this restaurant
+    # Get ALL subscriptions for this restaurant (including expired)
     existing_subscriptions = db.query(RestaurantSubscription).filter(
         RestaurantSubscription.restaurant_id == restaurant.id,
-        RestaurantSubscription.status.in_([SubscriptionStatus.TRIAL, SubscriptionStatus.ACTIVE])
+        RestaurantSubscription.status.in_([
+            SubscriptionStatus.TRIAL, 
+            SubscriptionStatus.ACTIVE,
+            SubscriptionStatus.EXPIRED,
+            SubscriptionStatus.PAST_DUE
+        ])
     ).all()
     
     try:
         if existing_subscriptions:
             # Use the most recent subscription
             existing_subscription = max(existing_subscriptions, key=lambda s: s.created_at)
+            
+            # SECURITY: Prevent reactivation of expired subscriptions without payment
+            if existing_subscription.status in [SubscriptionStatus.EXPIRED, SubscriptionStatus.PAST_DUE]:
+                raise HTTPException(
+                    status_code=status.HTTP_402_PAYMENT_REQUIRED,
+                    detail={
+                        "error": "subscription_expired",
+                        "message": "Your subscription has expired. Please complete payment to reactivate it.",
+                        "action_required": "payment",
+                        "subscription_id": existing_subscription.id,
+                        "expired_at": existing_subscription.current_period_end.isoformat() if existing_subscription.current_period_end else None
+                    }
+                )
             
             # Cancel all other subscriptions to avoid duplicates
             from datetime import datetime

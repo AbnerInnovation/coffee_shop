@@ -215,9 +215,9 @@ def upgrade_subscription(
         violations = validate_plan_limits(db, subscription.restaurant_id, new_plan)
         
         if violations:
-            error_msg = "No puedes cambiar a este plan porque excedes los siguientes límites:\n"
+            error_msg = "Cannot change to this plan because you exceed the following limits:\n"
             error_msg += "\n".join(f"• {v}" for v in violations)
-            error_msg += "\n\nPor favor elimina algunos recursos antes de cambiar de plan."
+            error_msg += "\n\nPlease remove some resources before changing plans."
             raise ValidationError(error_msg)
     
     # Update subscription
@@ -280,9 +280,9 @@ def downgrade_subscription(
     violations = validate_plan_limits(db, subscription.restaurant_id, new_plan)
     
     if violations:
-        error_msg = "No puedes cambiar a este plan porque excedes los siguientes límites:\n"
+        error_msg = "Cannot change to this plan because you exceed the following limits:\n"
         error_msg += "\n".join(f"• {v}" for v in violations)
-        error_msg += "\n\nPor favor elimina algunos recursos antes de cambiar de plan."
+        error_msg += "\n\nPlease remove some resources before changing plans."
         raise ValidationError(error_msg)
     
     # Store downgrade info in metadata for processing at period end

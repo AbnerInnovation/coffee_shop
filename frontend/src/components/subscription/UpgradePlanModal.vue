@@ -291,6 +291,21 @@ const confirmUpgrade = async () => {
   } catch (error: any) {
     console.error('Error upgrading plan:', error);
     
+    // Handle 402 Payment Required (expired subscription)
+    if (error.response?.status === 402) {
+      toast.error(t('app.subscription.errors.reactivation_requires_payment'), {
+        position: POSITION.TOP_RIGHT,
+        timeout: 10000,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true
+      });
+      
+      // Close modal and let parent handle payment flow
+      closeModal();
+      return;
+    }
+    
     const errorMessage = error.response?.data?.detail || 'Error al actualizar el plan. Por favor intenta de nuevo.';
     
     // Show error with proper formatting for multiline messages
