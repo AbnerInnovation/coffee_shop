@@ -97,3 +97,43 @@ export function formatDateTimeShort(date: string | null | undefined): string {
     return 'N/A';
   }
 }
+
+/**
+ * Calculate difference in days between two dates
+ * @param targetDateStr - Target date string (YYYY-MM-DD)
+ * @param startDate - Start date (defaults to today)
+ * @returns Number of days difference (minimum 1)
+ */
+export function calculateDaysDifference(
+  targetDateStr: string, 
+  startDate: Date = new Date()
+): number {
+  if (!targetDateStr) return 14;
+  
+  const start = new Date(startDate);
+  start.setHours(0, 0, 0, 0);
+  
+  const end = new Date(targetDateStr);
+  end.setHours(0, 0, 0, 0);
+  
+  // Check if dates are valid
+  if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+    return 14;
+  }
+  
+  const diffTime = end.getTime() - start.getTime();
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  
+  return diffDays > 0 ? diffDays : 1;
+}
+
+/**
+ * Get tomorrow's date in YYYY-MM-DD format
+ * @param fromDate - Optional starting date (defaults to today)
+ * @returns Date string
+ */
+export function getTomorrowDateString(fromDate: Date = new Date()): string {
+  const tomorrow = new Date(fromDate);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  return tomorrow.toISOString().split('T')[0];
+}

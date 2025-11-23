@@ -287,16 +287,31 @@
                   <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     {{ t('app.sysadmin.create_restaurant.trial_days') }} *
                   </label>
-                  <select
-                    v-model.number="form.trial_days"
-                    class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white"
-                  >
-                    <option :value="14">14 {{ t('app.common.days') }} ({{ t('app.sysadmin.create_restaurant.trial_default') }})</option>
-                    <option :value="30">30 {{ t('app.common.days') }} (1 {{ t('app.common.month') }})</option>
-                    <option :value="60">60 {{ t('app.common.days') }} (2 {{ t('app.common.months') }})</option>
-                  </select>
+                  <div class="grid grid-cols-1 gap-3" :class="selectedTrialOption === 'custom' ? 'sm:grid-cols-2' : ''">
+                    <select
+                      v-model="selectedTrialOption"
+                      class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white"
+                    >
+                      <option :value="14">14 {{ t('app.common.days') }} ({{ t('app.sysadmin.create_restaurant.trial_default') }})</option>
+                      <option :value="30">30 {{ t('app.common.days') }} (1 {{ t('app.common.month') }})</option>
+                      <option :value="60">60 {{ t('app.common.days') }} (2 {{ t('app.common.months') }})</option>
+                      <option value="custom">Fecha personalizada...</option>
+                    </select>
+                    
+                    <div v-if="selectedTrialOption === 'custom'">
+                      <input 
+                        type="date" 
+                        v-model="customTrialDate"
+                        :min="minDate"
+                        class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white"
+                      />
+                    </div>
+                  </div>
                   <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                    {{ t('app.sysadmin.create_restaurant.trial_days_hint') }}
+                    {{ selectedTrialOption === 'custom' 
+                       ? `El período de prueba durará ${form.trial_days} días`
+                       : t('app.sysadmin.create_restaurant.trial_days_hint') 
+                    }}
                   </p>
                 </div>
 
@@ -349,11 +364,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { ref, watch, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { Dialog, DialogPanel, DialogTitle, TransitionRoot, TransitionChild } from '@headlessui/vue';
 import { adminService } from '@/services/adminService';
 import { useToast, POSITION } from 'vue-toastification';
+import { calculateDaysDifference, getTomorrowDateString } from '@/utils/dateHelpers';
 
 const { t } = useI18n();
 const toast = useToast();
@@ -370,6 +386,9 @@ const emit = defineEmits<{
 const submitting = ref(false);
 const createdRestaurant = ref<any>(null);
 const restaurantCreationData = ref<any>(null);
+const selectedTrialOption = ref<number | 'custom'>(14);
+const customTrialDate = ref('');
+
 const form = ref({
   name: '',
   subdomain: '',
@@ -379,6 +398,24 @@ const form = ref({
   address: '',
   description: '',
   trial_days: 14
+});
+
+const minDate = computed(() => getTomorrowDateString());
+
+watch(selectedTrialOption, (newVal) => {
+  if (newVal === 'custom') {
+    const today = new Date();
+    today.setDate(today.getDate() + form.value.trial_days);
+    customTrialDate.value = today.toISOString().split('T')[0];
+  } else {
+    form.value.trial_days = newVal as number;
+  }
+});
+
+watch(customTrialDate, (newDate) => {
+  if (selectedTrialOption.value === 'custom' && newDate) {
+    form.value.trial_days = calculateDaysDifference(newDate);
+  }
 });
 
 const validateSubdomain = (event: Event) => {
@@ -399,6 +436,8 @@ const resetForm = () => {
     description: '',
     trial_days: 14
   };
+  selectedTrialOption.value = 14;
+  customTrialDate.value = '';
   createdRestaurant.value = null;
 };
 

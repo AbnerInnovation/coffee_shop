@@ -10,7 +10,9 @@ import {
   formatDateTime,
   formatTime,
   formatTimeAgo,
-  formatDateTimeShort
+  formatDateTimeShort,
+  calculateDaysDifference,
+  getTomorrowDateString
 } from '@/utils/dateHelpers'
 
 describe('dateHelpers', () => {
@@ -213,6 +215,59 @@ describe('dateHelpers', () => {
       const result = formatDateTimeShort('2025-11-14T00:00:00')
       expect(result).toMatch(/\d{1,2}\/\d{1,2}\/\d{4}/)
       expect(result).toMatch(/\d{1,2}:\d{2}/)
+    })
+  })
+
+  describe('calculateDaysDifference', () => {
+    it('should calculate difference between two dates', () => {
+      const startDate = new Date('2025-01-01')
+      const targetDate = '2025-01-15'
+      const result = calculateDaysDifference(targetDate, startDate)
+      expect(result).toBe(14)
+    })
+
+    it('should return 14 if target date is missing', () => {
+      const result = calculateDaysDifference('')
+      expect(result).toBe(14)
+    })
+
+    it('should return 14 if dates are invalid', () => {
+      const result = calculateDaysDifference('invalid-date')
+      expect(result).toBe(14)
+    })
+
+    it('should return minimum 1 day', () => {
+      const startDate = new Date('2025-01-15')
+      const targetDate = '2025-01-01' // Past date
+      const result = calculateDaysDifference(targetDate, startDate)
+      expect(result).toBe(1)
+    })
+
+    it('should handle same date', () => {
+      const startDate = new Date('2025-01-01')
+      const targetDate = '2025-01-01'
+      const result = calculateDaysDifference(targetDate, startDate)
+      expect(result).toBe(1) // Minimum 1 day
+    })
+  })
+
+  describe('getTomorrowDateString', () => {
+    it('should return tomorrow date string', () => {
+      const today = new Date('2025-01-01T12:00:00')
+      const result = getTomorrowDateString(today)
+      expect(result).toBe('2025-01-02')
+    })
+
+    it('should handle end of month', () => {
+      const today = new Date('2025-01-31T12:00:00')
+      const result = getTomorrowDateString(today)
+      expect(result).toBe('2025-02-01')
+    })
+
+    it('should handle end of year', () => {
+      const today = new Date('2025-12-31T12:00:00')
+      const result = getTomorrowDateString(today)
+      expect(result).toBe('2026-01-01')
     })
   })
 })
