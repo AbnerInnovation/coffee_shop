@@ -1,9 +1,11 @@
 import { ref, onMounted, onUnmounted, watch } from 'vue';
+import { useRoute } from 'vue-router';
 import { subscriptionService, type SubscriptionStatus } from '@/services/subscriptionService';
 import { useAuthStore } from '@/stores/auth';
 
 export function useSubscriptionCheck() {
   const authStore = useAuthStore();
+  const route = useRoute();
   const subscriptionStatus = ref<SubscriptionStatus | null>(null);
   const isChecking = ref(false);
   const showSuspendedModal = ref(false);
@@ -81,6 +83,26 @@ export function useSubscriptionCheck() {
         // Reset state on logout
         subscriptionStatus.value = null;
         showSuspendedModal.value = false;
+      }
+    }
+  );
+
+  /**
+   * Watch for route changes to enforce subscription check
+   * If subscription is suspended, prevent navigation to other pages (except subscription page)
+   */
+  watch(
+    () => route.path,
+    (newPath) => {
+      // If user is sysadmin, ignore
+      if (authStore.user?.role === 'sysadmin') return;
+
+      // If subscription status is known and invalid
+      if (subscriptionStatus.value && !subscriptionStatus.value.can_operate) {
+        // Allow access only to subscription page and login
+        if (newPath !== '/subscription' && newPath !== '/login') {
+          showSuspendedModal.value = true;
+        }
       }
     }
   );

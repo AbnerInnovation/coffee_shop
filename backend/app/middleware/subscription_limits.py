@@ -18,6 +18,11 @@ def _get_subscription_limits(db: Session, restaurant_id: int) -> Dict[str, any]:
     """
     subscription = get_restaurant_subscription(db, restaurant_id)
     
+    # Check if subscription exists AND can operate (is active/valid)
+    # If expired (trial or active), we treat it as no subscription to enforce default restrictive limits
+    if subscription and not subscription.can_operate:
+        subscription = None
+    
     if not subscription or not subscription.plan:
         # No subscription or plan, return default limits (very restrictive)
         return {
