@@ -92,7 +92,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, watch, onMounted } from 'vue';
 
 interface Props {
   loading: boolean | string;
@@ -102,7 +102,7 @@ interface Props {
   getItemQuantity: (itemId: number | string) => number;
 }
 
-defineProps<Props>();
+const props = defineProps<Props>();
 
 defineEmits<{
   (e: 'select-item', item: any): void;
@@ -113,4 +113,21 @@ const selectedCategory = ref<string | null>(null);
 function selectCategory(categoryName: string) {
   selectedCategory.value = categoryName;
 }
+
+// Auto-select first category if only one exists
+function autoSelectSingleCategory() {
+  if (props.categoryNames.length === 1 && !selectedCategory.value) {
+    selectedCategory.value = props.categoryNames[0];
+  }
+}
+
+// Watch for changes in categoryNames to auto-select
+watch(() => props.categoryNames, () => {
+  autoSelectSingleCategory();
+}, { immediate: true });
+
+// Also check on mount
+onMounted(() => {
+  autoSelectSingleCategory();
+});
 </script>
