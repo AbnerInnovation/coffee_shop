@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy.orm import Session
 from sqlalchemy import func, desc
 from typing import List, Optional
@@ -10,8 +10,10 @@ from ...models.order import Order, OrderStatus, PaymentMethod
 from ...models.order_item import OrderItem
 from ...models.menu import MenuItem, Category
 from ...models.cash_register import CashRegisterSession, SessionStatus
+from ...models.restaurant import Restaurant
 from ...services.user import get_current_active_user
 from ...models.user import User
+from ...core.dependencies import get_current_restaurant, require_admin_or_sysadmin
 
 router = APIRouter(
     prefix="/reports",
@@ -32,13 +34,14 @@ class PeriodType(str, Enum):
 # -----------------------------
 
 @router.get("/top-products")
-def get_top_products(
+async def get_top_products(
     start_date: Optional[str] = Query(None, description="Start date (YYYY-MM-DD)"),
     end_date: Optional[str] = Query(None, description="End date (YYYY-MM-DD)"),
     category_id: Optional[int] = Query(None, description="Filter by category"),
     limit: int = Query(10, ge=1, le=50, description="Number of top products to return"),
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(require_admin_or_sysadmin),
+    restaurant: Restaurant = Depends(get_current_restaurant)
 ):
     """
     Get top selling products with sales statistics.
@@ -61,9 +64,8 @@ def get_top_products(
             Order.is_paid == True
         )
         
-        # Filter by restaurant if user has one
-        if current_user.restaurant_id:
-            query = query.filter(Order.restaurant_id == current_user.restaurant_id)
+        # Filter by current restaurant (from subdomain)
+        query = query.filter(Order.restaurant_id == restaurant.id)
         
         # Date filtering
         if start_date:
@@ -126,12 +128,13 @@ def get_top_products(
 # -----------------------------
 
 @router.get("/dashboard")
-def get_dashboard_summary(
+async def get_dashboard_summary(
     period: PeriodType = Query(PeriodType.TODAY, description="Period type"),
     start_date: Optional[str] = Query(None, description="Custom start date (YYYY-MM-DD)"),
     end_date: Optional[str] = Query(None, description="Custom end date (YYYY-MM-DD)"),
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(require_admin_or_sysadmin),
+    restaurant: Restaurant = Depends(get_current_restaurant)
 ):
     """
     Get unified dashboard with all 7 essential metrics:
@@ -171,9 +174,8 @@ def get_dashboard_summary(
             Order.created_at <= end_datetime
         )
         
-        # Filter by restaurant
-        if current_user.restaurant_id:
-            orders_query = orders_query.filter(Order.restaurant_id == current_user.restaurant_id)
+        # Filter by current restaurant (from subdomain)
+        orders_query = orders_query.filter(Order.restaurant_id == restaurant.id)
         
         # 1. Total Sales & 2. Number of Tickets
         paid_orders = orders_query.all()
@@ -201,8 +203,8 @@ def get_dashboard_summary(
             Order.created_at <= end_datetime
         )
         
-        if current_user.restaurant_id:
-            top_products_query = top_products_query.filter(Order.restaurant_id == current_user.restaurant_id)
+        # Filter by current restaurant (from subdomain)
+        top_products_query = top_products_query.filter(Order.restaurant_id == restaurant.id)
         
         top_products = top_products_query.group_by(
             MenuItem.id, MenuItem.name, Category.name
@@ -227,10 +229,10 @@ def get_dashboard_summary(
             CashRegisterSession.opened_at <= end_datetime
         )
         
-        if current_user.restaurant_id:
-            cash_sessions_query = cash_sessions_query.filter(
-                CashRegisterSession.restaurant_id == current_user.restaurant_id
-            )
+        # Filter by current restaurant (from subdomain)
+        cash_sessions_query = cash_sessions_query.filter(
+            CashRegisterSession.restaurant_id == restaurant.id
+        )
         
         cash_sessions = cash_sessions_query.all()
         open_sessions = [s for s in cash_sessions if s.status == SessionStatus.OPEN]
@@ -241,8 +243,8 @@ def get_dashboard_summary(
         # 7. Unavailable Products
         unavailable_query = db.query(MenuItem).filter(MenuItem.is_available == False)
         
-        if current_user.restaurant_id:
-            unavailable_query = unavailable_query.filter(MenuItem.restaurant_id == current_user.restaurant_id)
+        # Filter by current restaurant (from subdomain)
+        unavailable_query = unavailable_query.filter(MenuItem.restaurant_id == restaurant.id)
         
         unavailable_products = unavailable_query.all()
         
@@ -299,10 +301,11 @@ def get_dashboard_summary(
 # -----------------------------
 
 @router.get("/sales-trend")
-def get_sales_trend(
+async def get_sales_trend(
     days: int = Query(7, ge=1, le=90, description="Number of days to analyze"),
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(require_admin_or_sysadmin),
+    restaurant: Restaurant = Depends(get_current_restaurant)
 ):
     """
     Get daily sales trend for the specified number of days.
@@ -324,8 +327,8 @@ def get_sales_trend(
             Order.created_at <= end_date
         )
         
-        if current_user.restaurant_id:
-            query = query.filter(Order.restaurant_id == current_user.restaurant_id)
+        # Filter by current restaurant (from subdomain)
+        query = query.filter(Order.restaurant_id == restaurant.id)
         
         results = query.group_by(func.date(Order.created_at)).order_by('date').all()
         
