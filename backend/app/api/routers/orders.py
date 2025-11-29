@@ -92,6 +92,17 @@ async def create_order(
     """
     Create a new order.
     """
+    # Determine order type (use provided or infer from table_id)
+    order_type = order.order_type if order.order_type else (
+        "dine_in" if order.table_id is not None else "delivery"
+    )
+    
+    # Validate table requirement for dine-in orders based on restaurant setting
+    if order_type == "dine_in" and order.table_id is None:
+        # Check if restaurant allows dine-in without table
+        if not restaurant.allow_dine_in_without_table:
+            raise ValidationError("Table is required for dine-in orders. Please select a table or change order type.")
+    
     # Only validate table exists if table_id is provided (for dine-in orders)
     if order.table_id is not None:
         db_table = db.query(TableModel).filter(TableModel.id == order.table_id).first()

@@ -173,7 +173,8 @@ export function validateOrderForm(
     tableId: number | string | null;
     customerName: string;
   },
-  hasItems: boolean
+  hasItems: boolean,
+  allowDineInWithoutTable: boolean = false
 ): { isValid: boolean; errors: string[] } {
   const errors: string[] = [];
 
@@ -181,7 +182,7 @@ export function validateOrderForm(
     errors.push('Debe agregar al menos un item a la orden');
   }
 
-  if (form.type === 'Dine-in' && !form.tableId) {
+  if (form.type === 'Dine-in' && !form.tableId && !allowDineInWithoutTable) {
     errors.push('Debe seleccionar una mesa para órdenes Dine-in');
   }
 

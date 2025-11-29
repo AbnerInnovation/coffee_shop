@@ -12,6 +12,7 @@
       "new_order": "Nueva Orden",
       "sysadmin": "Administración",
       "subscription": "Suscripción",
+      "configuration": "Configuración",
       "users": "Usuarios",
       "reports": "Reportes",
       "pending_payments": "Pagos Pendientes"
@@ -425,6 +426,7 @@
             "takeaway": "Para llevar",
             "delivery": "A Domicilio",
             "table": "Mesa",
+            "no_table": "Sin mesa para comer en el sitio",
             "loading_tables": "Cargando mesas...",
             "error_tables": "Error al cargar mesas",
             "no_tables": "No hay mesas disponibles",
@@ -1045,6 +1047,12 @@
           "compact": "Compacto",
           "standard": "Estándar",
           "updated": "Ancho de papel actualizado a {width}"
+        },
+        "dine_in_without_table": {
+          "title": "Permitir Consumo en Local sin Mesa",
+          "description": "Permite crear órdenes para consumo en local sin asignar una mesa específica",
+          "enabled": "✓ Consumo en local sin mesa habilitado",
+          "disabled": "Consumo en local sin mesa deshabilitado"
         },
         "saved": "Configuración guardada exitosamente",
         "error": "Error al guardar la configuración. Intenta de nuevo."

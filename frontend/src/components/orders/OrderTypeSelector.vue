@@ -24,7 +24,7 @@
       </label>
       <select 
         id="table" 
-        :value="modelValue.tableId"
+        :value="modelValue.tableId || ''"
         @change="updateTableId"
         class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
         :disabled="!!loading"
@@ -32,8 +32,9 @@
       >
         <option v-if="loading" value="" disabled>...</option>
         <option v-else-if="error && tables.length === 0" value="" disabled>Error</option>
-        <option v-else-if="tables.length === 0" value="" disabled>Sin mesas</option>
-        <option v-else v-for="table in sortedTables" :key="table.id" :value="table.id">
+        <option v-else-if="tables.length === 0 && !allowDineInWithoutTable" value="" disabled>Sin mesas</option>
+        <option v-if="allowDineInWithoutTable" value="">{{ $t('app.views.orders.modals.new_order.no_table') }}</option>
+        <option v-for="table in sortedTables" :key="table.id" :value="table.id">
           Mesa {{ table.number }}
         </option>
       </select>
@@ -91,6 +92,7 @@ interface Props {
   tables: Table[];
   loading: boolean | string | null;
   error: boolean | string | null;
+  allowDineInWithoutTable?: boolean;
 }
 
 const props = defineProps<Props>();
@@ -111,7 +113,9 @@ const updateType = (e: Event) => {
 
 const updateTableId = (e: Event) => {
   const target = e.target as HTMLSelectElement;
-  emit('update:modelValue', { ...props.modelValue, tableId: Number(target.value) });
+  const val = target.value;
+  // Handle empty string (No Table) as null
+  emit('update:modelValue', { ...props.modelValue, tableId: val ? Number(val) : null });
 };
 
 const updateCustomerName = (e: Event) => {

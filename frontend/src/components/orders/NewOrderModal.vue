@@ -52,7 +52,7 @@
                 <!-- TAB 1: Order Info -->
                 <div v-else-if="activeTab === 0" class="mt-6">
                   <OrderTypeSelector v-model="form" :tables="availableTables" :loading="loading.tables"
-                    :error="error.tables" />
+                    :error="error.tables" :allow-dine-in-without-table="restaurantSettings.allowDineInWithoutTable.value" />
                 </div>
 
                 <!-- TAB 2: Menu Items & Diners -->
@@ -108,7 +108,7 @@
                 class="flex-shrink-0 px-4 pt-4 pb-4 sm:px-6 sm:pt-6 sm:pb-6 border-t border-gray-200 dark:border-gray-700">
                 <button type="button"
                   class="w-full inline-flex justify-center rounded-lg bg-indigo-600 px-4 py-3 text-base font-semibold text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  :disabled="!hasItems || (form.type === 'Dine-in' && !form.tableId) || (form.type !== 'Dine-in' && !form.customerName)"
+                  :disabled="!hasItems || (form.type === 'Dine-in' && !form.tableId && !authStore.restaurant?.allow_dine_in_without_table) || (form.type !== 'Dine-in' && !form.customerName)"
                   @click="createOrder">
                   {{ isEditMode ? $t('app.views.orders.modals.new_order.update_order') :
                     $t('app.views.orders.modals.new_order.create_order') }}
@@ -149,6 +149,10 @@ import ExtrasSelector from './ExtrasSelector.vue';
 import type { MenuItemIngredients } from '../menu/IngredientsManager.vue';
 import type { Extra } from './ExtrasSelector.vue';
 import { usePermissions } from '@/composables/usePermissions';
+import { useAuthStore } from '@/stores/auth';
+import { useRestaurantSettings } from '@/composables/useRestaurantSettings';
+import { useOrderForm } from '@/composables/useOrderForm';
+import { useKitchenPrint } from '@/composables/useKitchenPrint';
 
 // Import new components
 import OrderTypeSelector from './OrderTypeSelector.vue';
@@ -167,8 +171,6 @@ import GroupedItemsList from './GroupedItemsList.vue';
 import type { ExtendedMenuItem, MenuItemVariant, OrderItemWithDetails } from '@/types/order';
 import { useMenuCategories } from '@/composables/useMenuCategories';
 import { useOrderItems } from '@/composables/useOrderItems';
-import { useKitchenPrint } from '@/composables/useKitchenPrint';
-import { useAuthStore } from '@/stores/auth';
 import { useItemSelection } from '@/composables/useItemSelection';
 import { useMultipleDiners } from '@/composables/useMultipleDiners';
 import { useOrderCreation } from '@/composables/useOrderCreation';
@@ -232,10 +234,15 @@ const checkMobile = () => {
 onMounted(() => {
   checkMobile();
   window.addEventListener('resize', checkMobile);
+  // Load restaurant settings to get current allow_dine_in_without_table value
+  restaurantSettings.loadSettings();
 });
 
 // Auth store for restaurant settings
 const authStore = useAuthStore();
+
+// Restaurant settings composable for real-time updates
+const restaurantSettings = useRestaurantSettings();
 
 // Kitchen print composable
 const { printKitchenTicket } = useKitchenPrint();
@@ -589,7 +596,11 @@ async function createOrder() {
       emit('close');
     } else {
       // Validate form using helper
-      const validation = validateOrderForm(form.value, hasItems);
+      const validation = validateOrderForm(
+        form.value,
+        hasItems,
+        authStore.restaurant?.allow_dine_in_without_table
+      );
       if (!validation.isValid) {
         validation.errors.forEach(error => showError(error));
         return;

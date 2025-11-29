@@ -15,6 +15,7 @@ import SubscriptionView from './views/SubscriptionView.vue';
 import UsersManagementView from './views/UsersManagementView.vue';
 import ReportsView from './views/ReportsView.vue';
 import ProfileView from './views/ProfileView.vue';
+import ConfigurationView from './views/ConfigurationView.vue';
 import LoginView from './views/LoginView.vue';
 import RegisterView from './views/RegisterView.vue';
 import LandingView from './views/LandingView.vue';
@@ -116,6 +117,16 @@ export const routes: RouteRecordRaw[] = [
       requiresAuth: true,
       requiresRestaurantContext: true, // Only accessible in restaurant subdomains
       permissionCheck: 'canViewSubscription' // Admin + SysAdmin
+    }
+  },
+  {
+    path: '/configuration',
+    name: 'Configuration',
+    component: ConfigurationView,
+    meta: { 
+      requiresAuth: true,
+      requiresRestaurantContext: true,
+      permissionCheck: 'canViewSubscription' // Admin + SysAdmin (same as subscription)
     }
   },
   {

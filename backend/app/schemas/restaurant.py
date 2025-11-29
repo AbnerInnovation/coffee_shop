@@ -24,6 +24,7 @@ class RestaurantBase(BaseModel):
     currency: str = Field(default="USD", max_length=3)
     tax_rate: Optional[float] = Field(default=0.0, ge=0, le=1)
     is_active: bool = True
+    allow_dine_in_without_table: bool = False
     
     @validator('name')
     def sanitize_name(cls, v):
@@ -91,6 +92,7 @@ class RestaurantUpdate(BaseModel):
     currency: Optional[str] = Field(None, max_length=3)
     tax_rate: Optional[float] = Field(None, ge=0, le=1)
     is_active: Optional[bool] = None
+    allow_dine_in_without_table: Optional[bool] = None
     
     @validator('name')
     def sanitize_name(cls, v):
@@ -149,6 +151,7 @@ class RestaurantPublic(BaseModel):
     currency: str
     kitchen_print_enabled: bool = True
     kitchen_print_paper_width: int = 80
+    allow_dine_in_without_table: bool = False
     
     class Config:
         from_attributes = True

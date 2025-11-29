@@ -174,154 +174,6 @@
           </p>
         </div>
       </div>
-
-      <!-- Settings Tab -->
-      <div v-if="activeTab === 'settings'">
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden">
-          <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
-              {{ t('app.subscription.settings.title') }}
-            </h2>
-            <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
-              {{ t('app.subscription.settings.subtitle') }}
-            </p>
-          </div>
-
-          <div class="p-4 sm:p-6 space-y-4 sm:space-y-6">
-            <!-- Kitchen Print Settings -->
-            <div class="bg-gray-50 dark:bg-gray-900/50 rounded-lg sm:rounded-xl p-4 sm:p-5 border border-gray-200 dark:border-gray-700">
-              <div class="flex items-center justify-between gap-3">
-                <div class="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
-                  <div class="p-1.5 sm:p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg flex-shrink-0">
-                    <svg class="w-5 h-5 sm:w-6 sm:h-6 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                    </svg>
-                  </div>
-                  <div class="flex-1 min-w-0">
-                    <h3 class="text-sm sm:text-base font-semibold text-gray-900 dark:text-white">
-                      {{ t('app.subscription.settings.kitchen_print.title') }}
-                    </h3>
-                    <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-0.5">
-                      {{ t('app.subscription.settings.kitchen_print.description') }}
-                    </p>
-                  </div>
-                </div>
-                <button
-                  @click="toggleKitchenPrint"
-                  :disabled="savingSettings"
-                  :class="[
-                    'relative inline-flex h-6 w-11 sm:h-7 sm:w-12 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 dark:focus:ring-offset-gray-800',
-                    kitchenPrintEnabled
-                      ? 'bg-indigo-600'
-                      : 'bg-gray-300 dark:bg-gray-600',
-                    savingSettings ? 'opacity-50 cursor-not-allowed' : ''
-                  ]"
-                >
-                  <span
-                    :class="[
-                      'pointer-events-none inline-block h-5 w-5 sm:h-6 sm:w-6 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out',
-                      kitchenPrintEnabled ? 'translate-x-5' : 'translate-x-0'
-                    ]"
-                  />
-                </button>
-              </div>
-            </div>
-
-            <!-- Paper Width Settings -->
-            <transition
-              enter-active-class="transition ease-out duration-200"
-              enter-from-class="opacity-0 -translate-y-2"
-              enter-to-class="opacity-100 translate-y-0"
-              leave-active-class="transition ease-in duration-150"
-              leave-from-class="opacity-100 translate-y-0"
-              leave-to-class="opacity-0 -translate-y-2"
-            >
-              <div v-if="kitchenPrintEnabled" class="bg-gray-50 dark:bg-gray-900/50 rounded-lg sm:rounded-xl p-4 sm:p-5 border border-gray-200 dark:border-gray-700">
-                <div class="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
-                  <div class="p-1.5 sm:p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex-shrink-0">
-                    <svg class="w-5 h-5 sm:w-6 sm:h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                  </div>
-                  <div class="flex-1 min-w-0">
-                    <h3 class="text-sm sm:text-base font-semibold text-gray-900 dark:text-white">
-                      {{ t('app.subscription.settings.paper_width.title') }}
-                    </h3>
-                    <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-0.5">
-                      {{ t('app.subscription.settings.paper_width.description') }}
-                    </p>
-                  </div>
-                </div>
-                <div class="grid grid-cols-2 gap-2 sm:gap-3">
-                  <button
-                    @click="setPaperWidth(58)"
-                    :disabled="savingSettings"
-                    :class="[
-                      'group relative px-3 py-3 sm:px-4 sm:py-4 rounded-lg sm:rounded-xl border-2 transition-all duration-200 transform active:scale-95 sm:hover:scale-105',
-                      paperWidth === 58
-                        ? 'border-indigo-500 bg-gradient-to-br from-indigo-50 to-indigo-100 dark:from-indigo-900/30 dark:to-indigo-800/20 shadow-md'
-                        : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 active:border-indigo-400 sm:hover:border-indigo-400 dark:hover:border-indigo-500',
-                      savingSettings ? 'opacity-50 cursor-not-allowed transform-none' : 'cursor-pointer'
-                    ]"
-                  >
-                    <div class="text-center">
-                      <div :class="[
-                        'text-xl sm:text-2xl font-bold',
-                        paperWidth === 58 ? 'text-indigo-700 dark:text-indigo-300' : 'text-gray-900 dark:text-white'
-                      ]">
-                        58mm
-                      </div>
-                      <div :class="[
-                        'text-[9px] sm:text-[10px] font-medium uppercase tracking-wide mt-0.5',
-                        paperWidth === 58 ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-500 dark:text-gray-400'
-                      ]">
-                        {{ t('app.subscription.settings.paper_width.compact') }}
-                      </div>
-                    </div>
-                    <div v-if="paperWidth === 58" class="absolute top-1 right-1 sm:top-1.5 sm:right-1.5">
-                      <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-indigo-600 dark:text-indigo-400" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-                      </svg>
-                    </div>
-                  </button>
-                  <button
-                    @click="setPaperWidth(80)"
-                    :disabled="savingSettings"
-                    :class="[
-                      'group relative px-3 py-3 sm:px-4 sm:py-4 rounded-lg sm:rounded-xl border-2 transition-all duration-200 transform active:scale-95 sm:hover:scale-105',
-                      paperWidth === 80
-                        ? 'border-indigo-500 bg-gradient-to-br from-indigo-50 to-indigo-100 dark:from-indigo-900/30 dark:to-indigo-800/20 shadow-md'
-                        : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 active:border-indigo-400 sm:hover:border-indigo-400 dark:hover:border-indigo-500',
-                      savingSettings ? 'opacity-50 cursor-not-allowed transform-none' : 'cursor-pointer'
-                    ]"
-                  >
-                    <div class="text-center">
-                      <div :class="[
-                        'text-xl sm:text-2xl font-bold',
-                        paperWidth === 80 ? 'text-indigo-700 dark:text-indigo-300' : 'text-gray-900 dark:text-white'
-                      ]">
-                        80mm
-                      </div>
-                      <div :class="[
-                        'text-[9px] sm:text-[10px] font-medium uppercase tracking-wide mt-0.5',
-                        paperWidth === 80 ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-500 dark:text-gray-400'
-                      ]">
-                        {{ t('app.subscription.settings.paper_width.standard') }}
-                      </div>
-                    </div>
-                    <div v-if="paperWidth === 80" class="absolute top-1 right-1 sm:top-1.5 sm:right-1.5">
-                      <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-indigo-600 dark:text-indigo-400" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-                      </svg>
-                    </div>
-                  </button>
-                </div>
-              </div>
-            </transition>
-
-          </div>
-        </div>
-      </div>
     </div>
 
     <!-- Modals -->
@@ -374,9 +226,6 @@ const {
 const showUpgradeModal = ref(false)
 const showRenewalModal = ref(false)
 const unreadAlertCount = ref(0)
-const kitchenPrintEnabled = ref(true)
-const paperWidth = ref(80)
-const savingSettings = ref(false)
 
 // Active tab from URL query
 const activeTab = computed({
@@ -389,8 +238,7 @@ const activeTab = computed({
 // Tabs configuration
 const tabs = computed(() => [
   { value: 'overview', label: t('app.subscription.tabs.overview') },
-  { value: 'alerts', label: t('app.subscription.tabs.alerts') },
-  { value: 'settings', label: t('app.subscription.tabs.settings') }
+  { value: 'alerts', label: t('app.subscription.tabs.alerts') }
 ])
 
 // User types configuration
@@ -430,78 +278,9 @@ const handleUpgraded = () => {
   loadData()
 }
 
-const toggleKitchenPrint = async () => {
-  try {
-    savingSettings.value = true
-    
-    const newValue = !kitchenPrintEnabled.value
-    
-    // Update backend
-    await api.patch('/restaurants/current', {
-      kitchen_print_enabled: newValue
-    })
-    
-    // Update local state
-    kitchenPrintEnabled.value = newValue
-    
-    // Update auth store
-    if (authStore.restaurant) {
-      authStore.restaurant.kitchen_print_enabled = newValue
-    }
-    
-    // Show success toast
-    toast.success(
-      newValue 
-        ? t('app.subscription.settings.kitchen_print.enabled')
-        : t('app.subscription.settings.kitchen_print.disabled')
-    )
-  } catch (error) {
-    console.error('Error updating kitchen print setting:', error)
-    toast.error(t('app.subscription.settings.error'))
-  } finally {
-    savingSettings.value = false
-  }
-}
-
-const setPaperWidth = async (width: number) => {
-  try {
-    savingSettings.value = true
-    
-    // Update backend
-    await api.patch('/restaurants/current', {
-      kitchen_print_paper_width: width
-    })
-    
-    // Update local state
-    paperWidth.value = width
-    
-    // Update auth store
-    if (authStore.restaurant) {
-      authStore.restaurant.kitchen_print_paper_width = width
-    }
-    
-    // Show success toast
-    toast.success(
-      t('app.subscription.settings.paper_width.updated', { width: `${width}mm` })
-    )
-  } catch (error) {
-    console.error('Error updating paper width setting:', error)
-    toast.error(t('app.subscription.settings.error'))
-  } finally {
-    savingSettings.value = false
-  }
-}
-
-const loadRestaurantSettings = async () => {
-  await authStore.loadRestaurant()
-  kitchenPrintEnabled.value = authStore.restaurant?.kitchen_print_enabled ?? true
-  paperWidth.value = authStore.restaurant?.kitchen_print_paper_width ?? 80
-}
-
 // Lifecycle
 onMounted(() => {
   loadData()
-  loadRestaurantSettings()
 
   if (route.query.openModal === 'true') {
     showUpgradeModal.value = true

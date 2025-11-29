@@ -15,6 +15,7 @@ export interface Restaurant {
   email?: string;
   kitchen_print_enabled?: boolean;
   kitchen_print_paper_width?: number;
+  allow_dine_in_without_table?: boolean;
 }
 
 /**

@@ -241,6 +241,36 @@ export function canCancelOrder(order: OrderWithLocalFields): boolean {
 // ==================== Data Transformation ====================
 
 /**
+ * Gets the appropriate table display text based on order type and table number
+ * Handles the case of "dine-in without table" correctly
+ * 
+ * @param order - The order object
+ * @param t - The translation function
+ * @returns Formatted table display string
+ */
+export function getOrderTableDisplay(order: any, t: any): string {
+  // If there's a table number, show it
+  if (order.table_number) {
+    return t('app.views.cashRegister.table_number', { number: order.table_number });
+  }
+  
+  // If no table number, check the order type
+  if (order.order_type === 'dine_in') {
+    // Dine-in without table
+    return t('app.views.orders.modals.new_order.no_table');
+  } else if (order.order_type === 'takeaway') {
+    // Takeaway order
+    return t('app.views.orders.takeaway');
+  } else if (order.order_type === 'delivery') {
+    // Delivery order
+    return t('app.views.orders.delivery');
+  }
+  
+  // Fallback to takeaway for backward compatibility
+  return t('app.views.cashRegister.takeaway');
+}
+
+/**
  * Transforms order from API format to local UI format
  * 
  * Performs the following transformations:
@@ -311,9 +341,7 @@ export function transformOrderToLocal(order: any, t: any): OrderWithLocalFields 
   return {
     ...order,
     customerName: order.customer_name || 'Walk-in',
-    table: order.table_number 
-      ? t('app.views.cashRegister.table_number', { number: order.table_number }) 
-      : t('app.views.cashRegister.takeaway'),
+    table: getOrderTableDisplay(order, t),
     total: order.total_amount || 0,
     createdAt: new Date(order.created_at || new Date()),
     items: mappedItems,
