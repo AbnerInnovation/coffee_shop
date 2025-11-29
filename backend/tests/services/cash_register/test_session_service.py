@@ -18,11 +18,12 @@ from app.services.cash_register.session_service import (
     get_sessions, 
     get_session, 
     get_current_session,
-    close_session
+    close_session,
+    close_session_with_denominations
 )
 from app.schemas.cash_register import CashRegisterSessionCreate
 from app.models.user import User
-from app.core.exceptions import ConflictError
+from app.core.exceptions import ConflictError, ValidationError
 from app.models.cash_register import (
     CashRegisterSession as CashRegisterSessionModel,
     SessionStatus
@@ -404,7 +405,7 @@ class TestCloseSession:
             final_balance=Decimal("150.00")
         )
         
-        with pytest.raises(ValueError, match="Session not found"):
+        with pytest.raises(ValidationError, match="Session not found"):
             close_session(db_session, 99999, update_data)
     
     def test_close_already_closed_session(
@@ -430,7 +431,7 @@ class TestCloseSession:
         close_session(db_session, session.id, update_data)
         
         # Try to close again
-        with pytest.raises(ValueError, match="Session is not open"):
+        with pytest.raises(ValidationError, match="Session is not open"):
             close_session(db_session, session.id, update_data)
 
 
