@@ -13,15 +13,16 @@ import pytest
 from datetime import datetime, timezone
 from decimal import Decimal
 from sqlalchemy.orm import Session
-
 from app.services.cash_register.session_service import (
-    create_session,
-    get_session,
+    create_session, 
+    get_sessions, 
+    get_session, 
     get_current_session,
-    get_sessions,
-    close_session,
-    close_session_with_denominations
+    close_session
 )
+from app.schemas.cash_register import CashRegisterSessionCreate
+from app.models.user import User
+from app.core.exceptions import ConflictError
 from app.models.cash_register import (
     CashRegisterSession as CashRegisterSessionModel,
     SessionStatus
@@ -83,6 +84,33 @@ class TestCreateSession:
         # Create third session
         session3 = create_session(db_session, session_data, test_restaurant.id)
         assert session3.session_number == 3
+    
+    def test_cannot_create_multiple_open_sessions_for_same_restaurant(
+        self, 
+        db_session: Session, 
+        test_restaurant, 
+        test_admin_user
+    ):
+        """Test that ConflictError is raised when trying to create multiple open sessions for same restaurant"""
+        session_data = CashRegisterSessionCreate(
+            opened_by_user_id=test_admin_user.id,
+            cashier_id=test_admin_user.id,
+            initial_balance=Decimal("100.00")
+        )
+        
+        # Create first session (should succeed)
+        session1 = create_session(db_session, session_data, test_restaurant.id)
+        assert session1.status == SessionStatus.OPEN
+        
+        # Attempt to create second session without closing first (should raise ConflictError)
+        with pytest.raises(ConflictError) as exc_info:
+            create_session(db_session, session_data, test_restaurant.id)
+        
+        # Verify error message contains useful context
+        error_message = str(exc_info.value.message)
+        assert "Cannot open a new session" in error_message
+        assert "already an open session" in error_message
+        assert f"Session #{session1.session_number}" in error_message
     
     def test_create_session_different_restaurants(
         self, 
@@ -203,16 +231,32 @@ class TestGetSessions:
     
     def test_get_all_sessions(self, db_session: Session, test_restaurant, test_admin_user):
         """Test retrieving all sessions without filters"""
+        from app.models.restaurant import Restaurant
+        from app.services.cash_register.session_service import close_session
+        from app.schemas.cash_register import CashRegisterSessionUpdate
+        
+        # Create additional restaurants for multiple sessions
+        restaurant2 = Restaurant(
+            name="Restaurant 2",
+            subdomain="restaurant2"
+        )
+        restaurant3 = Restaurant(
+            name="Restaurant 3", 
+            subdomain="restaurant3"
+        )
+        db_session.add_all([restaurant2, restaurant3])
+        db_session.commit()
+        
         session_data = CashRegisterSessionCreate(
             opened_by_user_id=test_admin_user.id,
             cashier_id=test_admin_user.id,
             initial_balance=Decimal("100.00")
         )
         
-        # Create 3 sessions
-        create_session(db_session, session_data, test_restaurant.id)
-        create_session(db_session, session_data, test_restaurant.id)
-        create_session(db_session, session_data, test_restaurant.id)
+        # Create sessions for different restaurants (1 per restaurant to respect business rule)
+        session1 = create_session(db_session, session_data, test_restaurant.id)
+        session2 = create_session(db_session, session_data, restaurant2.id)
+        session3 = create_session(db_session, session_data, restaurant3.id)
         
         result = get_sessions(db_session)
         
@@ -226,6 +270,8 @@ class TestGetSessions:
     ):
         """Test filtering sessions by restaurant ID"""
         from app.models.restaurant import Restaurant
+        from app.services.cash_register.session_service import close_session
+        from app.schemas.cash_register import CashRegisterSessionUpdate
         
         # Create second restaurant
         restaurant2 = Restaurant(
@@ -241,10 +287,12 @@ class TestGetSessions:
             initial_balance=Decimal("100.00")
         )
         
-        # Create sessions for both restaurants
-        create_session(db_session, session_data, test_restaurant.id)
-        create_session(db_session, session_data, test_restaurant.id)
-        create_session(db_session, session_data, restaurant2.id)
+        # Create sessions: 2 for test_restaurant (sequentially), 1 for restaurant2
+        session1 = create_session(db_session, session_data, test_restaurant.id)
+        # Close first session to allow second one for same restaurant
+        close_session(db_session, session1.id, CashRegisterSessionUpdate(final_balance=100.00))
+        session2 = create_session(db_session, session_data, test_restaurant.id)
+        session3 = create_session(db_session, session_data, restaurant2.id)
         
         result = get_sessions(db_session, restaurant_id=test_restaurant.id)
         
@@ -258,36 +306,59 @@ class TestGetSessions:
         test_admin_user
     ):
         """Test filtering sessions by status"""
+        from app.models.restaurant import Restaurant
+        from app.services.cash_register.session_service import close_session
+        from app.schemas.cash_register import CashRegisterSessionUpdate
+        
         session_data = CashRegisterSessionCreate(
             opened_by_user_id=test_admin_user.id,
             cashier_id=test_admin_user.id,
             initial_balance=Decimal("100.00")
         )
         
-        # Create 2 open and 1 closed session
+        # Create 3 sessions sequentially for the SAME restaurant: closed, open, closed
         session1 = create_session(db_session, session_data, test_restaurant.id)
-        session2 = create_session(db_session, session_data, test_restaurant.id)
-        session3 = create_session(db_session, session_data, test_restaurant.id)
+        # Close first session
+        close_session(db_session, session1.id, CashRegisterSessionUpdate(final_balance=100.00))
         
-        session1.status = SessionStatus.CLOSED
-        db_session.commit()
+        # Create second session and close it
+        session2 = create_session(db_session, session_data, test_restaurant.id)
+        close_session(db_session, session2.id, CashRegisterSessionUpdate(final_balance=100.00))
+        
+        # Create third session (will be open)
+        session3 = create_session(db_session, session_data, test_restaurant.id)
         
         result = get_sessions(db_session, status=SessionStatus.OPEN)
         
-        assert len(result) == 2
+        assert len(result) == 1
         assert all(s.status == SessionStatus.OPEN for s in result)
     
     def test_get_sessions_pagination(self, db_session: Session, test_restaurant, test_admin_user):
         """Test pagination with skip and limit"""
+        from app.models.restaurant import Restaurant
+        from app.services.cash_register.session_service import close_session
+        from app.schemas.cash_register import CashRegisterSessionUpdate
+        
         session_data = CashRegisterSessionCreate(
             opened_by_user_id=test_admin_user.id,
             cashier_id=test_admin_user.id,
             initial_balance=Decimal("100.00")
         )
         
-        # Create 5 sessions
-        for _ in range(5):
-            create_session(db_session, session_data, test_restaurant.id)
+        # Create 5 sessions for different restaurants to test pagination properly
+        restaurants = []
+        for i in range(5):
+            restaurant = Restaurant(
+                name=f"Restaurant {i+2}",  # Start from 2 since test_restaurant is 1
+                subdomain=f"restaurant{i+2}"
+            )
+            restaurants.append(restaurant)
+        db_session.add_all(restaurants)
+        db_session.commit()
+        
+        # Create 1 session per restaurant
+        for restaurant in restaurants:
+            create_session(db_session, session_data, restaurant.id)
         
         # Get first 2
         result1 = get_sessions(db_session, skip=0, limit=2)

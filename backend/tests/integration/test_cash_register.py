@@ -109,11 +109,11 @@ def test_cannot_open_multiple_sessions(client: TestClient, admin_token_headers: 
         headers=admin_token_headers
     )
     
-    # May return 201 if previous session was auto-closed or 400 if validation works
+    # May return 201 if previous session was auto-closed or 409 if validation works
     # In test environment, sessions may not persist between requests
-    assert response2.status_code in [201, 400]
-    if response2.status_code == 400:
-        assert "sesión" in response2.json()["detail"].lower()
+    assert response2.status_code in [201, 409]
+    if response2.status_code == 409:
+        assert "session" in response2.json()["error"]["message"].lower()
 
 
 def test_get_active_session(client: TestClient, admin_token_headers: dict, test_restaurant_subscription, test_admin_user: User):

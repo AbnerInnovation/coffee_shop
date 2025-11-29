@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session, joinedload
 from typing import List, Optional
 import logging
 
+from ...core.exceptions import ConflictError, ValidationError
 from ...models.cash_register import (
     CashRegisterSession as CashRegisterSessionModel,
     SessionStatus
@@ -44,7 +45,7 @@ def create_session(
         Created cash register session
         
     Raises:
-        ValueError: If there's already an open session for this restaurant
+        ConflictError: If there's already an open session for this restaurant
         Exception: If session creation fails
     """
     try:
@@ -57,10 +58,11 @@ def create_session(
             .first()
         
         if existing_open_session:
-            raise ValueError(
+            raise ConflictError(
                 f"Cannot open a new session. There is already an open session "
                 f"(Session #{existing_open_session.session_number}) for this restaurant. "
-                f"Please close the existing session before opening a new one."
+                f"Please close the existing session before opening a new one.",
+                resource="CashRegisterSession"
             )
         
         # Calculate the next session number for this restaurant
@@ -192,14 +194,14 @@ def close_session(
         The closed session
         
     Raises:
-        ValueError: If session not found or not open
+        ValidationError: If session not found or not open
     """
     try:
         db_session = get_session(db, session_id)
         if not db_session:
-            raise ValueError("Session not found")
+            raise ValidationError("Session not found")
         if db_session.status != SessionStatus.OPEN:
-            raise ValueError("Session is not open")
+            raise ValidationError("Session is not open")
 
         # Calculate expected balance from transactions
         expected_balance = calculate_expected_balance(db, session_id, db_session.initial_balance)
@@ -246,14 +248,14 @@ def close_session_with_denominations(
         The closed session
         
     Raises:
-        ValueError: If session not found or not open
+        ValidationError: If session not found or not open
     """
     try:
         db_session = get_session(db, session_id)
         if not db_session:
-            raise ValueError("Session not found")
+            raise ValidationError("Session not found")
         if db_session.status != SessionStatus.OPEN:
-            raise ValueError("Session is not open")
+            raise ValidationError("Session is not open")
 
         # Calculate expected balance from transactions
         expected_balance = calculate_expected_balance(db, session_id, db_session.initial_balance)
