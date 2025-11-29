@@ -63,6 +63,7 @@
       "create_success": "Creado correctamente",
       "update_success": "Actualizado correctamente",
       "delete_success": "Eliminado correctamente",
+      "delete_failed": "Error al eliminar",
       "delete_item_confirm_title": "Eliminar artículo del menú",
       "delete_item_confirm_text": "¿Seguro que deseas eliminar este artículo del menú? Esta acción no se puede deshacer.",
       "delete_item_confirm_text_named": "¿Seguro que deseas eliminar \"{name}\"? Esta acción no se puede deshacer.",
@@ -74,6 +75,19 @@
       "variant_required": "El nombre y precio de la variante son obligatorios",
       "submit_failed": "Error al enviar el formulario: {message}",
       "new_version_available": "Hay una nueva versión de Cloud Restaurant disponible. Actualizando..."
+    },
+    "errors": {
+      "generic": "Ha ocurrido un error",
+      "category": {
+        "cannot_delete_has_items": "No se puede eliminar la categoría '{name}' porque tiene {count} {count, plural, one {producto} other {productos}} asociados. Por favor, elimina o reasigna los productos primero."
+      },
+      "menu": {},
+      "table": {},
+      "order": {},
+      "user": {},
+      "cash_register": {
+        "session_already_open": "No se puede abrir una nueva sesión. Ya existe una sesión abierta (Sesión #{sessionNumber}) para este restaurante. Por favor, cierra la sesión existente antes de abrir una nueva."
+      }
     },
     "forms": {
       "name": "Nombre",
@@ -164,6 +178,7 @@
         "actualBalance": "Saldo Real",
         "finalBalanceRequired": "El saldo final es obligatorio",
         "sessionOpened": "Sesión abierta exitosamente",
+        "sessionOpenFailed": "Error al abrir sesión",
         "sessionClosed": "Sesión cerrada exitosamente",
         "cutSuccessful": "Corte realizado exitosamente",
         "cutFailed": "Error al realizar corte",
@@ -188,6 +203,7 @@
         "digitalPayments": "Pagos Digitales",
         "otherPayments": "Otros Pagos",
         "loading": "Cargando sesiones pasadas...",
+        "loadingSession": "Cargando sesión...",
         "pastSessions": "Sesiones Pasadas",
         "noPastSessions": "No se encontraron sesiones pasadas.",
         "searchSessions": "Buscar sesiones...",

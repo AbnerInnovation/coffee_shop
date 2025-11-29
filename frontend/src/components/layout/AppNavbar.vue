@@ -119,6 +119,27 @@
                   tabindex="-1"
                 >
                   <router-link
+                    v-if="canManageUsers && hasRestaurantContext()"
+                    to="/users"
+                    class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700/60"
+                    role="menuitem"
+                    tabindex="-1"
+                    @click="isProfileMenuOpen = false"
+                  >
+                    {{ t('app.nav.users') }}
+                  </router-link>
+                  <router-link
+                    v-if="canViewSubscription && hasRestaurantContext()"
+                    to="/reports"
+                    class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700/60"
+                    role="menuitem"
+                    tabindex="-1"
+                    @click="isProfileMenuOpen = false"
+                  >
+                    {{ t('app.nav.reports') }}
+                  </router-link>
+                  <div class="border-t border-gray-100 dark:border-gray-700 my-1"></div>
+                  <router-link
                     v-if="(authStore.user?.role === 'admin' || authStore.user?.role === 'sysadmin') && hasRestaurantContext()"
                     to="/subscription"
                     class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700/60"
@@ -266,6 +287,23 @@
           </div>
           <div class="space-y-1 px-3">
             <router-link
+              v-if="canManageUsers && hasRestaurantContext()"
+              to="/users"
+              class="block rounded-md px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white"
+              @click="isMobileMenuOpen = false"
+            >
+              {{ $t('app.nav.users') }}
+            </router-link>
+            <router-link
+              v-if="canViewSubscription && hasRestaurantContext()"
+              to="/reports"
+              class="block rounded-md px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white"
+              @click="isMobileMenuOpen = false"
+            >
+              {{ $t('app.nav.reports') }}
+            </router-link>
+            <div class="border-t border-gray-100 dark:border-gray-700 my-2"></div>
+            <router-link
               v-if="(authStore.user?.role === 'admin' || authStore.user?.role === 'sysadmin') && hasRestaurantContext()"
               to="/subscription"
               class="block rounded-md px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white"
@@ -369,8 +407,8 @@ const navigation = computed(() => {
   
   // If on subdomain (restaurant context), show restaurant operations
   const baseNav = [
-    { name: 'menu', labelKey: 'app.nav.menu', to: '/menu', current: false, show: true },
     { name: 'categories', labelKey: 'app.nav.categories', to: '/categories', current: false, show: canEditCategories.value },
+    { name: 'menu', labelKey: 'app.nav.menu', to: '/menu', current: false, show: true },
     { name: 'orders', labelKey: 'app.nav.orders', to: '/orders', current: false, show: true },
     { name: 'tables', labelKey: 'app.nav.tables', to: '/tables', current: false, show: canManageTables.value },
     { name: 'cash-register', labelKey: 'app.nav.cash_register', to: '/cash-register', current: false, show: canAccessCashRegister.value },
@@ -381,15 +419,7 @@ const navigation = computed(() => {
     baseNav.splice(4, 0, { name: 'kitchen', labelKey: 'app.nav.kitchen', to: '/kitchen', current: false, show: true });
   }
   
-  // Add Users management link if user has permission
-  if (canManageUsers.value) {
-    baseNav.push({ name: 'users', labelKey: 'app.nav.users', to: '/users', current: false, show: true });
-  }
-  
-  // Add Reports link if user has permission (admin/sysadmin)
-  if (canViewSubscription.value) {
-    baseNav.push({ name: 'reports', labelKey: 'app.nav.reports', to: '/reports', current: false, show: true });
-  }
+  // Users and Reports are now in the user dropdown menu, not in the main navbar
   
   // Filter by show property and update current state based on route
   return baseNav

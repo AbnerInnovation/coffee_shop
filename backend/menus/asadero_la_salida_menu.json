@@ -1,0 +1,592 @@
+{
+  "restaurant_id": 1,
+  "clear_existing": false,
+  "force": false,
+  "menu_data": {
+    "categories": [
+      {
+        "name": "TACOS",
+        "description": "Tacos especiales en taco (picadita, doradita, finas, etc.)",
+        "visible_in_kitchen": true,
+        "items": [
+          {
+            "name": "Taco de Carne Asada",
+            "description": "Taco con carne asada",
+            "price": 60.00,
+            "is_available": true,
+            "ingredients": {
+              "options": [],
+              "removable": ["Cebolla", "Cilantro", "Salsa"]
+            }
+          },
+          {
+            "name": "Taco de Adobada",
+            "description": "Taco con carne adobada",
+            "price": 45.00,
+            "is_available": true,
+            "ingredients": {
+              "options": [],
+              "removable": ["Cebolla", "Cilantro", "Salsa"]
+            }
+          },
+          {
+            "name": "Taco de Pollo",
+            "description": "Taco con pollo",
+            "price": 45.00,
+            "is_available": true,
+            "ingredients": {
+              "options": [],
+              "removable": ["Cebolla", "Cilantro", "Salsa"]
+            }
+          },
+          {
+            "name": "Taco de Chicharrón",
+            "description": "Taco con chicharrón",
+            "price": 40.00,
+            "is_available": true,
+            "ingredients": {
+              "options": [],
+              "removable": ["Cebolla", "Cilantro", "Salsa"]
+            }
+          },
+          {
+            "name": "Taco de Caramelos",
+            "description": "Taco con caramelos",
+            "price": 65.00,
+            "is_available": true,
+            "ingredients": {
+              "options": [],
+              "removable": ["Cebolla", "Cilantro", "Salsa"]
+            }
+          },
+          {
+            "name": "Taco de Consentidos",
+            "description": "Taco especial consentidos",
+            "price": 65.00,
+            "is_available": true,
+            "ingredients": {
+              "options": [],
+              "removable": ["Cebolla", "Cilantro", "Salsa"]
+            }
+          },
+          {
+            "name": "Taco de Vampiros",
+            "description": "Taco vampiros",
+            "price": 65.00,
+            "is_available": true,
+            "ingredients": {
+              "options": [],
+              "removable": ["Cebolla", "Cilantro", "Salsa"]
+            }
+          },
+          {
+            "name": "Taco de Frijoles",
+            "description": "Taco con frijoles",
+            "price": 40.00,
+            "is_available": true,
+            "ingredients": {
+              "options": [],
+              "removable": ["Cebolla", "Cilantro", "Salsa"]
+            }
+          },
+          {
+            "name": "Taco de Aguacate",
+            "description": "Taco con aguacate",
+            "price": 45.00,
+            "is_available": true,
+            "ingredients": {
+              "options": [],
+              "removable": ["Cebolla", "Cilantro", "Salsa"]
+            }
+          },
+          {
+            "name": "Taco de Tripitas",
+            "description": "Taco con tripitas",
+            "price": 70.00,
+            "is_available": true,
+            "ingredients": {
+              "options": [],
+              "removable": ["Cebolla", "Cilantro", "Salsa"]
+            }
+          },
+          {
+            "name": "Mix Taco",
+            "description": "Taco mixto",
+            "price": 65.00,
+            "is_available": true,
+            "ingredients": {
+              "options": [],
+              "removable": ["Cebolla", "Cilantro", "Salsa"]
+            }
+          },
+          {
+            "name": "Orden de Frijol",
+            "description": "Orden de frijoles",
+            "price": 60.00,
+            "is_available": true,
+            "ingredients": {
+              "options": [],
+              "removable": []
+            }
+          },
+          {
+            "name": "Orden de Aguacate",
+            "description": "Orden de aguacate",
+            "price": 65.00,
+            "is_available": true,
+            "ingredients": {
+              "options": [],
+              "removable": []
+            }
+          }
+        ]
+      },
+      {
+        "name": "ORDENES ESPECIALES",
+        "description": "Órdenes especiales de tacos y platillos",
+        "visible_in_kitchen": true,
+        "items": [
+          {
+            "name": "1/2 Orden Asada",
+            "description": "Media orden de carne asada",
+            "price": 210.00,
+            "is_available": true,
+            "ingredients": {
+              "options": [],
+              "removable": ["Cebolla", "Cilantro", "Salsa"]
+            }
+          },
+          {
+            "name": "1/2 Orden Pollo",
+            "description": "Media orden de pollo",
+            "price": 180.00,
+            "is_available": true,
+            "ingredients": {
+              "options": [],
+              "removable": ["Cebolla", "Cilantro", "Salsa"]
+            }
+          },
+          {
+            "name": "1/2 Orden Tripa",
+            "description": "Media orden de tripa",
+            "price": 230.00,
+            "is_available": true,
+            "ingredients": {
+              "options": [],
+              "removable": ["Cebolla", "Cilantro", "Salsa"]
+            }
+          },
+          {
+            "name": "Quesadillas",
+            "description": "Quesadillas",
+            "price": 60.00,
+            "is_available": true,
+            "ingredients": {
+              "options": [
+                {
+                  "name": "Tipo",
+                  "choices": ["Simple", "Con carne"],
+                  "default": "Simple"
+                }
+              ],
+              "removable": []
+            }
+          },
+          {
+            "name": "Quesadilla Doblad",
+            "description": "Quesadilla doblada",
+            "price": 40.00,
+            "is_available": true,
+            "ingredients": {
+              "options": [],
+              "removable": []
+            }
+          },
+          {
+            "name": "Queso Fundido",
+            "description": "Queso fundido con carne",
+            "price": 100.00,
+            "is_available": true,
+            "ingredients": {
+              "options": [
+                {
+                  "name": "Tipo de carne",
+                  "choices": ["Asada", "Adobada", "Pollo"],
+                  "default": "Asada"
+                }
+              ],
+              "removable": []
+            }
+          },
+          {
+            "name": "Carne Asada con Camarón",
+            "description": "Carne asada con camarón",
+            "price": 110.00,
+            "is_available": true,
+            "ingredients": {
+              "options": [],
+              "removable": []
+            }
+          },
+          {
+            "name": "Sincronizada",
+            "description": "Sincronizada",
+            "price": 110.00,
+            "is_available": true,
+            "ingredients": {
+              "options": [],
+              "removable": []
+            }
+          },
+          {
+            "name": "Sincronizada S'Aguacate",
+            "description": "Sincronizada sin aguacate",
+            "price": 100.00,
+            "is_available": true,
+            "ingredients": {
+              "options": [],
+              "removable": []
+            }
+          },
+          {
+            "name": "Sincronizada Tripa",
+            "description": "Sincronizada con tripa",
+            "price": 130.00,
+            "is_available": true,
+            "ingredients": {
+              "options": [],
+              "removable": []
+            }
+          },
+          {
+            "name": "Siriaca",
+            "description": "Siriaca",
+            "price": 200.00,
+            "is_available": true,
+            "ingredients": {
+              "options": [],
+              "removable": []
+            }
+          },
+          {
+            "name": "Costilla Asada",
+            "description": "Costilla asada",
+            "price": 170.00,
+            "is_available": true,
+            "ingredients": {
+              "options": [],
+              "removable": []
+            }
+          },
+          {
+            "name": "Costilla BBQ",
+            "description": "Costilla BBQ",
+            "price": 190.00,
+            "is_available": true,
+            "ingredients": {
+              "options": [],
+              "removable": []
+            }
+          },
+          {
+            "name": "Orden Especial Asada",
+            "description": "Orden especial de carne asada (800g)",
+            "price": 800.00,
+            "is_available": true,
+            "ingredients": {
+              "options": [],
+              "removable": []
+            }
+          },
+          {
+            "name": "Orden Especial Asada, Adobada y Pollo (1/2)",
+            "description": "Media orden especial con asada, adobada y pollo",
+            "price": 750.00,
+            "is_available": true,
+            "ingredients": {
+              "options": [],
+              "removable": []
+            }
+          },
+          {
+            "name": "Orden Especial Asada (700g)",
+            "description": "Orden especial de carne asada 700g",
+            "price": 700.00,
+            "is_available": true,
+            "ingredients": {
+              "options": [],
+              "removable": []
+            }
+          },
+          {
+            "name": "Orden Especial Asada, Adobada y Pollo (650g)",
+            "description": "Orden especial con asada, adobada y pollo 650g. Incluye frijoles y aguacate",
+            "price": 650.00,
+            "is_available": true,
+            "ingredients": {
+              "options": [],
+              "removable": []
+            }
+          }
+        ]
+      },
+      {
+        "name": "ENSALADAS",
+        "description": "Ensaladas frescas",
+        "visible_in_kitchen": true,
+        "items": [
+          {
+            "name": "Ensalada de Pollo",
+            "description": "Lechuga, zanahoria, col morada, aceitunas, chile morrón, champiñones, pepino, jícama",
+            "price": 130.00,
+            "is_available": true,
+            "ingredients": {
+              "options": [],
+              "removable": ["Zanahoria", "Col morada", "Aceitunas", "Chile morrón", "Champiñones", "Pepino", "Jícama"]
+            }
+          },
+          {
+            "name": "Ensalada de Asada",
+            "description": "Lechuga, zanahoria, col morada, aceitunas, chile morrón, champiñones, pepino, jícama con carne asada",
+            "price": 150.00,
+            "is_available": true,
+            "ingredients": {
+              "options": [],
+              "removable": ["Zanahoria", "Col morada", "Aceitunas", "Chile morrón", "Champiñones", "Pepino", "Jícama"]
+            }
+          },
+          {
+            "name": "Ensalada Sin Carne",
+            "description": "Lechuga, zanahoria, col morada, aceitunas, chile morrón, champiñones, pepino, jícama sin carne",
+            "price": 100.00,
+            "is_available": true,
+            "ingredients": {
+              "options": [],
+              "removable": ["Zanahoria", "Col morada", "Aceitunas", "Chile morrón", "Champiñones", "Pepino", "Jícama"]
+            }
+          }
+        ]
+      },
+      {
+        "name": "FAJITAS",
+        "description": "Fajitas de pollo o res",
+        "visible_in_kitchen": true,
+        "items": [
+          {
+            "name": "Fajitas",
+            "description": "Fajitas de pollo o res (orden)",
+            "price": 210.00,
+            "is_available": true,
+            "ingredients": {
+              "options": [
+                {
+                  "name": "Tipo de carne",
+                  "choices": ["Pollo", "Res"],
+                  "default": "Pollo"
+                }
+              ],
+              "removable": []
+            }
+          }
+        ]
+      },
+      {
+        "name": "PAPAS",
+        "description": "Papas locas y especiales",
+        "visible_in_kitchen": true,
+        "items": [
+          {
+            "name": "Papas Locas",
+            "description": "Papas locas",
+            "price": 170.00,
+            "is_available": true,
+            "ingredients": {
+              "options": [],
+              "removable": []
+            }
+          },
+          {
+            "name": "Papas Locas de Tripa",
+            "description": "Papas locas con tripa",
+            "price": 190.00,
+            "is_available": true,
+            "ingredients": {
+              "options": [],
+              "removable": []
+            }
+          }
+        ]
+      },
+      {
+        "name": "BEBIDAS",
+        "description": "Bebidas frías y calientes",
+        "visible_in_kitchen": false,
+        "items": [
+          {
+            "name": "Chocolate",
+            "description": "Chocolate caliente",
+            "price": 60.00,
+            "is_available": true,
+            "ingredients": {
+              "options": [],
+              "removable": []
+            }
+          },
+          {
+            "name": "Horchata",
+            "description": "Agua de horchata",
+            "price": 40.00,
+            "is_available": true,
+            "ingredients": {
+              "options": [
+                {
+                  "name": "Tamaño",
+                  "choices": ["Chico $40", "Grande $80"],
+                  "default": "Chico $40"
+                }
+              ],
+              "removable": []
+            }
+          },
+          {
+            "name": "Café",
+            "description": "Café",
+            "price": 50.00,
+            "is_available": true,
+            "ingredients": {
+              "options": [],
+              "removable": []
+            }
+          },
+          {
+            "name": "Jamaica",
+            "description": "Agua de jamaica",
+            "price": 40.00,
+            "is_available": true,
+            "ingredients": {
+              "options": [
+                {
+                  "name": "Tamaño",
+                  "choices": ["Chico $40", "Grande $80"],
+                  "default": "Chico $40"
+                }
+              ],
+              "removable": []
+            }
+          },
+          {
+            "name": "Pichel",
+            "description": "Pichel de agua fresca",
+            "price": 180.00,
+            "is_available": true,
+            "ingredients": {
+              "options": [
+                {
+                  "name": "Sabor",
+                  "choices": ["Horchata", "Jamaica", "Cebada"],
+                  "default": "Horchata"
+                }
+              ],
+              "removable": []
+            }
+          },
+          {
+            "name": "Cebada",
+            "description": "Agua de cebada",
+            "price": 40.00,
+            "is_available": true,
+            "ingredients": {
+              "options": [
+                {
+                  "name": "Tamaño",
+                  "choices": ["Chico $40", "Grande $80"],
+                  "default": "Chico $40"
+                }
+              ],
+              "removable": []
+            }
+          },
+          {
+            "name": "Limonada",
+            "description": "Limonada",
+            "price": 45.00,
+            "is_available": true,
+            "ingredients": {
+              "options": [
+                {
+                  "name": "Tamaño",
+                  "choices": ["Chico $45", "Grande $90"],
+                  "default": "Chico $45"
+                }
+              ],
+              "removable": []
+            }
+          },
+          {
+            "name": "Pichel Limonada",
+            "description": "Pichel de limonada",
+            "price": 190.00,
+            "is_available": true,
+            "ingredients": {
+              "options": [],
+              "removable": []
+            }
+          },
+          {
+            "name": "Sodas",
+            "description": "Refrescos",
+            "price": 40.00,
+            "is_available": true,
+            "ingredients": {
+              "options": [
+                {
+                  "name": "Tipo",
+                  "choices": ["Coca-Cola", "Sprite", "Fanta", "Pepsi"],
+                  "default": "Coca-Cola"
+                }
+              ],
+              "removable": []
+            }
+          }
+        ]
+      },
+      {
+        "name": "EXTRAS",
+        "description": "Extras y complementos",
+        "visible_in_kitchen": true,
+        "items": [
+          {
+            "name": "Taco con Frijol",
+            "description": "Taco con frijol extra",
+            "price": 5.00,
+            "is_available": true,
+            "ingredients": {
+              "options": [],
+              "removable": []
+            }
+          },
+          {
+            "name": "Orden de Cebollitas",
+            "description": "Orden de cebollitas asadas",
+            "price": 15.00,
+            "is_available": true,
+            "ingredients": {
+              "options": [],
+              "removable": []
+            }
+          },
+          {
+            "name": "Aguacate Embarrado Extra",
+            "description": "Aguacate embarrado extra",
+            "price": 5.00,
+            "is_available": true,
+            "ingredients": {
+              "options": [],
+              "removable": []
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

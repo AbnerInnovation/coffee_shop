@@ -44,9 +44,25 @@ def create_session(
         Created cash register session
         
     Raises:
+        ValueError: If there's already an open session for this restaurant
         Exception: If session creation fails
     """
     try:
+        # Check if there's already an open session for this restaurant
+        existing_open_session = db.query(CashRegisterSessionModel)\
+            .filter(
+                CashRegisterSessionModel.restaurant_id == restaurant_id,
+                CashRegisterSessionModel.status == SessionStatus.OPEN
+            )\
+            .first()
+        
+        if existing_open_session:
+            raise ValueError(
+                f"Cannot open a new session. There is already an open session "
+                f"(Session #{existing_open_session.session_number}) for this restaurant. "
+                f"Please close the existing session before opening a new one."
+            )
+        
         # Calculate the next session number for this restaurant
         last_session = db.query(CashRegisterSessionModel)\
             .filter(CashRegisterSessionModel.restaurant_id == restaurant_id)\

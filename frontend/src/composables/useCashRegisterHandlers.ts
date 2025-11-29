@@ -6,6 +6,7 @@ import {
   calculateCutReport,
   calculatePaymentBreakdown
 } from '@/utils/cashRegisterHelpers';
+import { handleError } from '@/utils/errorTranslator';
 
 /**
  * Composable for handling cash register modal operations
@@ -104,7 +105,13 @@ export function useCashRegisterHandlers(
       toast.showToast(t('app.views.cashRegister.sessionOpened') || 'Session opened successfully', 'success');
     } catch (error: any) {
       console.error('Error opening session:', error);
-      toast.showToast(error.response?.data?.detail || 'Failed to open session', 'error');
+      const errorMessage = handleError(
+        error, 
+        t, 
+        'cash_register',
+        t('app.views.cashRegister.sessionOpenFailed') || 'Failed to open session'
+      );
+      toast.showToast(errorMessage, 'error');
     }
   };
 

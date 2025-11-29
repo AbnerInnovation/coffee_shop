@@ -3,6 +3,7 @@ import { useI18n } from 'vue-i18n';
 import { useMenuStore } from '@/stores/menu';
 import { useToast } from '@/composables/useToast';
 import { useConfirm } from '@/composables/useConfirm';
+import { handleError } from '@/utils/errorTranslator';
 import type { MenuCategory } from '@/types/menu';
 
 export function useCategoryManagement() {
@@ -140,7 +141,8 @@ export function useCategoryManagement() {
       await (menuStore as any).deleteCategory(category.id);
       showSuccess(t('app.messages.delete_success') as string);
     } catch (err: any) {
-      showError(err?.message || (t('app.messages.delete_failed') as string));
+      const errorMessage = handleError(err, t, 'category', t('app.messages.delete_failed') as string);
+      showError(errorMessage);
     }
   }
 
