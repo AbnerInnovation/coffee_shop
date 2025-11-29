@@ -33,6 +33,7 @@ from ...services.user import get_current_active_user
 from ...services import cash_register as cash_register_service
 from ...models.user import User, UserRole
 from ...core.dependencies import get_current_user_with_active_subscription, get_current_restaurant
+from ...core.exceptions import ConflictError
 
 router = APIRouter(
     prefix="/cash-register",
@@ -78,6 +79,8 @@ async def create_session(
         
         return cash_register_service.create_session(db, session, restaurant.id)
     except HTTPException:
+        raise
+    except ConflictError:
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error creating session: {str(e)}")
