@@ -139,7 +139,8 @@ def get_session(
         raise HTTPException(status_code=500, detail=f"Error retrieving session: {str(e)}")
 
 @router.get("/sessions", response_model=List[CashRegisterSession])
-def get_sessions(
+async def get_sessions(
+    request: Request,
     status: Optional[SessionStatus] = None,
     cashier_id: Optional[int] = None,
     skip: int = 0,
@@ -148,15 +149,15 @@ def get_sessions(
     current_user: User = Depends(get_current_active_user)
 ) -> List[CashRegisterSession]:
     try:
+        # Get restaurant from subdomain
+        restaurant = await get_current_restaurant(request)
+        
         # If user is a cashier (staff with cashier type), only show their own sessions
         if current_user.role == "staff" and current_user.staff_type == "cashier":
             cashier_id = current_user.id
         
-        # Filter by restaurant_id to ensure isolation
-        restaurant_id = current_user.restaurant_id if current_user.restaurant_id else None
-        
         return cash_register_service.get_sessions(
-            db, restaurant_id=restaurant_id, status=status, cashier_id=cashier_id, skip=skip, limit=limit
+            db, restaurant_id=restaurant.id, status=status, cashier_id=cashier_id, skip=skip, limit=limit
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error retrieving sessions: {str(e)}")
@@ -236,7 +237,8 @@ def get_transactions(
 # -----------------------------
 
 @router.get("/reports", response_model=List[CashRegisterReport])
-def get_reports(
+async def get_reports(
+    request: Request,
     session_id: Optional[int] = None,
     report_type: Optional[str] = None,
     skip: int = 0,
@@ -245,11 +247,14 @@ def get_reports(
     current_user: User = Depends(get_current_active_user)
 ) -> List[CashRegisterReport]:
     try:
+        # Get restaurant from subdomain
+        restaurant = await get_current_restaurant(request)
+        
         # If user is a cashier, filter reports to only their sessions
         if current_user.role == "staff" and current_user.staff_type == "cashier":
-            # Get all session IDs for this cashier
+            # Get all session IDs for this cashier in this restaurant
             cashier_sessions = cash_register_service.get_sessions(
-                db, cashier_id=current_user.id, skip=0, limit=1000
+                db, restaurant_id=restaurant.id, cashier_id=current_user.id, skip=0, limit=1000
             )
             cashier_session_ids = [s.id for s in cashier_sessions]
             
@@ -279,29 +284,52 @@ def get_reports(
                 all_reports.extend(reports)
             return all_reports[:limit]  # Apply limit to combined results
         
-        # Admin/SysAdmin - return all reports
-        return cash_register_service.get_reports(
-            db, session_id=session_id, report_type=report_type, skip=skip, limit=limit
+        # Admin/SysAdmin - return all reports for this restaurant
+        # First get all sessions for this restaurant
+        restaurant_sessions = cash_register_service.get_sessions(
+            db, restaurant_id=restaurant.id, skip=0, limit=1000
         )
+        restaurant_session_ids = [s.id for s in restaurant_sessions]
+        
+        if session_id:
+            # Verify session belongs to this restaurant
+            if session_id not in restaurant_session_ids:
+                raise HTTPException(status_code=403, detail="Access denied: Session belongs to another restaurant")
+            return cash_register_service.get_reports(
+                db, session_id=session_id, report_type=report_type, skip=skip, limit=limit
+            )
+        
+        # Get reports for all restaurant sessions
+        all_reports = []
+        for sid in restaurant_session_ids:
+            reports = cash_register_service.get_reports(
+                db, session_id=sid, report_type=report_type, skip=0, limit=limit
+            )
+            all_reports.extend(reports)
+        return all_reports[:limit]
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error retrieving reports: {str(e)}")
 
 @router.get("/reports/session/{session_id}", response_model=List[CashRegisterReport])
-def get_session_reports(
+async def get_session_reports(
     session_id: int,
+    request: Request,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ) -> List[CashRegisterReport]:
     """Get all reports for a specific session."""
     try:
+        # Get restaurant from subdomain
+        restaurant = await get_current_restaurant(request)
+        
         session = cash_register_service.get_session(db, session_id)
         if not session:
             raise HTTPException(status_code=404, detail="Session not found")
         
-        # Security: Verify session belongs to user's restaurant
-        if current_user.restaurant_id and session.restaurant_id != current_user.restaurant_id:
+        # Security: Verify session belongs to this restaurant
+        if session.restaurant_id != restaurant.id:
             raise HTTPException(status_code=403, detail="Access denied: Session belongs to another restaurant")
         
         # If user is a cashier, verify the session belongs to them
@@ -395,7 +423,8 @@ def delete_transaction(
 # -----------------------------
 
 @router.get("/reports/daily-summaries", response_model=List[DailySummaryReport])
-def get_daily_summaries(
+async def get_daily_summaries(
+    request: Request,
     start_date: Optional[str] = Query(None, description="Start date for filtering reports (YYYY-MM-DD)"),
     end_date: Optional[str] = Query(None, description="End date for filtering reports (YYYY-MM-DD)"),
     skip: int = 0,
@@ -405,6 +434,9 @@ def get_daily_summaries(
 ) -> List[DailySummaryReport]:
     """Get daily summary reports within a date range."""
     try:
+        # Get restaurant from subdomain
+        restaurant = await get_current_restaurant(request)
+        
         # Convert date strings to datetime objects
         start_datetime = None
         end_datetime = None
@@ -419,12 +451,9 @@ def get_daily_summaries(
         if current_user.role == "staff" and current_user.staff_type == "cashier":
             cashier_id = current_user.id
         
-        # Get restaurant_id for filtering
-        restaurant_id = current_user.restaurant_id if current_user.restaurant_id else None
-        
         return cash_register_service.get_daily_summary_reports(
             db, start_date=start_datetime, end_date=end_datetime, cashier_id=cashier_id, 
-            restaurant_id=restaurant_id, skip=skip, limit=limit
+            restaurant_id=restaurant.id, skip=skip, limit=limit
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=f"Invalid date format. Use YYYY-MM-DD: {str(e)}")
@@ -432,7 +461,8 @@ def get_daily_summaries(
         raise HTTPException(status_code=500, detail=f"Error retrieving daily summaries: {str(e)}")
 
 @router.get("/reports/weekly-summary", response_model=WeeklySummaryReport)
-def get_weekly_summary(
+async def get_weekly_summary(
+    request: Request,
     start_date: Optional[str] = Query(None, description="Start of the week (YYYY-MM-DD)"),
     end_date: Optional[str] = Query(None, description="End of the week (YYYY-MM-DD)"),
     db: Session = Depends(get_db),
@@ -440,6 +470,9 @@ def get_weekly_summary(
 ) -> WeeklySummaryReport:
     """Generate a weekly summary report."""
     try:
+        # Get restaurant from subdomain
+        restaurant = await get_current_restaurant(request)
+        
         # Convert date strings to datetime objects
         if start_date:
             start_datetime = datetime.strptime(start_date, "%Y-%m-%d").replace(hour=0, minute=0, second=0, microsecond=0)
@@ -456,11 +489,8 @@ def get_weekly_summary(
         if current_user.role == "staff" and current_user.staff_type == "cashier":
             cashier_id = current_user.id
         
-        # Get restaurant_id for filtering
-        restaurant_id = current_user.restaurant_id if current_user.restaurant_id else None
-        
         return cash_register_service.get_weekly_summary(
-            db, start_datetime, end_datetime, restaurant_id=restaurant_id, cashier_id=cashier_id
+            db, start_datetime, end_datetime, restaurant_id=restaurant.id, cashier_id=cashier_id
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=f"Invalid date format. Use YYYY-MM-DD: {str(e)}")

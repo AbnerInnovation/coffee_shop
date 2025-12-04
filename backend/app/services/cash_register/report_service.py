@@ -294,7 +294,9 @@ def get_daily_summary_reports(
 def get_weekly_summary(
     db: Session,
     start_date: datetime,
-    end_date: datetime
+    end_date: datetime,
+    restaurant_id: Optional[int] = None,
+    cashier_id: Optional[int] = None
 ) -> WeeklySummaryReport:
     """
     Generate a weekly summary report aggregating multiple sessions.
@@ -303,16 +305,28 @@ def get_weekly_summary(
         db: Database session
         start_date: Start of the week
         end_date: End of the week
+        restaurant_id: Optional restaurant ID filter (for multi-restaurant isolation)
+        cashier_id: Optional cashier ID filter (for staff users)
         
     Returns:
         Weekly summary report
     """
     try:
         # Get all sessions within the date range
-        sessions = db.query(CashRegisterSessionModel).filter(
+        query = db.query(CashRegisterSessionModel).filter(
             CashRegisterSessionModel.opened_at >= start_date,
             CashRegisterSessionModel.opened_at <= end_date
-        ).all()
+        )
+        
+        # Apply restaurant filter for multi-tenant isolation
+        if restaurant_id:
+            query = query.filter(CashRegisterSessionModel.restaurant_id == restaurant_id)
+        
+        # Apply cashier filter for staff users
+        if cashier_id:
+            query = query.filter(CashRegisterSessionModel.cashier_id == cashier_id)
+        
+        sessions = query.all()
         
         total_sales = 0.0
         total_refunds = 0.0
