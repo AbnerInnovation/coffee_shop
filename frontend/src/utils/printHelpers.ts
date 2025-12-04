@@ -239,6 +239,7 @@ export const calculateOrderTotals = (order: any): OrderTotals => {
 
 /**
  * Open print window and trigger print dialog
+ * Automatically closes the window after printing (or canceling)
  */
 export const openPrintWindow = async (
   html: string,
@@ -261,14 +262,21 @@ export const openPrintWindow = async (
   // Wait for content to load, then print
   printWindow.onload = () => {
     console.log('📄 Print window loaded, triggering print dialog...');
+    // Setup afterprint handler BEFORE calling print()
+    printWindow.onafterprint = () => {
+      setTimeout(() => {
+        printWindow.close();
+
+        if (onComplete) {
+          onComplete();
+        }
+      }, 100);
+    };
+    
+    // Trigger print dialog
     setTimeout(() => {
       printWindow.print();
       console.log('🖨️ Print dialog triggered');
-      printWindow.onafterprint = () => {
-        console.log('✅ Print completed, closing window');
-        printWindow.close();
-        if (onComplete) onComplete();
-      };
     }, 250);
   };
 };
