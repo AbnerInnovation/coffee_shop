@@ -451,7 +451,17 @@ def get_weekly_summary(
         else:
             end_datetime = datetime.now()
         
-        return cash_register_service.get_weekly_summary(db, start_datetime, end_datetime)
+        # If user is a cashier, filter to only their sessions
+        cashier_id = None
+        if current_user.role == "staff" and current_user.staff_type == "cashier":
+            cashier_id = current_user.id
+        
+        # Get restaurant_id for filtering
+        restaurant_id = current_user.restaurant_id if current_user.restaurant_id else None
+        
+        return cash_register_service.get_weekly_summary(
+            db, start_datetime, end_datetime, restaurant_id=restaurant_id, cashier_id=cashier_id
+        )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=f"Invalid date format. Use YYYY-MM-DD: {str(e)}")
     except Exception as e:
