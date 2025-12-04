@@ -39,6 +39,10 @@ class Restaurant(BaseModel):
     kitchen_print_enabled: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     kitchen_print_paper_width: Mapped[int] = mapped_column(Integer, default=80, nullable=False)  # 58mm or 80mm
     
+    # Customer receipt settings
+    customer_print_enabled: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    customer_print_paper_width: Mapped[int] = mapped_column(Integer, default=80, nullable=False)  # 58mm or 80mm
+    
     # Order settings
     allow_dine_in_without_table: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     

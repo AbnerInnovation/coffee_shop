@@ -54,7 +54,8 @@ async def update_current_restaurant(
 ):
     """
     Update current restaurant settings (admin only).
-    Allows updating: kitchen_print_enabled, kitchen_print_paper_width, and allow_dine_in_without_table.
+    Allows updating: kitchen_print_enabled, kitchen_print_paper_width, 
+    customer_print_enabled, customer_print_paper_width, and allow_dine_in_without_table.
     """
     # Only admin and sysadmin can update restaurant settings
     if current_user.role not in ['admin', 'sysadmin']:
@@ -75,7 +76,13 @@ async def update_current_restaurant(
         raise ResourceNotFoundError("Restaurant", restaurant_from_request.id)
     
     # Update allowed fields
-    allowed_fields = ['kitchen_print_enabled', 'kitchen_print_paper_width', 'allow_dine_in_without_table']
+    allowed_fields = [
+        'kitchen_print_enabled', 
+        'kitchen_print_paper_width', 
+        'customer_print_enabled', 
+        'customer_print_paper_width',
+        'allow_dine_in_without_table'
+    ]
     for field, value in updates.items():
         if field in allowed_fields and hasattr(restaurant, field):
             setattr(restaurant, field, value)

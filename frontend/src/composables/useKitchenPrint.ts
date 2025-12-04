@@ -353,6 +353,13 @@ export function useKitchenPrint() {
     isPrinting.value = true;
 
     try {
+      // Ensure restaurant data is loaded
+      if (!authStore.restaurant) {
+        console.log('📥 Loading restaurant data...');
+        await authStore.loadRestaurant();
+        console.log('✅ Restaurant data loaded:', authStore.restaurant?.name);
+      }
+
       // Create a new window for printing
       console.log('📄 Opening print window...');
       const printWindow = window.open('', '_blank', 'width=800,height=600');

@@ -108,6 +108,15 @@ export const useAuthStore = defineStore('auth', () => {
           // Wait to ensure Safari persists the data
           await new Promise(resolve => setTimeout(resolve, 300));
           
+          // Load restaurant data for printing configurations
+          try {
+            await loadRestaurant();
+            console.log('✅ Restaurant data loaded on login');
+          } catch (restaurantError) {
+            console.warn('⚠️ Failed to load restaurant data on login:', restaurantError);
+            // Don't fail login if restaurant load fails
+          }
+          
           // Navigate based on user role and staff type
           if (router) {
             let redirectRoute = 'Dashboard'; // Default to Dashboard for all
@@ -245,6 +254,16 @@ export const useAuthStore = defineStore('auth', () => {
         user.value = response.data;
         // Persist user to storage
         safeStorage.setItem('user', JSON.stringify(user.value));
+        
+        // Load restaurant data for printing configurations
+        try {
+          await loadRestaurant();
+          console.log('✅ Restaurant data loaded on auth check');
+        } catch (restaurantError) {
+          console.warn('⚠️ Failed to load restaurant data on auth check:', restaurantError);
+          // Don't fail auth check if restaurant load fails
+        }
+        
         return true;
       }
       

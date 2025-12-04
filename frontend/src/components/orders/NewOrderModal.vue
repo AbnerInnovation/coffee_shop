@@ -153,6 +153,7 @@ import { useAuthStore } from '@/stores/auth';
 import { useRestaurantSettings } from '@/composables/useRestaurantSettings';
 import { useOrderForm } from '@/composables/useOrderForm';
 import { useKitchenPrint } from '@/composables/useKitchenPrint';
+import { useCustomerPrint } from '@/composables/useCustomerPrint';
 
 // Import new components
 import OrderTypeSelector from './OrderTypeSelector.vue';
@@ -246,6 +247,9 @@ const restaurantSettings = useRestaurantSettings();
 
 // Kitchen print composable
 const { printKitchenTicket } = useKitchenPrint();
+
+// Customer print composable
+const { printCustomerReceipt } = useCustomerPrint();
 
 // Use multiple diners composable (always enabled)
 const multipleDinersComposable = useMultipleDiners();
@@ -649,6 +653,9 @@ async function createOrder() {
       } else {
         console.log('⚠️ Kitchen printing is disabled or restaurant not loaded');
       }
+
+      // NOTE: Customer receipt is NOT printed here
+      // It will be printed when the order is paid in OrderDetailsModal
 
       // Always emit and close, regardless of payment success
       // If payment failed, the user already saw a warning message explaining what happened

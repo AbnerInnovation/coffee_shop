@@ -292,7 +292,8 @@ def create_order_with_items(
                 total_amount += extra_data.price * extra_data.quantity
 
     # Process persons with their items (new multi-diner approach)
-    if hasattr(order, 'persons') and order.persons:
+    has_persons = hasattr(order, 'persons') and order.persons
+    if has_persons:
         for person_data in order.persons:
             # Create person
             db_person = OrderPersonModel(
@@ -309,8 +310,9 @@ def create_order_with_items(
             for item_data in person_data.items:
                 create_order_item(item_data, person_id=db_person.id)
     
-    # Process direct items (legacy support - items without person assignment)
-    if hasattr(order, 'items') and order.items:
+    # Process direct items ONLY if there are no persons (legacy support)
+    # This prevents duplicate items when using multi-diner mode
+    if not has_persons and hasattr(order, 'items') and order.items:
         for item_data in order.items:
             create_order_item(item_data, person_id=None)
 

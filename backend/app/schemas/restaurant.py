@@ -24,6 +24,10 @@ class RestaurantBase(BaseModel):
     currency: str = Field(default="USD", max_length=3)
     tax_rate: Optional[float] = Field(default=0.0, ge=0, le=1)
     is_active: bool = True
+    kitchen_print_enabled: bool = False
+    kitchen_print_paper_width: int = Field(default=80, ge=58, le=80)
+    customer_print_enabled: bool = True
+    customer_print_paper_width: int = Field(default=80, ge=58, le=80)
     allow_dine_in_without_table: bool = False
     
     @validator('name')
@@ -92,6 +96,10 @@ class RestaurantUpdate(BaseModel):
     currency: Optional[str] = Field(None, max_length=3)
     tax_rate: Optional[float] = Field(None, ge=0, le=1)
     is_active: Optional[bool] = None
+    kitchen_print_enabled: Optional[bool] = None
+    kitchen_print_paper_width: Optional[int] = Field(None, ge=58, le=80)
+    customer_print_enabled: Optional[bool] = None
+    customer_print_paper_width: Optional[int] = Field(None, ge=58, le=80)
     allow_dine_in_without_table: Optional[bool] = None
     
     @validator('name')
@@ -151,6 +159,8 @@ class RestaurantPublic(BaseModel):
     currency: str
     kitchen_print_enabled: bool = True
     kitchen_print_paper_width: int = 80
+    customer_print_enabled: bool = True
+    customer_print_paper_width: int = 80
     allow_dine_in_without_table: bool = False
     
     class Config:

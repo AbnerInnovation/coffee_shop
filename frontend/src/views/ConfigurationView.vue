@@ -161,6 +161,148 @@
             </div>
           </transition>
 
+          <!-- Customer Print Settings -->
+          <div class="bg-gray-50 dark:bg-gray-900/50 rounded-lg sm:rounded-xl p-4 sm:p-5 border border-gray-200 dark:border-gray-700">
+            <div class="flex items-center justify-between gap-3">
+              <div class="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+                <div class="p-1.5 sm:p-2 bg-green-100 dark:bg-green-900/30 rounded-lg flex-shrink-0">
+                  <svg class="w-5 h-5 sm:w-6 sm:h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <h3 class="text-sm sm:text-base font-semibold text-gray-900 dark:text-white">
+                    {{ t('app.subscription.settings.customer_print.title') }}
+                  </h3>
+                  <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-0.5">
+                    {{ t('app.subscription.settings.customer_print.description') }}
+                  </p>
+                </div>
+              </div>
+              <button
+                @click="restaurantSettings.toggleCustomerPrint"
+                :disabled="isSaving"
+                :class="[
+                  'relative inline-flex h-6 w-11 sm:h-7 sm:w-12 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2 dark:focus:ring-offset-gray-800',
+                  customerPrintEnabled
+                    ? 'bg-green-600'
+                    : 'bg-gray-300 dark:bg-gray-600',
+                  isSaving ? 'opacity-50 cursor-not-allowed' : ''
+                ]"
+              >
+                <span
+                  :class="[
+                    'pointer-events-none inline-block h-5 w-5 sm:h-6 sm:w-6 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out',
+                    customerPrintEnabled ? 'translate-x-5' : 'translate-x-0'
+                  ]"
+                />
+              </button>
+            </div>
+          </div>
+
+          <!-- Customer Paper Width Settings -->
+          <transition
+            enter-active-class="transition ease-out duration-200"
+            enter-from-class="opacity-0 -translate-y-2"
+            enter-to-class="opacity-100 translate-y-0"
+            leave-active-class="transition ease-in duration-150"
+            leave-from-class="opacity-100 translate-y-0"
+            leave-to-class="opacity-0 -translate-y-2"
+          >
+            <div v-if="customerPrintEnabled" class="bg-gray-50 dark:bg-gray-900/50 rounded-lg sm:rounded-xl p-4 sm:p-5 border border-gray-200 dark:border-gray-700">
+              <div class="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+                <div class="p-1.5 sm:p-2 bg-green-100 dark:bg-green-900/30 rounded-lg flex-shrink-0">
+                  <svg class="w-5 h-5 sm:w-6 sm:h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <h3 class="text-sm sm:text-base font-semibold text-gray-900 dark:text-white">
+                    {{ t('app.subscription.settings.customer_paper_width.title') }}
+                  </h3>
+                  <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-0.5">
+                    {{ t('app.subscription.settings.customer_paper_width.description') }}
+                  </p>
+                </div>
+              </div>
+
+              <!-- Customer Paper Width Options -->
+              <div class="grid grid-cols-2 gap-3 sm:gap-4">
+                <button
+                  @click="() => restaurantSettings.setCustomerPaperWidth(58)"
+                  :disabled="isSaving"
+                  :class="[
+                    'relative overflow-hidden rounded-lg border-2 transition-all duration-200',
+                    currentCustomerPaperWidth === 58 
+                      ? 'border-green-500 bg-green-50 dark:bg-green-900/20' 
+                      : 'border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600'
+                  ]"
+                >
+                  <div class="p-3 sm:p-4 text-center">
+                    <div class="mx-auto w-8 h-8 sm:w-10 sm:h-10 mb-2 flex items-center justify-center">
+                      <svg class="w-full h-full text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                    </div>
+                    <div :class="[
+                      'text-xl sm:text-2xl font-bold',
+                      currentCustomerPaperWidth === 58 ? 'text-green-700 dark:text-green-300' : 'text-gray-900 dark:text-white'
+                    ]">
+                      58mm
+                    </div>
+                    <div :class="[
+                      'text-[9px] sm:text-[10px] font-medium uppercase tracking-wide mt-0.5',
+                      currentCustomerPaperWidth === 58 ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'
+                    ]">
+                      {{ t('app.subscription.settings.customer_paper_width.compact') }}
+                    </div>
+                  </div>
+                  <div v-if="currentCustomerPaperWidth === 58" class="absolute top-1 right-1 sm:top-1.5 sm:right-1.5">
+                    <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-green-600 dark:text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                    </svg>
+                  </div>
+                </button>
+
+                <button
+                  @click="() => restaurantSettings.setCustomerPaperWidth(80)"
+                  :disabled="isSaving"
+                  :class="[
+                    'relative overflow-hidden rounded-lg border-2 transition-all duration-200',
+                    currentCustomerPaperWidth === 80 
+                      ? 'border-green-500 bg-green-50 dark:bg-green-900/20' 
+                      : 'border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600'
+                  ]"
+                >
+                  <div class="p-3 sm:p-4 text-center">
+                    <div class="mx-auto w-8 h-8 sm:w-10 sm:h-10 mb-2 flex items-center justify-center">
+                      <svg class="w-full h-full text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                    </div>
+                    <div :class="[
+                      'text-xl sm:text-2xl font-bold',
+                      currentCustomerPaperWidth === 80 ? 'text-green-700 dark:text-green-300' : 'text-gray-900 dark:text-white'
+                    ]">
+                      80mm
+                    </div>
+                    <div :class="[
+                      'text-[9px] sm:text-[10px] font-medium uppercase tracking-wide mt-0.5',
+                      currentCustomerPaperWidth === 80 ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'
+                    ]">
+                      {{ t('app.subscription.settings.customer_paper_width.standard') }}
+                    </div>
+                  </div>
+                  <div v-if="currentCustomerPaperWidth === 80" class="absolute top-1 right-1 sm:top-1.5 sm:right-1.5">
+                    <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-green-600 dark:text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                    </svg>
+                  </div>
+                </button>
+              </div>
+            </div>
+          </transition>
+
           <!-- Dine-in Without Table Settings -->
           <div class="border-t border-gray-200 dark:border-gray-700 pt-6">
             <div class="flex items-center justify-between">
@@ -211,9 +353,11 @@ const restaurantSettings = useRestaurantSettings()
 
 // Computed properties to avoid repetitive .value access
 const currentPaperWidth = computed(() => restaurantSettings.paperWidth.value)
+const currentCustomerPaperWidth = computed(() => restaurantSettings.customerPaperWidth.value)
 const isSaving = computed(() => restaurantSettings.savingSettings.value)
 const isLoading = computed(() => restaurantSettings.loadingSettings.value)
 const kitchenPrintEnabled = computed(() => restaurantSettings.kitchenPrintEnabled.value)
+const customerPrintEnabled = computed(() => restaurantSettings.customerPrintEnabled.value)
 const allowDineInWithoutTable = computed(() => restaurantSettings.allowDineInWithoutTable.value)
 
 // Lifecycle

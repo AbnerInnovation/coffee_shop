@@ -7,6 +7,8 @@ import api from '@/services/api'
 export interface RestaurantSettings {
   kitchen_print_enabled: boolean
   kitchen_print_paper_width: number
+  customer_print_enabled: boolean
+  customer_print_paper_width: number
   allow_dine_in_without_table: boolean
 }
 
@@ -35,6 +37,8 @@ export function useRestaurantSettings(settingsService: ISettingsService = new Re
   // Reactive state
   const kitchenPrintEnabled = ref(true)
   const paperWidth = ref(80)
+  const customerPrintEnabled = ref(true)
+  const customerPaperWidth = ref(80)
   const allowDineInWithoutTable = ref(false)
   const savingSettings = ref(false)
   const loadingSettings = ref(false)
@@ -58,6 +62,12 @@ export function useRestaurantSettings(settingsService: ISettingsService = new Re
           break
         case 'kitchen_print_paper_width':
           paperWidth.value = value as number
+          break
+        case 'customer_print_enabled':
+          customerPrintEnabled.value = value as boolean
+          break
+        case 'customer_print_paper_width':
+          customerPaperWidth.value = value as number
           break
         case 'allow_dine_in_without_table':
           allowDineInWithoutTable.value = value as boolean
@@ -94,6 +104,20 @@ export function useRestaurantSettings(settingsService: ISettingsService = new Re
     return updateSetting('kitchen_print_paper_width', width, message)
   }
 
+  const toggleCustomerPrint = (): Promise<void> => {
+    const newValue = !customerPrintEnabled.value
+    const message = newValue 
+      ? t('app.subscription.settings.customer_print.enabled')
+      : t('app.subscription.settings.customer_print.disabled')
+    
+    return updateSetting('customer_print_enabled', newValue, message)
+  }
+
+  const setCustomerPaperWidth = (width: number): Promise<void> => {
+    const message = t('app.subscription.settings.customer_paper_width.updated', { width: `${width}mm` })
+    return updateSetting('customer_print_paper_width', width, message)
+  }
+
   const toggleDineInWithoutTable = (): Promise<void> => {
     const newValue = !allowDineInWithoutTable.value
     const message = newValue 
@@ -111,6 +135,8 @@ export function useRestaurantSettings(settingsService: ISettingsService = new Re
       
       kitchenPrintEnabled.value = settings.kitchen_print_enabled ?? true
       paperWidth.value = settings.kitchen_print_paper_width ?? 80
+      customerPrintEnabled.value = settings.customer_print_enabled ?? true
+      customerPaperWidth.value = settings.customer_print_paper_width ?? 80
       allowDineInWithoutTable.value = settings.allow_dine_in_without_table ?? false
     } catch (error) {
       console.error('Error loading restaurant settings:', error)
@@ -124,6 +150,8 @@ export function useRestaurantSettings(settingsService: ISettingsService = new Re
     // State
     kitchenPrintEnabled: kitchenPrintEnabled as Ref<boolean>,
     paperWidth: paperWidth as Ref<number>,
+    customerPrintEnabled: customerPrintEnabled as Ref<boolean>,
+    customerPaperWidth: customerPaperWidth as Ref<number>,
     allowDineInWithoutTable: allowDineInWithoutTable as Ref<boolean>,
     savingSettings: savingSettings as Ref<boolean>,
     loadingSettings: loadingSettings as Ref<boolean>,
@@ -131,6 +159,8 @@ export function useRestaurantSettings(settingsService: ISettingsService = new Re
     // Methods
     toggleKitchenPrint,
     setPaperWidth,
+    toggleCustomerPrint,
+    setCustomerPaperWidth,
     toggleDineInWithoutTable,
     loadSettings,
     

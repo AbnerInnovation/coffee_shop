@@ -473,7 +473,8 @@
               "add_one_item": "Agrega al menos un artículo a la orden",
               "create_failed": "Error al crear la orden"
             },
-            "print_warning": "La orden se creó correctamente pero no se pudo imprimir el ticket de cocina"
+            "print_warning": "La orden se creó correctamente pero no se pudo imprimir el ticket de cocina",
+            "customer_print_warning": "La orden se creó correctamente pero no se pudo imprimir el ticket del cliente"
           },
           "details": {
             "order_title": "Orden #{id}",
@@ -482,6 +483,10 @@
             "customer": "Cliente",
             "no_name": "Sin nombre",
             "takeaway": "Para llevar",
+            "print_pre_bill": "Imprimir Cuenta",
+            "pre_bill_printed": "Pre-cuenta impresa exitosamente",
+            "pre_bill_print_error": "Error al imprimir la pre-cuenta",
+            "receipt_print_warning": "Pago completado pero no se pudo imprimir el recibo",
             "order_items": "Artículos de la orden",
             "headers": {
               "item": "Artículo",
@@ -1042,11 +1047,24 @@
           "disabled": "Impresión de tickets deshabilitada"
         },
         "paper_width": {
-          "title": "Ancho del Papel",
-          "description": "Selecciona el ancho del papel de tu impresora térmica",
+          "title": "Ancho del Papel (Cocina)",
+          "description": "Selecciona el ancho del papel de tu impresora térmica de cocina",
           "compact": "Compacto",
           "standard": "Estándar",
           "updated": "Ancho de papel actualizado a {width}"
+        },
+        "customer_print": {
+          "title": "Impresión de Tickets para Cliente",
+          "description": "Habilita la impresión automática de tickets para el cliente cuando se crea una orden",
+          "enabled": "✓ Impresión de tickets de cliente habilitada",
+          "disabled": "Impresión de tickets de cliente deshabilitada"
+        },
+        "customer_paper_width": {
+          "title": "Ancho del Papel (Cliente)",
+          "description": "Selecciona el ancho del papel de tu impresora térmica para tickets de cliente",
+          "compact": "Compacto",
+          "standard": "Estándar",
+          "updated": "Ancho de papel de cliente actualizado a {width}"
         },
         "dine_in_without_table": {
           "title": "Permitir Consumo en Local sin Mesa",

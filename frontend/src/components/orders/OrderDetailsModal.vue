@@ -375,6 +375,25 @@
                 </div>
                 
                 <div class="flex flex-col gap-2 sm:flex sm:flex-row sm:justify-center sm:gap-3 mt-6">
+                  <!-- Print Pre-Bill Button (only for unpaid orders) -->
+                  <button
+                    v-if="!order.is_paid && order.status !== 'cancelled'"
+                    type="button"
+                    class="inline-flex w-full sm:w-auto justify-center items-center gap-2 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 sm:px-4 text-sm font-medium text-gray-700 dark:text-gray-200 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                    @click="handlePrintPreBill"
+                    :disabled="isPrintingPreBill"
+                  >
+                    <svg v-if="!isPrintingPreBill" class="h-4 w-4 sm:h-5 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                    </svg>
+                    <svg v-else class="animate-spin h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    {{ $t('app.views.orders.modals.details.print_pre_bill') || 'Imprimir Cuenta' }}
+                  </button>
+
+                  <!-- Complete Payment Button -->
                   <button
                     v-if="!order.is_paid && order.status !== 'cancelled' && canProcessPayments"
                     type="button"
@@ -403,6 +422,7 @@ import { useToast } from '@/composables/useToast'
 import { useConfirm } from '@/composables/useConfirm'
 import { useTheme } from '@/composables/useTheme'
 import { usePermissions } from '@/composables/usePermissions'
+import { useCustomerPrint } from '@/composables/useCustomerPrint'
 
 const props = defineProps({
   open: {
@@ -435,7 +455,9 @@ const { confirm } = useConfirm();
 const { showSuccess, showError } = useToast();
 const { t } = useI18n();
 const { canProcessPayments } = usePermissions();
+const { printPreBill, printCustomerReceipt } = useCustomerPrint();
 const isMounted = ref(false);
+const isPrintingPreBill = ref(false);
 
 // Internal toast notification state
 const internalToast = ref({
@@ -599,6 +621,65 @@ function calculateChange() {
   changeAmount.value = received - total;
 }
 
+// Handle print pre-bill
+async function handlePrintPreBill() {
+  isPrintingPreBill.value = true;
+  try {
+    console.log('📋 Order data for pre-bill:', {
+      order_number: props.order.order_number,
+      items_count: props.order.items?.length || 0,
+      items: props.order.items,
+      persons: props.order.persons
+    });
+    
+    // Build order object with correct structure for printing
+    // This ensures items are properly associated with persons
+    const orderForPrint = {
+      ...props.order,
+      // If order has persons but items don't have person_id, reconstruct the structure
+      items: props.order.items || [],
+      persons: props.order.persons || []
+    };
+    
+    // If there are persons but items don't have person_id, try to match them
+    if (orderForPrint.persons.length > 0) {
+      const itemsWithPersonId = orderForPrint.items.filter((item: any) => item.person_id);
+      
+      // If no items have person_id, we need to use the persons' items instead
+      if (itemsWithPersonId.length === 0 && orderForPrint.persons.some((p: any) => p.items && p.items.length > 0)) {
+        console.log('⚠️ Items missing person_id, using items from persons structure');
+        // Flatten items from persons
+        orderForPrint.items = orderForPrint.persons.flatMap((person: any) => 
+          (person.items || []).map((item: any) => ({
+            ...item,
+            person_id: person.id
+          }))
+        );
+      }
+    }
+    
+    console.log('📋 Reconstructed order for print:', {
+      items_count: orderForPrint.items.length,
+      persons_count: orderForPrint.persons.length,
+      items_with_person_id: orderForPrint.items.filter((i: any) => i.person_id).length
+    });
+    
+    await printPreBill(orderForPrint);
+    showInternalToast(
+      t('app.views.orders.modals.details.pre_bill_printed') || 'Pre-cuenta impresa exitosamente',
+      'success'
+    );
+  } catch (error) {
+    console.error('Error printing pre-bill:', error);
+    showInternalToast(
+      t('app.views.orders.modals.details.pre_bill_print_error') || 'Error al imprimir la pre-cuenta',
+      'error'
+    );
+  } finally {
+    isPrintingPreBill.value = false;
+  }
+}
+
 async function completePayment() {
   // Validate cash payment has sufficient amount
   if (selectedPaymentMethod.value === 'cash') {
@@ -622,11 +703,47 @@ async function completePayment() {
   }
   
   try {
+    // Save payment info before resetting
+    const paymentInfo = {
+      method: selectedPaymentMethod.value,
+      amountPaid: selectedPaymentMethod.value === 'cash' ? cashReceived.value : props.order.total,
+      change: selectedPaymentMethod.value === 'cash' ? changeAmount.value : 0
+    };
+    
     await orderService.markOrderPaid(props.order.id, selectedPaymentMethod.value, props.order.status);
     showInternalToast(t('app.views.orders.payment.success') || 'Pago completado exitosamente', 'success');
     showPaymentMethodSelector.value = false;
     
-    // Reset cash fields
+    // Auto-print customer receipt after payment if enabled
+    try {
+      // Create updated order object with payment info
+      const paidOrder = {
+        ...props.order,
+        is_paid: true,
+        payment_method: paymentInfo.method,
+        amount_paid: paymentInfo.amountPaid,
+        change_amount: paymentInfo.change
+      };
+      
+      console.log('🖨️ Printing customer receipt with payment info:', {
+        payment_method: paidOrder.payment_method,
+        amount_paid: paidOrder.amount_paid,
+        change_amount: paidOrder.change_amount
+      });
+      
+      await printCustomerReceipt(paidOrder);
+      console.log('✅ Customer receipt printed successfully after payment');
+    } catch (printError) {
+      console.error('❌ Error printing customer receipt:', printError);
+      // Don't block the payment flow if printing fails
+      showInternalToast(
+        t('app.views.orders.modals.details.receipt_print_warning') || 'Pago completado pero no se pudo imprimir el recibo',
+        'warning',
+        4000
+      );
+    }
+    
+    // Reset cash fields after printing
     cashReceived.value = 0;
     changeAmount.value = 0;
     
