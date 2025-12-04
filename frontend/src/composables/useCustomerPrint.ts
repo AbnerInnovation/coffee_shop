@@ -1,5 +1,17 @@
 import { ref } from 'vue';
 import { useAuthStore } from '@/stores/auth';
+import {
+  formatTime,
+  formatCurrency,
+  getOrderTypeLabel,
+  getPaymentMethodLabel,
+  extractItemData,
+  buildGroupedItemsHTML,
+  getCommonStyles,
+  getSizeClass,
+  calculateOrderTotals,
+  openPrintWindow
+} from '@/utils/printHelpers';
 
 export function useCustomerPrint() {
   const authStore = useAuthStore();
@@ -13,43 +25,13 @@ export function useCustomerPrint() {
   };
 
   /**
-   * Format currency for display
-   */
-  const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat('es-MX', {
-      style: 'currency',
-      currency: 'MXN'
-    }).format(amount);
-  };
-
-  /**
    * Build HTML for pre-bill (cuenta) - shows items and total, no payment info
    * Used when customer asks for the bill before paying
    */
   const buildPreBillHTML = (order: any, paperWidth: number): string => {
-    const formatTime = (dateString: string) => {
-      const date = new Date(dateString);
-      return date.toLocaleString('es-MX', { 
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit', 
-        minute: '2-digit',
-        hour12: true 
-      });
-    };
-
-    const getOrderTypeLabel = (type: string) => {
-      const labels: Record<string, string> = {
-        'dine_in': 'Para Comer Aquí',
-        'takeout': 'Para Llevar',
-        'delivery': 'Domicilio'
-      };
-      return labels[type] || type;
-    };
-
-    const sizeClass = paperWidth === 58 ? 'receipt-58mm' : 'receipt-80mm';
+    const sizeClass = getSizeClass(paperWidth);
     const restaurant = authStore.restaurant;
+    const commonStyles = getCommonStyles(paperWidth);
 
     // Debug: Log order and restaurant data
     console.log('🔍 Building pre-bill HTML for order:', {
@@ -60,17 +42,9 @@ export function useCustomerPrint() {
       restaurant_loaded: !!restaurant
     });
 
-    // Helper function to build item HTML (same pattern as kitchen ticket)
+    // Helper function to build item HTML for pre-bill
     const buildItemHTML = (item: any) => {
-      const itemName = item.menu_item?.name || item.menu_item_name || item.name || 'Item';
-      const variantName = item.variant?.name || item.variant_name;
-      const categoryName = item.menu_item?.category && typeof item.menu_item.category === 'object' 
-        ? item.menu_item.category.name 
-        : typeof item.menu_item?.category === 'string' 
-          ? item.menu_item.category 
-          : '';
-      const unitPrice = item.unit_price || item.price || 0;
-      const itemTotal = item.quantity * unitPrice;
+      const { itemName, variantName, categoryName, subtotal } = extractItemData(item);
       
       return `
       <div class="item-row">
@@ -78,55 +52,15 @@ export function useCustomerPrint() {
           <span class="item-qty">${item.quantity}x</span>
           <span class="item-name">${itemName}${variantName ? ` (${variantName})` : ''}</span>
         </div>
-        <span class="item-price">${formatCurrency(itemTotal)}</span>
+        <span class="item-price">${formatCurrency(subtotal)}</span>
       </div>
       ${categoryName ? `<div class="item-category">${categoryName}</div>` : ''}
       `;
     };
 
-    // Build items HTML - group by person if persons exist (same pattern as kitchen ticket)
-    let itemsHTML = '';
-    
-    if (order.persons && order.persons.length > 0) {
-      // Group items by person
-      const groupedHTML = order.persons.map((person: any, index: number) => {
-        const personItems = order.items.filter((item: any) => item.person_id === person.id);
-        if (personItems.length === 0) return '';
-        
-        const personName = person.name || `Persona ${index + 1}`;
-        const personItemsHTML = personItems.map(buildItemHTML).join('');
-        
-        return `
-        <div class="person-section">
-          <div class="person-name">${personName}</div>
-          ${personItemsHTML}
-        </div>
-        `;
-      }).join('');
-      
-      // Check if there are items without person_id (orphan items)
-      const orphanItems = order.items.filter((item: any) => !item.person_id);
-      const orphanHTML = orphanItems.length > 0 
-        ? orphanItems.map(buildItemHTML).join('') 
-        : '';
-      
-      // Combine grouped and orphan items
-      itemsHTML = groupedHTML + orphanHTML;
-      
-      // If no items were shown at all, show all items without grouping
-      if (!itemsHTML.trim()) {
-        console.warn('⚠️ No items matched any person, showing all items without grouping');
-        itemsHTML = order.items.map(buildItemHTML).join('');
-      }
-    } else {
-      // No persons - show all items normally
-      itemsHTML = order.items.map(buildItemHTML).join('');
-    }
-
-    const subtotal = order.subtotal || 0;
-    const discount = order.discount || 0;
-    const tax = order.tax || 0;
-    const total = order.total || subtotal - discount + tax;
+    // Build items HTML - group by person if persons exist
+    const { html: itemsHTML } = buildGroupedItemsHTML(order, buildItemHTML);
+    const { subtotal, discount, tax, total } = calculateOrderTotals(order);
 
     return `
 <!DOCTYPE html>
@@ -135,19 +69,9 @@ export function useCustomerPrint() {
   <meta charset="UTF-8">
   <title>Pre-Cuenta - Orden #${order.order_number}</title>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    ${commonStyles}
 
     body {
-      font-family: 'Courier New', monospace;
-      background: white;
-      color: #000;
-      width: ${paperWidth - 8}mm;
-      max-width: ${paperWidth - 8}mm;
-      margin: 0;
       padding: ${paperWidth === 58 ? '1mm 2mm 1mm 0' : '4mm 4mm 4mm 0'};
       font-weight: 600;
       -webkit-print-color-adjust: exact;
@@ -208,15 +132,11 @@ export function useCustomerPrint() {
       margin: 2mm 0;
     }
 
-    .person-section {
-      margin-bottom: 2mm;
-    }
-
-    .person-name {
+    /* Override person-header for pre-bill */
+    .person-header {
       font-size: 13px;
       font-weight: 900;
-      margin-bottom: 1mm;
-      padding: 1mm 0;
+      text-align: left;
       border-bottom: 2px solid black;
       letter-spacing: 0.5px;
     }
@@ -398,17 +318,6 @@ export function useCustomerPrint() {
       font-size: 9px;
     }
 
-    @media print {
-      @page {
-        margin: 0;
-        size: ${paperWidth}mm auto;
-      }
-
-      body {
-        margin: 0;
-        padding: 4mm;
-      }
-    }
   </style>
 </head>
 <body class="${sizeClass}">
@@ -429,7 +338,7 @@ export function useCustomerPrint() {
     </div>
     <div class="order-info-row">
       <span>Fecha:</span>
-      <span>${formatTime(order.created_at)}</span>
+      <span>${formatTime(order.created_at, true)}</span>
     </div>
     ${order.table_number ? `
     <div class="order-info-row">
@@ -498,109 +407,66 @@ export function useCustomerPrint() {
    * Single source of truth for receipt styling
    */
   const buildReceiptHTML = (order: any, paperWidth: number): string => {
-    const formatTime = (dateString: string) => {
-      const date = new Date(dateString);
-      return date.toLocaleString('es-MX', { 
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit', 
-        minute: '2-digit',
-        hour12: true 
-      });
-    };
+    const sizeClass = getSizeClass(paperWidth);
+    const commonStyles = getCommonStyles(paperWidth);
 
-    const getOrderTypeLabel = (type: string) => {
-      const labels: Record<string, string> = {
-        'dine_in': 'Para Comer Aquí',
-        'takeout': 'Para Llevar',
-        'delivery': 'Domicilio'
-      };
-      return labels[type] || type;
-    };
-
-    const getPaymentMethodLabel = (method: string) => {
-      const labels: Record<string, string> = {
-        'cash': 'Efectivo',
-        'card': 'Tarjeta',
-        'transfer': 'Transferencia',
-        'other': 'Otro'
-      };
-      return labels[method] || method;
-    };
-
-    // Helper function to build item HTML
+    // Helper function to build item HTML for receipt (table format)
     const buildItemHTML = (item: any) => {
-      const itemName = item.menu_item?.name || item.menu_item_name || item.name || 'Item';
-      const variantName = item.variant?.name || item.variant_name;
-      const unitPrice = item.unit_price || item.price || 0;
-      const quantity = item.quantity || 1;
-      const subtotal = unitPrice * quantity;
+      const { itemName, variantName, categoryName, quantity, subtotal } = extractItemData(item);
       
       return `
       <tr class="receipt-item">
         <td class="item-quantity">${quantity}</td>
         <td class="item-description">
-          <div class="item-name">${itemName}</div>
-          ${variantName ? `<div class="item-variant">${variantName}</div>` : ''}
-          ${item.special_instructions ? `<div class="item-notes">${item.special_instructions}</div>` : ''}
+          <div class="item-name">${itemName}${variantName ? ` (${variantName})` : ''}</div>
+          ${categoryName ? `<div class="item-category">${categoryName}</div>` : ''}
         </td>
-        <td class="item-price">${formatCurrency(unitPrice)}</td>
         <td class="item-total">${formatCurrency(subtotal)}</td>
       </tr>
       `;
     };
 
     // Build items HTML - group by person if persons exist
-    let itemsHTML = '';
-    
     console.log('🔍 Building receipt HTML - order data:', {
       has_persons: !!(order.persons && order.persons.length > 0),
       persons_count: order.persons?.length || 0,
       items_count: order.items?.length || 0
     });
     
+    // For table format, we need to wrap person sections in table rows
+    const buildPersonSection = (personName: string, itemsHTML: string) => `
+      <tr class="person-section">
+        <td colspan="3" class="person-header">${personName}</td>
+      </tr>
+      ${itemsHTML}
+    `;
+    
+    let itemsHTML = '';
     if (order.persons && order.persons.length > 0) {
-      // Group items by person
       itemsHTML = order.persons.map((person: any, index: number) => {
         const personItems = order.items?.filter((item: any) => item.person_id === person.id) || [];
-        
-        // Fallback: if no items have person_id, use items from person.items
         const items = personItems.length > 0 ? personItems : (person.items || []);
-        
         if (items.length === 0) return '';
         
         const personName = person.name || `Persona ${index + 1}`;
         const personItemsHTML = items.map(buildItemHTML).join('');
-        
-        return `
-        <tr class="person-section">
-          <td colspan="4" class="person-header">${personName}</td>
-        </tr>
-        ${personItemsHTML}
-        `;
+        return buildPersonSection(personName, personItemsHTML);
       }).join('');
       
-      // Fallback: if no items matched persons, show all items
       if (!itemsHTML && order.items && order.items.length > 0) {
         console.log('⚠️ No items matched persons, showing all items');
         itemsHTML = order.items.map(buildItemHTML).join('');
       }
     } else {
-      // No persons - show all items normally
       itemsHTML = (order.items || []).map(buildItemHTML).join('');
     }
 
     // Calculate totals
-    const subtotal = order.subtotal || order.total_amount || 0;
-    const discount = order.discount_amount || 0;
-    const tax = order.tax_amount || 0;
-    const total = order.total_amount || 0;
-
-    const sizeClass = paperWidth === 58 ? 'receipt-58mm' : 'receipt-80mm';
+    const { subtotal, discount, tax, total } = calculateOrderTotals(order);
     const restaurantName = authStore.restaurant?.name || 'Restaurante';
     const restaurantAddress = authStore.restaurant?.address || '';
     const restaurantPhone = authStore.restaurant?.phone || '';
+    const restaurantEmail = authStore.restaurant?.email || '';
 
     return `
 <!DOCTYPE html>
@@ -609,18 +475,9 @@ export function useCustomerPrint() {
   <meta charset="UTF-8">
   <title>Ticket - Orden #${order.order_number}</title>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    ${commonStyles}
 
     body {
-      font-family: 'Courier New', monospace;
-      background: white;
-      color: #000;
-      width: ${paperWidth-8}mm;
-      margin: 0;
       padding: 4px;
       font-size: 12px;
       font-weight: 700;
@@ -696,7 +553,7 @@ export function useCustomerPrint() {
     }
 
     .item-description {
-      width: 45%;
+      width: 65%;
     }
 
     .item-name {
@@ -704,19 +561,13 @@ export function useCustomerPrint() {
       margin-bottom: 2px;
     }
 
-    .item-variant {
+    .item-category {
       font-size: 10px;
-      font-style: italic;
-      margin-bottom: 2px;
+      font-weight: bold;
+      color: #666;
+      margin-top: 1px;
     }
 
-    .item-notes {
-      font-size: 10px;
-      color: #333;
-      margin-top: 2px;
-    }
-
-    .item-price,
     .item-total {
       text-align: right;
       width: 20%;
@@ -820,18 +671,6 @@ export function useCustomerPrint() {
     .receipt-58mm .total-row.grand-total {
       font-size: 14px;
     }
-
-    @media print {
-      @page {
-        margin: 0;
-        size: ${paperWidth}mm auto;
-      }
-
-      body {
-        margin: 0;
-        padding: 4px;
-      }
-    }
   </style>
 </head>
 <body class="${sizeClass}">
@@ -841,10 +680,15 @@ export function useCustomerPrint() {
     ${restaurantPhone ? `<div class="restaurant-info">Tel: ${restaurantPhone}</div>` : ''}
   </div>
 
+  <div class="receipt-divider"></div>
+
   <div class="receipt-info">
     <div class="receipt-info-row">
-      <span><strong>Orden:</strong> #${order.order_number}</span>
-      <span><strong>Fecha:</strong> ${formatTime(order.created_at)}</span>
+      <span><strong>Folio:</strong> #${order.order_number}</span>
+      <span><strong>Fecha:</strong> ${formatTime(order.created_at, true).split(',')[0]}</span>
+    </div>
+    <div class="receipt-info-row">
+      <span><strong>Hora:</strong> ${formatTime(order.created_at, true).split(',')[1]?.trim() || ''}</span>
     </div>
     ${order.table_number ? `
     <div class="receipt-info-row">
@@ -872,7 +716,6 @@ export function useCustomerPrint() {
         <tr>
           <th>Cant.</th>
           <th>Desc.</th>
-          <th class="text-right">Precio</th>
           <th class="text-right">Total</th>
         </tr>
       </thead>
@@ -924,9 +767,14 @@ export function useCustomerPrint() {
   </div>
   ` : ''}
 
+  <div class="receipt-divider"></div>
+
   <div class="receipt-footer">
-    <div>¡Gracias por su preferencia!</div>
+    <div class="footer-message">¡Gracias por su preferencia!</div>
     <div class="footer-message">¡Vuelva pronto!</div>
+    <div style="margin-top: 8px; font-size: 9px;">
+      Este ticket no es un comprobante fiscal
+    </div>
   </div>
 </body>
 </html>
@@ -956,16 +804,6 @@ export function useCustomerPrint() {
         console.log('✅ Restaurant data loaded:', authStore.restaurant?.name);
       }
 
-      // Create a new window for printing
-      console.log('📄 Opening print window...');
-      const printWindow = window.open('', '_blank', 'width=800,height=600');
-      
-      if (!printWindow) {
-        throw new Error('No se pudo abrir la ventana de impresión. Verifica que los pop-ups estén habilitados.');
-      }
-
-      console.log('✅ Print window opened');
-
       // Get paper width from restaurant settings
       const paperWidth = authStore.restaurant?.customer_print_paper_width || 80;
       console.log('📏 Paper width:', paperWidth);
@@ -974,23 +812,8 @@ export function useCustomerPrint() {
       const receiptHTML = buildReceiptHTML(order, paperWidth);
       console.log('📝 Receipt HTML generated, length:', receiptHTML.length);
 
-      // Write HTML to print window
-      printWindow.document.write(receiptHTML);
-      printWindow.document.close();
-      console.log('✅ HTML written to print window');
-
-      // Wait for content to load, then print
-      printWindow.onload = () => {
-        console.log('📄 Print window loaded, triggering print dialog...');
-        setTimeout(() => {
-          printWindow.print();
-          console.log('🖨️ Print dialog triggered');
-          printWindow.onafterprint = () => {
-            console.log('✅ Print completed, closing window');
-            printWindow.close();
-          };
-        }, 250);
-      };
+      // Open print window and trigger print
+      await openPrintWindow(receiptHTML);
     } catch (error) {
       console.error('❌ Error printing customer receipt:', error);
       throw error;
@@ -1023,16 +846,6 @@ export function useCustomerPrint() {
         console.log('✅ Restaurant data loaded:', authStore.restaurant?.name);
       }
 
-      // Create a new window for printing
-      console.log('📄 Opening print window for pre-bill...');
-      const printWindow = window.open('', '_blank', 'width=800,height=600');
-      
-      if (!printWindow) {
-        throw new Error('No se pudo abrir la ventana de impresión. Verifica que los pop-ups estén habilitados.');
-      }
-
-      console.log('✅ Print window opened');
-
       // Get paper width from restaurant settings
       const paperWidth = authStore.restaurant?.customer_print_paper_width || 80;
       console.log('📏 Paper width:', paperWidth);
@@ -1041,23 +854,8 @@ export function useCustomerPrint() {
       const preBillHTML = buildPreBillHTML(order, paperWidth);
       console.log('📝 Pre-bill HTML generated, length:', preBillHTML.length);
 
-      // Write HTML to print window
-      printWindow.document.write(preBillHTML);
-      printWindow.document.close();
-      console.log('✅ HTML written to print window');
-
-      // Wait for content to load, then print
-      printWindow.onload = () => {
-        console.log('📄 Print window loaded, triggering print dialog...');
-        setTimeout(() => {
-          printWindow.print();
-          console.log('🖨️ Print dialog triggered');
-          printWindow.onafterprint = () => {
-            console.log('✅ Print completed, closing window');
-            printWindow.close();
-          };
-        }, 250);
-      };
+      // Open print window and trigger print
+      await openPrintWindow(preBillHTML);
     } catch (error) {
       console.error('❌ Error printing pre-bill:', error);
       throw error;

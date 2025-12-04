@@ -1,5 +1,14 @@
 import { ref } from 'vue';
 import { useAuthStore } from '@/stores/auth';
+import {
+  formatTime,
+  getOrderTypeLabel,
+  extractItemData,
+  buildGroupedItemsHTML,
+  getCommonStyles,
+  getSizeClass,
+  openPrintWindow
+} from '@/utils/printHelpers';
 
 export function useKitchenPrint() {
   const authStore = useAuthStore();
@@ -17,39 +26,14 @@ export function useKitchenPrint() {
    * Single source of truth for ticket styling
    */
   const buildTicketHTML = (order: any, paperWidth: number): string => {
-    const formatTime = (dateString: string) => {
-      const date = new Date(dateString);
-      return date.toLocaleTimeString('es-MX', { 
-        hour: '2-digit', 
-        minute: '2-digit',
-        hour12: true 
-      });
-    };
-
-
-    const getOrderTypeLabel = (type: string) => {
-      const labels: Record<string, string> = {
-        'dine_in': 'PARA COMER AQUÍ',
-        'takeout': 'PARA LLEVAR',
-        'delivery': 'DOMICILIO'
-      };
-      return labels[type] || type.toUpperCase();
-    };
-
-    // Helper function to build item HTML
+    // Helper function to build item HTML for kitchen
     const buildItemHTML = (item: any) => {
-      const itemName = item.menu_item?.name || item.menu_item_name || item.name || 'Item';
-      const variantName = item.variant?.name || item.variant_name;
-      const categoryName = item.menu_item?.category && typeof item.menu_item.category === 'object' 
-        ? item.menu_item.category.name 
-        : typeof item.menu_item?.category === 'string' 
-          ? item.menu_item.category 
-          : '';
+      const { itemName, variantName, categoryName, quantity, specialInstructions } = extractItemData(item);
       
       return `
       <div class="ticket-item">
         <div class="item-header">
-          <span class="item-quantity">${item.quantity}x</span>
+          <span class="item-quantity">${quantity}x</span>
           <span class="item-name">${itemName}</span>
         </div>
         ${categoryName ? `
@@ -58,9 +42,9 @@ export function useKitchenPrint() {
         ${variantName ? `
           <div class="item-variant">${variantName}</div>
         ` : ''}
-        ${item.special_instructions ? `
+        ${specialInstructions ? `
           <div class="item-notes">
-            <span class="notes-text">${item.special_instructions}</span>
+            <span class="notes-text">${specialInstructions}</span>
           </div>
         ` : ''}
       </div>
@@ -68,32 +52,9 @@ export function useKitchenPrint() {
     };
 
     // Build items HTML - group by person if persons exist
-    let itemsHTML = '';
-    
-    if (order.persons && order.persons.length > 0) {
-      // Group items by person
-      itemsHTML = order.persons.map((person: any, index: number) => {
-        const personItems = order.items.filter((item: any) => item.person_id === person.id);
-        if (personItems.length === 0) return '';
-        
-        const personName = person.name || `Persona ${index + 1}`;
-        const personItemsHTML = personItems.map(buildItemHTML).join('');
-        
-        return `
-        <div class="person-section">
-          <div class="person-header">
-            <strong>${personName}</strong>
-          </div>
-          ${personItemsHTML}
-        </div>
-        `;
-      }).join('');
-    } else {
-      // No persons - show all items normally
-      itemsHTML = order.items.map(buildItemHTML).join('');
-    }
-
-    const sizeClass = paperWidth === 58 ? 'ticket-58mm' : 'ticket-80mm';
+    const { html: itemsHTML } = buildGroupedItemsHTML(order, buildItemHTML);
+    const sizeClass = getSizeClass(paperWidth);
+    const commonStyles = getCommonStyles(paperWidth);
 
     return `
 <!DOCTYPE html>
@@ -102,20 +63,7 @@ export function useKitchenPrint() {
   <meta charset="UTF-8">
   <title>Ticket Cocina - Orden #${order.order_number}</title>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    body {
-      font-family: 'Courier New', monospace;
-      background: white;
-      color: black;
-      width: ${paperWidth-8}mm;
-      margin: 0;
-      padding: 2px 0;
-    }
+    ${commonStyles}
 
     .ticket-header {
       text-align: center;
@@ -153,26 +101,15 @@ export function useKitchenPrint() {
       margin: 2px 0;
     }
 
+    /* Override person-header for kitchen (uppercase) */
+    .person-header strong {
+      text-transform: uppercase;
+    }
+
     .ticket-items {
       margin: 2px 0;
     }
 
-    .person-section {
-      margin-bottom: 8px;
-      page-break-inside: avoid;
-    }
-
-    .person-header {
-      font-size: 16px;
-      font-weight: bold;
-      text-align: center;
-      padding: 4px 0;
-      margin-bottom: 6px;
-      border-top: 1px solid black;
-      border-bottom: 1px solid black;
-      background: transparent;
-      color: black;
-    }
 
     .ticket-item {
       margin-bottom: 4px;
@@ -297,17 +234,6 @@ export function useKitchenPrint() {
       font-size: 14px;
     }
 
-    @media print {
-      @page {
-        margin: 0;
-        size: ${paperWidth}mm auto;
-      }
-
-      body {
-        margin: 0;
-        padding: 2px 0;
-      }
-    }
   </style>
 </head>
 <body class="${sizeClass}">
@@ -360,41 +286,16 @@ export function useKitchenPrint() {
         console.log('✅ Restaurant data loaded:', authStore.restaurant?.name);
       }
 
-      // Create a new window for printing
-      console.log('📄 Opening print window...');
-      const printWindow = window.open('', '_blank', 'width=800,height=600');
-      
-      if (!printWindow) {
-        throw new Error('No se pudo abrir la ventana de impresión. Verifica que los pop-ups estén habilitados.');
-      }
-
-      console.log('✅ Print window opened');
-
       // Get paper width from restaurant settings
       const paperWidth = authStore.restaurant?.kitchen_print_paper_width || 80;
       console.log('📏 Paper width:', paperWidth);
 
-      // Build the ticket HTML directly (simpler and more reliable)
+      // Build the ticket HTML
       const ticketHTML = buildTicketHTML(order, paperWidth);
       console.log('📝 Ticket HTML generated, length:', ticketHTML.length);
 
-      // Write HTML to print window
-      printWindow.document.write(ticketHTML);
-      printWindow.document.close();
-      console.log('✅ HTML written to print window');
-
-      // Wait for content to load, then print
-      printWindow.onload = () => {
-        console.log('📄 Print window loaded, triggering print dialog...');
-        setTimeout(() => {
-          printWindow.print();
-          console.log('🖨️ Print dialog triggered');
-          printWindow.onafterprint = () => {
-            console.log('✅ Print completed, closing window');
-            printWindow.close();
-          };
-        }, 250);
-      };
+      // Open print window and trigger print
+      await openPrintWindow(ticketHTML);
     } catch (error) {
       console.error('❌ Error printing kitchen ticket:', error);
       throw error;
