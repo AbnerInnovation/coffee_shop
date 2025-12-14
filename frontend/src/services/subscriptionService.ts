@@ -86,6 +86,8 @@ export interface MySubscription {
 export interface SubscriptionUsage {
   has_subscription: boolean;
   message?: string;
+  operation_mode?: string;
+  mode_config?: any;
   limits?: Record<string, any>;
   usage?: {
     users: {

@@ -86,7 +86,32 @@ router.beforeEach(async (to, from, next) => {
     }
   }
 
-  // 6. All checks passed, proceed
+  // 6. Check POS mode requirement (if required)
+  if (to.meta.requiresPOSMode) {
+    if (!authStore.isAuthenticated) {
+      next({ name: 'Login', query: { redirect: to.fullPath } });
+      return;
+    }
+
+    try {
+      const usage = await subscriptionService.getUsage();
+      
+      // Check if operation mode is POS (not full_restaurant)
+      const isPOSMode = usage.operation_mode === 'pos_only';
+      
+      if (!isPOSMode) {
+        console.warn('❌ POS view only accessible in POS mode');
+        next({ name: 'Orders' }); // Redirect to regular orders view
+        return;
+      }
+    } catch (error) {
+      console.error('Error checking POS mode access:', error);
+      next({ name: 'Dashboard' });
+      return;
+    }
+  }
+
+  // 7. All checks passed, proceed
   next();
 });
 

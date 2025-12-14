@@ -1,16 +1,42 @@
 <template>
-  <div v-if="!isEditMode && canProcessPayments" class="mt-6 border-t border-gray-200 dark:border-gray-700 pt-4">
-    <div class="flex items-center justify-between mb-3">
+  <div v-if="!isEditMode && canProcessPayments">
+    <div v-if="!hideTitle" class="flex items-center justify-between mb-3">
       <h4 class="text-sm font-medium text-gray-900 dark:text-gray-100">
         {{ $t('app.views.orders.payment.title') || 'Payment' }}
       </h4>
       <button
         type="button"
-        @click="$emit('update:mark-as-paid', !markAsPaid)"
-        class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-        :class="markAsPaid ? 'bg-indigo-600' : 'bg-gray-200 dark:bg-gray-700'"
+        @click="!disableToggle && $emit('update:mark-as-paid', !markAsPaid)"
+        class="relative inline-flex h-6 w-11 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+        :class="[
+          markAsPaid ? 'bg-indigo-600' : 'bg-gray-200 dark:bg-gray-700',
+          disableToggle ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+        ]"
         role="switch"
         :aria-checked="markAsPaid"
+        :disabled="disableToggle"
+      >
+        <span class="sr-only">{{ $t('app.views.orders.payment.mark_as_paid') || 'Mark as paid' }}</span>
+        <span
+          :class="markAsPaid ? 'translate-x-5' : 'translate-x-0'"
+          class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+        />
+      </button>
+    </div>
+    
+    <!-- Toggle when title is hidden -->
+    <div v-else class="flex items-center justify-end mb-3">
+      <button
+        type="button"
+        @click="!disableToggle && $emit('update:mark-as-paid', !markAsPaid)"
+        class="relative inline-flex h-6 w-11 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+        :class="[
+          markAsPaid ? 'bg-indigo-600' : 'bg-gray-200 dark:bg-gray-700',
+          disableToggle ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+        ]"
+        role="switch"
+        :aria-checked="markAsPaid"
+        :disabled="disableToggle"
       >
         <span class="sr-only">{{ $t('app.views.orders.payment.mark_as_paid') || 'Mark as paid' }}</span>
         <span
@@ -50,6 +76,7 @@
           <div class="relative">
             <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400">$</span>
             <input
+              ref="cashReceivedInput"
               v-model.number="cashReceived"
               type="number"
               step="0.01"
@@ -114,6 +141,8 @@ interface Props {
   selectedPaymentMethod: 'cash' | 'card' | 'digital' | 'other';
   orderTotal: number;
   cashReceived?: number;
+  disableToggle?: boolean;
+  hideTitle?: boolean;
 }
 
 const props = defineProps<Props>();
@@ -133,14 +162,35 @@ const paymentMethods = [
 
 // Cash change calculator
 const cashReceived = ref<number>(props.cashReceived || 0);
+const cashReceivedInput = ref<HTMLInputElement | null>(null);
 
 const changeAmount = computed(() => {
   return cashReceived.value - props.orderTotal;
 });
 
+// Focus on cash received input
+function focusCashInput() {
+  if (cashReceivedInput.value) {
+    cashReceivedInput.value.focus();
+    cashReceivedInput.value.select();
+  }
+}
+
+// Blur cash received input
+function blurCashInput() {
+  if (cashReceivedInput.value) {
+    cashReceivedInput.value.blur();
+  }
+}
+
 // Emit changes to parent
 watch(cashReceived, (newValue) => {
   emit('update:cash-received', newValue);
+});
+
+// Sync local state when prop changes from parent (e.g., form reset)
+watch(() => props.cashReceived, (newValue) => {
+  cashReceived.value = newValue || 0;
 });
 
 // Reset cash received when payment method changes
@@ -155,5 +205,11 @@ watch(() => props.markAsPaid, (newValue) => {
   if (!newValue) {
     cashReceived.value = 0;
   }
+});
+
+// Expose focus and blur functions
+defineExpose({
+  focusCashInput,
+  blurCashInput
 });
 </script>

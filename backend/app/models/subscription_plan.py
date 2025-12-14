@@ -3,6 +3,7 @@ from sqlalchemy.orm import relationship, Mapped, mapped_column
 from typing import List, Optional, Dict, Any
 from enum import Enum as PyEnum
 from .base import BaseModel
+from ..core.operation_modes import OperationMode
 
 class PlanTier(str, PyEnum):
     """Plan tier enumeration"""
@@ -12,6 +13,7 @@ class PlanTier(str, PyEnum):
     PRO = "pro"
     BUSINESS = "business"
     ENTERPRISE = "enterprise"
+    POS_BASIC = "pos_basic"  # New tier for POS-only businesses
 
 class SubscriptionPlan(BaseModel):
     """
@@ -45,6 +47,14 @@ class SubscriptionPlan(BaseModel):
     max_tables: Mapped[int] = mapped_column(Integer, nullable=False, default=10)
     max_menu_items: Mapped[int] = mapped_column(Integer, nullable=False, default=50)
     max_categories: Mapped[int] = mapped_column(Integer, nullable=False, default=10)
+    
+    # Operation mode (defines business type and available features)
+    operation_mode: Mapped[OperationMode] = mapped_column(
+        SQLEnum(OperationMode, name='operation_mode', values_callable=lambda obj: [e.value for e in obj]),
+        nullable=False,
+        default=OperationMode.FULL_RESTAURANT,
+        index=True
+    )
     
     # Feature flags
     has_kitchen_module: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)

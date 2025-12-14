@@ -356,7 +356,12 @@ const getItemQuantity = (menuItemId: number): number => {
 
 const selectItem = (item: MenuItem) => {
   selectedMenuItem.value = item;
-  selectedVariantId.value = null;
+  // Auto-select first variant if item has variants and no base price
+  if (item.variants && item.variants.length > 0 && (!item.price || item.price === 0)) {
+    selectedVariantId.value = item.variants[0].id;
+  } else {
+    selectedVariantId.value = null;
+  }
   itemQuantity.value = 1;
   itemSpecialInstructions.value = '';
   showItemModal.value = true;

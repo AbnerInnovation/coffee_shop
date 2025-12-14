@@ -83,11 +83,19 @@
         <SessionStatsCards
           :initial-balance="currentSession.initial_balance || 0"
           :current-balance="currentBalance"
-          :transaction-count="transactions.length"
+          :sales-amount="sessionSales"
+          :sales-count="salesCount"
           :total-expenses="sessionExpenses"
+          :expenses-count="expensesCount"
           class="mb-3"
         />
-        <LastCutDisplay :lastCut="lastCut" :isLoading="lastCutLoading" />
+        
+        <!-- Cuts History -->
+        <CutsHistoryList 
+          v-if="currentSession"
+          :session-id="currentSession.id"
+          class="mt-3"
+        />
       </div>
 
       <!-- No Session Message -->
@@ -167,7 +175,7 @@ import PageHeader from '@/components/layout/PageHeader.vue';
 import { useCashRegisterSession } from '@/composables/useCashRegisterSession';
 import { useCashRegisterModals } from '@/composables/useCashRegisterModals';
 import { useCashRegisterHandlers } from '@/composables/useCashRegisterHandlers';
-import LastCutDisplay from '@/components/LastCutDisplay.vue';
+import CutDetails from '@/components/cashRegister/CutDetails.vue';
 import ReportsView from '@/components/ReportsView.vue';
 import BaseButton from '@/components/ui/BaseButton.vue';
 import SessionStatsCards from '@/components/cashRegister/SessionStatsCards.vue';
@@ -176,6 +184,7 @@ import OpenSessionModal from '@/components/cashRegister/OpenSessionModal.vue';
 import CloseSessionModal from '@/components/cashRegister/CloseSessionModal.vue';
 import ExpenseModal from '@/components/cashRegister/ExpenseModal.vue';
 import CutModal from '@/components/cashRegister/CutModal.vue';
+import CutsHistoryList from '@/components/cashRegister/CutsHistoryList.vue';
 
 /**
  * CashRegisterView - Main view for cash register management
@@ -201,6 +210,9 @@ const {
   lastCutLoading,
   currentBalance,
   sessionExpenses,
+  sessionSales,
+  salesCount,
+  expensesCount,
   sessionDuration,
   openSession: openSessionService,
   closeSession: closeSessionService,

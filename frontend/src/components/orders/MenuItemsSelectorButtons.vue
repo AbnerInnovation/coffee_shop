@@ -114,6 +114,11 @@ function selectCategory(categoryName: string) {
   selectedCategory.value = categoryName;
 }
 
+// Reset selected category
+function resetSelection() {
+  selectedCategory.value = null;
+}
+
 // Auto-select first category if only one exists
 function autoSelectSingleCategory() {
   if (props.categoryNames.length === 1 && !selectedCategory.value) {
@@ -129,5 +134,10 @@ watch(() => props.categoryNames, () => {
 // Also check on mount
 onMounted(() => {
   autoSelectSingleCategory();
+});
+
+// Expose reset function for parent component
+defineExpose({
+  resetSelection
 });
 </script>

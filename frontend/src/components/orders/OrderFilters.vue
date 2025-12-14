@@ -1,7 +1,7 @@
 <template>
   <div class="space-y-2 sm:space-y-4">
-    <!-- Status Tabs -->
-    <div class="border-b border-gray-200 dark:border-gray-700 overflow-x-auto overflow-y-hidden -mx-3 sm:mx-0">
+    <!-- Status Tabs (hidden in POS mode) -->
+    <div v-if="showStatusTabs" class="border-b border-gray-200 dark:border-gray-700 overflow-x-auto overflow-y-hidden -mx-3 sm:mx-0">
       <nav class="flex -mb-px" aria-label="Tabs">
         <div class="flex space-x-4 sm:space-x-8 px-3 sm:px-0 min-w-max">
           <button 
@@ -34,8 +34,8 @@
       </nav>
     </div>
 
-    <!-- Additional Filters -->
-    <div class="grid grid-cols-3 gap-2 sm:flex sm:flex-row sm:gap-4">
+    <!-- Additional Filters (hidden completely in POS mode) -->
+    <div v-if="showStatusTabs" class="grid grid-cols-3 gap-2 sm:flex sm:flex-row sm:gap-4">
       <!-- Payment Status Filter -->
       <div class="flex-1">
         <label for="payment-filter" class="hidden sm:block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -53,8 +53,8 @@
         </select>
       </div>
 
-      <!-- Order Type Filter -->
-      <div class="flex-1">
+      <!-- Order Type Filter (hidden in POS mode) -->
+      <div v-if="showStatusTabs" class="flex-1">
         <label for="type-filter" class="hidden sm:block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
           {{ $t('app.views.orders.filters.order_type') || 'Tipo de Orden' }}
         </label>
@@ -71,8 +71,8 @@
         </select>
       </div>
 
-      <!-- Table Filter -->
-      <div class="flex-1">
+      <!-- Table Filter (hidden in POS mode) -->
+      <div v-if="showStatusTabs" class="flex-1">
         <label for="table-filter" class="hidden sm:block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
           {{ $t('app.views.orders.filters.table') || 'Mesa' }}
         </label>
@@ -82,7 +82,7 @@
           @change="$emit('update:table-filter', ($event.target as HTMLSelectElement).value === 'all' ? 'all' : Number(($event.target as HTMLSelectElement).value))"
           class="block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white py-1.5 sm:py-2 pl-2 sm:pl-3 pr-8 sm:pr-10 text-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500"
         >
-          <option value="all">{{ $t('app.views.orders.filters.all_tables') || 'Todas' }}</option>
+          <option value="all">{{ $t('app.views.orders.filters.all_tables') || 'Todas las mesas' }}</option>
           <option v-for="table in tables" :key="table.id" :value="table.id">
             {{ table.number }}
           </option>
@@ -93,7 +93,9 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue';
 import type { Table } from '@/services/tableService';
+import { useOperationMode } from '@/composables/useOperationMode';
 
 type OrderStatus = 'pending' | 'preparing' | 'ready' | 'completed' | 'cancelled' | 'all';
 type PaymentFilter = 'all' | 'paid' | 'unpaid';
@@ -120,4 +122,8 @@ defineEmits<{
   'update:order-type': [value: OrderTypeFilter];
   'update:table-filter': [value: TableFilter];
 }>();
+
+// Check if kitchen orders are allowed (hide status tabs in POS mode)
+const { modeConfig } = useOperationMode();
+const showStatusTabs = computed(() => modeConfig.value?.allows_kitchen_orders ?? true);
 </script>

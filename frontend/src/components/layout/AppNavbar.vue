@@ -367,6 +367,7 @@ import { useI18n } from 'vue-i18n';
 import { useTheme } from '@/composables/useTheme';
 import { alertService } from '@/services/alertService';
 import { useAppVersion } from '@/composables/useAppVersion';
+import { useOperationMode } from '@/composables/useOperationMode';
 
 const props = defineProps({
   subscriptionFeatures: {
@@ -394,6 +395,8 @@ const {
   canViewSubscription,
   isSysAdmin 
 } = usePermissions();
+
+const { showTables, showKitchen, showWaiters, isPosOnlyMode } = useOperationMode();
 
 const isMobileMenuOpen = ref(false);
 const isProfileMenuOpen = ref(false);
@@ -427,13 +430,18 @@ const navigation = computed(() => {
   const baseNav = [
     { name: 'categories', labelKey: 'app.nav.categories', to: '/categories', current: false, show: canEditCategories.value },
     { name: 'menu', labelKey: 'app.nav.menu', to: '/menu', current: false, show: true },
-    { name: 'orders', labelKey: 'app.nav.orders', to: '/orders', current: false, show: true },
-    { name: 'tables', labelKey: 'app.nav.tables', to: '/tables', current: false, show: canManageTables.value },
+    { name: 'orders', labelKey: 'app.nav.orders', to: '/orders', current: false, show: !isPosOnlyMode.value },
+    { name: 'pos', labelKey: 'app.nav.pos', to: '/pos', current: false, show: isPosOnlyMode.value },
     { name: 'cash-register', labelKey: 'app.nav.cash_register', to: '/cash-register', current: false, show: canAccessCashRegister.value },
   ];
   
-  // Add kitchen module if subscription allows it AND user has permission
-  if (props.subscriptionFeatures.has_kitchen_module && canAccessKitchen.value) {
+  // Add tables module if operation mode allows it AND user has permission
+  if (showTables.value && canManageTables.value) {
+    baseNav.splice(3, 0, { name: 'tables', labelKey: 'app.nav.tables', to: '/tables', current: false, show: true });
+  }
+  
+  // Add kitchen module if subscription allows it AND user has permission AND operation mode allows it
+  if (props.subscriptionFeatures.has_kitchen_module && canAccessKitchen.value && showKitchen.value) {
     baseNav.splice(4, 0, { name: 'kitchen', labelKey: 'app.nav.kitchen', to: '/kitchen', current: false, show: true });
   }
   

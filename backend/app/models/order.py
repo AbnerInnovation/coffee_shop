@@ -4,6 +4,7 @@ from datetime import datetime
 from sqlalchemy import Integer, String, Float, ForeignKey, Enum as SQLEnum, DateTime, Boolean
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from .base import BaseModel
+from ..core.operation_modes import OrderType
 
 # Import the single source of OrderItem
 from .order_item import OrderItem
@@ -34,7 +35,13 @@ class Order(BaseModel):
     order_number: Mapped[int] = mapped_column(Integer, nullable=False, index=True)  # Consecutive number per restaurant
     table_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("tables.id"), nullable=True)
     customer_name: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
-    order_type: Mapped[str] = mapped_column(String(50), default="dine_in", nullable=False)
+    order_type: Mapped[OrderType] = mapped_column(
+        SQLEnum(OrderType, name='order_type', values_callable=lambda obj: [e.value for e in obj]),
+        default=OrderType.DINE_IN,
+        nullable=False,
+        index=True
+    )
+    ticket_number: Mapped[Optional[str]] = mapped_column(String(20), nullable=True, index=True)  # For POS mode daily tickets (YYYYMMDD-NNN)
     status: Mapped[OrderStatus] = mapped_column(
         SQLEnum(OrderStatus, name='order_status'),
         default=OrderStatus.PENDING,

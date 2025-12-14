@@ -56,6 +56,7 @@ import { hasRestaurantContext } from '@/utils/subdomain';
 import { useSubscriptionCheck } from '@/composables/useSubscriptionCheck';
 import { useToast } from '@/composables/useToast';
 import { useI18n } from 'vue-i18n';
+import { useOperationMode } from '@/composables/useOperationMode';
 
 const authStore = useAuthStore();
 const route = useRoute();
@@ -65,6 +66,9 @@ const { t } = useI18n();
 
 // Subscription check
 const { subscriptionStatus, showSuspendedModal, closeSuspendedModal } = useSubscriptionCheck();
+
+// Operation mode
+const { loadModeConfig } = useOperationMode();
 
 // Subscription features
 const subscriptionFeatures = ref({
@@ -92,7 +96,7 @@ function handleOrderCreated(order) {
   }
 }
 
-// Load subscription features
+// Load subscription features and operation mode
 const loadSubscriptionFeatures = async () => {
   // Only load subscription features if we're in a restaurant context (subdomain)
   // and user is authenticated
@@ -109,6 +113,12 @@ const loadSubscriptionFeatures = async () => {
         has_inventory_module: usage.features.has_inventory_module || false,
         has_advanced_reports: usage.features.has_advanced_reports || false
       };
+    }
+    
+    // Load operation mode configuration from usage response (no separate call needed)
+    if (usage.operation_mode && usage.mode_config) {
+      const { setModeConfigFromUsage } = useOperationMode();
+      setModeConfigFromUsage(usage.operation_mode, usage.mode_config);
     }
   } catch (error) {
     console.error('Error loading subscription features:', error);

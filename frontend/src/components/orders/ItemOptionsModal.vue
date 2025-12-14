@@ -238,13 +238,18 @@ const addButtonRef = ref<HTMLElement | null>(null);
 // Reset when item changes
 watch(() => props.item, (newItem) => {
   if (newItem) {
-    selectedVariant.value = null;
+    // Auto-select first variant if item has variants and no base price
+    if (newItem.variants && newItem.variants.length > 0 && (!newItem.price || newItem.price === 0)) {
+      selectedVariant.value = newItem.variants[0];
+    } else {
+      selectedVariant.value = null;
+    }
     // Don't reset specialNote here - let SpecialNotesBuilder handle it
     // specialNote.value = '';
     notes.value = '';
     quantity.value = 1;
   }
-});
+}, { immediate: true });
 
 // Computed total price
 const totalPrice = computed(() => {
@@ -252,10 +257,15 @@ const totalPrice = computed(() => {
   
   let price = 0;
   if (selectedVariant.value) {
-    const basePrice = props.item.price || 0;
-    const adjustment = selectedVariant.value.price_adjustment || 0;
-    const variantPrice = basePrice + adjustment;
-    price = getEffectivePrice(variantPrice, selectedVariant.value.discount_price);
+    // Use variant's absolute price if available, otherwise use base + adjustment
+    if (selectedVariant.value.price && selectedVariant.value.price > 0) {
+      price = getEffectivePrice(selectedVariant.value.price, selectedVariant.value.discount_price);
+    } else {
+      const basePrice = props.item.price || 0;
+      const adjustment = selectedVariant.value.price_adjustment || 0;
+      const variantPrice = basePrice + adjustment;
+      price = getEffectivePrice(variantPrice, selectedVariant.value.discount_price);
+    }
   } else {
     price = getEffectivePrice(props.item.price || 0, props.item.discount_price);
   }

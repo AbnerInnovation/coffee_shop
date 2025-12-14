@@ -24,6 +24,7 @@ from app.api.deps import get_current_user, get_current_restaurant, require_admin
 from app.services.user import get_current_active_user
 from app.schemas.payment import RenewalRequest, RenewalResponse, PaymentSubmit, PaymentResponse
 from app.schemas.alert import AlertResponse, AlertMarkRead
+from app.core.operation_modes import OperationMode, get_mode_config
 
 router = APIRouter(prefix="/subscriptions", tags=["subscriptions"])
 
@@ -143,8 +144,13 @@ def get_subscription_usage(
             return 100
         return round((current / max_val) * 100, 1)
     
+    # Get operation mode configuration
+    mode_config = get_mode_config(plan.operation_mode)
+    
     return {
         "has_subscription": True,
+        "operation_mode": plan.operation_mode.value,
+        "mode_config": mode_config,
         "limits": limits,
         "usage": usage,
         "percentages": {
@@ -176,7 +182,8 @@ def get_available_plans(
     return [
         {
             "id": plan.id,
-            "name": plan.display_name,
+            "name": plan.name,
+            "display_name": plan.display_name,
             "tier": plan.tier.value,
             "description": plan.description,
             "monthly_price": plan.monthly_price,
@@ -666,3 +673,32 @@ def mark_alerts_read(
     alert_service.mark_as_read(data.alert_ids, restaurant.id)
     
     return {"message": "Alerts marked as read"}
+
+
+@router.get("/mode-config")
+def get_operation_mode_config(
+    current_user: User = Depends(get_current_active_user),
+    restaurant: Restaurant = Depends(get_current_restaurant),
+    db: Session = Depends(get_db)
+):
+    """
+    Get the operation mode configuration for the current restaurant.
+    This endpoint is used by the frontend to adapt the UI based on the business type.
+    Available to all authenticated users.
+    """
+    subscription = get_restaurant_subscription(db, restaurant.id)
+    
+    if not subscription or not subscription.plan:
+        operation_mode = OperationMode.FULL_RESTAURANT
+        plan_name = None
+    else:
+        operation_mode = subscription.plan.operation_mode
+        plan_name = subscription.plan.display_name
+    
+    config = get_mode_config(operation_mode)
+    
+    return {
+        "operation_mode": operation_mode.value,
+        "plan_name": plan_name,
+        "config": config
+    }

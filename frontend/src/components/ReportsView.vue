@@ -102,23 +102,6 @@
             </p>
           </div>
           
-          <div class="bg-red-50 dark:bg-red-900/30 p-3 rounded-lg">
-            <p class="text-xs text-red-800 dark:text-red-200 mb-1">
-              {{ t('app.views.cashRegister.totalRefunds') || 'Total Refunds' }}
-            </p>
-            <p class="text-lg font-bold text-red-600 dark:text-red-400">
-              {{ formatCurrency(report.total_refunds || 0) }}
-            </p>
-          </div>
-          
-          <div class="bg-purple-50 dark:bg-purple-900/30 p-3 rounded-lg">
-            <p class="text-xs text-purple-800 dark:text-purple-200 mb-1">
-              {{ t('app.views.cashRegister.totalTips') || 'Total Tips' }}
-            </p>
-            <p class="text-lg font-bold text-purple-600 dark:text-purple-400">
-              {{ formatCurrency(report.total_tips || 0) }}
-            </p>
-          </div>
           
           <div class="bg-amber-50 dark:bg-amber-900/30 p-3 rounded-lg">
             <p class="text-xs text-amber-800 dark:text-amber-200 mb-1">
@@ -188,23 +171,6 @@
           </p>
         </div>
         
-        <div class="bg-red-50 dark:bg-red-900/30 p-4 rounded-lg">
-          <p class="text-xs text-red-800 dark:text-red-200 mb-1">
-            {{ t('app.views.cashRegister.totalRefunds') || 'Total Refunds' }}
-          </p>
-          <p class="text-xl font-bold text-red-600 dark:text-red-400">
-            {{ formatCurrency(weeklySummary.total_refunds || 0) }}
-          </p>
-        </div>
-        
-        <div class="bg-purple-50 dark:bg-purple-900/30 p-4 rounded-lg">
-          <p class="text-xs text-purple-800 dark:text-purple-200 mb-1">
-            {{ t('app.views.cashRegister.totalTips') || 'Total Tips' }}
-          </p>
-          <p class="text-xl font-bold text-purple-600 dark:text-purple-400">
-            {{ formatCurrency(weeklySummary.total_tips || 0) }}
-          </p>
-        </div>
         
         <div class="bg-amber-50 dark:bg-amber-900/30 p-4 rounded-lg">
           <p class="text-xs text-amber-800 dark:text-amber-200 mb-1">

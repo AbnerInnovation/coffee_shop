@@ -6,15 +6,20 @@
         class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
 
       <div class="fixed inset-0 z-10 overflow-y-auto">
-        <div class="flex h-full sm:min-h-full items-stretch sm:items-center justify-center p-0 sm:p-4 text-center">
+        <div :class="posMode ? 'flex h-full items-stretch justify-center p-0' : 'flex h-full sm:min-h-full items-stretch sm:items-center justify-center p-0 sm:p-4 text-center'">
           <TransitionChild as="div" enter="ease-out duration-300"
             enter-from="opacity-0 translate-y-full sm:translate-y-0 sm:scale-95"
             enter-to="opacity-100 translate-y-0 sm:scale-100" leave="ease-in duration-200"
             leave-from="opacity-100 translate-y-0 sm:scale-100"
             leave-to="opacity-0 translate-y-full sm:translate-y-0 sm:scale-95"
-            class="w-full h-full sm:w-auto sm:h-auto">
+            :class="posMode ? 'w-full h-full' : 'w-full h-full sm:w-auto sm:h-auto'">
             <DialogPanel
-              class="relative flex flex-col transform overflow-hidden bg-white dark:bg-gray-900 text-left shadow-xl transition-all w-full h-full sm:h-auto sm:max-h-[90vh] sm:my-8 sm:max-w-4xl rounded-none sm:rounded-lg border-0 sm:border border-gray-200 dark:border-gray-800">
+              :class="[
+                'relative flex flex-col transform overflow-hidden bg-white dark:bg-gray-900 text-left shadow-xl transition-all',
+                posMode 
+                  ? 'w-full h-full rounded-none border-0' 
+                  : 'w-full h-full sm:h-auto sm:max-h-[90vh] sm:my-8 sm:max-w-4xl rounded-none sm:rounded-lg border-0 sm:border border-gray-200 dark:border-gray-800'
+              ]">
               <!-- FIXED HEADER -->
               <div class="flex-shrink-0 px-4 pt-4 sm:px-6 sm:pt-5">
                 <div class="flex items-center justify-between">
@@ -33,15 +38,19 @@
                 </div>
               </div>
 
-              <!-- TAB NAVIGATION -->
-              <div class="flex-shrink-0 px-4 sm:px-6 mt-4">
+              <!-- TAB NAVIGATION - Hidden in POS mode on large screens -->
+              <div v-if="!posMode || isMobile" class="flex-shrink-0 px-4 sm:px-6 mt-4">
                 <TabNavigation
-                  :tabs="[$t('app.views.orders.modals.new_order.tabs.order_info'), $t('app.views.orders.modals.new_order.tabs.menu_items'), $t('app.views.orders.modals.new_order.tabs.summary')]"
-                  :active-tab="activeTab" @change="activeTab = $event" />
+                  :tabs="availableTabs"
+                  :active-tab="isPosOnlyMode && modeLoaded ? activeTab - 1 : activeTab"
+                  @change="isPosOnlyMode && modeLoaded ? activeTab = $event + 1 : activeTab = $event" />
               </div>
 
               <!-- SCROLLABLE CONTENT -->
-              <div class="flex-1 overflow-y-auto overflow-x-hidden px-4 sm:px-6 pb-6">
+              <div :class="[
+                'flex-1 overflow-y-auto overflow-x-hidden',
+                posMode && !isMobile ? 'flex gap-4 p-4' : 'px-4 sm:px-6 pb-6'
+              ]">
                 <!-- Mobile: Item Options View (replaces menu) -->
                 <ItemOptionsInline v-if="isMobile && showingItemOptions && selectedItem" :item="selectedItem"
                   :top-notes="topNotes"
@@ -49,71 +58,170 @@
                   @back="showingItemOptions = false; selectedItem = null"
                   @add="handleAddItemFromModal" />
 
-                <!-- TAB 1: Order Info -->
-                <div v-else-if="activeTab === 0" class="mt-6">
-                  <OrderTypeSelector v-model="form" :tables="availableTables" :loading="loading.tables"
-                    :error="error.tables" :allow-dine-in-without-table="restaurantSettings.allowDineInWithoutTable.value" />
-                </div>
+                <!-- POS MODE: Three Column Layout (Large Screens) -->
+                <template v-if="posMode && !isMobile">
+                  <!-- COLUMN 1: Menu -->
+                  <div class="flex-1 flex flex-col overflow-y-auto pr-2">
+                    <!-- Column Header -->
+                    <div class="flex-shrink-0 mb-4">
+                      <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
+                        <span class="flex items-center justify-center w-7 h-7 rounded-full bg-indigo-600 text-white text-sm font-bold mr-2">1</span>
+                        {{ $t('app.views.orders.modals.new_order.tabs.menu_items') }}
+                      </h3>
+                    </div>
 
-                <!-- TAB 2: Menu Items & Diners -->
-                <div v-else-if="activeTab === 1" class="mt-6 space-y-4">
-                  <!-- Persons Manager at the top -->
-                  <PersonsManager :order-type="form.type" :persons="persons"
-                    :active-person-index="activePersonIndex"
-                    :disabled="isEditMode"
-                    @update:active-person-index="activePersonIndex = $event" @add-person="addPerson"
-                    @remove-person="removePersonWithConfirm" @update-person-name="updatePersonName" />
+                    <div class="flex-1 space-y-4 overflow-y-auto">
+                      <!-- Persons Manager at the top -->
+                      <PersonsManager :order-type="form.type" :persons="persons"
+                        :active-person-index="activePersonIndex"
+                        :disabled="isEditMode"
+                        @update:active-person-index="activePersonIndex = $event" @add-person="addPerson"
+                        @remove-person="removePersonWithConfirm" @update-person-name="updatePersonName" />
 
-                  <!-- Active Diner Items Summary -->
-                  <DinerItemsSummary v-if="persons[activePersonIndex]"
-                    :title="persons[activePersonIndex].name || $t('app.views.orders.modals.new_order.persons.person_label', { position: persons[activePersonIndex].position })"
-                    :items="persons[activePersonIndex].items" 
-                    :get-menu-item-name="getMenuItemName"
-                    :get-menu-item-category="getMenuItemCategory"
-                    :empty-message="$t('app.views.orders.modals.new_order.persons.no_items')"
-                    @remove-group="removeGroupFromPerson" />
+                      <!-- Active Diner Items Summary -->
+                      <DinerItemsSummary v-if="persons[activePersonIndex]"
+                        :title="persons[activePersonIndex].name || $t('app.views.orders.modals.new_order.persons.person_label', { position: persons[activePersonIndex].position })"
+                        :items="persons[activePersonIndex].items" 
+                        :get-menu-item-name="getMenuItemName"
+                        :get-menu-item-category="getMenuItemCategory"
+                        :empty-message="$t('app.views.orders.modals.new_order.persons.no_items')"
+                        @remove-group="removeGroupFromPerson" />
 
-                  <!-- Menu Items Selector - Buttons View -->
-                  <MenuItemsSelectorButtons :loading="loading.menu" :error="error.menu"
-                    :category-names="categoryNames" :menu-items-by-category="menuItemsByCategory"
-                    :get-item-quantity="getItemQuantity" @select-item="selectItem" />
-                </div>
+                      <!-- Menu Items Selector - Buttons View -->
+                      <MenuItemsSelectorButtons ref="menuSelectorRef" :loading="loading.menu" :error="error.menu"
+                        :category-names="categoryNames" :menu-items-by-category="menuItemsByCategory"
+                        :get-item-quantity="getItemQuantity" @select-item="selectItem" />
+                    </div>
+                  </div>
 
-                <!-- TAB 3: Summary & Payment -->
-                <div v-else-if="activeTab === 2" class="mt-6 space-y-6">
-                  <!-- Order Summary -->
-                  <OrderSummary 
-                    :use-multiple-diners="true" 
-                    :persons="persons"
-                    :selectedItems="selectedItems" 
-                    :getMenuItemName="getMenuItemName"
-                    :getMenuItemCategory="getMenuItemCategory"
-                    :calculateItemTotal="calculateItemTotal" 
-                    :isItemLocked="isItemLocked"
-                    @removeItem="removeItemFromPerson" 
-                    @decreaseQuantity="decreaseQuantity"
-                    @increaseQuantity="increaseQuantity" 
-                  />
+                  <!-- COLUMN 2: Order Summary -->
+                  <div class="flex-1 flex flex-col overflow-y-auto px-2 border-l border-gray-200 dark:border-gray-700">
+                    <!-- Column Header -->
+                    <div class="flex-shrink-0 mb-4">
+                      <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
+                        <span class="flex items-center justify-center w-7 h-7 rounded-full bg-indigo-600 text-white text-sm font-bold mr-2">2</span>
+                        {{ $t('app.views.orders.modals.new_order.tabs.summary') }}
+                      </h3>
+                    </div>
 
-                  <!-- Payment Section in Tab 3 -->
-                  <PaymentSection :is-edit-mode="isEditMode" :can-process-payments="canProcessPayments"
-                    :order-total="orderTotal" v-model:mark-as-paid="markAsPaid"
-                    v-model:selected-payment-method="selectedPaymentMethod"
-                    v-model:cash-received="cashReceived" />
-                </div>
+                    <div class="flex-1 overflow-y-auto">
+                      <OrderSummary 
+                        :use-multiple-diners="true" 
+                        :persons="persons"
+                        :selectedItems="selectedItems" 
+                        :getMenuItemName="getMenuItemName"
+                        :getMenuItemCategory="getMenuItemCategory"
+                        :calculateItemTotal="calculateItemTotal" 
+                        :isItemLocked="isItemLocked"
+                        :show-create-button="false"
+                        @removeItem="removeItemFromPerson" 
+                        @decreaseQuantity="decreaseQuantity"
+                        @increaseQuantity="increaseQuantity"
+                      />
+                    </div>
+                  </div>
+
+                  <!-- COLUMN 3: Payment & Create Order -->
+                  <div class="flex-1 flex flex-col overflow-y-auto pl-2 border-l border-gray-200 dark:border-gray-700">
+                    <!-- Column Header -->
+                    <div class="flex-shrink-0 mb-4">
+                      <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
+                        <span class="flex items-center justify-center w-7 h-7 rounded-full bg-indigo-600 text-white text-sm font-bold mr-2">3</span>
+                        {{ $t('app.views.orders.payment.title') }}
+                      </h3>
+                    </div>
+
+                    <div class="flex-1 overflow-y-auto">
+                      <!-- Payment Section -->
+                      <PaymentSection ref="paymentSectionRef" :is-edit-mode="isEditMode" :can-process-payments="canProcessPayments"
+                        :order-total="orderTotal" v-model:mark-as-paid="markAsPaid"
+                        v-model:selected-payment-method="selectedPaymentMethod"
+                        v-model:cash-received="cashReceived"
+                        :disable-toggle="isPosOnlyMode && modeLoaded"
+                        :hide-title="true" />
+                    </div>
+
+                    <!-- Create Order Button - Always at bottom -->
+                    <div class="flex-shrink-0 pt-6 pb-2">
+                      <button type="button"
+                        class="w-full inline-flex justify-center rounded-lg bg-indigo-600 px-4 py-3 text-base font-semibold text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        :disabled="!hasItems || !isPaymentValid"
+                        @click="createOrder">
+                        {{ isEditMode ? $t('app.views.orders.modals.new_order.update_order') : $t('app.views.orders.modals.new_order.create_order') }}
+                      </button>
+                    </div>
+                  </div>
+                </template>
+
+                <!-- NORMAL MODE: Tab-based Layout -->
+                <template v-else>
+                  <!-- TAB 1: Order Info (hidden in POS mode) -->
+                  <div v-if="activeTab === 0 && !(isPosOnlyMode && modeLoaded)" class="mt-6">
+                    <OrderTypeSelector v-model="form" :tables="availableTables" :loading="loading.tables"
+                      :error="error.tables" :allow-dine-in-without-table="restaurantSettings.allowDineInWithoutTable.value" />
+                  </div>
+
+                  <!-- TAB 2: Menu Items & Diners -->
+                  <div v-else-if="activeTab === 1" class="mt-6 space-y-4">
+                    <!-- Persons Manager at the top -->
+                    <PersonsManager :order-type="form.type" :persons="persons"
+                      :active-person-index="activePersonIndex"
+                      :disabled="isEditMode"
+                      @update:active-person-index="activePersonIndex = $event" @add-person="addPerson"
+                      @remove-person="removePersonWithConfirm" @update-person-name="updatePersonName" />
+
+                    <!-- Active Diner Items Summary -->
+                    <DinerItemsSummary v-if="persons[activePersonIndex]"
+                      :title="persons[activePersonIndex].name || $t('app.views.orders.modals.new_order.persons.person_label', { position: persons[activePersonIndex].position })"
+                      :items="persons[activePersonIndex].items" 
+                      :get-menu-item-name="getMenuItemName"
+                      :get-menu-item-category="getMenuItemCategory"
+                      :empty-message="$t('app.views.orders.modals.new_order.persons.no_items')"
+                      @remove-group="removeGroupFromPerson" />
+
+                    <!-- Menu Items Selector - Buttons View -->
+                    <MenuItemsSelectorButtons :loading="loading.menu" :error="error.menu"
+                      :category-names="categoryNames" :menu-items-by-category="menuItemsByCategory"
+                      :get-item-quantity="getItemQuantity" @select-item="selectItem" />
+                  </div>
+
+                  <!-- TAB 3: Summary & Payment -->
+                  <div v-else-if="activeTab === 2" class="mt-6 space-y-6">
+                    <!-- Order Summary -->
+                    <OrderSummary 
+                      :use-multiple-diners="true" 
+                      :persons="persons"
+                      :selectedItems="selectedItems" 
+                      :getMenuItemName="getMenuItemName"
+                      :getMenuItemCategory="getMenuItemCategory"
+                      :calculateItemTotal="calculateItemTotal" 
+                      :isItemLocked="isItemLocked"
+                      :show-create-button="false"
+                      @removeItem="removeItemFromPerson" 
+                      @decreaseQuantity="decreaseQuantity"
+                      @increaseQuantity="increaseQuantity"
+                    />
+
+                    <!-- Payment Section in Tab 3 -->
+                    <PaymentSection :is-edit-mode="isEditMode" :can-process-payments="canProcessPayments"
+                      :order-total="orderTotal" v-model:mark-as-paid="markAsPaid"
+                      v-model:selected-payment-method="selectedPaymentMethod"
+                      v-model:cash-received="cashReceived"
+                      :disable-toggle="isPosOnlyMode && modeLoaded" />
+
+                    <!-- Create Order Button -->
+                    <div class="pt-2">
+                      <button type="button"
+                        class="w-full inline-flex justify-center rounded-lg bg-indigo-600 px-4 py-3 text-base font-semibold text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        :disabled="!hasItems || (!posMode && ((form.type === 'Dine-in' && !form.tableId && !authStore.restaurant?.allow_dine_in_without_table) || (form.type !== 'Dine-in' && !form.customerName)))"
+                        @click="createOrder">
+                        {{ isEditMode ? $t('app.views.orders.modals.new_order.update_order') : $t('app.views.orders.modals.new_order.create_order') }}
+                      </button>
+                    </div>
+                  </div>
+                </template>
               </div>
 
-              <!-- FOOTER - Only show create button on Tab 3 -->
-              <div v-if="activeTab === 2"
-                class="flex-shrink-0 px-4 pt-4 pb-4 sm:px-6 sm:pt-6 sm:pb-6 border-t border-gray-200 dark:border-gray-700">
-                <button type="button"
-                  class="w-full inline-flex justify-center rounded-lg bg-indigo-600 px-4 py-3 text-base font-semibold text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  :disabled="!hasItems || (form.type === 'Dine-in' && !form.tableId && !authStore.restaurant?.allow_dine_in_without_table) || (form.type !== 'Dine-in' && !form.customerName)"
-                  @click="createOrder">
-                  {{ isEditMode ? $t('app.views.orders.modals.new_order.update_order') :
-                    $t('app.views.orders.modals.new_order.create_order') }}
-                </button>
-              </div>
             </DialogPanel>
           </TransitionChild>
         </div>
@@ -129,7 +237,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, defineExpose, nextTick, watch } from 'vue';
+import { ref, computed, onMounted, onUnmounted, defineExpose, nextTick, watch } from 'vue';
 import orderService, { type CreateOrderData, type OrderItem, type Order as OrderType } from '@/services/orderService';
 import menuService from '@/services/menuService';
 import tableService from '@/services/tableService';
@@ -154,6 +262,7 @@ import { useRestaurantSettings } from '@/composables/useRestaurantSettings';
 import { useOrderForm } from '@/composables/useOrderForm';
 import { useKitchenPrint } from '@/composables/useKitchenPrint';
 import { useCustomerPrint } from '@/composables/useCustomerPrint';
+import { useCashRegisterSession } from '@/composables/useCashRegisterSession';
 
 // Import new components
 import OrderTypeSelector from './OrderTypeSelector.vue';
@@ -177,6 +286,7 @@ import { useMultipleDiners } from '@/composables/useMultipleDiners';
 import { useOrderCreation } from '@/composables/useOrderCreation';
 import { useDataFetching } from '@/composables/useDataFetching';
 import { useItemGrouping } from '@/composables/useItemGrouping';
+import { useOperationMode } from '@/composables/useOperationMode';
 import { getEffectivePrice, getVariantPrice, getMenuItemName as getMenuItemNameUtil, getMenuItemCategory as getMenuItemCategoryUtil } from '@/utils/priceHelpers';
 import {
   transformMenuItemFromAPI,
@@ -194,6 +304,7 @@ const props = defineProps<{
   tableId?: number | null;
   mode?: 'create' | 'edit';
   orderToEdit?: OrderType | null;
+  posMode?: boolean; // True when used in dedicated POS view
 }>();
 
 const emit = defineEmits<{
@@ -202,9 +313,9 @@ const emit = defineEmits<{
   (e: 'order-updated', order: any): void;
 }>();
 
-// Form data
+// Form data - Initialize with Takeaway in POS mode, Dine-in otherwise
 const form = ref({
-  type: 'Dine-in',
+  type: props.posMode ? 'Takeaway' : 'Dine-in',
   tableId: null as number | string | null,
   customerName: '',
   notes: '',
@@ -224,8 +335,40 @@ const isEditMode = computed(() => {
   return (props.mode || 'create') === 'edit' && !!props.orderToEdit
 });
 
-// Tab navigation
+// Operation mode for POS - declare early
+const { isPosOnlyMode, isLoaded: modeLoaded } = useOperationMode();
+
+// Tab navigation - start at tab 1 (menu) in POS mode, tab 0 (order info) otherwise
 const activeTab = ref(0);
+
+// Reference to menu selector component for resetting
+const menuSelectorRef = ref<InstanceType<typeof MenuItemsSelectorButtons> | null>(null);
+
+// Reference to payment section for keyboard shortcuts
+const paymentSectionRef = ref<InstanceType<typeof PaymentSection> | null>(null);
+
+// Computed tabs array - hide tab 0 in POS mode
+const availableTabs = computed(() => {
+  const allTabs = [
+    t('app.views.orders.modals.new_order.tabs.order_info'),
+    t('app.views.orders.modals.new_order.tabs.menu_items'),
+    t('app.views.orders.modals.new_order.tabs.summary')
+  ];
+  
+  // In POS mode, hide the first tab (order info)
+  if (modeLoaded.value && isPosOnlyMode.value) {
+    return allTabs.slice(1); // Return only tabs 1 and 2
+  }
+  
+  return allTabs;
+});
+
+// Adjust active tab when mode loads
+watch([isPosOnlyMode, modeLoaded], ([isPOS, loaded]) => {
+  if (loaded && isPOS && activeTab.value === 0) {
+    activeTab.value = 1; // Skip to menu items tab
+  }
+}, { immediate: true });
 
 // Detect if we're on mobile
 const isMobile = ref(false);
@@ -266,6 +409,9 @@ const { showError, showSuccess, showWarning, showToast } = useToast();
 const { canProcessPayments } = usePermissions();
 const { t } = useI18n();
 
+// Cash register session validation (only in POS mode)
+const { currentSession } = props.posMode ? useCashRegisterSession() : { currentSession: ref(null) };
+
 // Use data fetching composable
 const dataFetching = useDataFetching();
 const { menuItems, availableTables, loading, error } = dataFetching;
@@ -274,6 +420,13 @@ const { menuItems, availableTables, loading, error } = dataFetching;
 const markAsPaid = ref(false);
 const selectedPaymentMethod = ref<'cash' | 'card' | 'digital' | 'other'>('cash');
 const cashReceived = ref<number>(0);
+
+// In POS mode, mark as paid by default
+watch([isPosOnlyMode, modeLoaded], ([isPOS, loaded]) => {
+  if (loaded && isPOS) {
+    markAsPaid.value = true;
+  }
+}, { immediate: true });
 
 // Use composables
 const {
@@ -318,10 +471,25 @@ const orderTotal = computed(() => {
 // Use order creation composable
 const orderCreationComposable = useOrderCreation();
 
+// Validate if payment is valid (for enabling create button)
+const isPaymentValid = computed(() => {
+  // If not marked as paid, payment is valid (will be paid later)
+  if (!markAsPaid.value) return true;
+  
+  // If marked as paid, check payment method
+  if (selectedPaymentMethod.value === 'cash') {
+    // For cash, check if received amount covers the total
+    return cashReceived.value >= orderTotal.value;
+  }
+  
+  // For other payment methods (card, digital, other), just need method selected
+  return true;
+});
+
 // Helper to initialize a fresh form state
 function getInitialForm() {
   return {
-    type: 'Dine-in',
+    type: props.posMode ? 'Takeaway' : 'Dine-in',
     tableId: null as number | string | null,
     customerName: '',
     notes: '',
@@ -565,6 +733,12 @@ function removeGroupFromPerson(group: any) {
 
 async function createOrder() {
   try {
+    // Validate cash register session in POS mode
+    if (props.posMode && markAsPaid.value && !currentSession.value) {
+      showError('No hay una sesión de caja abierta. Por favor abre una sesión de caja antes de procesar pagos.');
+      return;
+    }
+
     // Collect all items from all persons (multiple diners mode)
     const validItems: any[] = [];
     persons.value.forEach(person => {
@@ -599,15 +773,17 @@ async function createOrder() {
       emit('order-updated', updated);
       emit('close');
     } else {
-      // Validate form using helper
-      const validation = validateOrderForm(
-        form.value,
-        hasItems,
-        authStore.restaurant?.allow_dine_in_without_table
-      );
-      if (!validation.isValid) {
-        validation.errors.forEach(error => showError(error));
-        return;
+      // Validate form using helper (skip validation in POS mode)
+      if (!props.posMode) {
+        const validation = validateOrderForm(
+          form.value,
+          hasItems,
+          authStore.restaurant?.allow_dine_in_without_table
+        );
+        if (!validation.isValid) {
+          validation.errors.forEach(error => showError(error));
+          return;
+        }
       }
 
       // Create new order using composable
@@ -660,7 +836,14 @@ async function createOrder() {
       // Always emit and close, regardless of payment success
       // If payment failed, the user already saw a warning message explaining what happened
       emit('order-created', order);
-      emit('close');
+      
+      // In POS mode, reset form instead of closing
+      if (props.posMode) {
+        await nextTick();
+        resetFormForNextSale();
+      } else {
+        emit('close');
+      }
     }
   } catch (error: any) {
     console.error('Error creating order:', error);
@@ -729,6 +912,57 @@ function handleAddItemFromModal(data: {
   showItemOptionsModal.value = false;
 }
 
+/**
+ * Reset form for next sale in POS mode
+ * Clears all items, resets payment state, and returns to menu tab
+ */
+function resetFormForNextSale() {
+  // Reset form data
+  form.value = {
+    type: props.posMode ? 'Takeaway' : 'Dine-in',
+    tableId: null,
+    customerName: '',
+    notes: '',
+    items: []
+  };
+  
+  // Reset persons (start with one empty person)
+  persons.value = [
+    {
+      name: '',
+      position: 1,
+      items: []
+    }
+  ];
+  activePersonIndex.value = 0;
+  
+  // Reset payment state
+  markAsPaid.value = isPosOnlyMode.value; // Auto-activate in POS mode
+  selectedPaymentMethod.value = 'cash';
+  cashReceived.value = 0;
+  
+  // Reset item selection
+  resetItemSelection();
+  
+  // Return to menu tab (tab 1 in POS mode)
+  activeTab.value = isPosOnlyMode.value ? 1 : 0;
+  
+  // Collapse all categories for clean start
+  collapseAllCategories();
+  
+  // Reset menu selector category selection
+  if (menuSelectorRef.value) {
+    menuSelectorRef.value.resetSelection();
+  }
+  
+  // Remove focus from cash input
+  if (paymentSectionRef.value) {
+    paymentSectionRef.value.blurCashInput();
+  }
+  
+  console.log('✅ Form reset for next sale');
+}
+
 // Handle modal close - only close if ItemOptionsModal is not open
 function handleModalClose() {
   // Don't close if ItemOptionsModal is open
@@ -793,6 +1027,47 @@ onMounted(async () => {
   }
 });
 
+// Keyboard shortcuts for POS mode
+function handleKeyboardShortcuts(event: KeyboardEvent) {
+  // Only in POS mode and when modal is actually open
+  if (!props.posMode || !props.open) return;
+  
+  // F2: Focus on cash received input
+  if (event.key === 'F2') {
+    event.preventDefault();
+    event.stopPropagation();
+    if (paymentSectionRef.value && markAsPaid.value && selectedPaymentMethod.value === 'cash') {
+      paymentSectionRef.value.focusCashInput();
+    }
+    return;
+  }
+  
+  // F9: Create order (submit)
+  if (event.key === 'F9') {
+    event.preventDefault();
+    event.stopPropagation();
+    if (hasItems.value && isPaymentValid.value) {
+      createOrder();
+    }
+    return;
+  }
+}
+
+onMounted(() => {
+  // Add keyboard shortcuts only in POS mode
+  // Use capture phase to intercept before other handlers
+  if (props.posMode) {
+    window.addEventListener('keydown', handleKeyboardShortcuts, true);
+  }
+});
+
+onUnmounted(() => {
+  // Clean up keyboard shortcuts
+  if (props.posMode) {
+    window.removeEventListener('keydown', handleKeyboardShortcuts, true);
+  }
+});
+
 // If the full order data arrives after the modal is already open, hydrate then
 watch(() => props.orderToEdit, (newOrder) => {
 
@@ -820,7 +1095,7 @@ watch(() => props.open, (isOpen, wasOpen) => {
       }));
     }
     // After tables list is already loaded, select the matching table id from the card
-    if (props.tableId) {
+    if (props.tableId && !props.posMode) {
       form.value.type = 'Dine-in';
       form.value.tableId = props.tableId;
     }

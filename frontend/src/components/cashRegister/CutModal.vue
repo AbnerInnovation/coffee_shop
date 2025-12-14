@@ -20,18 +20,6 @@
             </div>
             <div class="flex justify-between">
               <span class="text-gray-600 dark:text-gray-400">
-                {{ t('app.views.cashRegister.totalRefunds') || 'Total Refunds' }}
-              </span>
-              <span class="font-medium">{{ formatCurrency(report.total_refunds || 0) }}</span>
-            </div>
-            <div class="flex justify-between">
-              <span class="text-gray-600 dark:text-gray-400">
-                {{ t('app.views.cashRegister.totalTips') || 'Total Tips' }}
-              </span>
-              <span class="font-medium">{{ formatCurrency(report.total_tips || 0) }}</span>
-            </div>
-            <div class="flex justify-between">
-              <span class="text-gray-600 dark:text-gray-400">
                 {{ t('app.views.cashRegister.totalExpenses') || 'Total Expenses' }}
               </span>
               <span class="font-medium text-red-600 dark:text-red-400">{{ formatCurrency(report.total_expenses || 0) }}</span>

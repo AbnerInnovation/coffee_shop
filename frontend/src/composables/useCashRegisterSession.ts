@@ -1,7 +1,14 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import cashRegisterService from '@/services/cashRegisterService';
 import type { Transaction, CashRegisterSession } from '@/utils/cashRegisterHelpers';
-import { calculateCurrentBalance, calculateSessionExpenses, calculateSessionDuration } from '@/utils/cashRegisterHelpers';
+import { 
+  calculateCurrentBalance, 
+  calculateSessionExpenses, 
+  calculateSessionDuration,
+  calculateSessionSales,
+  calculateSalesCount,
+  calculateExpensesCount
+} from '@/utils/cashRegisterHelpers';
 
 /**
  * Composable for cash register session management
@@ -24,6 +31,18 @@ export function useCashRegisterSession() {
 
   const sessionExpenses = computed(() => {
     return calculateSessionExpenses(transactions.value);
+  });
+
+  const sessionSales = computed(() => {
+    return calculateSessionSales(transactions.value);
+  });
+
+  const salesCount = computed(() => {
+    return calculateSalesCount(transactions.value);
+  });
+
+  const expensesCount = computed(() => {
+    return calculateExpensesCount(transactions.value);
   });
 
   const sessionDuration = computed(() => {
@@ -227,6 +246,9 @@ export function useCashRegisterSession() {
     // Computed
     currentBalance,
     sessionExpenses,
+    sessionSales,
+    salesCount,
+    expensesCount,
     sessionDuration,
 
     // Methods

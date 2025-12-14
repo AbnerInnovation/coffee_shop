@@ -90,14 +90,14 @@
       <!-- Add button -->
       <button @click="handleAdd"
         class="w-full py-3 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors">
-        Agregar a la orden
+        Agregar • ${{ totalPrice.toFixed(2) }}
       </button>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { ref, watch, computed } from 'vue';
 import SpecialNotesBuilder from './SpecialNotesBuilder.vue';
 import type { ExtendedMenuItem, MenuItemVariant } from '@/types/order';
 
@@ -123,11 +123,33 @@ const quantity = ref(1);
 // Reset when item changes - same as ItemOptionsModal
 watch(() => props.item, (newItem) => {
   if (newItem) {
-    selectedVariant.value = null;
+    // Auto-select first variant if item has variants and no base price
+    if (newItem.variants && newItem.variants.length > 0 && (!newItem.price || newItem.price === 0)) {
+      selectedVariant.value = newItem.variants[0];
+    } else {
+      selectedVariant.value = null;
+    }
     specialNote.value = '';
     notes.value = '';
     quantity.value = 1;
   }
+}, { immediate: true });
+
+// Computed total price
+const totalPrice = computed(() => {
+  if (!props.item) return 0;
+  
+  let price = 0;
+  if (selectedVariant.value) {
+    price = props.getVariantPrice(selectedVariant.value);
+  } else {
+    // Use discount price if available, otherwise regular price
+    price = (props.item.discount_price && props.item.discount_price > 0) 
+      ? props.item.discount_price 
+      : (props.item.price || 0);
+  }
+  
+  return price * quantity.value;
 });
 
 function handleAdd() {

@@ -16,6 +16,15 @@ class PlanTierEnum(str, Enum):
     PRO = "pro"
     BUSINESS = "business"
     ENTERPRISE = "enterprise"
+    POS_BASIC = "pos_basic"
+
+
+class OperationModeEnum(str, Enum):
+    FULL_RESTAURANT = "full_restaurant"
+    POS_ONLY = "pos_only"
+    CAFE_MODE = "cafe_mode"
+    FOOD_TRUCK = "food_truck"
+    QUICK_SERVICE = "quick_service"
 
 
 class AddonTypeEnum(str, Enum):
@@ -58,6 +67,9 @@ class SubscriptionPlanBase(BaseModel):
     description: Optional[str] = None
     monthly_price: float
     annual_price: Optional[float] = None
+    
+    # Operation mode
+    operation_mode: OperationModeEnum = OperationModeEnum.FULL_RESTAURANT
     
     # User limits
     max_admin_users: int = 1

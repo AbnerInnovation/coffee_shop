@@ -174,7 +174,11 @@
             </div>
 
             <!-- Last Cut Information -->
-            <LastCutDisplay :lastCut="lastCut" :isLoading="lastCutLoading" />
+            <CutDetails 
+              :cut-data="lastCut" 
+              :is-loading="lastCutLoading"
+              :title="t('app.views.cashRegister.lastCut')"
+            />
 
             <!-- Transactions -->
             <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
@@ -284,14 +288,6 @@
                 </div>
                 <div class="text-center">
                   <p class="text-sm text-gray-500 dark:text-gray-400">
-                    {{ t('app.views.cashRegister.totalRefunds') }}
-                  </p>
-                  <p class="text-xl font-bold text-red-600 dark:text-red-400">
-                    {{ formatCurrency(sessionSummary.total_refunds || 0) }}
-                  </p>
-                </div>
-                <div class="text-center">
-                  <p class="text-sm text-gray-500 dark:text-gray-400">
                     {{ t('app.views.cashRegister.netCashFlow') }}
                   </p>
                   <p class="text-xl font-bold text-blue-600 dark:text-blue-400">
@@ -340,7 +336,7 @@ import { useI18n } from 'vue-i18n'
 import { cashRegisterService } from '@/services/cashRegisterService'
 import { useToast } from '@/composables/useToast'
 import { formatCurrency } from '@/utils/priceHelpers'
-import LastCutDisplay from '@/components/LastCutDisplay.vue'
+import CutDetails from '@/components/cashRegister/CutDetails.vue'
 import { formatDateTime as formatDate } from '@/utils/dateHelpers'
 
 interface Props {

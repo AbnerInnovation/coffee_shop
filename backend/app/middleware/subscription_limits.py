@@ -9,12 +9,13 @@ from typing import Callable, Optional, Dict
 from app.models import Restaurant, User, MenuItem, Table, Category
 # New modular imports - SOLID refactoring
 from app.services.subscription import get_restaurant_subscription
+from app.core.operation_modes import OperationMode, is_feature_enabled
 
 
 def _get_subscription_limits(db: Session, restaurant_id: int) -> Dict[str, any]:
     """
     Helper function to get subscription limits for a restaurant.
-    Returns a dict with all plan limits.
+    Returns a dict with all plan limits including operation_mode.
     """
     subscription = get_restaurant_subscription(db, restaurant_id)
     
@@ -26,6 +27,7 @@ def _get_subscription_limits(db: Session, restaurant_id: int) -> Dict[str, any]:
     if not subscription or not subscription.plan:
         # No subscription or plan, return default limits (very restrictive)
         return {
+            'operation_mode': OperationMode.FULL_RESTAURANT,
             'max_admin_users': 1,
             'max_waiter_users': 0,
             'max_cashier_users': 0,
@@ -43,6 +45,7 @@ def _get_subscription_limits(db: Session, restaurant_id: int) -> Dict[str, any]:
     
     plan = subscription.plan
     return {
+        'operation_mode': plan.operation_mode,
         'max_admin_users': plan.max_admin_users,
         'max_waiter_users': plan.max_waiter_users,
         'max_cashier_users': plan.max_cashier_users,
@@ -181,7 +184,24 @@ class SubscriptionLimitsMiddleware:
     def check_feature_access(db: Session, restaurant_id: int, feature: str) -> None:
         """Check if restaurant has access to a specific feature"""
         limits = _get_subscription_limits(db, restaurant_id)
+        operation_mode = limits.get('operation_mode', OperationMode.FULL_RESTAURANT)
         
+        # Check if feature is enabled in operation mode
+        mode_feature_map = {
+            'tables': 'show_tables',
+            'kitchen': 'show_kitchen',
+            'waiters': 'show_waiters',
+            'delivery': 'show_delivery'
+        }
+        
+        mode_feature = mode_feature_map.get(feature)
+        if mode_feature and not is_feature_enabled(operation_mode, mode_feature):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Feature '{feature}' is not available in {operation_mode.value} mode."
+            )
+        
+        # Check plan-level feature flags
         feature_map = {
             'kitchen': 'has_kitchen_module',
             'ingredients': 'has_ingredients_module',

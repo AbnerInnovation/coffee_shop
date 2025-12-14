@@ -184,7 +184,7 @@
             >
               <option :value="null">{{ t('app.sysadmin.modal.select_plan_placeholder') }}</option>
               <option v-for="plan in plans" :key="plan.id" :value="plan.id">
-                {{ plan.display_name }} - ${{ plan.monthly_price }}/{{ t('app.common.month') }}
+                {{ plan.display_name || plan.name }} - ${{ plan.monthly_price }}/{{ t('app.common.month') }}
               </option>
             </select>
           </div>

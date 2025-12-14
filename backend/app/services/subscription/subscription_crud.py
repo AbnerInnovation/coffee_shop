@@ -204,7 +204,7 @@ def upgrade_subscription(
     old_plan = subscription.plan
     
     # Determine if it's an upgrade or downgrade
-    tier_order = ["trial", "starter", "basic", "pro", "business", "enterprise"]
+    tier_order = ["trial", "starter", "pos_basic", "basic", "pro", "business", "enterprise"]
     old_tier_index = tier_order.index(old_plan.tier.value)
     new_tier_index = tier_order.index(new_plan.tier.value)
     

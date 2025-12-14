@@ -114,7 +114,7 @@
     </div>
 
     <!-- Total Section -->
-    <div class="mt-4 pt-4 border-t border-gray-200">
+    <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
       <div class="flex justify-between items-center">
         <span class="text-sm font-medium text-gray-900 dark:text-gray-100">
           {{ $t('app.views.orders.modals.new_order.total') }}
@@ -130,6 +130,16 @@
           </template>
         </span>
       </div>
+    </div>
+
+    <!-- Create Order Button -->
+    <div v-if="showCreateButton" class="mt-6">
+      <button type="button"
+        class="w-full inline-flex justify-center rounded-lg bg-indigo-600 px-4 py-3 text-base font-semibold text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        :disabled="isCreateDisabled"
+        @click="$emit('create-order')">
+        {{ buttonText }}
+      </button>
     </div>
   </div>
 </template>
@@ -179,6 +189,9 @@ interface Props {
   getMenuItemCategory?: (itemId: number) => string;
   calculateItemTotal: (item: DisplayOrderItem) => string;
   isItemLocked: (item: DisplayOrderItem) => boolean;
+  showCreateButton?: boolean;
+  isCreateDisabled?: boolean;
+  buttonText?: string;
 }
 
 const props = defineProps<Props>();
@@ -187,6 +200,7 @@ defineEmits<{
   (e: 'remove-item', personIndex: number, itemIndex: number): void;
   (e: 'decrease-quantity', item: DisplayOrderItem): void;
   (e: 'increase-quantity', item: DisplayOrderItem): void;
+  (e: 'create-order'): void;
 }>();
 
 // Helper function to convert person items to OrderItem format for grouping

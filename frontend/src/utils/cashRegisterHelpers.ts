@@ -107,6 +107,57 @@ export function calculateSessionExpenses(transactions: Transaction[]): number {
 }
 
 /**
+ * Calculates total sales amount from transaction list
+ * Only counts transactions with type 'sale'
+ * 
+ * @param transactions - Array of transactions
+ * @returns Total sales amount
+ * 
+ * @example
+ * ```typescript
+ * const salesAmount = calculateSessionSales(transactions);
+ * // Returns: 5000.00
+ * ```
+ */
+export function calculateSessionSales(transactions: Transaction[]): number {
+  return transactions
+    .filter(t => t.transaction_type === 'sale')
+    .reduce((sum, t) => sum + (t.amount || 0), 0);
+}
+
+/**
+ * Counts number of sale transactions
+ * 
+ * @param transactions - Array of transactions
+ * @returns Count of sale transactions
+ * 
+ * @example
+ * ```typescript
+ * const salesCount = calculateSalesCount(transactions);
+ * // Returns: 45
+ * ```
+ */
+export function calculateSalesCount(transactions: Transaction[]): number {
+  return transactions.filter(t => t.transaction_type === 'sale').length;
+}
+
+/**
+ * Counts number of expense transactions
+ * 
+ * @param transactions - Array of transactions
+ * @returns Count of expense transactions
+ * 
+ * @example
+ * ```typescript
+ * const expensesCount = calculateExpensesCount(transactions);
+ * // Returns: 8
+ * ```
+ */
+export function calculateExpensesCount(transactions: Transaction[]): number {
+  return transactions.filter(t => t.transaction_type === 'expense').length;
+}
+
+/**
  * Calculates current balance from initial balance and all transactions
  * 
  * Formula: initial_balance + sum(all_transactions)

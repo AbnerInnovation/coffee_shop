@@ -151,7 +151,8 @@ class OrderBase(BaseModel):
     status: OrderStatus = OrderStatus.PENDING
     is_paid: bool = False
     payment_method: Optional[PaymentMethod] = None
-    order_type: Optional[str] = Field(None, max_length=50, description="Order type: dine_in, takeaway, or delivery")
+    order_type: Optional[str] = Field(None, max_length=50, description="Order type: dine_in, takeaway, delivery, pos_sale, quick_service")
+    ticket_number: Optional[str] = Field(None, max_length=20, description="Ticket number for POS sales (e.g., 20241212-001)")
     
     @validator('notes')
     def sanitize_notes(cls, v):

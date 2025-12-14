@@ -122,6 +122,11 @@ export const cashRegisterService = {
     return response;
   },
 
+  async getAllCuts(sessionId: number) {
+    const response = await api.get(`${CASH_REGISTER_ENDPOINT}/reports/session/${sessionId}`);
+    return response;
+  },
+
   async getDailyReport(date: string) {
     const response = await api.get(`${CASH_REGISTER_ENDPOINT}/reports/daily`, {
       params: { date }

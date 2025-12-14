@@ -14,7 +14,7 @@
     
     <div v-else class="divide-y divide-gray-200 dark:divide-gray-700">
       <div 
-        v-for="transaction in transactions" 
+        v-for="transaction in displayedTransactions" 
         :key="transaction.id" 
         class="px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
       >
@@ -51,10 +51,21 @@
         </div>
       </div>
     </div>
+    
+    <!-- Ver más/menos button -->
+    <div v-if="transactions.length > 5" class="px-4 py-3 border-t border-gray-200 dark:border-gray-700">
+      <button
+        @click="showAll = !showAll"
+        class="w-full text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors"
+      >
+        {{ showAll ? t('app.views.cashRegister.showLess') : t('app.views.cashRegister.showMore') }}
+      </button>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { formatCurrency } from '@/utils/priceHelpers';
 import {
@@ -68,9 +79,18 @@ import {
 
 const { t } = useI18n();
 
-defineProps<{
+const props = defineProps<{
   transactions: Transaction[];
 }>();
+
+const showAll = ref(false);
+
+const displayedTransactions = computed(() => {
+  if (showAll.value || props.transactions.length <= 5) {
+    return props.transactions;
+  }
+  return props.transactions.slice(0, 5);
+});
 
 const formatDate = (dateString: string) => formatTransactionDate(dateString);
 const getDescription = (description: string) => translateDescription(description, t);

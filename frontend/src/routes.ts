@@ -8,6 +8,7 @@ import MenuView from './views/MenuView.vue';
 import CategoriesView from './views/CategoriesView.vue';
 import CashRegisterView from './views/CashRegisterView.vue';
 import OrdersView from './views/OrdersView.vue';
+import POSView from './views/POSView.vue';
 import KitchenView from './views/KitchenView.vue';
 import SysAdminView from './views/SysAdminView.vue';
 import PendingPaymentsView from './views/PendingPaymentsView.vue';
@@ -78,6 +79,16 @@ export const routes: RouteRecordRaw[] = [
     meta: { 
       requiresAuth: true,
       requiresRestaurantContext: true
+    }
+  },
+  {
+    path: '/pos',
+    name: 'POS',
+    component: POSView,
+    meta: { 
+      requiresAuth: true,
+      requiresRestaurantContext: true,
+      requiresPOSMode: true // Only accessible in POS mode
     }
   },
   {

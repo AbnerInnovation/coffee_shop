@@ -5,6 +5,7 @@
       "dashboard": "Inicio",
       "menu": "Menú",
       "orders": "Pedidos",
+      "pos": "POS",
       "kitchen": "Cocina",
       "tables": "Mesas",
       "categories": "Categorías",
@@ -159,6 +160,19 @@
       }
     },
     "views": {
+      "pos": {
+        "title": "Punto de Venta",
+        "description": "Gestiona tus ventas de forma rápida y eficiente",
+        "open_pos": "Abrir POS",
+        "sales_today": "Ventas Hoy",
+        "total": "Total",
+        "sale_success": "Venta {ticket} completada",
+        "sale_completed": "¡Venta Completada!",
+        "ticket": "Ticket",
+        "view_orders": "Ver Órdenes",
+        "close_pos": "Cerrar Caja",
+        "confirm_close": "¿Cerrar caja?"
+      },
       "cashRegister": {
         "title": "Caja Registradora",
         "subtitle": "Gestionar sesiones de caja registradora y transacciones",
@@ -306,7 +320,20 @@
         "details": "Detalles",
         "opened": "Abierta",
         "closed": "Cerrada",
-        "openSessionToStart": "Abre una sesión para comenzar a gestionar las operaciones de caja registradora."
+        "openSessionToStart": "Abre una sesión para comenzar a gestionar las operaciones de caja registradora.",
+        "salesAmount": "Monto de Ventas",
+        "salesCount": "Transacciones de Venta",
+        "expensesCount": "Transacciones de Gastos",
+        "sales": "Ventas",
+        "cutsHistory": "Historial de Cortes",
+        "noCuts": "No se han realizado cortes en esta sesión",
+        "cutNumber": "Corte #{number}",
+        "performedAt": "Realizado",
+        "viewCutDetails": "Ver Detalles",
+        "cutDetails": "Detalles del Corte",
+        "closeCutDetails": "Cerrar",
+        "showMore": "Ver más",
+        "showLess": "Ver menos"
       },
       "orders": {
         "title": "Órdenes",
@@ -317,6 +344,9 @@
         "payment_completed_success": "Pago completado exitosamente",
         "no_orders": "No se encontraron órdenes",
         "no_orders_description": "Comienza creando una nueva orden",
+        "takeaway": "Para Llevar",
+        "dine_in": "Para Comer Aquí",
+        "delivery": "A Domicilio",
         "add_items_modal": {
           "title": "Agregar Items - Mesa {tableNumber} (Orden #{orderId})",
           "info": "Los nuevos items se agregarán a la orden existente y se enviarán a cocina con estado 'pendiente'.",

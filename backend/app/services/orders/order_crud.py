@@ -22,6 +22,9 @@ from ...models.menu import MenuItem, MenuItemVariant
 from ...models.table import Table as TableModel
 from ...schemas.order import OrderCreate, OrderUpdate, OrderItemCreate
 from .serializers import serialize_order
+from .ticket_generator import generate_ticket_number
+from ...services.subscription import get_restaurant_subscription
+from ...core.operation_modes import validate_order_for_mode, get_default_order_type, get_mode_config
 
 
 def apply_filters(query, filters: Dict[str, Any]):
@@ -198,6 +201,7 @@ def create_order_with_items(
     - Creating persons (multi-diner support)
     - Calculating total amount
     - Marking table as occupied for dine-in orders
+    - Generating ticket numbers for POS mode
     
     Args:
         db: Database session
@@ -208,24 +212,55 @@ def create_order_with_items(
     Returns:
         Serialized created order
     """
-    # Use order_type from request, or infer from table_id if not provided
-    order_type = order.order_type if order.order_type else (
-        "dine_in" if order.table_id is not None else "delivery"
-    )
+    # Get restaurant subscription and operation mode
+    subscription = get_restaurant_subscription(db, restaurant_id)
+    operation_mode = subscription.plan.operation_mode if subscription and subscription.plan else None
+    
+    # Determine order_type: use provided, or get default from mode, or infer from table_id
+    if order.order_type:
+        order_type = order.order_type
+    elif operation_mode:
+        order_type = get_default_order_type(operation_mode).value
+    else:
+        order_type = "dine_in" if order.table_id is not None else "delivery"
+    
+    # Validate order against operation mode
+    if operation_mode:
+        is_valid, error_msg = validate_order_for_mode(
+            operation_mode,
+            {
+                'table_id': order.table_id,
+                'order_type': order_type
+            }
+        )
+        if not is_valid:
+            raise ValueError(error_msg)
 
     # Get the next order number for this restaurant
     max_order_number = db.query(sa.func.max(OrderModel.order_number)).filter(
         OrderModel.restaurant_id == restaurant_id
     ).scalar()
     next_order_number = (max_order_number or 0) + 1
+    
+    # Generate ticket number if in POS mode
+    ticket_number = None
+    if operation_mode:
+        ticket_number = generate_ticket_number(db, restaurant_id, operation_mode)
+    
+    # Determine initial status: POS orders (no kitchen) are completed immediately, others are pending
+    mode_config = get_mode_config(operation_mode) if operation_mode else None
+    allows_kitchen = mode_config.get('allows_kitchen_orders', True) if mode_config else True
+    initial_status = OrderStatus.COMPLETED if (operation_mode and not allows_kitchen) else OrderStatus.PENDING
 
     db_order = OrderModel(
         order_number=next_order_number,
         table_id=order.table_id,
         customer_name=getattr(order, 'customer_name', None),
         order_type=order_type,
+        ticket_number=ticket_number,
         notes=order.notes,
-        status=OrderStatus.PENDING,
+        status=initial_status,
+        is_paid=getattr(order, 'is_paid', False),
         restaurant_id=restaurant_id,
         user_id=user_id,
         created_at=datetime.now(timezone.utc),
