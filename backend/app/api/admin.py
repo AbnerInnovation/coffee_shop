@@ -217,6 +217,18 @@ def list_all_restaurants(
     
     results = query.offset(skip).limit(limit).all()
     
+    # Update subscription status for all subscriptions before returning
+    subscription_ids = [row.subscription_id for row in results if row.subscription_id]
+    if subscription_ids:
+        subscriptions = db.query(RestaurantSubscription).filter(
+            RestaurantSubscription.id.in_(subscription_ids)
+        ).all()
+        for sub in subscriptions:
+            sub.update_status(db)
+    
+    # Re-fetch results after status updates
+    results = query.offset(skip).limit(limit).all()
+    
     # Convert to response model
     restaurants = []
     for row in results:
