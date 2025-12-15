@@ -21,6 +21,7 @@ class Restaurant(BaseModel):
     
     name: Mapped[str] = mapped_column(String(100), nullable=False)
     subdomain: Mapped[str] = mapped_column(String(50), unique=True, nullable=False, index=True)
+    business_type: Mapped[str] = mapped_column(String(50), default="restaurant", nullable=False)
     description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     address: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     phone: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)

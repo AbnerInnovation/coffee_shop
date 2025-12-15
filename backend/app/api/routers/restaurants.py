@@ -148,36 +148,55 @@ async def create_restaurant(
             resource="Restaurant"
         )
     
-    # Extract trial_days and admin_email before creating restaurant
+    # Extract trial_days, admin_email, plan_id, and business_type before creating restaurant
     trial_days = restaurant.trial_days if hasattr(restaurant, 'trial_days') else 14
     custom_admin_email = restaurant.admin_email if hasattr(restaurant, 'admin_email') else None
+    plan_id = restaurant.plan_id if hasattr(restaurant, 'plan_id') else None
+    business_type = restaurant.business_type if hasattr(restaurant, 'business_type') else 'restaurant'
     
     # Debug log
     print(f"🔍 Restaurant creation request:")
     print(f"   Name: {restaurant.name}")
     print(f"   Subdomain: {restaurant.subdomain}")
+    print(f"   Business Type: {business_type}")
+    print(f"   Plan ID: {plan_id if plan_id else '(trial)'}")
     print(f"   Trial days: {trial_days}")
     print(f"   Custom admin email: {custom_admin_email if custom_admin_email else '(not provided)'}")
     
-    # Create new restaurant (exclude trial_days and admin_email from dict - they're not DB fields)
-    restaurant_data = restaurant.dict(exclude={'trial_days', 'admin_email'})
+    # Create new restaurant (exclude trial_days, admin_email, and plan_id from dict - they're not DB fields)
+    restaurant_data = restaurant.dict(exclude={'trial_days', 'admin_email', 'plan_id'})
+    print(f"📦 Restaurant data to create: {restaurant_data}")
+    print(f"   business_type in data: {restaurant_data.get('business_type', 'NOT FOUND')}")
     db_restaurant = RestaurantModel(**restaurant_data)
     db.add(db_restaurant)
     db.commit()
     db.refresh(db_restaurant)
+    print(f"✅ Restaurant created with business_type: {db_restaurant.business_type}")
     
-    # Automatically create trial subscription with custom trial_days
+    # Create subscription based on plan_id
     trial_subscription = None
     try:
-        # New modular import - SOLID refactoring
-        from app.services.subscription import create_trial_subscription
-        trial_subscription = create_trial_subscription(db, db_restaurant.id, trial_days)
-        print(f"✅ Trial subscription created for restaurant '{db_restaurant.name}' (ID: {db_restaurant.id})")
-        print(f"   Trial duration: {trial_days} days")
-        print(f"   Trial expires: {trial_subscription.trial_end_date}")
+        if plan_id:
+            # Create paid subscription with selected plan
+            from app.services.subscription import create_paid_subscription
+            trial_subscription = create_paid_subscription(
+                db=db,
+                restaurant_id=db_restaurant.id,
+                plan_id=plan_id,
+                billing_cycle='monthly'
+            )
+            print(f"✅ Paid subscription created for restaurant '{db_restaurant.name}' (ID: {db_restaurant.id})")
+            print(f"   Plan ID: {plan_id}")
+        else:
+            # Create trial subscription with custom trial_days
+            from app.services.subscription import create_trial_subscription
+            trial_subscription = create_trial_subscription(db, db_restaurant.id, trial_days)
+            print(f"✅ Trial subscription created for restaurant '{db_restaurant.name}' (ID: {db_restaurant.id})")
+            print(f"   Trial duration: {trial_days} days")
+            print(f"   Trial expires: {trial_subscription.trial_end_date}")
     except Exception as e:
         # Log error but don't fail restaurant creation
-        print(f"⚠️ Warning: Could not create trial subscription for restaurant {db_restaurant.id}: {e}")
+        print(f"⚠️ Warning: Could not create subscription for restaurant {db_restaurant.id}: {e}")
     
     # Automatically create admin user for the restaurant
     admin_email = ""
@@ -227,84 +246,137 @@ async def create_restaurant(
     # Generate restaurant URL from environment variables
     restaurant_url = f"{settings.BASE_PROTOCOL}://{db_restaurant.subdomain}.{settings.BASE_DOMAIN}"
     
-    # Generate welcome message
-    trial_expires = trial_subscription.trial_end_date if trial_subscription else None
-    trial_expires_str = trial_expires.strftime("%d/%m/%Y") if trial_expires else "N/A"
+    # Get business type from the created restaurant (use db value, not request value)
+    actual_business_type = db_restaurant.business_type
+    print(f"🔍 Using business_type from db_restaurant: {actual_business_type}")
+    
+    # Business type labels and customization
+    business_labels = {
+        'restaurant': {'name': 'restaurante', 'emoji': '🍽️'},
+        'cafe': {'name': 'cafetería', 'emoji': '☕'},
+        'food_truck': {'name': 'food truck', 'emoji': '🚚'},
+        'churreria': {'name': 'churrería', 'emoji': '🥨'},
+        'bakery': {'name': 'panadería', 'emoji': '🥖'},
+        'bar': {'name': 'bar', 'emoji': '🍺'},
+        'fast_food': {'name': 'comida rápida', 'emoji': '🍔'},
+        'other': {'name': 'negocio', 'emoji': '🏪'}
+    }
+    
+    business_info = business_labels.get(actual_business_type, business_labels['other'])
+    business_name = business_info['name']
+    business_emoji = business_info['emoji']
+    
+    print(f"📊 Business type for messages: {actual_business_type} -> {business_name} {business_emoji}")
+    
+    # Customize steps based on business type
+    # Businesses that don't typically use tables
+    no_table_businesses = ['food_truck', 'churreria', 'bakery', 'fast_food']
+    uses_tables = actual_business_type not in no_table_businesses
+    
+    if uses_tables:
+        steps = """📝 PRIMEROS PASOS:
+1. Ingresa al sistema con las credenciales proporcionadas
+2. Cambia tu contraseña
+3. Configura la información de tu negocio
+4. Crea tu menú y categorías
+5. Agrega tus mesas
+6. Crea usuarios para tu personal
+7. ¡Comienza a tomar pedidos!"""
+    else:
+        steps = """📝 PRIMEROS PASOS:
+1. Ingresa al sistema con las credenciales proporcionadas
+2. Cambia tu contraseña
+3. Configura la información de tu negocio
+4. Crea tu menú y categorías de productos
+5. Crea usuarios para tu personal (cajeros, cocina)
+6. ¡Comienza a vender usando el POS!"""
+    
+    # Determine subscription info
+    subscription_info = ""
+    subscription_plan_name = None
+    trial_expires = None
+    tips_section = ""
+    
+    if plan_id:
+        # Paid subscription
+        from app.services.subscription import get_plan_by_id
+        plan = get_plan_by_id(db, plan_id)
+        subscription_plan_name = plan.display_name
+        subscription_info = f"""💳 SUSCRIPCIÓN ACTIVA:
+• Plan: {plan.display_name}
+• Precio: ${plan.monthly_price:.2f}/mes
+• Estado: Activo
+• Acceso completo a todas las funcionalidades del plan"""
+        tips_section = """💡 CONSEJOS:
+• Explora todas las secciones para familiarizarte con el sistema
+• Revisa tu suscripción en la sección "Suscripción"
+• Gestiona tu facturación y pagos desde el panel de suscripción"""
+    else:
+        # Trial subscription
+        trial_expires = trial_subscription.trial_end_date if trial_subscription else None
+        trial_expires_str = trial_expires.strftime("%d/%m/%Y") if trial_expires else "N/A"
+        subscription_info = f"""🎁 PERÍODO DE PRUEBA:
+• Duración: {trial_days} días
+• Vence el: {trial_expires_str}
+• Acceso completo a funcionalidades Pro"""
+        tips_section = """💡 CONSEJOS:
+• Explora todas las secciones para familiarizarte con el sistema
+• Revisa tu suscripción en la sección "Suscripción"
+• Antes de que expire tu prueba, elige un plan que se ajuste a tus necesidades"""
     
     welcome_message = f"""
 🎉 ¡Bienvenido a Cloud Restaurant!
 
-Tu restaurante '{db_restaurant.name}' ha sido creado exitosamente.
+Tu {business_name} "{db_restaurant.name}" ha sido creado exitosamente.
 
-📋 INFORMACIÓN DEL RESTAURANTE:
-   • Nombre: {db_restaurant.name}
-   • Subdomain: {db_restaurant.subdomain}
-   • URL de acceso: {restaurant_url}
+📋 ACCESO AL SISTEMA:
+🌐 URL: {restaurant_url}
+📧 Email: {admin_email}
+🔑 Contraseña: {admin_password}
 
-🔐 CREDENCIALES DE ADMINISTRADOR:
-   • Email: {admin_email}
-   • Contraseña: {admin_password}
-   
-   ⚠️ IMPORTANTE: Guarda esta contraseña en un lugar seguro. No se mostrará nuevamente.
+⚠️ IMPORTANTE: 
+• Cambia tu contraseña al iniciar sesión por primera vez
+• Ve a tu perfil → Cambiar Contraseña
 
-🎁 PERÍODO DE PRUEBA:
-   • Duración: {trial_days} días
-   • Vence el: {trial_expires_str}
-   • Plan incluido: Acceso completo a funcionalidades Pro
+{subscription_info}
 
-📝 PRIMEROS PASOS:
+{steps}
 
-1. Accede al sistema:
-   → Ingresa a: {restaurant_url}
-   → Usa las credenciales proporcionadas arriba
+{tips_section}
 
-2. Cambia tu contraseña:
-   → Ve a tu perfil (icono de usuario en la esquina superior derecha)
-   → Selecciona "Cambiar Contraseña"
-   → Elige una contraseña segura y memorable
-
-3. Configura tu restaurante:
-   → Completa la información del restaurante (dirección, teléfono, logo)
-   → Configura tu zona horaria y moneda
-   → Ajusta la tasa de impuestos si aplica
-
-4. Crea tu menú:
-   → Ve a la sección "Menú"
-   → Crea categorías (Bebidas, Alimentos, Postres, etc.)
-   → Agrega tus productos con precios y descripciones
-   → Configura ingredientes personalizables si lo necesitas
-
-5. Configura tus mesas:
-   → Ve a la sección "Mesas"
-   → Crea las mesas de tu restaurante
-   → Asigna números y capacidades
-
-6. Crea usuarios adicionales:
-   → Ve a la sección "Usuarios"
-   → Agrega meseros, cajeros y personal de cocina
-   → Asigna roles según sus responsabilidades
-
-7. Comienza a tomar pedidos:
-   → Usa la vista de "Mesas" para gestionar pedidos
-   → El módulo de "Cocina" mostrará los pedidos pendientes
-   → Usa "Caja" para gestionar pagos y cortes de caja
-
-💡 CONSEJOS:
-   • Explora todas las secciones para familiarizarte con el sistema
-   • Revisa tu suscripción en la sección "Suscripción"
-   • Antes de que expire tu prueba, elige un plan que se ajuste a tus necesidades
-
-📞 SOPORTE:
-   Si necesitas ayuda, contacta a tu administrador del sistema.
-
-¡Éxito con tu restaurante! 🍽️
+¡Éxito con tu {business_name}! {business_emoji}
 """
 
     # Generate shareable message (more concise for WhatsApp/Email)
+    if plan_id:
+        shareable_subscription_info = f"💳 Plan: {subscription_plan_name}"
+    else:
+        trial_expires_str = trial_expires.strftime("%d/%m/%Y") if trial_expires else "N/A"
+        shareable_subscription_info = f"🎁 Período de prueba: {trial_days} días (vence {trial_expires_str})"
+    
+    # Use personalized steps for shareable message too
+    if uses_tables:
+        shareable_steps = """📝 PRIMEROS PASOS:
+1. Ingresa con las credenciales proporcionadas
+2. Cambia tu contraseña (Perfil → Cambiar Contraseña)
+3. Configura la información de tu negocio
+4. Crea tu menú y categorías
+5. Agrega tus mesas
+6. Crea usuarios para tu personal
+7. ¡Comienza a tomar pedidos!"""
+    else:
+        shareable_steps = """📝 PRIMEROS PASOS:
+1. Ingresa con las credenciales proporcionadas
+2. Cambia tu contraseña (Perfil → Cambiar Contraseña)
+3. Configura la información de tu negocio
+4. Crea tu menú y categorías de productos
+5. Crea usuarios para tu personal (cajeros, cocina)
+6. ¡Comienza a vender usando el POS!"""
+    
     shareable_message = f"""
-🎉 ¡Tu restaurante está listo en Cloud Restaurant Admin!
+🎉 ¡Tu {business_name} está listo en Cloud Restaurant Admin!
 
-🏪 Restaurante: {db_restaurant.name}
+🏪 {db_restaurant.name}
 🌐 URL: {restaurant_url}
 
 🔐 ACCESOS DE ADMINISTRADOR:
@@ -313,18 +385,11 @@ Tu restaurante '{db_restaurant.name}' ha sido creado exitosamente.
 
 ⚠️ IMPORTANTE: Cambia tu contraseña al iniciar sesión por primera vez.
 
-🎁 Período de prueba: {trial_days} días (vence {trial_expires_str})
+{shareable_subscription_info}
 
-📝 PRIMEROS PASOS:
-1. Ingresa con las credenciales proporcionadas
-2. Cambia tu contraseña (Perfil → Cambiar Contraseña)
-3. Configura la información de tu restaurante
-4. Crea tu menú y categorías
-5. Agrega tus mesas
-6. Crea usuarios para tu personal
-7. ¡Comienza a tomar pedidos!
+{shareable_steps}
 
-¡Éxito! 🍽️
+¡Éxito! {business_emoji}
 """
     
     return RestaurantCreationResponse(
@@ -332,8 +397,9 @@ Tu restaurante '{db_restaurant.name}' ha sido creado exitosamente.
         admin_email=admin_email,
         admin_password=admin_password,
         restaurant_url=restaurant_url,
-        trial_days=trial_days,
+        trial_days=trial_days if not plan_id else None,
         trial_expires=trial_expires,
+        subscription_plan=subscription_plan_name,
         welcome_message=welcome_message,
         shareable_message=shareable_message
     )

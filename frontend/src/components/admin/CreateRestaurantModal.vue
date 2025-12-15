@@ -213,6 +213,30 @@
                   </p>
                 </div>
 
+                <!-- Business Type -->
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Tipo de Negocio *
+                  </label>
+                  <select
+                    v-model="form.business_type"
+                    required
+                    class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white"
+                  >
+                    <option value="restaurant">🍽️ Restaurante</option>
+                    <option value="cafe">☕ Cafetería</option>
+                    <option value="food_truck">🚚 Food Truck</option>
+                    <option value="churreria">🥨 Churrería</option>
+                    <option value="bakery">🥖 Panadería</option>
+                    <option value="bar">🍺 Bar</option>
+                    <option value="fast_food">🍔 Comida Rápida</option>
+                    <option value="other">🏪 Otro</option>
+                  </select>
+                  <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    Selecciona el tipo de negocio para personalizar la experiencia
+                  </p>
+                </div>
+
                 <!-- Email -->
                 <div>
                   <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -282,8 +306,57 @@
                   />
                 </div>
 
-                <!-- Trial Days Selector -->
+                <!-- Subscription Type Selector -->
                 <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Tipo de Suscripción *
+                  </label>
+                  <div class="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      @click="selectedPlanType = 'trial'"
+                      :class="[
+                        'px-4 py-3 rounded-lg border-2 transition-all text-left',
+                        selectedPlanType === 'trial'
+                          ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/20'
+                          : 'border-gray-300 dark:border-gray-600 hover:border-indigo-400'
+                      ]"
+                    >
+                      <div class="flex items-center gap-2">
+                        <div :class="[
+                          'w-4 h-4 rounded-full border-2 flex items-center justify-center',
+                          selectedPlanType === 'trial' ? 'border-indigo-600' : 'border-gray-400'
+                        ]">
+                          <div v-if="selectedPlanType === 'trial'" class="w-2 h-2 rounded-full bg-indigo-600"></div>
+                        </div>
+                        <span class="text-sm font-medium text-gray-900 dark:text-white">Prueba Gratuita</span>
+                      </div>
+                    </button>
+                    <button
+                      type="button"
+                      @click="selectedPlanType = 'paid'"
+                      :class="[
+                        'px-4 py-3 rounded-lg border-2 transition-all text-left',
+                        selectedPlanType === 'paid'
+                          ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/20'
+                          : 'border-gray-300 dark:border-gray-600 hover:border-indigo-400'
+                      ]"
+                    >
+                      <div class="flex items-center gap-2">
+                        <div :class="[
+                          'w-4 h-4 rounded-full border-2 flex items-center justify-center',
+                          selectedPlanType === 'paid' ? 'border-indigo-600' : 'border-gray-400'
+                        ]">
+                          <div v-if="selectedPlanType === 'paid'" class="w-2 h-2 rounded-full bg-indigo-600"></div>
+                        </div>
+                        <span class="text-sm font-medium text-gray-900 dark:text-white">Plan de Pago</span>
+                      </div>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Trial Days Selector (only if trial selected) -->
+                <div v-if="selectedPlanType === 'trial'">
                   <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     {{ t('app.sysadmin.create_restaurant.trial_days') }} *
                   </label>
@@ -315,18 +388,50 @@
                   </p>
                 </div>
 
-                <!-- Trial Info -->
-                <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                <!-- Plan Selector (only if paid selected) -->
+                <div v-if="selectedPlanType === 'paid'">
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Plan de Suscripción *
+                  </label>
+                  <select
+                    v-model.number="form.plan_id"
+                    required
+                    class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white"
+                  >
+                    <option :value="null" disabled>Selecciona un plan...</option>
+                    <option 
+                      v-for="plan in availablePlans" 
+                      :key="plan.id" 
+                      :value="plan.id"
+                    >
+                      {{ plan.display_name }} - ${{ plan.monthly_price.toFixed(2) }}/mes
+                    </option>
+                  </select>
+                  <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    El restaurante comenzará con una suscripción activa del plan seleccionado
+                  </p>
+                </div>
+
+                <!-- Info Box -->
+                <div :class="[
+                  'rounded-lg p-4',
+                  selectedPlanType === 'trial' 
+                    ? 'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800'
+                    : 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800'
+                ]">
                   <div class="flex items-start gap-3">
-                    <svg class="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="h-5 w-5 mt-0.5" :class="selectedPlanType === 'trial' ? 'text-blue-600 dark:text-blue-400' : 'text-green-600 dark:text-green-400'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     <div class="flex-1">
-                      <p class="text-sm font-medium text-blue-900 dark:text-blue-200">
-                        {{ t('app.sysadmin.create_restaurant.trial_info_title') }}
+                      <p class="text-sm font-medium" :class="selectedPlanType === 'trial' ? 'text-blue-900 dark:text-blue-200' : 'text-green-900 dark:text-green-200'">
+                        {{ selectedPlanType === 'trial' ? t('app.sysadmin.create_restaurant.trial_info_title') : 'Suscripción de Pago' }}
                       </p>
-                      <p class="text-sm text-blue-700 dark:text-blue-300 mt-1">
-                        {{ t('app.sysadmin.create_restaurant.trial_info_desc') }}
+                      <p class="text-sm mt-1" :class="selectedPlanType === 'trial' ? 'text-blue-700 dark:text-blue-300' : 'text-green-700 dark:text-green-300'">
+                        {{ selectedPlanType === 'trial' 
+                           ? t('app.sysadmin.create_restaurant.trial_info_desc')
+                           : 'El restaurante comenzará con acceso completo a las funcionalidades del plan seleccionado.'
+                        }}
                       </p>
                     </div>
                   </div>
@@ -364,10 +469,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed } from 'vue';
+import { ref, watch, computed, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { Dialog, DialogPanel, DialogTitle, TransitionRoot, TransitionChild } from '@headlessui/vue';
 import { adminService } from '@/services/adminService';
+import { subscriptionService } from '@/services/subscriptionService';
 import { useToast, POSITION } from 'vue-toastification';
 import { calculateDaysDifference, getTomorrowDateString } from '@/utils/dateHelpers';
 
@@ -388,16 +494,21 @@ const createdRestaurant = ref<any>(null);
 const restaurantCreationData = ref<any>(null);
 const selectedTrialOption = ref<number | 'custom'>(14);
 const customTrialDate = ref('');
+const availablePlans = ref<any[]>([]);
+const loadingPlans = ref(false);
+const selectedPlanType = ref<'trial' | 'paid'>('trial');
 
 const form = ref({
   name: '',
   subdomain: '',
+  business_type: 'restaurant',
   email: '',
   admin_email: '',
   phone: '',
   address: '',
   description: '',
-  trial_days: 14
+  trial_days: 14,
+  plan_id: null as number | null
 });
 
 const minDate = computed(() => getTomorrowDateString());
@@ -429,21 +540,29 @@ const resetForm = () => {
   form.value = {
     name: '',
     subdomain: '',
+    business_type: 'restaurant',
     email: '',
     admin_email: '',
     phone: '',
     address: '',
     description: '',
-    trial_days: 14
+    trial_days: 14,
+    plan_id: null
   };
   selectedTrialOption.value = 14;
   customTrialDate.value = '';
+  selectedPlanType.value = 'trial';
   createdRestaurant.value = null;
 };
 
 const handleSubmit = async () => {
   submitting.value = true;
   try {
+    console.log('📤 Sending restaurant data:', form.value);
+    console.log('   business_type:', form.value.business_type);
+    console.log('   plan_id:', form.value.plan_id);
+    console.log('   selectedPlanType:', selectedPlanType.value);
+    
     const response = await adminService.createRestaurant(form.value);
     
     if (import.meta.env.DEV) {
@@ -526,33 +645,8 @@ const copyToClipboard = async (text: string, label: string = 'Texto') => {
 const copyWelcomeMessage = async () => {
   if (!restaurantCreationData.value) return;
   
-  const message = `🎉 ¡Bienvenido a Cloud Restaurant!
-
-Tu restaurante "${createdRestaurant.value.name}" ha sido creado exitosamente.
-
-📋 ACCESO AL SISTEMA:
-🌐 URL: ${restaurantCreationData.value.restaurant_url}
-📧 Email: ${restaurantCreationData.value.admin_email}
-🔑 Contraseña: ${restaurantCreationData.value.admin_password}
-
-⚠️ IMPORTANTE: 
-• Cambia tu contraseña al iniciar sesión por primera vez
-• Ve a tu perfil → Cambiar Contraseña
-
-🎁 PERÍODO DE PRUEBA:
-• Duración: ${restaurantCreationData.value.trial_days} días
-• Acceso completo a todas las funcionalidades
-
-📝 PRIMEROS PASOS:
-1. Ingresa al sistema con las credenciales proporcionadas
-2. Cambia tu contraseña
-3. Configura la información de tu restaurante
-4. Crea tu menú y categorías
-5. Agrega tus mesas
-6. Crea usuarios para tu personal
-7. ¡Comienza a tomar pedidos!
-
-¡Éxito con tu restaurante! 🍽️`;
+  // Use the welcome_message from backend (already personalized)
+  const message = restaurantCreationData.value.welcome_message;
 
   await copyToClipboard(message, 'Mensaje completo');
 };
@@ -567,9 +661,41 @@ const formatTrialDate = (dateStr: string) => {
   });
 };
 
+const loadPlans = async () => {
+  loadingPlans.value = true;
+  try {
+    console.log('🔍 Loading subscription plans...');
+    const plans = await subscriptionService.getPlans();
+    console.log('📦 Plans received:', plans);
+    // Backend already filters out trial plans (include_trial=False)
+    availablePlans.value = plans;
+    console.log('✅ Available plans:', availablePlans.value.length);
+  } catch (error: any) {
+    console.error('❌ Error loading plans:', error);
+    console.error('Error details:', error.response?.data || error.message);
+    toast.error(`Error al cargar planes: ${error.response?.data?.detail || error.message}`, {
+      position: POSITION.TOP_RIGHT,
+      timeout: 5000
+    });
+  } finally {
+    loadingPlans.value = false;
+  }
+};
+
 watch(() => props.show, (newValue) => {
   if (newValue) {
     resetForm();
+    loadPlans();
   }
+});
+
+watch(selectedPlanType, (newType) => {
+  if (newType === 'trial') {
+    form.value.plan_id = null;
+  }
+});
+
+onMounted(() => {
+  loadPlans();
 });
 </script>

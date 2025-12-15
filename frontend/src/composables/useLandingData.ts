@@ -56,7 +56,7 @@ export function useLandingData() {
       subtitle: 'Taquerías y restaurantes pequeños',
       price: '$699 / mes',
       features: [
-        '1 admin + 3 meseros + 1 cocina',
+        '1 admin + 3 meseros + 1 cocina + 1 cajero',
         'Hasta 20 mesas',
         '150 productos en menú',
         'Módulo de Ingredientes incluido 🎁',
@@ -75,31 +75,7 @@ export function useLandingData() {
         '400 productos en menú',
         'Ingredientes + Reportes Avanzados incluidos 🎁'
       ],
-    },
-    {
-      name: 'business',
-      title: 'Business',
-      subtitle: 'Restaurantes establecidos',
-      price: '$1,499 / mes',
-      features: [
-        '2 admin + 8 meseros + 3 cajeros + 3 cocina',
-        'Hasta 60 mesas',
-        '800 productos en menú',
-        'Todos los módulos incluidos 🎁',
-      ],
-    },
-    {
-      name: 'enterprise',
-      title: 'Enterprise',
-      subtitle: 'Cadenas y franquicias',
-      price: '$2,199 / mes',
-      features: [
-        '1 dueño + 4 admin + 15 meseros + 5 cajeros + 5 cocina',
-        'Hasta 150 mesas',
-        'Productos ilimitados',
-        'Multi-sucursal + Gerente de cuenta',
-      ],
-    },
+    }
   ]
 
   const previewSlides = [

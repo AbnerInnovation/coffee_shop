@@ -13,22 +13,24 @@ from ..core.validators import (
 
 
 class RestaurantBase(BaseModel):
+    """Base schema for restaurant with common fields"""
     name: str = Field(..., min_length=1, max_length=100)
-    subdomain: str = Field(..., min_length=1, max_length=50)
-    description: Optional[str] = Field(None, max_length=1000)
-    address: Optional[str] = Field(None, max_length=500)
+    subdomain: str = Field(..., min_length=3, max_length=50, pattern="^[a-z0-9-]+$")
+    business_type: str = Field(default="restaurant", max_length=50)
+    description: Optional[str] = Field(None, max_length=500)
+    address: Optional[str] = Field(None, max_length=255)
     phone: Optional[str] = Field(None, max_length=20)
     email: Optional[str] = Field(None, max_length=100)
     logo_url: Optional[str] = Field(None, max_length=500)
-    timezone: str = Field(default="America/Phoenix", max_length=100)
-    currency: str = Field(default="USD", max_length=3)
+    timezone: str = Field(default="America/Los_Angeles", max_length=50)
+    currency: str = Field(default="MXN", max_length=3)
     tax_rate: Optional[float] = Field(default=0.0, ge=0, le=1)
-    is_active: bool = True
-    kitchen_print_enabled: bool = False
+    kitchen_print_enabled: bool = Field(default=False)
     kitchen_print_paper_width: int = Field(default=80, ge=58, le=80)
-    customer_print_enabled: bool = True
+    customer_print_enabled: bool = Field(default=False)
     customer_print_paper_width: int = Field(default=80, ge=58, le=80)
-    allow_dine_in_without_table: bool = False
+    allow_dine_in_without_table: bool = Field(default=False)
+    is_active: bool = True
     
     @validator('name')
     def sanitize_name(cls, v):
@@ -75,12 +77,21 @@ class RestaurantCreate(RestaurantBase):
     """Schema for creating a new restaurant"""
     trial_days: Optional[int] = Field(default=14, ge=1, le=365, description="Number of trial days (1-365)")
     admin_email: Optional[str] = Field(None, max_length=100)
+    plan_id: Optional[int] = Field(None, description="Subscription plan ID (if not provided, creates trial)")
     
     @validator('admin_email')
     def validate_admin_email_field(cls, v):
         """Validate admin email if provided"""
         if v:
             return validate_email(v)
+        return v
+    
+    @validator('business_type')
+    def validate_business_type(cls, v):
+        """Validate business type"""
+        allowed_types = ['restaurant', 'cafe', 'food_truck', 'churreria', 'bakery', 'bar', 'fast_food', 'other']
+        if v not in allowed_types:
+            raise ValueError(f'Business type must be one of: {", ".join(allowed_types)}')
         return v
 
 
@@ -173,7 +184,8 @@ class RestaurantCreationResponse(BaseModel):
     admin_email: str
     admin_password: str
     restaurant_url: str
-    trial_days: int
-    trial_expires: datetime
+    trial_days: Optional[int] = None
+    trial_expires: Optional[datetime] = None
+    subscription_plan: Optional[str] = None
     welcome_message: str
     shareable_message: str
