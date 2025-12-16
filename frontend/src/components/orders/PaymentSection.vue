@@ -133,6 +133,7 @@ import {
   DevicePhoneMobileIcon, 
   EllipsisHorizontalIcon 
 } from '@heroicons/vue/24/outline';
+import { usePaymentMethods } from '@/composables/usePaymentMethods';
 
 interface Props {
   isEditMode: boolean;
@@ -153,12 +154,24 @@ const emit = defineEmits<{
   'update:cash-received': [value: number];
 }>();
 
-const paymentMethods = [
-  { value: 'cash', label: 'Efectivo', icon: BanknotesIcon },
-  { value: 'card', label: 'Tarjeta', icon: CreditCardIcon },
-  { value: 'digital', label: 'Digital', icon: DevicePhoneMobileIcon },
-  { value: 'other', label: 'Otro', icon: EllipsisHorizontalIcon }
-];
+// Get available payment methods from restaurant configuration
+const { availablePaymentMethods } = usePaymentMethods();
+
+// Map payment methods to include icons
+const iconMap = {
+  cash: BanknotesIcon,
+  card: CreditCardIcon,
+  digital: DevicePhoneMobileIcon,
+  other: EllipsisHorizontalIcon
+};
+
+const paymentMethods = computed(() => {
+  return availablePaymentMethods.value.map(method => ({
+    value: method.value,
+    label: method.label,
+    icon: iconMap[method.value]
+  }));
+});
 
 // Cash change calculator
 const cashReceived = ref<number>(props.cashReceived || 0);

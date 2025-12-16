@@ -1,6 +1,6 @@
-from sqlalchemy import String, Boolean, Column, Text, Integer
+from sqlalchemy import String, Boolean, Column, Text, Integer, JSON
 from sqlalchemy.orm import relationship, Mapped, mapped_column
-from typing import List, Optional, TYPE_CHECKING
+from typing import List, Optional, TYPE_CHECKING, Dict, Any
 from .base import BaseModel
 
 if TYPE_CHECKING:
@@ -46,6 +46,14 @@ class Restaurant(BaseModel):
     
     # Order settings
     allow_dine_in_without_table: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    
+    # Payment methods configuration (JSON)
+    # cash is always enabled and cannot be disabled
+    payment_methods_config: Mapped[Dict[str, Any]] = mapped_column(
+        JSON,
+        nullable=False,
+        default={"cash": True, "card": False, "digital": True, "other": False}
+    )
     
     # Relationships
     users: Mapped[List["User"]] = relationship("User", back_populates="restaurant", cascade="all, delete-orphan")

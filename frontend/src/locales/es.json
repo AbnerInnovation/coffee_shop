@@ -1102,6 +1102,17 @@
           "enabled": "✓ Consumo en local sin mesa habilitado",
           "disabled": "Consumo en local sin mesa deshabilitado"
         },
+        "payment_methods": {
+          "title": "Métodos de Pago",
+          "description": "Configura los métodos de pago disponibles para tu restaurante",
+          "cash": "Efectivo",
+          "card": "Tarjeta",
+          "digital": "Digital",
+          "other": "Otro",
+          "cash_always_enabled": "El efectivo siempre está habilitado y no se puede desactivar",
+          "enabled": "✓ {method} habilitado",
+          "disabled": "{method} deshabilitado"
+        },
         "saved": "Configuración guardada exitosamente",
         "error": "Error al guardar la configuración. Intenta de nuevo."
       },

@@ -164,7 +164,7 @@
                                         <span class="hidden sm:inline">{{$t('app.views.orders.modals.details.in_kitchen')}}</span>
                                       </span>
                                     </div>
-                                    <div v-if="item.special_instructions" class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                    <div v-if="!isPosOnlyMode && item.special_instructions" class="text-xs text-gray-500 dark:text-gray-400 mt-1">
                                       <span class="font-medium">{{$t('app.views.orders.modals.details.special_instructions')}}</span> {{ item.special_instructions }}
                                     </div>
                                     <div class="sm:hidden text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -229,10 +229,10 @@
                                     <span class="hidden sm:inline">{{$t('app.views.orders.modals.details.in_kitchen')}}</span>
                                   </span>
                                 </div>
-                                <div v-if="item.notes" class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                <div v-if="!isPosOnlyMode && item.notes" class="text-xs text-gray-500 dark:text-gray-400 mt-1">
                                   <span class="font-medium">{{$t('app.views.orders.modals.details.note')}}</span> {{ item.notes }}
                                 </div>
-                                <div v-if="item.special_instructions" class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                <div v-if="!isPosOnlyMode && item.special_instructions" class="text-xs text-gray-500 dark:text-gray-400 mt-1">
                                   <span class="font-medium">{{$t('app.views.orders.modals.details.special_instructions')}}</span> {{ item.special_instructions }}
                                 </div>
                                 <!-- Show extras if any -->
@@ -443,6 +443,7 @@ import { useConfirm } from '@/composables/useConfirm'
 import { useTheme } from '@/composables/useTheme'
 import { usePermissions } from '@/composables/usePermissions'
 import { useCustomerPrint } from '@/composables/useCustomerPrint'
+import { useOperationMode } from '@/composables/useOperationMode';
 
 const props = defineProps({
   open: {
@@ -476,6 +477,7 @@ const { showSuccess, showError } = useToast();
 const { t } = useI18n();
 const { canProcessPayments } = usePermissions();
 const { printPreBill, printCustomerReceipt } = useCustomerPrint();
+const { isPosOnlyMode } = useOperationMode();
 const isMounted = ref(false);
 const isPrintingPreBill = ref(false);
 

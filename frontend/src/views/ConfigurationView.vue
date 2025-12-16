@@ -334,6 +334,117 @@
             </div>
           </div>
 
+          <!-- Payment Methods Configuration -->
+          <div class="border-t border-gray-200 dark:border-gray-700 pt-6 mt-6">
+            <div class="bg-gray-50 dark:bg-gray-900/50 rounded-lg sm:rounded-xl p-4 sm:p-5 border border-gray-200 dark:border-gray-700">
+              <div class="flex items-center gap-2 sm:gap-3 mb-4">
+                <div class="p-1.5 sm:p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg flex-shrink-0">
+                  <svg class="w-5 h-5 sm:w-6 sm:h-6 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                  </svg>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <h3 class="text-sm sm:text-base font-semibold text-gray-900 dark:text-white">
+                    {{ t('app.subscription.settings.payment_methods.title') }}
+                  </h3>
+                  <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-0.5">
+                    {{ t('app.subscription.settings.payment_methods.description') }}
+                  </p>
+                </div>
+              </div>
+
+              <!-- Payment Methods Grid -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                <!-- Cash (Always Enabled) -->
+                <div class="flex items-center justify-between p-3 sm:p-4 bg-white dark:bg-gray-800 rounded-lg border-2 border-emerald-500 dark:border-emerald-600">
+                  <div class="flex items-center gap-3">
+                    <svg class="w-5 h-5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                    <span class="text-sm font-medium text-gray-900 dark:text-white">
+                      {{ t('app.subscription.settings.payment_methods.cash') }}
+                    </span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <span class="text-xs text-emerald-600 dark:text-emerald-400 font-medium">Siempre activo</span>
+                    <svg class="w-5 h-5 text-emerald-600 dark:text-emerald-400" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                    </svg>
+                  </div>
+                </div>
+
+                <!-- Card -->
+                <div class="flex items-center justify-between p-3 sm:p-4 bg-white dark:bg-gray-800 rounded-lg border-2 transition-colors" :class="paymentMethodsConfig.card ? 'border-indigo-500 dark:border-indigo-600' : 'border-gray-200 dark:border-gray-700'">
+                  <div class="flex items-center gap-3">
+                    <svg class="w-5 h-5" :class="paymentMethodsConfig.card ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-400'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                    </svg>
+                    <span class="text-sm font-medium text-gray-900 dark:text-white">
+                      {{ t('app.subscription.settings.payment_methods.card') }}
+                    </span>
+                  </div>
+                  <button
+                    @click="() => restaurantSettings.togglePaymentMethod('card')"
+                    :disabled="isSaving"
+                    :class="[
+                      'relative inline-flex h-5 w-9 sm:h-6 sm:w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 dark:focus:ring-offset-gray-800',
+                      paymentMethodsConfig.card ? 'bg-indigo-600' : 'bg-gray-300 dark:bg-gray-600',
+                      isSaving ? 'opacity-50 cursor-not-allowed' : ''
+                    ]"
+                  >
+                    <span :class="['pointer-events-none inline-block h-4 w-4 sm:h-5 sm:w-5 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out', paymentMethodsConfig.card ? 'translate-x-4 sm:translate-x-5' : 'translate-x-0']" />
+                  </button>
+                </div>
+
+                <!-- Digital -->
+                <div class="flex items-center justify-between p-3 sm:p-4 bg-white dark:bg-gray-800 rounded-lg border-2 transition-colors" :class="paymentMethodsConfig.digital ? 'border-indigo-500 dark:border-indigo-600' : 'border-gray-200 dark:border-gray-700'">
+                  <div class="flex items-center gap-3">
+                    <svg class="w-5 h-5" :class="paymentMethodsConfig.digital ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-400'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                    </svg>
+                    <span class="text-sm font-medium text-gray-900 dark:text-white">
+                      {{ t('app.subscription.settings.payment_methods.digital') }}
+                    </span>
+                  </div>
+                  <button
+                    @click="() => restaurantSettings.togglePaymentMethod('digital')"
+                    :disabled="isSaving"
+                    :class="[
+                      'relative inline-flex h-5 w-9 sm:h-6 sm:w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 dark:focus:ring-offset-gray-800',
+                      paymentMethodsConfig.digital ? 'bg-indigo-600' : 'bg-gray-300 dark:bg-gray-600',
+                      isSaving ? 'opacity-50 cursor-not-allowed' : ''
+                    ]"
+                  >
+                    <span :class="['pointer-events-none inline-block h-4 w-4 sm:h-5 sm:w-5 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out', paymentMethodsConfig.digital ? 'translate-x-4 sm:translate-x-5' : 'translate-x-0']" />
+                  </button>
+                </div>
+
+                <!-- Other -->
+                <div class="flex items-center justify-between p-3 sm:p-4 bg-white dark:bg-gray-800 rounded-lg border-2 transition-colors" :class="paymentMethodsConfig.other ? 'border-indigo-500 dark:border-indigo-600' : 'border-gray-200 dark:border-gray-700'">
+                  <div class="flex items-center gap-3">
+                    <svg class="w-5 h-5" :class="paymentMethodsConfig.other ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-400'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                    <span class="text-sm font-medium text-gray-900 dark:text-white">
+                      {{ t('app.subscription.settings.payment_methods.other') }}
+                    </span>
+                  </div>
+                  <button
+                    @click="() => restaurantSettings.togglePaymentMethod('other')"
+                    :disabled="isSaving"
+                    :class="[
+                      'relative inline-flex h-5 w-9 sm:h-6 sm:w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 dark:focus:ring-offset-gray-800',
+                      paymentMethodsConfig.other ? 'bg-indigo-600' : 'bg-gray-300 dark:bg-gray-600',
+                      isSaving ? 'opacity-50 cursor-not-allowed' : ''
+                    ]"
+                  >
+                    <span :class="['pointer-events-none inline-block h-4 w-4 sm:h-5 sm:w-5 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out', paymentMethodsConfig.other ? 'translate-x-4 sm:translate-x-5' : 'translate-x-0']" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
     </div>
@@ -359,6 +470,7 @@ const isLoading = computed(() => restaurantSettings.loadingSettings.value)
 const kitchenPrintEnabled = computed(() => restaurantSettings.kitchenPrintEnabled.value)
 const customerPrintEnabled = computed(() => restaurantSettings.customerPrintEnabled.value)
 const allowDineInWithoutTable = computed(() => restaurantSettings.allowDineInWithoutTable.value)
+const paymentMethodsConfig = computed(() => restaurantSettings.paymentMethodsConfig.value)
 
 // Lifecycle
 onMounted(() => {

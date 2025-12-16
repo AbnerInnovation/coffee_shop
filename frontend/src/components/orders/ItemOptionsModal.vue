@@ -110,7 +110,7 @@
               </div>
 
               <!-- Special Notes Builder -->
-              <div v-if="item" class="mb-4">
+              <div v-if="!isPosOnlyMode && item" class="mb-4">
                 <SpecialNotesBuilder
                   :ingredients="(item as any).ingredients || null"
                   v-model="specialNote"
@@ -119,7 +119,7 @@
               </div>
 
               <!-- Additional Notes (fallback) -->
-              <div v-if="!item || !(item as any).ingredients" class="mb-4">
+              <div v-if="!isPosOnlyMode && (!item || !(item as any).ingredients)" class="mb-4">
                 <label for="item-notes" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   {{ $t('app.views.orders.modals.new_order.special_instructions') }}
                 </label>
@@ -189,6 +189,7 @@
 import { ref, computed, watch } from 'vue';
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue';
 import SpecialNotesBuilder from './SpecialNotesBuilder.vue';
+import { useOperationMode } from '@/composables/useOperationMode';
 
 interface MenuItem {
   id: number;
@@ -227,6 +228,7 @@ interface Emits {
 const props = defineProps<Props>();
 const emit = defineEmits<Emits>();
 
+const { isPosOnlyMode } = useOperationMode();
 const selectedVariant = ref<MenuItemVariant | null>(null);
 const specialNote = ref('');
 const notes = ref('');

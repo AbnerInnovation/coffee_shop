@@ -31,7 +31,7 @@
                 </span>
               </div>
               <!-- Special Instructions -->
-              <div v-if="group.special_instructions" class="mt-1 space-y-0.5">
+              <div v-if="!isPosOnlyMode && group.special_instructions" class="mt-1 space-y-0.5">
                 <p v-for="(instruction, idx) in personData.getFormattedInstructions(group)" :key="idx" 
                   class="text-xs text-gray-500 dark:text-gray-400">
                   {{ instruction }}
@@ -82,7 +82,7 @@
               {{ item.category }}
             </span>
           </div>
-          <p v-if="item.notes" class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ item.notes }}</p>
+          <p v-if="!isPosOnlyMode && item.notes" class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ item.notes }}</p>
           <div v-if="item.extras && item.extras.length > 0" class="mt-1 space-y-0.5">
             <p v-for="(extra, idx) in item.extras" :key="idx" class="text-xs text-indigo-600 dark:text-indigo-400">
               + {{ extra.name }} ({{ extra.quantity }}x ${{ extra.price.toFixed(2) }})
@@ -150,6 +150,7 @@ import { useI18n } from 'vue-i18n';
 import { useItemGrouping } from '@/composables/useItemGrouping';
 import type { OrderItem } from '@/services/orderService';
 import { MinusIcon, PlusIcon } from '@heroicons/vue/24/outline';
+import { useOperationMode } from '@/composables/useOperationMode';
 
 // Local interface for display items (different from OrderItem)
 interface DisplayOrderItem {
@@ -202,6 +203,8 @@ defineEmits<{
   (e: 'increase-quantity', item: DisplayOrderItem): void;
   (e: 'create-order'): void;
 }>();
+
+const { isPosOnlyMode } = useOperationMode();
 
 // Helper function to convert person items to OrderItem format for grouping
 function convertPersonItemsToOrderItems(personItems: Person['items'], menuItems: any): OrderItem[] {

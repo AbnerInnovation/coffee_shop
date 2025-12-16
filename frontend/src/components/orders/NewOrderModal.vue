@@ -156,13 +156,13 @@
                 <!-- NORMAL MODE: Tab-based Layout -->
                 <template v-else>
                   <!-- TAB 1: Order Info (hidden in POS mode) -->
-                  <div v-if="activeTab === 0 && !(isPosOnlyMode && modeLoaded)" class="mt-6">
+                  <div v-if="activeTab === 0 && !(isPosOnlyMode && modeLoaded) && !(isMobile && showingItemOptions)" class="mt-6">
                     <OrderTypeSelector v-model="form" :tables="availableTables" :loading="loading.tables"
                       :error="error.tables" :allow-dine-in-without-table="restaurantSettings.allowDineInWithoutTable.value" />
                   </div>
 
                   <!-- TAB 2: Menu Items & Diners -->
-                  <div v-else-if="activeTab === 1" class="mt-6 space-y-4">
+                  <div v-else-if="activeTab === 1 && !(isMobile && showingItemOptions)" class="mt-6 space-y-4">
                     <!-- Persons Manager at the top -->
                     <PersonsManager :order-type="form.type" :persons="persons"
                       :active-person-index="activePersonIndex"
@@ -186,7 +186,7 @@
                   </div>
 
                   <!-- TAB 3: Summary & Payment -->
-                  <div v-else-if="activeTab === 2" class="mt-6 space-y-6">
+                  <div v-else-if="activeTab === 2 && !(isMobile && showingItemOptions)" class="mt-6 space-y-6">
                     <!-- Order Summary -->
                     <OrderSummary 
                       :use-multiple-diners="true" 

@@ -1,6 +1,6 @@
 from .base import PhoenixBaseModel as BaseModel
 from pydantic import Field, validator
-from typing import Optional
+from typing import Optional, Dict
 from datetime import datetime
 from ..core.validators import (
     sanitize_text,
@@ -30,6 +30,10 @@ class RestaurantBase(BaseModel):
     customer_print_enabled: bool = Field(default=False)
     customer_print_paper_width: int = Field(default=80, ge=58, le=80)
     allow_dine_in_without_table: bool = Field(default=False)
+    payment_methods_config: Dict[str, bool] = Field(
+        default={"cash": True, "card": False, "digital": True, "other": False},
+        description="Payment methods configuration. Cash is always enabled."
+    )
     is_active: bool = True
     
     @validator('name')
@@ -71,6 +75,13 @@ class RestaurantBase(BaseModel):
     def validate_currency_field(cls, v):
         """Validate currency code format."""
         return validate_currency_code(v)
+    
+    @validator('payment_methods_config')
+    def validate_payment_methods(cls, v):
+        """Ensure cash is always enabled."""
+        if v is not None and isinstance(v, dict):
+            v['cash'] = True  # Cash is always enabled
+        return v
 
 
 class RestaurantCreate(RestaurantBase):
@@ -112,6 +123,7 @@ class RestaurantUpdate(BaseModel):
     customer_print_enabled: Optional[bool] = None
     customer_print_paper_width: Optional[int] = Field(None, ge=58, le=80)
     allow_dine_in_without_table: Optional[bool] = None
+    payment_methods_config: Optional[Dict[str, bool]] = None
     
     @validator('name')
     def sanitize_name(cls, v):
@@ -147,6 +159,13 @@ class RestaurantUpdate(BaseModel):
     def validate_currency_field(cls, v):
         """Validate currency code format."""
         return validate_currency_code(v)
+    
+    @validator('payment_methods_config')
+    def validate_payment_methods_update(cls, v):
+        """Ensure cash is always enabled."""
+        if v is not None and isinstance(v, dict):
+            v['cash'] = True  # Cash is always enabled
+        return v
 
 
 class Restaurant(RestaurantBase):
@@ -173,6 +192,7 @@ class RestaurantPublic(BaseModel):
     customer_print_enabled: bool = True
     customer_print_paper_width: int = 80
     allow_dine_in_without_table: bool = False
+    payment_methods_config: Dict[str, bool] = {"cash": True, "card": False, "digital": True, "other": False}
     
     class Config:
         from_attributes = True

@@ -4,12 +4,20 @@ import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import api from '@/services/api'
 
+export interface PaymentMethodsConfig {
+  cash: boolean
+  card: boolean
+  digital: boolean
+  other: boolean
+}
+
 export interface RestaurantSettings {
   kitchen_print_enabled: boolean
   kitchen_print_paper_width: number
   customer_print_enabled: boolean
   customer_print_paper_width: number
   allow_dine_in_without_table: boolean
+  payment_methods_config: PaymentMethodsConfig
 }
 
 export interface ISettingsService {
@@ -40,6 +48,12 @@ export function useRestaurantSettings(settingsService: ISettingsService = new Re
   const customerPrintEnabled = ref(true)
   const customerPaperWidth = ref(80)
   const allowDineInWithoutTable = ref(false)
+  const paymentMethodsConfig = ref<PaymentMethodsConfig>({
+    cash: true,
+    card: false,
+    digital: true,
+    other: false
+  })
   const savingSettings = ref(false)
   const loadingSettings = ref(false)
 
@@ -71,6 +85,9 @@ export function useRestaurantSettings(settingsService: ISettingsService = new Re
           break
         case 'allow_dine_in_without_table':
           allowDineInWithoutTable.value = value as boolean
+          break
+        case 'payment_methods_config':
+          paymentMethodsConfig.value = value as PaymentMethodsConfig
           break
       }
 
@@ -127,6 +144,23 @@ export function useRestaurantSettings(settingsService: ISettingsService = new Re
     return updateSetting('allow_dine_in_without_table', newValue, message)
   }
 
+  const togglePaymentMethod = (method: keyof PaymentMethodsConfig): Promise<void> => {
+    // Cash cannot be disabled
+    if (method === 'cash') {
+      toast.warning(t('app.subscription.settings.payment_methods.cash_always_enabled'))
+      return Promise.resolve()
+    }
+
+    const newConfig = { ...paymentMethodsConfig.value }
+    newConfig[method] = !newConfig[method]
+    
+    const message = newConfig[method]
+      ? t('app.subscription.settings.payment_methods.enabled', { method: t(`app.subscription.settings.payment_methods.${method}`) })
+      : t('app.subscription.settings.payment_methods.disabled', { method: t(`app.subscription.settings.payment_methods.${method}`) })
+    
+    return updateSetting('payment_methods_config', newConfig, message)
+  }
+
   // Load settings from backend
   const loadSettings = async (): Promise<void> => {
     try {
@@ -138,6 +172,12 @@ export function useRestaurantSettings(settingsService: ISettingsService = new Re
       customerPrintEnabled.value = settings.customer_print_enabled ?? true
       customerPaperWidth.value = settings.customer_print_paper_width ?? 80
       allowDineInWithoutTable.value = settings.allow_dine_in_without_table ?? false
+      paymentMethodsConfig.value = settings.payment_methods_config ?? {
+        cash: true,
+        card: false,
+        digital: true,
+        other: false
+      }
     } catch (error) {
       console.error('Error loading restaurant settings:', error)
       toast.error(t('app.subscription.settings.error'))
@@ -153,6 +193,7 @@ export function useRestaurantSettings(settingsService: ISettingsService = new Re
     customerPrintEnabled: customerPrintEnabled as Ref<boolean>,
     customerPaperWidth: customerPaperWidth as Ref<number>,
     allowDineInWithoutTable: allowDineInWithoutTable as Ref<boolean>,
+    paymentMethodsConfig: paymentMethodsConfig as Ref<PaymentMethodsConfig>,
     savingSettings: savingSettings as Ref<boolean>,
     loadingSettings: loadingSettings as Ref<boolean>,
     
@@ -162,6 +203,7 @@ export function useRestaurantSettings(settingsService: ISettingsService = new Re
     toggleCustomerPrint,
     setCustomerPaperWidth,
     toggleDineInWithoutTable,
+    togglePaymentMethod,
     loadSettings,
     
     // Service injection (for testing)
