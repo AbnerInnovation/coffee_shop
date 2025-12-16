@@ -685,6 +685,8 @@ export function useCustomerPrint() {
   <div class="receipt-info">
     <div class="receipt-info-row">
       <span><strong>Folio:</strong> #${order.order_number}</span>
+    </div>
+    <div class="receipt-info-row">
       <span><strong>Fecha:</strong> ${formatTime(order.created_at, true).split(',')[0]}</span>
     </div>
     <div class="receipt-info-row">
@@ -693,11 +695,9 @@ export function useCustomerPrint() {
     ${order.table_number ? `
     <div class="receipt-info-row">
       <span><strong>Mesa:</strong> ${order.table_number}</span>
-      <span><strong>Tipo:</strong> ${getOrderTypeLabel(order.order_type)}</span>
     </div>
     ` : `
     <div class="receipt-info-row">
-      <span><strong>Tipo:</strong> ${getOrderTypeLabel(order.order_type)}</span>
       ${order.customer_name ? `<span><strong>Cliente:</strong> ${order.customer_name}</span>` : ''}
     </div>
     `}
