@@ -237,7 +237,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, defineExpose, nextTick, watch } from 'vue';
+import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue';
 import orderService, { type CreateOrderData, type OrderItem, type Order as OrderType } from '@/services/orderService';
 import menuService from '@/services/menuService';
 import tableService from '@/services/tableService';
@@ -803,35 +803,33 @@ async function createOrder() {
       );
 
       // Auto-print kitchen ticket if enabled
-      // Load restaurant settings if not available
       if (!authStore.restaurant) {
-        console.log('📥 Restaurant not loaded, loading now...');
         await authStore.loadRestaurant();
       }
       
-      console.log('🖨️ Kitchen print check:', {
-        enabled: authStore.restaurant?.kitchen_print_enabled,
-        restaurant: authStore.restaurant,
-        order: order
-      });
-      
       if (authStore.restaurant?.kitchen_print_enabled) {
-        console.log('🖨️ Attempting to print kitchen ticket...');
         try {
-          await nextTick(); // Wait for DOM to update
+          await nextTick();
           await printKitchenTicket(order);
-          console.log('✅ Kitchen ticket printed successfully');
         } catch (printError) {
-          console.error('❌ Error printing kitchen ticket:', printError);
-          // Don't block the order creation flow if printing fails
+          console.error('Error printing kitchen ticket:', printError);
           showWarning(t('app.views.orders.modals.new_order.print_warning'));
         }
-      } else {
-        console.log('⚠️ Kitchen printing is disabled or restaurant not loaded');
       }
 
-      // NOTE: Customer receipt is NOT printed here
-      // It will be printed when the order is paid in OrderDetailsModal
+      // Auto-print customer receipt if enabled and order is paid (POS mode)
+      if (authStore.restaurant?.customer_print_enabled && 
+          props.posMode && 
+          markAsPaid.value && 
+          paymentSuccess) {
+        try {
+          await nextTick();
+          await printCustomerReceipt(order);
+        } catch (printError) {
+          console.error('Error printing customer receipt:', printError);
+          showWarning(t('app.views.orders.modals.new_order.print_warning'));
+        }
+      }
 
       // Always emit and close, regardless of payment success
       // If payment failed, the user already saw a warning message explaining what happened
