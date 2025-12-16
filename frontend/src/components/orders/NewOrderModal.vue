@@ -905,9 +905,10 @@ function handleAddItemFromModal(data: {
     }
   }
 
-  // Reset
+  // Reset - including mobile inline mode state
   selectedItem.value = null;
   showItemOptionsModal.value = false;
+  showingItemOptions.value = false;
 }
 
 /**
