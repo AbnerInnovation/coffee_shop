@@ -799,7 +799,8 @@ async function createOrder() {
         t,
         showSuccess,
         showWarning,
-        showError
+        showError,
+        props.posMode // Suppress success message in POS mode (POSView shows its own message)
       );
 
       // Auto-print kitchen ticket if enabled
@@ -824,7 +825,13 @@ async function createOrder() {
           paymentSuccess) {
         try {
           await nextTick();
-          await printCustomerReceipt(order);
+          // Add payment info to order object for receipt printing (not saved in DB)
+          const orderWithPayment = {
+            ...order,
+            payment_method: selectedPaymentMethod.value,
+            amount_paid: selectedPaymentMethod.value === 'cash' ? cashReceived.value : undefined
+          };
+          await printCustomerReceipt(orderWithPayment);
         } catch (printError) {
           console.error('Error printing customer receipt:', printError);
           showWarning(t('app.views.orders.modals.new_order.print_warning'));
@@ -958,8 +965,6 @@ function resetFormForNextSale() {
   if (paymentSectionRef.value) {
     paymentSectionRef.value.blurCashInput();
   }
-  
-  console.log('✅ Form reset for next sale');
 }
 
 // Handle modal close - only close if ItemOptionsModal is not open

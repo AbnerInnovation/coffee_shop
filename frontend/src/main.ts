@@ -76,7 +76,6 @@ async function initializeApp() {
   if (subdomain) {
     const api = (await import('./services/api')).default;
     api.defaults.headers.common['x-restaurant-subdomain'] = subdomain;
-    console.log('[main.ts] Set default x-restaurant-subdomain header:', subdomain);
   }
   
   const pinia = createPinia();
@@ -112,7 +111,6 @@ async function initializeApp() {
   // Wait for router to be ready before mounting
   await router.isReady();
   
-  console.log('[main.ts] Router ready, mounting app...');
   app.mount('#app');
 }
 

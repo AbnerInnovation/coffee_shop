@@ -238,45 +238,95 @@ export const calculateOrderTotals = (order: any): OrderTotals => {
 };
 
 /**
+ * Check if running in Electron
+ */
+export const isElectron = (): boolean => {
+  return !!(window as any).electron;
+};
+
+/**
  * Open print window and trigger print dialog
  * Automatically closes the window after printing (or canceling)
+ * Uses Electron native printing if available
  */
 export const openPrintWindow = async (
   html: string,
   onComplete?: () => void
 ): Promise<void> => {
-  console.log('📄 Opening print window...');
-  const printWindow = window.open('', '_blank', 'width=800,height=600');
-  
-  if (!printWindow) {
-    throw new Error('No se pudo abrir la ventana de impresión. Verifica que los pop-ups estén habilitados.');
+  // Use Electron native printing if available
+  if (isElectron()) {
+    try {
+      const electron = (window as any).electron;
+      const result = await electron.print.printHTML(html);
+      
+      if (result.success) {
+      } else {
+        throw new Error(result.error || 'Print failed');
+      }
+      
+      if (onComplete) {
+        onComplete();
+      }
+      return;
+    } catch (error) {
+      console.error('❌ Error with Electron print, falling back to browser:', error);
+      // Fall through to browser print
+    }
   }
+  
+  return new Promise<void>((resolve, reject) => {
+    const printWindow = window.open('', '_blank', 'width=800,height=600');
+    
+    if (!printWindow) {
+      reject(new Error('No se pudo abrir la ventana de impresión. Verifica que los pop-ups estén habilitados.'));
+      return;
+    }
 
-  console.log('✅ Print window opened');
 
-  // Write HTML to print window
-  printWindow.document.write(html);
-  printWindow.document.close();
-  console.log('✅ HTML written to print window');
+    // Write HTML to print window
+    printWindow.document.write(html);
+    printWindow.document.close();
 
-  // Wait for content to load, then print
-  printWindow.onload = () => {
-    console.log('📄 Print window loaded, triggering print dialog...');
-    // Setup afterprint handler BEFORE calling print()
-    printWindow.onafterprint = () => {
-      setTimeout(() => {
-        printWindow.close();
-
-        if (onComplete) {
-          onComplete();
+    // Wait for content to load, then print
+    printWindow.onload = () => {
+      let printCompleted = false;
+      
+      // Setup afterprint handler BEFORE calling print()
+      printWindow.onafterprint = () => {
+        if (!printCompleted) {
+          printCompleted = true;
+          
+          setTimeout(() => {
+            printWindow.close();
+            
+            if (onComplete) {
+              onComplete();
+            }
+            
+            resolve();
+          }, 100);
         }
-      }, 100);
+      };
+      
+      // Fallback: resolve after 30 seconds if user doesn't print/cancel
+      const fallbackTimeout = setTimeout(() => {
+        if (!printCompleted) {
+          printCompleted = true;
+          printWindow.close();
+          resolve();
+        }
+      }, 30000);
+      
+      // Trigger print dialog
+      setTimeout(() => {
+        printWindow.print();
+      }, 250);
     };
     
-    // Trigger print dialog
-    setTimeout(() => {
-      printWindow.print();
-      console.log('🖨️ Print dialog triggered');
-    }, 250);
-  };
+    // Handle window load error
+    printWindow.onerror = (error) => {
+      printWindow.close();
+      reject(error);
+    };
+  });
 };

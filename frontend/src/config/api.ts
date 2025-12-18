@@ -7,7 +7,7 @@ const API_CONFIG = {
     // In Electron, always use config.json URL
     if (isElectron()) {
       const url = getApiBaseUrl();
-      console.log('[API_CONFIG] Electron mode, using:', url);
+
       return url;
     }
     // In browser, use environment variable if set, otherwise use subdomain-aware URL

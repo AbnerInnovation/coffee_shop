@@ -21,16 +21,12 @@ const router = createRouter({
  * Uses the centralized permissions module for consistent access control
  */
 router.beforeEach(async (to, from, next) => {
-  console.log('[Router] Navigation:', { from: from.path, to: to.path, name: to.name });
-  
   const authStore = useAuthStore();
   const user = authStore.user;
   
-  console.log('[Router] Auth state:', { isAuthenticated: authStore.isAuthenticated, user: user?.email });
 
   // 0. Redirect root to login if not authenticated
   if (to.path === '/' && !authStore.isAuthenticated) {
-    console.log('[Router] Redirecting to Login (not authenticated)');
     next({ name: 'Login', replace: true });
     return;
   }
@@ -49,7 +45,6 @@ router.beforeEach(async (to, from, next) => {
 
   // 3. Check if route requires restaurant context (subdomain)
   if (to.meta.requiresRestaurantContext && !hasRestaurantContext()) {
-    console.warn(`❌ Route ${to.path} requires restaurant context (subdomain)`);
     // If user is sysadmin, redirect to sysadmin dashboard
     if (user?.role === 'sysadmin') {
       next({ name: 'SysAdmin' });
@@ -68,8 +63,6 @@ router.beforeEach(async (to, from, next) => {
       const hasPermission = permissionFn(user);
       
       if (!hasPermission) {
-        console.warn(`❌ User lacks permission: ${to.meta.permissionCheck} for route: ${to.path}`);
-        console.warn('User data:', { role: user?.role, staff_type: user?.staff_type });
         // Redirect to Dashboard instead of Menu to avoid lazy loading issues
         next({ name: 'Dashboard' });
         return;
@@ -88,12 +81,10 @@ router.beforeEach(async (to, from, next) => {
       const usage = await subscriptionService.getUsage();
       
       if (!usage.has_subscription || !usage.features?.has_kitchen_module) {
-        console.warn('❌ Kitchen module not available in subscription');
         next({ name: 'Subscription' });
         return;
       }
     } catch (error) {
-      console.error('Error checking kitchen module access:', error);
       next({ name: 'Dashboard' });
       return;
     }
@@ -113,12 +104,10 @@ router.beforeEach(async (to, from, next) => {
       const isPOSMode = usage.operation_mode === 'pos_only';
       
       if (!isPOSMode) {
-        console.warn('❌ POS view only accessible in POS mode');
         next({ name: 'Orders' }); // Redirect to regular orders view
         return;
       }
     } catch (error) {
-      console.error('Error checking POS mode access:', error);
       next({ name: 'Dashboard' });
       return;
     }

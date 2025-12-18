@@ -1,6 +1,6 @@
 {
   "name": "coffee-shop-admin",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "private": true,
   "main": "dist-electron/main.js",
   "scripts": {
@@ -22,6 +22,7 @@
     "electron:build": "cross-env ELECTRON=true vite build && electron-builder",
     "electron:build:win": "cross-env ELECTRON=true CSC_IDENTITY_AUTO_DISCOVERY=false vite build && electron-builder --win",
     "electron:build:portable": "cross-env ELECTRON=true CSC_IDENTITY_AUTO_DISCOVERY=false vite build && electron-builder --win portable",
+    "electron:build:portable:clean": "rimraf dist dist-electron release && cross-env ELECTRON=true CSC_IDENTITY_AUTO_DISCOVERY=false vite build && electron-builder --win portable",
     "electron:preview": "electron ."
   },
   "dependencies": {

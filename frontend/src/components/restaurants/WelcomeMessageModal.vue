@@ -412,16 +412,7 @@ const formatDate = (dateString: string | undefined) => {
 
 const copyToClipboard = async (text: string | undefined, label: string) => {
   if (!text) return;
-  
-  try {
-    await navigator.clipboard.writeText(text);
-    // TODO: Mostrar toast de éxito
-    if (import.meta.env.DEV) {
-      console.log(`${label} copiado al portapapeles`);
-    }
-  } catch (err) {
-    console.error('Error al copiar:', err);
-  }
+  await navigator.clipboard.writeText(text);
 };
 
 const copyShareableMessage = async () => {
@@ -429,10 +420,6 @@ const copyShareableMessage = async () => {
   
   try {
     await navigator.clipboard.writeText(props.restaurantData.shareable_message);
-    // TODO: Mostrar toast de éxito
-    if (import.meta.env.DEV) {
-      console.log('Mensaje copiado al portapapeles');
-    }
   } catch (err) {
     console.error('Error al copiar:', err);
   }

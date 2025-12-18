@@ -16,13 +16,6 @@ export function isElectron(): boolean {
   const hasProcess = !!(window && window.process && (window.process as any).type);
   const result = hasElectronAPI || hasProcess;
   
-  console.log('[isElectron] Check:', {
-    hasWindow: !!window,
-    hasElectronAPI,
-    hasProcess,
-    processType: window && window.process ? (window.process as any).type : 'undefined',
-    result
-  });
   return result;
 }
 
@@ -31,21 +24,17 @@ export function isElectron(): boolean {
  */
 function getCachedElectronConfig(): any {
   if (!isElectron()) {
-    console.log('[getCachedElectronConfig] Not Electron, returning null');
     return null;
   }
   
   try {
     const cached = localStorage.getItem(ELECTRON_CONFIG_KEY);
-    console.log('[getCachedElectronConfig] Raw cached value:', cached);
     
     if (!cached) {
-      console.log('[getCachedElectronConfig] No cached config found');
       return null;
     }
     
     const parsed = JSON.parse(cached);
-    console.log('[getCachedElectronConfig] Parsed cache data:', parsed);
     
     // Handle both old format (direct config) and new format (with timestamp)
     if (parsed.config) {
@@ -79,12 +68,10 @@ async function loadElectronConfig(): Promise<any> {
       try {
         response = await fetch(path);
         if (response.ok) {
-          console.log(`[loadElectronConfig] Successfully loaded from: ${path}`);
           break;
         }
       } catch (err) {
         lastError = err;
-        console.warn(`[loadElectronConfig] Failed to load from ${path}:`, err);
       }
     }
     
@@ -120,7 +107,6 @@ export function getSubdomain(): string | null {
   if (isElectron()) {
     const config = getCachedElectronConfig();
     if (config) {
-      console.log('[getSubdomain] Using Electron config:', config.restaurant?.subdomain);
       return config.restaurant?.subdomain || null;
     }
   }
@@ -154,7 +140,6 @@ export function getApiBaseUrl(): string {
   if (isElectron()) {
     const config = getCachedElectronConfig();
     if (config) {
-      console.log('[getApiBaseUrl] Using Electron config:', config.restaurant?.apiUrl);
       return config.restaurant?.apiUrl || 'http://localhost:8001';
     }
   }
@@ -203,20 +188,12 @@ export function hasRestaurantContext(): boolean {
  * @returns Promise that resolves when config is loaded
  */
 export async function initializeElectronConfig(): Promise<void> {
-  console.log('[initializeElectronConfig] Starting...');
-  console.log('[initializeElectronConfig] Is Electron?', isElectron());
   
   if (isElectron()) {
     const config = await loadElectronConfig();
-    console.log('[initializeElectronConfig] Config loaded:', config);
-    console.log('[initializeElectronConfig] Subdomain:', config?.restaurant?.subdomain);
-    console.log('[initializeElectronConfig] API URL:', config?.restaurant?.apiUrl);
     
     // Verify it's in localStorage
     const cached = localStorage.getItem(ELECTRON_CONFIG_KEY);
-    console.log('[initializeElectronConfig] Cached in localStorage:', cached);
-  } else {
-    console.log('[initializeElectronConfig] Not running in Electron, skipping config load');
-  }
+  } 
 }
 

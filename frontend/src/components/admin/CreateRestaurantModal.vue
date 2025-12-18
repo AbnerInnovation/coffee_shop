@@ -558,34 +558,16 @@ const resetForm = () => {
 const handleSubmit = async () => {
   submitting.value = true;
   try {
-    console.log('📤 Sending restaurant data:', form.value);
-    console.log('   business_type:', form.value.business_type);
-    console.log('   plan_id:', form.value.plan_id);
-    console.log('   selectedPlanType:', selectedPlanType.value);
-    
     const response = await adminService.createRestaurant(form.value);
-    
-    if (import.meta.env.DEV) {
-      console.log('🔍 Restaurant creation response:', response);
-      console.log('🔍 Has welcome_message?', !!response.welcome_message);
-      console.log('🔍 Has shareable_message?', !!response.shareable_message);
-      console.log('🔍 Has admin_password?', !!response.admin_password);
-    }
     
     // Check if response has welcome message (new format)
     if (response.welcome_message && response.shareable_message && response.admin_password) {
       // New format with complete welcome data
-      if (import.meta.env.DEV) {
-        console.log('✅ Showing credentials in modal');
-      }
+
       restaurantCreationData.value = response;
       createdRestaurant.value = response.restaurant;
     } else {
       // Old format (just restaurant object) or missing data
-      if (import.meta.env.DEV) {
-        console.warn('⚠️ Response missing welcome data, showing basic success message');
-        console.log('Response keys:', Object.keys(response));
-      }
       createdRestaurant.value = response.restaurant || response;
       restaurantCreationData.value = null;
     }
@@ -595,8 +577,6 @@ const handleSubmit = async () => {
       timeout: 5000
     });
   } catch (error: any) {
-    console.error('Error creating restaurant:', error);
-    
     const errorMessage = error.response?.data?.detail || t('app.sysadmin.create_restaurant.error');
     toast.error(errorMessage, {
       position: POSITION.TOP_RIGHT,
@@ -634,7 +614,6 @@ const copyToClipboard = async (text: string, label: string = 'Texto') => {
       timeout: 2000
     });
   } catch (error) {
-    console.error('Failed to copy:', error);
     toast.error('Error al copiar', {
       position: POSITION.TOP_RIGHT,
       timeout: 2000
@@ -664,15 +643,10 @@ const formatTrialDate = (dateStr: string) => {
 const loadPlans = async () => {
   loadingPlans.value = true;
   try {
-    console.log('🔍 Loading subscription plans...');
     const plans = await subscriptionService.getPlans();
-    console.log('📦 Plans received:', plans);
     // Backend already filters out trial plans (include_trial=False)
     availablePlans.value = plans;
-    console.log('✅ Available plans:', availablePlans.value.length);
   } catch (error: any) {
-    console.error('❌ Error loading plans:', error);
-    console.error('Error details:', error.response?.data || error.message);
     toast.error(`Error al cargar planes: ${error.response?.data?.detail || error.message}`, {
       position: POSITION.TOP_RIGHT,
       timeout: 5000

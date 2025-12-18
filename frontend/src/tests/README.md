@@ -254,7 +254,6 @@ Current minimum coverage requirements (configured in `vitest.config.ts`):
 ```typescript
 it('should debug', () => {
   const result = myFunction()
-  console.log('Result:', result)
   expect(result).toBe(expected)
 })
 ```

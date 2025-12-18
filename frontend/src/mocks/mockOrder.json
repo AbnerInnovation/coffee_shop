@@ -1,0 +1,53 @@
+{
+  "id": 999,
+  "order_number": 1,
+  "ticket_number": "20241218-001",
+  "table_number": null,
+  "customer_name": null,
+  "order_type": "pos_sale",
+  "status": "completed",
+  "is_paid": true,
+  "payment_method": "cash",
+  "amount_paid": 250,
+  "total_amount": 200,
+  "subtotal": 180,
+  "tax_amount": 20,
+  "discount_amount": 0,
+  "created_at": "2024-12-18T10:30:00.000Z",
+  "waiter_name": null,
+  "items": [
+    {
+      "id": 1,
+      "quantity": 2,
+      "unit_price": 50,
+      "menu_item": {
+        "name": "Café Americano",
+        "category": { "name": "Bebidas" }
+      },
+      "variant": { "name": "Grande" },
+      "special_instructions": null
+    },
+    {
+      "id": 2,
+      "quantity": 1,
+      "unit_price": 80,
+      "menu_item": {
+        "name": "Croissant",
+        "category": { "name": "Panadería" }
+      },
+      "variant": null,
+      "special_instructions": null
+    },
+    {
+      "id": 3,
+      "quantity": 3,
+      "unit_price": 30,
+      "menu_item": {
+        "name": "Galleta de Chocolate",
+        "category": { "name": "Panadería" }
+      },
+      "variant": null,
+      "special_instructions": null
+    }
+  ]
+}

@@ -27,15 +27,10 @@ api.interceptors.request.use(
     // Add subdomain header for Electron FIRST (before auth check)
     // This is critical for login endpoint which needs the subdomain
     const subdomain = getSubdomain();
-    console.log('[API Interceptor] Request to:', config.url);
-    console.log('[API Interceptor] Subdomain from getSubdomain():', subdomain);
     
     if (subdomain) {
       config.headers['x-restaurant-subdomain'] = subdomain;
-      console.log('[API Interceptor] ✅ Added x-restaurant-subdomain header:', subdomain);
-    } else {
-      console.warn('[API Interceptor] ⚠️ No subdomain available - header NOT added');
-    }
+    } 
     
     // Try in-memory token first (for Safari), then storage, then authService
     const token = getGlobalToken() || 

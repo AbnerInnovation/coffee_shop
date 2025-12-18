@@ -21,6 +21,7 @@ import LoginView from './views/LoginView.vue';
 import RegisterView from './views/RegisterView.vue';
 import LandingView from './views/LandingView.vue';
 import NotFoundView from './views/NotFoundView.vue';
+import PrintTestView from './views/PrintTestView.vue';
 
 // Permission check function type
 export type PermissionCheck = (user: User | null) => boolean;
@@ -189,6 +190,14 @@ export const routes: RouteRecordRaw[] = [
     name: 'Plans',
     component: LandingView,
     meta: { requiresAuth: false, hideNavbar: true }
+  },
+
+  // Print testing (development only)
+  {
+    path: '/print-test',
+    name: 'PrintTest',
+    component: PrintTestView,
+    meta: { requiresAuth: true }
   },
 
   // Catch-all

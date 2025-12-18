@@ -108,7 +108,7 @@ export const useAuthStore = defineStore('auth', () => {
           // Load restaurant data for printing configurations
           try {
             await loadRestaurant();
-            console.log('✅ Restaurant data loaded on login');
+
           } catch (restaurantError) {
             console.warn('⚠️ Failed to load restaurant data on login:', restaurantError);
             // Don't fail login if restaurant load fails
@@ -229,7 +229,6 @@ export const useAuthStore = defineStore('auth', () => {
         // Load restaurant data for printing configurations
         try {
           await loadRestaurant();
-          console.log('✅ Restaurant data loaded on auth check');
         } catch (restaurantError) {
           console.warn('⚠️ Failed to load restaurant data on auth check:', restaurantError);
           // Don't fail auth check if restaurant load fails
@@ -307,16 +306,10 @@ export const useAuthStore = defineStore('auth', () => {
       }
     } else if (!token && storedUser) {
       // If we have user data but no token, clear the stale user data
-      if (import.meta.env.DEV) {
-        console.log('⚠️ User data without token, clearing...');
-      }
       safeStorage.removeItem('user');
       safeStorage.removeItem('user', true);
       user.value = null;
     } else if (!token && !storedUser) {
-      if (import.meta.env.DEV) {
-        console.log('ℹ️ No stored credentials found');
-      }
       user.value = null;
     }
   }

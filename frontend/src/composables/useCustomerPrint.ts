@@ -1,4 +1,3 @@
-import { ref } from 'vue';
 import { useAuthStore } from '@/stores/auth';
 import {
   formatTime,
@@ -9,20 +8,13 @@ import {
   buildGroupedItemsHTML,
   getCommonStyles,
   getSizeClass,
-  calculateOrderTotals,
-  openPrintWindow
+  calculateOrderTotals
 } from '@/utils/printHelpers';
+import { usePrint } from './usePrint';
 
 export function useCustomerPrint() {
   const authStore = useAuthStore();
-  const isPrinting = ref(false);
-
-  /**
-   * Check if customer receipt printing is enabled for current restaurant
-   */
-  const isPrintEnabled = () => {
-    return authStore.restaurant?.customer_print_enabled ?? true; // Enabled by default
-  };
+  const { isPrinting, printWithBuilder, electronPrint } = usePrint();
 
   /**
    * Build HTML for pre-bill (cuenta) - shows items and total, no payment info
@@ -32,15 +24,6 @@ export function useCustomerPrint() {
     const sizeClass = getSizeClass(paperWidth);
     const restaurant = authStore.restaurant;
     const commonStyles = getCommonStyles(paperWidth);
-
-    // Debug: Log order and restaurant data
-    console.log('🔍 Building pre-bill HTML for order:', {
-      order_number: order.order_number,
-      items_count: order.items?.length || 0,
-      persons_count: order.persons?.length || 0,
-      restaurant_name: restaurant?.name,
-      restaurant_loaded: !!restaurant
-    });
 
     // Helper function to build item HTML for pre-bill
     const buildItemHTML = (item: any) => {
@@ -425,13 +408,6 @@ export function useCustomerPrint() {
       </tr>
       `;
     };
-
-    // Build items HTML - group by person if persons exist
-    console.log('🔍 Building receipt HTML - order data:', {
-      has_persons: !!(order.persons && order.persons.length > 0),
-      persons_count: order.persons?.length || 0,
-      items_count: order.items?.length || 0
-    });
     
     // For table format, we need to wrap person sections in table rows
     const buildPersonSection = (personName: string, itemsHTML: string) => `
@@ -442,7 +418,8 @@ export function useCustomerPrint() {
     `;
     
     let itemsHTML = '';
-    if (order.persons && order.persons.length > 0) {
+    // Only show person headers if there are 2 or more persons
+    if (order.persons && order.persons.length > 1) {
       itemsHTML = order.persons.map((person: any, index: number) => {
         const personItems = order.items?.filter((item: any) => item.person_id === person.id) || [];
         const items = personItems.length > 0 ? personItems : (person.items || []);
@@ -454,10 +431,10 @@ export function useCustomerPrint() {
       }).join('');
       
       if (!itemsHTML && order.items && order.items.length > 0) {
-        console.log('⚠️ No items matched persons, showing all items');
         itemsHTML = order.items.map(buildItemHTML).join('');
       }
     } else {
+      // Single person or no persons: show items without person headers
       itemsHTML = (order.items || []).map(buildItemHTML).join('');
     }
 
@@ -684,7 +661,7 @@ export function useCustomerPrint() {
 
   <div class="receipt-info">
     <div class="receipt-info-row">
-      <span><strong>Folio:</strong> #${order.order_number}</span>
+      <span><strong>Folio:</strong> #${order.ticket_number || order.order_number}</span>
     </div>
     <div class="receipt-info-row">
       <span><strong>Fecha:</strong> ${formatTime(order.created_at, true).split(',')[0]}</span>
@@ -783,91 +760,43 @@ export function useCustomerPrint() {
 
   /**
    * Print a customer receipt for an order
-   * Opens the receipt in a new window and triggers print dialog
+   * Uses silent printing in Electron, browser print dialog otherwise
    */
   const printCustomerReceipt = async (order: any) => {
-    console.log('🖨️ printCustomerReceipt called with order:', order);
-    
-    if (!isPrintEnabled()) {
-      console.warn('⚠️ Customer receipt printing is disabled for this restaurant');
-      return;
-    }
-
-    console.log('✅ Customer receipt printing is enabled, proceeding...');
-    isPrinting.value = true;
-
-    try {
-      // Ensure restaurant data is loaded
-      if (!authStore.restaurant) {
-        console.log('📥 Loading restaurant data...');
-        await authStore.loadRestaurant();
-        console.log('✅ Restaurant data loaded:', authStore.restaurant?.name);
-      }
-
-      // Get paper width from restaurant settings
-      const paperWidth = authStore.restaurant?.customer_print_paper_width || 80;
-      console.log('📏 Paper width:', paperWidth);
-
-      // Build the receipt HTML
-      const receiptHTML = buildReceiptHTML(order, paperWidth);
-      console.log('📝 Receipt HTML generated, length:', receiptHTML.length);
-
-      // Open print window and trigger print
-      await openPrintWindow(receiptHTML);
-    } catch (error) {
-      console.error('❌ Error printing customer receipt:', error);
-      throw error;
-    } finally {
-      isPrinting.value = false;
-    }
+    await printWithBuilder(
+      order,
+      buildReceiptHTML,
+      {
+        enabledSettingKey: 'customer_print_enabled',
+        paperWidthKey: 'customer_print_paper_width',
+        printerNameKey: 'customer_printer_name'
+      },
+      'Customer receipt'
+    );
   };
 
   /**
    * Print a pre-bill (cuenta) for an order
-   * Opens the pre-bill in a new window and triggers print dialog
+   * Uses silent printing in Electron, browser print dialog otherwise
    * Used when customer asks for the bill before paying
    */
   const printPreBill = async (order: any) => {
-    console.log('🖨️ printPreBill called with order:', order);
-    
-    if (!isPrintEnabled()) {
-      console.warn('⚠️ Customer printing is disabled for this restaurant');
-      return;
-    }
-
-    console.log('✅ Customer printing is enabled, proceeding with pre-bill...');
-    isPrinting.value = true;
-
-    try {
-      // Ensure restaurant data is loaded
-      if (!authStore.restaurant) {
-        console.log('📥 Loading restaurant data...');
-        await authStore.loadRestaurant();
-        console.log('✅ Restaurant data loaded:', authStore.restaurant?.name);
-      }
-
-      // Get paper width from restaurant settings
-      const paperWidth = authStore.restaurant?.customer_print_paper_width || 80;
-      console.log('📏 Paper width:', paperWidth);
-
-      // Build the pre-bill HTML
-      const preBillHTML = buildPreBillHTML(order, paperWidth);
-      console.log('📝 Pre-bill HTML generated, length:', preBillHTML.length);
-
-      // Open print window and trigger print
-      await openPrintWindow(preBillHTML);
-    } catch (error) {
-      console.error('❌ Error printing pre-bill:', error);
-      throw error;
-    } finally {
-      isPrinting.value = false;
-    }
+    await printWithBuilder(
+      order,
+      buildPreBillHTML,
+      {
+        enabledSettingKey: 'customer_print_enabled',
+        paperWidthKey: 'customer_print_paper_width',
+        printerNameKey: 'customer_printer_name'
+      },
+      'Pre-bill'
+    );
   };
 
   return {
     isPrinting,
-    isPrintEnabled,
     printPreBill,
-    printCustomerReceipt
+    printCustomerReceipt,
+    electronPrint
   };
 }

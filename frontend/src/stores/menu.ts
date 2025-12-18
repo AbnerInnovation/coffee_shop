@@ -79,19 +79,13 @@ export const useMenuStore = defineStore('menu', () => {
     error.value = null;
     try {
       const response = await menuService.getMenuItem(id);
-      if (import.meta.env.DEV) {
-        console.log('🔍 Raw response from API:', response);
-        console.log('🔍 Response.ingredients:', response.ingredients);
-      }
       const normalized = normalizeMenuItem(response);
-      if (import.meta.env.DEV) {
-        console.log('🔍 After normalizeMenuItem:', normalized);
-        console.log('🔍 Normalized.ingredients:', normalized.ingredients);
-      }
+
       return normalized;
     } catch (err: any) {
       const message = err.response?.data?.message || err.message || `Failed to fetch menu item ${id}`;
       error.value = message;
+      
       throw new Error(message);
     } finally {
       loading.value = false;

@@ -1,4 +1,3 @@
-import { ref } from 'vue';
 import { useAuthStore } from '@/stores/auth';
 import {
   formatTime,
@@ -6,20 +5,13 @@ import {
   extractItemData,
   buildGroupedItemsHTML,
   getCommonStyles,
-  getSizeClass,
-  openPrintWindow
+  getSizeClass
 } from '@/utils/printHelpers';
+import { usePrint } from './usePrint';
 
 export function useKitchenPrint() {
   const authStore = useAuthStore();
-  const isPrinting = ref(false);
-
-  /**
-   * Check if kitchen printing is enabled for current restaurant
-   */
-  const isPrintEnabled = () => {
-    return authStore.restaurant?.kitchen_print_enabled ?? false;
-  };
+  const { isPrinting, print, electronPrint } = usePrint();
 
   /**
    * Build HTML for kitchen ticket
@@ -265,48 +257,26 @@ export function useKitchenPrint() {
 
   /**
    * Print a kitchen ticket for an order
-   * Opens the ticket in a new window and triggers print dialog
+   * Uses silent printing in Electron, browser print dialog otherwise
    */
   const printKitchenTicket = async (order: any) => {
-    console.log('🖨️ printKitchenTicket called with order:', order);
+    const { printWithBuilder } = usePrint();
     
-    if (!isPrintEnabled()) {
-      console.warn('⚠️ Kitchen printing is disabled for this restaurant');
-      return;
-    }
-
-    console.log('✅ Kitchen printing is enabled, proceeding...');
-    isPrinting.value = true;
-
-    try {
-      // Ensure restaurant data is loaded
-      if (!authStore.restaurant) {
-        console.log('📥 Loading restaurant data...');
-        await authStore.loadRestaurant();
-        console.log('✅ Restaurant data loaded:', authStore.restaurant?.name);
-      }
-
-      // Get paper width from restaurant settings
-      const paperWidth = authStore.restaurant?.kitchen_print_paper_width || 80;
-      console.log('📏 Paper width:', paperWidth);
-
-      // Build the ticket HTML
-      const ticketHTML = buildTicketHTML(order, paperWidth);
-      console.log('📝 Ticket HTML generated, length:', ticketHTML.length);
-
-      // Open print window and trigger print
-      await openPrintWindow(ticketHTML);
-    } catch (error) {
-      console.error('❌ Error printing kitchen ticket:', error);
-      throw error;
-    } finally {
-      isPrinting.value = false;
-    }
+    await printWithBuilder(
+      order,
+      buildTicketHTML,
+      {
+        enabledSettingKey: 'kitchen_print_enabled',
+        paperWidthKey: 'kitchen_print_paper_width',
+        printerNameKey: 'kitchen_printer_name'
+      },
+      'Kitchen ticket'
+    );
   };
 
   return {
     isPrinting,
-    isPrintEnabled,
-    printKitchenTicket
+    printKitchenTicket,
+    electronPrint
   };
 }

@@ -7,9 +7,6 @@ let _cachedToken: string | null = null;
 
 export function setGlobalToken(token: string | null) {
   _cachedToken = token;
-  if (import.meta.env.DEV) {
-    console.log('🔐 Global token set:', !!token);
-  }
 }
 
 export function getGlobalToken(): string | null {

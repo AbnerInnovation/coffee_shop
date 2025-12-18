@@ -36,16 +36,8 @@ export function useOperationMode() {
       modeConfig.value = response.data.config
       planName.value = response.data.plan_name
       isLoaded.value = true
-      
-      console.log('✅ Operation mode loaded:', {
-        mode: operationMode.value,
-        plan: planName.value,
-        showTables: response.data.config.show_tables,
-        showKitchen: response.data.config.show_kitchen
-      })
     } catch (err: any) {
       error.value = err.response?.data?.detail || 'Error loading operation mode'
-      console.error('❌ Error loading operation mode:', err)
       // On error, default to full_restaurant mode
       operationMode.value = 'full_restaurant' as OperationMode
       isLoaded.value = true
@@ -108,12 +100,6 @@ export function useOperationMode() {
     operationMode.value = mode as OperationMode
     modeConfig.value = config
     isLoaded.value = true
-    
-    console.log('✅ Operation mode loaded from usage:', {
-      mode: operationMode.value,
-      showTables: config.show_tables,
-      showKitchen: config.show_kitchen
-    })
   }
 
   return {

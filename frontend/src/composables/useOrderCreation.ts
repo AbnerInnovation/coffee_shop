@@ -193,10 +193,13 @@ export function useOrderCreation() {
     t: (key: string) => string,
     showSuccess: (msg: string) => void,
     showWarning: (msg: string, duration?: number) => void,
-    showError: (msg: string) => void
+    showError: (msg: string) => void,
+    suppressSuccessMessage: boolean = false
   ): Promise<boolean> {
     if (!markAsPaid) {
-      showSuccess(t('app.views.orders.messages.order_created_success'));
+      if (!suppressSuccessMessage) {
+        showSuccess(t('app.views.orders.messages.order_created_success'));
+      }
       return true;
     }
 
@@ -215,7 +218,9 @@ export function useOrderCreation() {
 
     try {
       await orderService.markOrderPaid(orderId, paymentMethod);
-      showSuccess(t('app.views.orders.messages.order_created_and_paid_success') || 'Order created and marked as paid successfully');
+      if (!suppressSuccessMessage) {
+        showSuccess(t('app.views.orders.messages.order_created_and_paid_success') || 'Order created and marked as paid successfully');
+      }
       return true;
     } catch (paymentError: any) {
       console.error('Failed to mark order as paid:', paymentError);
@@ -272,7 +277,8 @@ export function useOrderCreation() {
     t: (key: string) => string,
     showSuccess: (msg: string) => void,
     showWarning: (msg: string, duration?: number) => void,
-    showError: (msg: string) => void
+    showError: (msg: string) => void,
+    suppressSuccessMessage: boolean = false
   ): Promise<{ order: any; paymentSuccess: boolean }> {
     // Validate cash payment BEFORE creating the order
     if (markAsPaid && paymentMethod === 'cash') {
@@ -303,7 +309,8 @@ export function useOrderCreation() {
       t,
       showSuccess,
       showWarning,
-      showError
+      showError,
+      suppressSuccessMessage
     );
 
     return { order: created, paymentSuccess };

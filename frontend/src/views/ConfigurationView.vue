@@ -16,11 +16,29 @@
     </div>
 
     <!-- Content -->
-    <div v-else class="space-y-4 sm:space-y-6">
-      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden">
-        <div class="p-4 sm:p-6 space-y-4 sm:space-y-6">
-          <!-- Kitchen Print Settings -->
-          <div class="bg-gray-50 dark:bg-gray-900/50 rounded-lg sm:rounded-xl p-4 sm:p-5 border border-gray-200 dark:border-gray-700">
+    <div v-else class="space-y-6 sm:space-y-8">
+      <!-- Print Settings Section -->
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+        <div class="px-3 sm:px-4 py-2 sm:py-3 border-b border-gray-200 dark:border-gray-700">
+          <div class="flex items-center gap-2">
+            <div class="p-1.5 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
+              <svg class="w-5 h-5 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+              </svg>
+            </div>
+            <div>
+              <h2 class="text-base sm:text-lg font-bold text-gray-900 dark:text-white">
+                Configuración de Impresión
+              </h2>
+              <p class="text-xs text-gray-600 dark:text-gray-400">
+                Configura tus impresoras y tickets térmicos
+              </p>
+            </div>
+          </div>
+        </div>
+        <div class="p-3 sm:p-4 space-y-3">
+          <!-- Kitchen Print Settings (only if kitchen module is enabled) -->
+          <div v-if="showKitchen" class="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
             <div class="flex items-center justify-between gap-3">
               <div class="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
                 <div class="p-1.5 sm:p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg flex-shrink-0">
@@ -58,7 +76,7 @@
             </div>
           </div>
 
-          <!-- Paper Width Settings -->
+          <!-- Paper Width Settings (only if kitchen module is enabled) -->
           <transition
             enter-active-class="transition ease-out duration-200"
             enter-from-class="opacity-0 -translate-y-2"
@@ -67,8 +85,8 @@
             leave-from-class="opacity-100 translate-y-0"
             leave-to-class="opacity-0 -translate-y-2"
           >
-            <div v-if="kitchenPrintEnabled" class="bg-gray-50 dark:bg-gray-900/50 rounded-lg sm:rounded-xl p-4 sm:p-5 border border-gray-200 dark:border-gray-700">
-              <div class="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+            <div v-if="showKitchen && kitchenPrintEnabled" class="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
+              <div class="flex items-center gap-2 mb-3">
                 <div class="p-1.5 sm:p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex-shrink-0">
                   <svg class="w-5 h-5 sm:w-6 sm:h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -85,7 +103,7 @@
               </div>
 
               <!-- Paper Width Options -->
-              <div class="grid grid-cols-2 gap-3 sm:gap-4">
+              <div class="grid grid-cols-2 gap-2">
                 <button
                   @click="() => restaurantSettings.setPaperWidth(58)"
                   :disabled="isSaving"
@@ -96,20 +114,20 @@
                       : 'border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600'
                   ]"
                 >
-                  <div class="p-3 sm:p-4 text-center">
-                    <div class="mx-auto w-8 h-8 sm:w-10 sm:h-10 mb-2 flex items-center justify-center">
+                  <div class="p-2 text-center">
+                    <div class="mx-auto w-6 h-6 mb-1 flex items-center justify-center">
                       <svg class="w-full h-full text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                       </svg>
                     </div>
                     <div :class="[
-                      'text-xl sm:text-2xl font-bold',
+                      'text-lg font-bold',
                       currentPaperWidth === 58 ? 'text-indigo-700 dark:text-indigo-300' : 'text-gray-900 dark:text-white'
                     ]">
                       58mm
                     </div>
                     <div :class="[
-                      'text-[9px] sm:text-[10px] font-medium uppercase tracking-wide mt-0.5',
+                      'text-[9px] font-medium uppercase tracking-wide',
                       currentPaperWidth === 58 ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-500 dark:text-gray-400'
                     ]">
                       {{ t('app.subscription.settings.paper_width.compact') }}
@@ -132,20 +150,20 @@
                       : 'border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600'
                   ]"
                 >
-                  <div class="p-3 sm:p-4 text-center">
-                    <div class="mx-auto w-8 h-8 sm:w-10 sm:h-10 mb-2 flex items-center justify-center">
+                  <div class="p-2 text-center">
+                    <div class="mx-auto w-6 h-6 mb-1 flex items-center justify-center">
                       <svg class="w-full h-full text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                       </svg>
                     </div>
                     <div :class="[
-                      'text-xl sm:text-2xl font-bold',
+                      'text-lg font-bold',
                       currentPaperWidth === 80 ? 'text-indigo-700 dark:text-indigo-300' : 'text-gray-900 dark:text-white'
                     ]">
                       80mm
                     </div>
                     <div :class="[
-                      'text-[9px] sm:text-[10px] font-medium uppercase tracking-wide mt-0.5',
+                      'text-[9px] font-medium uppercase tracking-wide',
                       currentPaperWidth === 80 ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-500 dark:text-gray-400'
                     ]">
                       {{ t('app.subscription.settings.paper_width.standard') }}
@@ -162,7 +180,7 @@
           </transition>
 
           <!-- Customer Print Settings -->
-          <div class="bg-gray-50 dark:bg-gray-900/50 rounded-lg sm:rounded-xl p-4 sm:p-5 border border-gray-200 dark:border-gray-700">
+          <div class="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
             <div class="flex items-center justify-between gap-3">
               <div class="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
                 <div class="p-1.5 sm:p-2 bg-green-100 dark:bg-green-900/30 rounded-lg flex-shrink-0">
@@ -209,8 +227,8 @@
             leave-from-class="opacity-100 translate-y-0"
             leave-to-class="opacity-0 -translate-y-2"
           >
-            <div v-if="customerPrintEnabled" class="bg-gray-50 dark:bg-gray-900/50 rounded-lg sm:rounded-xl p-4 sm:p-5 border border-gray-200 dark:border-gray-700">
-              <div class="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+            <div v-if="customerPrintEnabled" class="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
+              <div class="flex items-center gap-2 mb-3">
                 <div class="p-1.5 sm:p-2 bg-green-100 dark:bg-green-900/30 rounded-lg flex-shrink-0">
                   <svg class="w-5 h-5 sm:w-6 sm:h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -227,7 +245,7 @@
               </div>
 
               <!-- Customer Paper Width Options -->
-              <div class="grid grid-cols-2 gap-3 sm:gap-4">
+              <div class="grid grid-cols-2 gap-2">
                 <button
                   @click="() => restaurantSettings.setCustomerPaperWidth(58)"
                   :disabled="isSaving"
@@ -238,20 +256,20 @@
                       : 'border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600'
                   ]"
                 >
-                  <div class="p-3 sm:p-4 text-center">
-                    <div class="mx-auto w-8 h-8 sm:w-10 sm:h-10 mb-2 flex items-center justify-center">
+                  <div class="p-2 text-center">
+                    <div class="mx-auto w-6 h-6 mb-1 flex items-center justify-center">
                       <svg class="w-full h-full text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                       </svg>
                     </div>
                     <div :class="[
-                      'text-xl sm:text-2xl font-bold',
+                      'text-lg font-bold',
                       currentCustomerPaperWidth === 58 ? 'text-green-700 dark:text-green-300' : 'text-gray-900 dark:text-white'
                     ]">
                       58mm
                     </div>
                     <div :class="[
-                      'text-[9px] sm:text-[10px] font-medium uppercase tracking-wide mt-0.5',
+                      'text-[9px] font-medium uppercase tracking-wide',
                       currentCustomerPaperWidth === 58 ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'
                     ]">
                       {{ t('app.subscription.settings.customer_paper_width.compact') }}
@@ -274,20 +292,20 @@
                       : 'border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600'
                   ]"
                 >
-                  <div class="p-3 sm:p-4 text-center">
-                    <div class="mx-auto w-8 h-8 sm:w-10 sm:h-10 mb-2 flex items-center justify-center">
+                  <div class="p-2 text-center">
+                    <div class="mx-auto w-6 h-6 mb-1 flex items-center justify-center">
                       <svg class="w-full h-full text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                       </svg>
                     </div>
                     <div :class="[
-                      'text-xl sm:text-2xl font-bold',
+                      'text-lg font-bold',
                       currentCustomerPaperWidth === 80 ? 'text-green-700 dark:text-green-300' : 'text-gray-900 dark:text-white'
                     ]">
                       80mm
                     </div>
                     <div :class="[
-                      'text-[9px] sm:text-[10px] font-medium uppercase tracking-wide mt-0.5',
+                      'text-[9px] font-medium uppercase tracking-wide',
                       currentCustomerPaperWidth === 80 ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'
                     ]">
                       {{ t('app.subscription.settings.customer_paper_width.standard') }}
@@ -303,8 +321,62 @@
             </div>
           </transition>
 
+          <!-- Print Test Button -->
+          <div class="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
+            <div class="flex items-center justify-between gap-3">
+              <div class="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+                <div class="p-1.5 sm:p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex-shrink-0">
+                  <svg class="w-5 h-5 sm:w-6 sm:h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <h3 class="text-sm sm:text-base font-semibold text-gray-900 dark:text-white">
+                    Probar Impresión
+                  </h3>
+                  <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-0.5">
+                    Prueba tus tickets de cocina y cliente con datos de ejemplo
+                  </p>
+                </div>
+              </div>
+              <router-link
+                to="/print-test"
+                class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                </svg>
+                <span class="hidden sm:inline">Probar Impresión</span>
+                <span class="sm:hidden">Probar</span>
+              </router-link>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- General Settings Section (hidden in POS only mode) -->
+      <div v-if="!isPosOnlyMode" class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+        <div class="px-3 sm:px-4 py-2 sm:py-3 border-b border-gray-200 dark:border-gray-700">
+          <div class="flex items-center gap-2">
+            <div class="p-1.5 bg-gray-100 dark:bg-gray-700 rounded-lg">
+              <svg class="w-5 h-5 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </div>
+            <div>
+              <h2 class="text-base sm:text-lg font-bold text-gray-900 dark:text-white">
+                Configuración General
+              </h2>
+              <p class="text-xs text-gray-600 dark:text-gray-400">
+                Opciones generales del restaurante
+              </p>
+            </div>
+          </div>
+        </div>
+        <div class="p-3 sm:p-4">
           <!-- Dine-in Without Table Settings -->
-          <div class="border-t border-gray-200 dark:border-gray-700 pt-6">
+          <div>
             <div class="flex items-center justify-between">
               <div class="flex-1">
                 <h3 class="text-base font-semibold text-gray-900 dark:text-white">
@@ -333,30 +405,51 @@
               </div>
             </div>
           </div>
+        </div>
+      </div>
 
+      <!-- Payment Methods Section -->
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+        <div class="px-3 sm:px-4 py-2 sm:py-3 border-b border-gray-200 dark:border-gray-700">
+          <div class="flex items-center gap-2">
+            <div class="p-1.5 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
+              <svg class="w-5 h-5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+              </svg>
+            </div>
+            <div>
+              <h2 class="text-base sm:text-lg font-bold text-gray-900 dark:text-white">
+                Métodos de Pago
+              </h2>
+              <p class="text-xs text-gray-600 dark:text-gray-400">
+                Configura los métodos de pago disponibles
+              </p>
+            </div>
+          </div>
+        </div>
+        <div class="p-3 sm:p-4">
           <!-- Payment Methods Configuration -->
-          <div class="border-t border-gray-200 dark:border-gray-700 pt-6 mt-6">
-            <div class="bg-gray-50 dark:bg-gray-900/50 rounded-lg sm:rounded-xl p-4 sm:p-5 border border-gray-200 dark:border-gray-700">
-              <div class="flex items-center gap-2 sm:gap-3 mb-4">
-                <div class="p-1.5 sm:p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg flex-shrink-0">
-                  <svg class="w-5 h-5 sm:w-6 sm:h-6 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                  </svg>
-                </div>
-                <div class="flex-1 min-w-0">
-                  <h3 class="text-sm sm:text-base font-semibold text-gray-900 dark:text-white">
-                    {{ t('app.subscription.settings.payment_methods.title') }}
-                  </h3>
-                  <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-0.5">
-                    {{ t('app.subscription.settings.payment_methods.description') }}
-                  </p>
-                </div>
+          <div class="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
+            <div class="flex items-center gap-2 sm:gap-3 mb-4">
+              <div class="p-1.5 sm:p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg flex-shrink-0">
+                <svg class="w-5 h-5 sm:w-6 sm:h-6 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                </svg>
               </div>
+              <div class="flex-1 min-w-0">
+                <h3 class="text-sm sm:text-base font-semibold text-gray-900 dark:text-white">
+                  {{ t('app.subscription.settings.payment_methods.title') }}
+                </h3>
+                <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-0.5">
+                  {{ t('app.subscription.settings.payment_methods.description') }}
+                </p>
+              </div>
+            </div>
 
-              <!-- Payment Methods Grid -->
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+            <!-- Payment Methods Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <!-- Cash (Always Enabled) -->
-                <div class="flex items-center justify-between p-3 sm:p-4 bg-white dark:bg-gray-800 rounded-lg border-2 border-emerald-500 dark:border-emerald-600">
+                <div class="flex items-center justify-between p-2.5 bg-white dark:bg-gray-800 rounded-lg border-2 border-emerald-500 dark:border-emerald-600">
                   <div class="flex items-center gap-3">
                     <svg class="w-5 h-5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -374,7 +467,7 @@
                 </div>
 
                 <!-- Card -->
-                <div class="flex items-center justify-between p-3 sm:p-4 bg-white dark:bg-gray-800 rounded-lg border-2 transition-colors" :class="paymentMethodsConfig.card ? 'border-indigo-500 dark:border-indigo-600' : 'border-gray-200 dark:border-gray-700'">
+                <div class="flex items-center justify-between p-2.5 bg-white dark:bg-gray-800 rounded-lg border-2 transition-colors" :class="paymentMethodsConfig.card ? 'border-indigo-500 dark:border-indigo-600' : 'border-gray-200 dark:border-gray-700'">
                   <div class="flex items-center gap-3">
                     <svg class="w-5 h-5" :class="paymentMethodsConfig.card ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-400'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
@@ -397,7 +490,7 @@
                 </div>
 
                 <!-- Digital -->
-                <div class="flex items-center justify-between p-3 sm:p-4 bg-white dark:bg-gray-800 rounded-lg border-2 transition-colors" :class="paymentMethodsConfig.digital ? 'border-indigo-500 dark:border-indigo-600' : 'border-gray-200 dark:border-gray-700'">
+                <div class="flex items-center justify-between p-2.5 bg-white dark:bg-gray-800 rounded-lg border-2 transition-colors" :class="paymentMethodsConfig.digital ? 'border-indigo-500 dark:border-indigo-600' : 'border-gray-200 dark:border-gray-700'">
                   <div class="flex items-center gap-3">
                     <svg class="w-5 h-5" :class="paymentMethodsConfig.digital ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-400'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
@@ -420,7 +513,7 @@
                 </div>
 
                 <!-- Other -->
-                <div class="flex items-center justify-between p-3 sm:p-4 bg-white dark:bg-gray-800 rounded-lg border-2 transition-colors" :class="paymentMethodsConfig.other ? 'border-indigo-500 dark:border-indigo-600' : 'border-gray-200 dark:border-gray-700'">
+                <div class="flex items-center justify-between p-2.5 bg-white dark:bg-gray-800 rounded-lg border-2 transition-colors" :class="paymentMethodsConfig.other ? 'border-indigo-500 dark:border-indigo-600' : 'border-gray-200 dark:border-gray-700'">
                   <div class="flex items-center gap-3">
                     <svg class="w-5 h-5" :class="paymentMethodsConfig.other ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-400'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -443,8 +536,6 @@
                 </div>
               </div>
             </div>
-          </div>
-
         </div>
       </div>
     </div>
@@ -456,11 +547,15 @@ import { onMounted, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ArrowPathIcon } from '@heroicons/vue/24/outline'
 import { useRestaurantSettings } from '@/composables/useRestaurantSettings'
+import { useOperationMode } from '@/composables/useOperationMode'
 
 const { t } = useI18n()
 
 // Restaurant settings management
 const restaurantSettings = useRestaurantSettings()
+
+// Operation mode for kitchen module check and POS mode
+const { showKitchen, isPosOnlyMode } = useOperationMode()
 
 // Computed properties to avoid repetitive .value access
 const currentPaperWidth = computed(() => restaurantSettings.paperWidth.value)

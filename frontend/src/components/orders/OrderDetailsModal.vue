@@ -647,13 +647,6 @@ function calculateChange() {
 async function handlePrintPreBill() {
   isPrintingPreBill.value = true;
   try {
-    console.log('📋 Order data for pre-bill:', {
-      order_number: props.order.order_number,
-      items_count: props.order.items?.length || 0,
-      items: props.order.items,
-      persons: props.order.persons
-    });
-    
     // Build order object with correct structure for printing
     // This ensures items are properly associated with persons
     const orderForPrint = {
@@ -669,7 +662,6 @@ async function handlePrintPreBill() {
       
       // If no items have person_id, we need to use the persons' items instead
       if (itemsWithPersonId.length === 0 && orderForPrint.persons.some((p: any) => p.items && p.items.length > 0)) {
-        console.log('⚠️ Items missing person_id, using items from persons structure');
         // Flatten items from persons
         orderForPrint.items = orderForPrint.persons.flatMap((person: any) => 
           (person.items || []).map((item: any) => ({
@@ -680,19 +672,8 @@ async function handlePrintPreBill() {
       }
     }
     
-    console.log('📋 Reconstructed order for print:', {
-      items_count: orderForPrint.items.length,
-      persons_count: orderForPrint.persons.length,
-      items_with_person_id: orderForPrint.items.filter((i: any) => i.person_id).length
-    });
-    
     await printPreBill(orderForPrint);
-    showInternalToast(
-      t('app.views.orders.modals.details.pre_bill_printed') || 'Pre-cuenta impresa exitosamente',
-      'success'
-    );
   } catch (error) {
-    console.error('Error printing pre-bill:', error);
     showInternalToast(
       t('app.views.orders.modals.details.pre_bill_print_error') || 'Error al imprimir la pre-cuenta',
       'error'
@@ -747,16 +728,8 @@ async function completePayment() {
         change_amount: paymentInfo.change
       };
       
-      console.log('🖨️ Printing customer receipt with payment info:', {
-        payment_method: paidOrder.payment_method,
-        amount_paid: paidOrder.amount_paid,
-        change_amount: paidOrder.change_amount
-      });
-      
       await printCustomerReceipt(paidOrder);
-      console.log('✅ Customer receipt printed successfully after payment');
     } catch (printError) {
-      console.error('❌ Error printing customer receipt:', printError);
       // Don't block the payment flow if printing fails
       showInternalToast(
         t('app.views.orders.modals.details.receipt_print_warning') || 'Pago completado pero no se pudo imprimir el recibo',
