@@ -45,3 +45,13 @@ dev-dist
 coverage/
 .nyc_output/
 *.lcov
+
+# Electron
+dist-electron/
+release/
+*.exe
+*.dmg
+*.AppImage
+
+# Electron config (keep example, ignore actual config)
+public/config.json

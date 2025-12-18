@@ -93,9 +93,9 @@ const goToSubscription = () => {
   router.push('/subscription');
 };
 
-const logout = () => {
+const logout = async () => {
   emit('close');
-  authStore.logout();
-  router.push('/login');
+  await authStore.logout();
+  await router.push({ name: 'Login' });
 };
 </script>

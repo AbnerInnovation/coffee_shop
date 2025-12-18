@@ -1,6 +1,8 @@
 import { defineConfig, loadEnv } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import { VitePWA } from 'vite-plugin-pwa';
+import electron from 'vite-plugin-electron';
+import electronRenderer from 'vite-plugin-electron-renderer';
 import { fileURLToPath, URL } from 'node:url';
 import { resolve } from 'node:path';
 import packageJson from './package.json';
@@ -11,7 +13,7 @@ export default defineConfig(({ mode }) => {
   const appVersion = env.VITE_APP_VERSION || packageJson.version || '1.0.0';
   
   return {
-    base: mode === 'production' ? '/' : '/',
+    base: process.env.ELECTRON ? './' : '/',
     plugins: [
       vue({
         template: {
@@ -20,6 +22,37 @@ export default defineConfig(({ mode }) => {
           }
         }
       }),
+      // Only enable electron plugin when building for Electron
+      ...(process.env.ELECTRON ? [
+        electron([
+          {
+            entry: 'electron/main.ts',
+            onstart(options) {
+              options.startup();
+            },
+            vite: {
+              build: {
+                outDir: 'dist-electron',
+                rollupOptions: {
+                  external: ['electron']
+                }
+              }
+            }
+          },
+          {
+            entry: 'electron/preload.ts',
+            onstart(options) {
+              options.reload();
+            },
+            vite: {
+              build: {
+                outDir: 'dist-electron'
+              }
+            }
+          }
+        ]),
+        electronRenderer()
+      ] : []),
       VitePWA({
         registerType: 'autoUpdate',
         includeAssets: ['favicon.png', 'icons/*.png'],
@@ -168,7 +201,7 @@ export default defineConfig(({ mode }) => {
       },
       fs: {
         strict: true,
-      },
+      }
     },
     build: {
       target: 'esnext',

@@ -1,0 +1,10 @@
+{
+  "restaurant": {
+    "subdomain": "mi-restaurante",
+    "apiUrl": "https://mi-restaurante.shopacoffee.com"
+  },
+  "app": {
+    "name": "Cloud Restaurant Admin",
+    "version": "1.4.2"
+  }
+}

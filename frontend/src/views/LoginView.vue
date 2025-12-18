@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen flex justify-center bg-gray-50 dark:bg-gray-950 py-12 px-4 sm:px-6 lg:px-8">
+  <div class=" flex justify-center bg-gray-50 dark:bg-gray-950 py-12 px-4 sm:px-6 lg:px-8">
     <div class="max-w-md w-full space-y-8">
       <div>
         <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
@@ -60,6 +60,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
+import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { useI18n } from 'vue-i18n';
 import { useToast } from '@/composables/useToast';
@@ -68,6 +69,7 @@ const email = ref('');
 const password = ref('');
 const rememberMe = ref(true);
 const loading = ref(false);
+const router = useRouter();
 const authStore = useAuthStore();
 const { t } = useI18n();
 const { showError } = useToast();
@@ -88,11 +90,31 @@ const handleLogin = async () => {
       password: password.value
     }, rememberMe.value);
     
-    if (!success) {
-      const errorMessage = authStore.error || '';
-
-      let translationKey = backendResponseTranslations[errorMessage] || 'app.views.auth.login.errors.failed';
+    if (success) {
+      // Redirect based on user role
+      const user = authStore.user;
+      let redirectRoute = 'Dashboard';
       
+      if (user?.role === 'staff' && user?.staff_type) {
+        switch (user.staff_type) {
+          case 'cashier':
+            redirectRoute = 'CashRegister';
+            break;
+          case 'waiter':
+            redirectRoute = 'Orders';
+            break;
+          case 'kitchen':
+            redirectRoute = 'Kitchen';
+            break;
+          default:
+            redirectRoute = 'Dashboard';
+        }
+      }
+      
+      await router.replace({ name: redirectRoute });
+    } else {
+      const errorMessage = authStore.error || '';
+      let translationKey = backendResponseTranslations[errorMessage] || 'app.views.auth.login.errors.failed';
       showError(t(translationKey) as string, 6000);
     }
   } catch (err: any) {

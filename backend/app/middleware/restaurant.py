@@ -44,42 +44,48 @@ async def get_restaurant_from_request(request: Request) -> Optional[Restaurant]:
     Extract restaurant from request subdomain.
     Returns None if no subdomain or restaurant not found.
     """
-    # Get host from request
-    host = request.headers.get('host', '')
+    # PRIORITY 1: Check for explicit x-restaurant-subdomain header first (for Electron/mobile apps)
+    hdr_sub = request.headers.get('x-restaurant-subdomain')
+    logger.info(f"[get_restaurant_from_request] x-restaurant-subdomain header: {hdr_sub}")
     
-    # Extract subdomain from Host
-    subdomain = extract_subdomain(host)
+    if hdr_sub:
+        subdomain = hdr_sub.strip().lower()
+        logger.info(f"[get_restaurant_from_request] Using subdomain from x-restaurant-subdomain header: {subdomain}")
+    else:
+        # PRIORITY 2: Get host from request
+        host = request.headers.get('host', '')
+        logger.info(f"[get_restaurant_from_request] Host header: {host}")
+        
+        # Extract subdomain from Host
+        subdomain = extract_subdomain(host)
+        logger.info(f"[get_restaurant_from_request] Subdomain from host: {subdomain}")
 
-    # Treat reserved subdomains as non-tenant so we can resolve via Origin/Referer/header
-    if subdomain in RESERVED_SUBDOMAINS:
-        subdomain = None
-    
-    # If no subdomain on Host, try Origin then Referer headers
-    if not subdomain:
-        origin = request.headers.get('origin') or ''
-        referer = request.headers.get('referer') or ''
-        for hdr in (origin, referer):
-            if hdr:
-                try:
-                    parsed = urlparse(hdr)
-                    origin_host = parsed.hostname or ''
-                    subdomain = extract_subdomain(origin_host)
-                    if subdomain:
-                        logger.debug(f"Resolved subdomain from header ({'Origin' if hdr==origin else 'Referer'}): {subdomain}")
-                        break
-                except Exception:
-                    # ignore parse errors
-                    pass
-    
-    # Final fallback: allow explicit override via header for server-to-server calls
-    if not subdomain:
-        hdr_sub = request.headers.get('x-restaurant-subdomain')
-        if hdr_sub:
-            subdomain = hdr_sub.strip().lower()
+        # Treat reserved subdomains as non-tenant so we can resolve via Origin/Referer/header
+        if subdomain in RESERVED_SUBDOMAINS:
+            subdomain = None
+        
+        # PRIORITY 3: If no subdomain on Host, try Origin then Referer headers
+        if not subdomain:
+            origin = request.headers.get('origin') or ''
+            referer = request.headers.get('referer') or ''
+            for hdr in (origin, referer):
+                if hdr:
+                    try:
+                        parsed = urlparse(hdr)
+                        origin_host = parsed.hostname or ''
+                        subdomain = extract_subdomain(origin_host)
+                        if subdomain:
+                            logger.debug(f"Resolved subdomain from header ({'Origin' if hdr==origin else 'Referer'}): {subdomain}")
+                            break
+                    except Exception:
+                        # ignore parse errors
+                        pass
     
     if not subdomain:
-        logger.debug(f"No subdomain found in host: {host}")
+        logger.warning(f"[get_restaurant_from_request] No subdomain found in host: {host}")
         return None
+    
+    logger.info(f"[get_restaurant_from_request] Final subdomain to query: {subdomain}")
     
     # Query database for restaurant
     db = SessionLocal()

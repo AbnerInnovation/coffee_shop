@@ -6,7 +6,7 @@
     <!-- Main content -->
     <main :class="[
       'bg-gray-50 dark:bg-gray-950',
-      showNavbar ? 'min-h-[calc(100vh-3.5rem)] sm:min-h-[calc(100vh-4rem)]' : 'min-h-screen'
+      showNavbar ? 'min-h-[calc(100vh-3.6rem)] sm:min-h-[calc(100vh-4.1rem)]' : 'min-h-screen'
     ]">
       <div :class="[
         'bg-gray-50 dark:bg-gray-950 mx-auto',

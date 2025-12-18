@@ -1,10 +1,16 @@
-import { getApiBaseUrl } from '@/utils/subdomain';
+import { getApiBaseUrl, isElectron } from '@/utils/subdomain';
 
 // API Configuration
 const API_CONFIG = {
   // Base URL for all API requests (subdomain-aware)
   get BASE_URL() {
-    // Use environment variable if set, otherwise use subdomain-aware URL
+    // In Electron, always use config.json URL
+    if (isElectron()) {
+      const url = getApiBaseUrl();
+      console.log('[API_CONFIG] Electron mode, using:', url);
+      return url;
+    }
+    // In browser, use environment variable if set, otherwise use subdomain-aware URL
     return import.meta.env.VITE_API_URL || getApiBaseUrl();
   },
   

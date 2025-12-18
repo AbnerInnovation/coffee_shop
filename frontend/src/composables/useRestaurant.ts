@@ -42,8 +42,8 @@ export function useRestaurant() {
       loading.value = true;
       error.value = null;
       
-      const response = await api.get('/restaurants/current');
-      restaurant.value = response.data;
+      const data = await api.get('/restaurants/current') as Restaurant;
+      restaurant.value = data; // Interceptor already flattens response
     } catch (err: any) {
       console.error('Failed to fetch restaurant:', err);
       error.value = err.response?.data?.detail || 'Failed to load restaurant information';

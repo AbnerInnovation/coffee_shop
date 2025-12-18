@@ -1,13 +1,15 @@
-import { createRouter, createWebHistory } from 'vue-router';
+import { createRouter, createWebHistory, createWebHashHistory } from 'vue-router';
 import { routes } from './routes';
 import { useAuthStore } from './stores/auth';
 import { subscriptionService } from './services/subscriptionService';
 import * as permissions from './utils/permissions';
 import { hasRestaurantContext } from './utils/subdomain';
 import { safeStorage } from './utils/storage';
+import { isElectron } from './utils/subdomain';
 
 const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
+  // Use hash history for Electron, web history for browser
+  history: isElectron() ? createWebHashHistory() : createWebHistory(import.meta.env.BASE_URL),
   routes,
   scrollBehavior(to, from, savedPosition) {
     return savedPosition || { top: 0 };
@@ -19,8 +21,19 @@ const router = createRouter({
  * Uses the centralized permissions module for consistent access control
  */
 router.beforeEach(async (to, from, next) => {
+  console.log('[Router] Navigation:', { from: from.path, to: to.path, name: to.name });
+  
   const authStore = useAuthStore();
   const user = authStore.user;
+  
+  console.log('[Router] Auth state:', { isAuthenticated: authStore.isAuthenticated, user: user?.email });
+
+  // 0. Redirect root to login if not authenticated
+  if (to.path === '/' && !authStore.isAuthenticated) {
+    console.log('[Router] Redirecting to Login (not authenticated)');
+    next({ name: 'Login', replace: true });
+    return;
+  }
 
   // 1. Check authentication requirement
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {

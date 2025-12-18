@@ -1,0 +1,59 @@
+{
+  "appId": "com.shopacoffee.admin",
+  "productName": "Cloud Restaurant Admin",
+  "copyright": "Copyright © 2024 Shop a Coffee",
+  "directories": {
+    "output": "release",
+    "buildResources": "build"
+  },
+  "files": [
+    "dist/**/*",
+    "dist-electron/**/*",
+    "package.json",
+    "public/config.json",
+    "public/config.example.json",
+    "public/README-CONFIG.txt"
+  ],
+  "win": {
+    "target": [
+      {
+        "target": "nsis",
+        "arch": ["x64", "ia32"]
+      },
+      {
+        "target": "portable",
+        "arch": ["x64"]
+      }
+    ],
+    "artifactName": "${productName}-${version}-${arch}.${ext}",
+    "requestedExecutionLevel": "asInvoker",
+    "sign": false
+  },
+  "nsis": {
+    "oneClick": false,
+    "allowToChangeInstallationDirectory": true,
+    "createDesktopShortcut": true,
+    "createStartMenuShortcut": true,
+    "shortcutName": "Cloud Restaurant Admin",
+    "deleteAppDataOnUninstall": false,
+    "perMachine": false
+  },
+  "portable": {
+    "artifactName": "${productName}-${version}-portable.exe"
+  },
+  "extraResources": [
+    {
+      "from": "public/icons",
+      "to": "icons",
+      "filter": ["**/*"]
+    },
+    {
+      "from": "public/config.json",
+      "to": "config.json"
+    },
+    {
+      "from": "public/config.example.json",
+      "to": "config.example.json"
+    }
+  ]
+}

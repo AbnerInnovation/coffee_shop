@@ -1,7 +1,6 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import { useRouter } from 'vue-router';
-import axios from 'axios';
+import api from '@/services/api';
 import { safeStorage, checkStorageAndWarn } from '@/utils/storage';
 import { setGlobalToken } from '@/utils/tokenCache';
 import type { Restaurant } from '@/composables/useRestaurant';
@@ -34,8 +33,6 @@ interface AuthState {
 
 export const useAuthStore = defineStore('auth', () => {
   const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8001') + '/api/v1';
-  // Get the router instance
-  const router = useRouter();
   
   // State
   const user = ref<User | null>(null);
@@ -59,13 +56,13 @@ export const useAuthStore = defineStore('auth', () => {
       formData.append('grant_type', 'password');
       formData.append('scope', '');
 
-      const response = await axios.post(`${API_BASE_URL}/auth/token`, formData, {
+      const response = await api.post('/auth/token', formData, {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
-      });
+      }) as any;
 
-      const { access_token, refresh_token } = response.data;
+      const { access_token, refresh_token } = response;
       
       if (!access_token) {
         throw new Error('No access token received');
@@ -83,13 +80,13 @@ export const useAuthStore = defineStore('auth', () => {
       
       try {
         // Fetch user data
-        const userResponse = await axios.get(`${API_BASE_URL}/users/me`, {
+        const userResponse = await api.get('/users/me', {
           headers: { Authorization: `Bearer ${access_token}` },
         });
         
-        if (userResponse.data) {
-          // Update store state FIRST
-          const userData = userResponse.data;
+        if (userResponse) {
+          // Update store state FIRST (interceptor already flattened response)
+          const userData = userResponse as unknown as User;
           user.value = userData;
           
           // Save to BOTH localStorage and sessionStorage for Safari compatibility
@@ -117,30 +114,7 @@ export const useAuthStore = defineStore('auth', () => {
             // Don't fail login if restaurant load fails
           }
           
-          // Navigate based on user role and staff type
-          if (router) {
-            let redirectRoute = 'Dashboard'; // Default to Dashboard for all
-            
-            // Redirect based on role and staff_type
-            if (userData.role === 'staff' && userData.staff_type) {
-              switch (userData.staff_type) {
-                case 'cashier':
-                  redirectRoute = 'CashRegister';
-                  break;
-                case 'waiter':
-                  redirectRoute = 'Orders';
-                  break;
-                case 'kitchen':
-                  redirectRoute = 'Kitchen';
-                  break;
-                default:
-                  redirectRoute = 'Dashboard';
-              }
-            }
-            
-            // Use router.replace instead of push to avoid back button issues
-            await router.replace({ name: redirectRoute });
-          }
+          // Note: Redirect is now handled by LoginView.vue component
           return true;
         }
       } catch (userError) {
@@ -170,11 +144,11 @@ export const useAuthStore = defineStore('auth', () => {
       error.value = null;
       
       // Register new user
-      const response = await axios.post(`${API_BASE_URL}/auth/register`, {
+      const response = await api.post('/auth/register', {
         email: registerData.email,
         password: registerData.password,
         full_name: registerData.full_name,
-        role: registerData.role || 'user'
+        role: registerData.role || 'customer',
       });
       
       // Auto-login after registration
@@ -197,7 +171,7 @@ export const useAuthStore = defineStore('auth', () => {
       
       // Call backend logout to clear HTTPOnly cookies
       try {
-        await axios.post(`${API_BASE_URL}/auth/logout`);
+        await api.post('/auth/logout');
       } catch (err) {
         console.warn('Backend logout failed, continuing with client cleanup:', err);
       }
@@ -215,17 +189,14 @@ export const useAuthStore = defineStore('auth', () => {
       safeStorage.removeItem('refresh_token', true);
       safeStorage.removeItem('user', true);
       
-      // Use window.location to force a full page reload
-      // This avoids issues with dynamic module loading after logout
-      window.location.href = '/login';
+      // Note: Navigation is handled by the calling component (e.g., AppNavbar.vue)
+      // Store should not handle routing directly
     } catch (error) {
       console.error('Error during logout:', error);
-      // Even if navigation fails, ensure we're logged out
+      // Even if there's an error, ensure we're logged out
       user.value = null;
       accessToken.value = null;
       setGlobalToken(null);
-      // Fallback to window.location
-      window.location.href = '/login';
     } finally {
       loading.value = false;
     }
@@ -245,13 +216,13 @@ export const useAuthStore = defineStore('auth', () => {
       }
       
       // Verify token and get user data
-      const response = await axios.get(`${API_BASE_URL}/users/me`, {
+      const response = await api.get('/users/me', {
         headers: { Authorization: `Bearer ${token}` },
       });
       
-      if (response.data) {
-        // Update store state with fresh user data
-        user.value = response.data;
+      if (response) {
+        // Update store state with fresh user data (interceptor already flattened)
+        user.value = response as unknown as User;
         // Persist user to storage
         safeStorage.setItem('user', JSON.stringify(user.value));
         
@@ -302,8 +273,7 @@ export const useAuthStore = defineStore('auth', () => {
   // Load restaurant information
   async function loadRestaurant() {
     try {
-      const response = await axios.get(`${API_BASE_URL}/restaurants/current`);
-      restaurant.value = response.data;
+      restaurant.value = await api.get('/restaurants/current');
     } catch (err) {
       console.error('Failed to load restaurant:', err);
       restaurant.value = null;

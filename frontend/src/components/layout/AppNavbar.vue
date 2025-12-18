@@ -18,7 +18,7 @@
             <XMarkIcon v-else class="block h-6 w-6" aria-hidden="true" />
           </button>
           
-          <router-link to="/" class="flex-shrink-0">
+          <router-link to="/" class="flex-shrink-0 flex items-center gap-2 sm:gap-3">
             <!-- Logo for dark mode -->
             <img 
               v-if="isDark" 
@@ -33,6 +33,12 @@
               alt="Logo" 
               class="h-8 sm:h-12 w-auto cursor-pointer hover:opacity-80 transition-opacity"
             />
+            <!-- Restaurant Name -->
+            <div v-if="restaurant" class="hidden md:block">
+              <h1 class="text-base font-semibold text-gray-900 dark:text-white truncate max-w-[200px]">
+                {{ restaurant.name }}
+              </h1>
+            </div>
           </router-link>
           
           <div v-if="authStore.isAuthenticated" class="hidden md:block">
@@ -368,6 +374,7 @@ import { useTheme } from '@/composables/useTheme';
 import { alertService } from '@/services/alertService';
 import { useAppVersion } from '@/composables/useAppVersion';
 import { useOperationMode } from '@/composables/useOperationMode';
+import { useRestaurant } from '@/composables/useRestaurant';
 
 const props = defineProps({
   subscriptionFeatures: {
@@ -397,6 +404,7 @@ const {
 } = usePermissions();
 
 const { showTables, showKitchen, showWaiters, isPosOnlyMode } = useOperationMode();
+const { restaurant } = useRestaurant();
 
 const isMobileMenuOpen = ref(false);
 const isProfileMenuOpen = ref(false);
@@ -487,18 +495,18 @@ function toggleProfileMenu() {
 }
 
 async function handleLogout() {
+  // Close the profile menu
+  isProfileMenuOpen.value = false;
+  
   try {
-    // Close the profile menu
-    isProfileMenuOpen.value = false;
-    
+    // Clear auth state
     await authStore.logout();
-    // Note: authStore.logout() uses window.location.href, so this code won't execute
-    // The page will reload before we get here
   } catch (error) {
     console.error('Logout failed:', error);
-    // If logout fails, force navigation with full page reload
-    window.location.href = '/login';
   }
+  
+  // Force navigation to login (preserves subdomain)
+  window.location.href = window.location.origin + '/login';
 }
 
 // Load alert count

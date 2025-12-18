@@ -2,6 +2,7 @@ import axios, { AxiosError, type AxiosInstance, type InternalAxiosRequestConfig,
 import API_CONFIG from '@/config/api';
 import { safeStorage } from '@/utils/storage';
 import { getGlobalToken } from '@/utils/tokenCache';
+import { getSubdomain } from '@/utils/subdomain';
 
 declare module 'axios' {
   export interface AxiosRequestConfig {
@@ -20,9 +21,22 @@ const api: AxiosInstance = axios.create({
   withCredentials: true, // Send cookies with requests
 });
 
-// Request interceptor to add auth token to requests
+// Request interceptor to add auth token and subdomain header
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
+    // Add subdomain header for Electron FIRST (before auth check)
+    // This is critical for login endpoint which needs the subdomain
+    const subdomain = getSubdomain();
+    console.log('[API Interceptor] Request to:', config.url);
+    console.log('[API Interceptor] Subdomain from getSubdomain():', subdomain);
+    
+    if (subdomain) {
+      config.headers['x-restaurant-subdomain'] = subdomain;
+      console.log('[API Interceptor] ✅ Added x-restaurant-subdomain header:', subdomain);
+    } else {
+      console.warn('[API Interceptor] ⚠️ No subdomain available - header NOT added');
+    }
+    
     // Try in-memory token first (for Safari), then storage, then authService
     const token = getGlobalToken() || 
                   safeStorage.getItem('access_token') || 
@@ -32,6 +46,7 @@ api.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    
     return config;
   },
   (error) => {

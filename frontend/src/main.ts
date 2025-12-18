@@ -10,6 +10,7 @@ import 'vue-toastification/dist/index.css';
 import { safeStorage } from './utils/storage';
 import { setGlobalToken, getGlobalToken } from './utils/tokenCache';
 import { registerSW } from 'virtual:pwa-register';
+import { initializeElectronConfig } from './utils/subdomain';
 
 // Configure axios
 axios.defaults.baseURL = import.meta.env.VITE_API_URL || 'http://localhost:8001';
@@ -66,29 +67,56 @@ axios.interceptors.response.use(
   }
 );
 
-const pinia = createPinia();
-const app = createApp(App);
+// Initialize Electron configuration before creating the app
+async function initializeApp() {
+  await initializeElectronConfig();
+  
+  // Set axios default header for Electron subdomain
+  const subdomain = (await import('./utils/subdomain')).getSubdomain();
+  if (subdomain) {
+    const api = (await import('./services/api')).default;
+    api.defaults.headers.common['x-restaurant-subdomain'] = subdomain;
+    console.log('[main.ts] Set default x-restaurant-subdomain header:', subdomain);
+  }
+  
+  const pinia = createPinia();
+  const app = createApp(App);
 
-app.use(pinia);
-app.use(router);
-app.use(i18n);
-// Configure Vue Toastification with sensible defaults
-const toastOptions: ToastOptions = {
-  position: POSITION.BOTTOM_RIGHT,
-  timeout: 3500,
-  closeOnClick: true,
-  pauseOnFocusLoss: true,
-  pauseOnHover: true,
-  draggable: true,
-  draggablePercent: 0.6,
-  showCloseButtonOnHover: false,
-  hideProgressBar: false,
-  closeButton: 'button',
-  icon: true,
-  rtl: false,
-};
-app.use(Toast, toastOptions);
-app.mount('#app');
+  app.use(pinia);
+  app.use(i18n);
+  
+  // Initialize auth store before router
+  const { useAuthStore } = await import('./stores/auth');
+  const authStore = useAuthStore();
+  await authStore.checkAuth();
+  
+  app.use(router);
+  
+  // Configure Vue Toastification with sensible defaults
+  const toastOptions: ToastOptions = {
+    position: POSITION.BOTTOM_RIGHT,
+    timeout: 3500,
+    closeOnClick: true,
+    pauseOnFocusLoss: true,
+    pauseOnHover: true,
+    draggable: true,
+    draggablePercent: 0.6,
+    showCloseButtonOnHover: false,
+    hideProgressBar: false,
+    closeButton: 'button',
+    icon: true,
+    rtl: false,
+  };
+  app.use(Toast, toastOptions);
+  
+  // Wait for router to be ready before mounting
+  await router.isReady();
+  
+  console.log('[main.ts] Router ready, mounting app...');
+  app.mount('#app');
+}
+
+initializeApp();
 
 // Register PWA Service Worker and notify the app when a new version is available
 if ('serviceWorker' in navigator) {
