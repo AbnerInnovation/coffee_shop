@@ -6,6 +6,7 @@ import * as permissions from './utils/permissions';
 import { hasRestaurantContext } from './utils/subdomain';
 import { safeStorage } from './utils/storage';
 import { isElectron } from './utils/subdomain';
+import { isRouteAvailable } from './utils/platform';
 
 const router = createRouter({
   // Use hash history for Electron, web history for browser
@@ -24,8 +25,14 @@ router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore();
   const user = authStore.user;
   
+  // 0. Check if route is available in current platform (Electron vs Web)
+  if (to.name && !isRouteAvailable(to.name as string)) {
+    // Redirect to Dashboard if trying to access cloud-only route in Electron
+    next({ name: 'Dashboard' });
+    return;
+  }
 
-  // 0. Redirect root to login if not authenticated
+  // 1. Redirect root to login if not authenticated
   if (to.path === '/' && !authStore.isAuthenticated) {
     next({ name: 'Login', replace: true });
     return;

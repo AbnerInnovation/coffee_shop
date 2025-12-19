@@ -27,14 +27,8 @@ export function useTheme() {
   }
 
   function initTheme() {
-    const stored = safeStorage.getItem(STORAGE_KEY);
-    if (stored === 'light' || stored === 'dark') {
-      applyTheme(stored === 'dark');
-      return;
-    }
-    // Fallback to system preference
-    const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-    applyTheme(prefersDark);
+    // Always use dark theme
+    applyTheme(true);
   }
 
   onMounted(() => {

@@ -5,8 +5,9 @@
       :subtitle="t('app.views.menu.categories.subtitle') || 'Manage your menu categories'"
     >
       <template #actions>
+        <!-- Add button - Cloud only (hidden in Electron Desktop) -->
         <button
-          v-if="canEditCategories"
+          v-if="platformFeatures.cloudOnly.categoryManagement && canEditCategories"
           type="button"
           @click="openModal()"
           class="block rounded-md bg-indigo-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
@@ -45,6 +46,7 @@ import { onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { usePermissions } from '@/composables/usePermissions';
 import { useCategoryManagement } from '@/composables/useCategoryManagement';
+import { platformFeatures } from '@/utils/platform';
 import MainLayout from '@/components/layout/MainLayout.vue';
 import PageHeader from '@/components/layout/PageHeader.vue';
 import CategoryList from '@/components/categories/CategoryList.vue';

@@ -54,8 +54,8 @@
                   </p>
                 </div>
                 
-                <!-- Actions Dropdown -->
-                <div v-if="category.id && canEdit" class="absolute top-4 right-4" @click.stop>
+                <!-- Actions Dropdown - Cloud only (hidden in Electron Desktop) -->
+                <div v-if="platformFeatures.cloudOnly.categoryManagement && category.id && canEdit" class="absolute top-4 right-4" @click.stop>
                   <DropdownMenu
                     :id="`category-${category.id}`"
                     button-label="Category actions"
@@ -95,6 +95,7 @@ import DropdownMenuItem from '@/components/ui/DropdownMenuItem.vue';
 import DropdownMenuDivider from '@/components/ui/DropdownMenuDivider.vue';
 import { PencilIcon, TrashIcon, EyeIcon, EyeSlashIcon } from '@heroicons/vue/24/outline';
 import type { MenuCategory } from '@/types/menu';
+import { platformFeatures } from '@/utils/platform';
 
 defineProps<{
   categories: MenuCategory[];

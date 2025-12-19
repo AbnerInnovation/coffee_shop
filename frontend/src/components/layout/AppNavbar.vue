@@ -64,9 +64,9 @@
         <!-- Desktop user menu -->
         <div v-if="authStore.isAuthenticated" class="hidden md:block">
           <div class="ml-4 flex items-center md:ml-6 gap-2 sm:gap-3">
-            <!-- Alerts Badge - Only show in restaurant subdomains -->
+            <!-- Alerts Badge - Only show in restaurant subdomains and Cloud (not Electron) -->
             <router-link
-              v-if="canViewSubscription && hasRestaurantContext()"
+              v-if="platformFeatures.cloudOnly.subscription && canViewSubscription && hasRestaurantContext()"
               to="/subscription"
               class="relative rounded-full p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-300 dark:hover:text-white dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-primary-500 touch-manipulation"
               :aria-label="'Alertas de suscripción'"
@@ -80,16 +80,6 @@
               </span>
             </router-link>
 
-            <!-- Theme toggle -->
-            <button
-              type="button"
-              class="rounded-full p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-300 dark:hover:text-white dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-primary-500 touch-manipulation"
-              :aria-label="$t('app.actions.toggle_theme')"
-              @click="toggleTheme()"
-            >
-              <SunIcon v-if="isDark" class="h-5 w-5 sm:h-6 sm:w-6" />
-              <MoonIcon v-else class="h-5 w-5 sm:h-6 sm:w-6" />
-            </button>
             <div class="relative ml-3" ref="profileMenuRef">
               <div>
                 <button
@@ -124,8 +114,9 @@
                   aria-labelledby="user-menu-button"
                   tabindex="-1"
                 >
+                  <!-- Cloud-only links (hidden in Electron Desktop) -->
                   <router-link
-                    v-if="canManageUsers && hasRestaurantContext()"
+                    v-if="platformFeatures.cloudOnly.users && canManageUsers && hasRestaurantContext()"
                     to="/users"
                     class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700/60"
                     role="menuitem"
@@ -135,7 +126,7 @@
                     {{ t('app.nav.users') }}
                   </router-link>
                   <router-link
-                    v-if="canViewSubscription && hasRestaurantContext()"
+                    v-if="platformFeatures.cloudOnly.reports && canViewSubscription && hasRestaurantContext()"
                     to="/reports"
                     class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700/60"
                     role="menuitem"
@@ -144,9 +135,9 @@
                   >
                     {{ t('app.nav.reports') }}
                   </router-link>
-                  <div class="border-t border-gray-100 dark:border-gray-700 my-1"></div>
+                  <div v-if="!isElectron()" class="border-t border-gray-100 dark:border-gray-700 my-1"></div>
                   <router-link
-                    v-if="(authStore.user?.role === 'admin' || authStore.user?.role === 'sysadmin') && hasRestaurantContext()"
+                    v-if="platformFeatures.cloudOnly.subscription && (authStore.user?.role === 'admin' || authStore.user?.role === 'sysadmin') && hasRestaurantContext()"
                     to="/subscription"
                     class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700/60"
                     role="menuitem"
@@ -156,7 +147,7 @@
                     {{ t('app.nav.subscription') }}
                   </router-link>
                   <router-link
-                    v-if="(authStore.user?.role === 'admin' || authStore.user?.role === 'sysadmin') && hasRestaurantContext()"
+                    v-if="platformFeatures.cloudOnly.subscription && (authStore.user?.role === 'admin' || authStore.user?.role === 'sysadmin') && hasRestaurantContext()"
                     to="/configuration"
                     class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700/60"
                     role="menuitem"
@@ -196,18 +187,6 @@
           </div>
         </div>
 
-        <!-- Theme toggle mobile -->
-        <div class="-mr-2 flex md:hidden">
-          <button
-            type="button"
-            class="rounded-full p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-300 dark:hover:text-white dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-primary-500 touch-manipulation"
-            :aria-label="$t('app.actions.toggle_theme')"
-            @click="toggleTheme()"
-          >
-            <SunIcon v-if="isDark" class="h-6 w-6" />
-            <MoonIcon v-else class="h-6 w-6" />
-          </button>
-        </div>
       </div>
     </div>
 
@@ -302,8 +281,9 @@
             </div>
           </div>
           <div class="space-y-1 px-3">
+            <!-- Cloud-only links (hidden in Electron Desktop) -->
             <router-link
-              v-if="canManageUsers && hasRestaurantContext()"
+              v-if="platformFeatures.cloudOnly.users && canManageUsers && hasRestaurantContext()"
               to="/users"
               class="block rounded-md px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white"
               @click="isMobileMenuOpen = false"
@@ -311,16 +291,16 @@
               {{ $t('app.nav.users') }}
             </router-link>
             <router-link
-              v-if="canViewSubscription && hasRestaurantContext()"
+              v-if="platformFeatures.cloudOnly.reports && canViewSubscription && hasRestaurantContext()"
               to="/reports"
               class="block rounded-md px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white"
               @click="isMobileMenuOpen = false"
             >
               {{ $t('app.nav.reports') }}
             </router-link>
-            <div class="border-t border-gray-100 dark:border-gray-700 my-2"></div>
+            <div v-if="!isElectron()" class="border-t border-gray-100 dark:border-gray-700 my-2"></div>
             <router-link
-              v-if="(authStore.user?.role === 'admin' || authStore.user?.role === 'sysadmin') && hasRestaurantContext()"
+              v-if="platformFeatures.cloudOnly.subscription && (authStore.user?.role === 'admin' || authStore.user?.role === 'sysadmin') && hasRestaurantContext()"
               to="/subscription"
               class="block rounded-md px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white"
               @click="isMobileMenuOpen = false"
@@ -328,7 +308,7 @@
               {{ $t('app.nav.subscription') }}
             </router-link>
             <router-link
-              v-if="(authStore.user?.role === 'admin' || authStore.user?.role === 'sysadmin') && hasRestaurantContext()"
+              v-if="platformFeatures.cloudOnly.subscription && (authStore.user?.role === 'admin' || authStore.user?.role === 'sysadmin') && hasRestaurantContext()"
               to="/configuration"
               class="block rounded-md px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white"
               @click="isMobileMenuOpen = false"
@@ -364,7 +344,7 @@
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { Bars3Icon, XMarkIcon, MoonIcon, SunIcon, BellAlertIcon } from '@heroicons/vue/24/outline';
+import { Bars3Icon, XMarkIcon, BellAlertIcon } from '@heroicons/vue/24/outline';
 import { useAuthStore } from '@/stores/auth';
 import { useToast } from '@/composables/useToast';
 import { usePermissions } from '@/composables/usePermissions';
@@ -375,6 +355,9 @@ import { alertService } from '@/services/alertService';
 import { useAppVersion } from '@/composables/useAppVersion';
 import { useOperationMode } from '@/composables/useOperationMode';
 import { useRestaurant } from '@/composables/useRestaurant';
+import { isElectron, platformFeatures } from '@/utils/platform';
+
+const router = useRouter();
 
 const props = defineProps({
   subscriptionFeatures: {
@@ -391,7 +374,7 @@ const props = defineProps({
 const authStore = useAuthStore();
 const route = useRoute();
 const { t } = useI18n();
-const { isDark, toggleTheme } = useTheme();
+const { isDark } = useTheme();
 const { appVersion } = useAppVersion();
 const { 
   canEditCategories, 
@@ -505,8 +488,14 @@ async function handleLogout() {
     console.error('Logout failed:', error);
   }
   
-  // Force navigation to login (preserves subdomain)
-  window.location.href = window.location.origin + '/login';
+  // Use router navigation in Electron, window.location in web
+  if (isElectron()) {
+    // In Electron, use Vue Router to avoid blank screen
+    router.push({ name: 'Login', replace: true });
+  } else {
+    // In web, use window.location to preserve subdomain
+    window.location.href = window.location.origin + '/login';
+  }
 }
 
 // Load alert count

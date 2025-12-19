@@ -5,6 +5,7 @@ import { FunnelIcon, PencilIcon, TrashIcon, CheckCircleIcon, XCircleIcon as XCir
 import type { MenuItem, MenuItemVariant, MenuCategory } from '@/types/menu';
 import { useI18n } from 'vue-i18n';
 import { usePermissions } from '@/composables/usePermissions';
+import { platformFeatures } from '@/utils/platform';
 import PageHeader from '@/components/layout/PageHeader.vue';
 import DropdownMenu from '@/components/ui/DropdownMenu.vue';
 import DropdownMenuItem from '@/components/ui/DropdownMenuItem.vue';
@@ -67,8 +68,9 @@ function isItemAvailable(item: MenuItem): boolean {
       :subtitle="t('app.views.menu.list.subtitle')"
     >
       <template #actions>
+        <!-- Add button - Cloud only (hidden in Electron Desktop) -->
         <button
-          v-if="canEditMenu"
+          v-if="platformFeatures.cloudOnly.menuManagement && canEditMenu"
           type="button"
           @click="$emit('add-item')"
           class="block rounded-md bg-indigo-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
@@ -130,8 +132,8 @@ function isItemAvailable(item: MenuItem): boolean {
                 :data-dropdown-container="`menu-item-${item.id}`"
                 class="bg-white dark:bg-gray-900 rounded-lg shadow border border-gray-200 dark:border-gray-800 p-3 relative"
               >
-                <!-- Three Dots Menu (only for admin/sysadmin) -->
-                <div v-if="item.id && canEditMenu" class="absolute top-2 right-2 z-30" @click.stop>
+                <!-- Three Dots Menu - Cloud only (hidden in Electron Desktop) -->
+                <div v-if="platformFeatures.cloudOnly.menuManagement && item.id && canEditMenu" class="absolute top-2 right-2 z-30" @click.stop>
                   <DropdownMenu
                     :id="`menu-item-${item.id}`"
                     button-label="Menu item actions"
@@ -341,7 +343,8 @@ function isItemAvailable(item: MenuItem): boolean {
                     </span>
                   </td>
                   <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6 dark:text-gray-400">
-                    <div v-if="item.id && canEditMenu" class="flex justify-end" @click.stop>
+                    <!-- Actions Menu - Cloud only (hidden in Electron Desktop) -->
+                    <div v-if="platformFeatures.cloudOnly.menuManagement && item.id && canEditMenu" class="flex justify-end" @click.stop>
                       <DropdownMenu
                         :id="`menu-item-desktop-${item.id}`"
                         button-label="Menu item actions"
