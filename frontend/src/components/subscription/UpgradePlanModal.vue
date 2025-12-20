@@ -229,6 +229,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'close'): void;
   (e: 'upgraded'): void;
+  (e: 'requiresPayment', data: { planId: number, billingCycle: string }): void;
 }>();
 
 // State
@@ -291,17 +292,22 @@ const confirmUpgrade = async () => {
   } catch (error: any) {
     console.error('Error upgrading plan:', error);
     
-    // Handle 402 Payment Required (expired subscription)
+    // Handle 402 Payment Required (expired subscription - needs manual payment)
     if (error.response?.status === 402) {
-      toast.error(t('app.subscription.errors.reactivation_requires_payment'), {
+      const detail = error.response?.data?.detail;
+      const message = typeof detail === 'object' ? detail.message : detail;
+      
+      toast.info(message || 'Tu suscripción ha expirado. Serás redirigido al proceso de pago.', {
         position: POSITION.TOP_RIGHT,
-        timeout: 10000,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true
+        timeout: 5000
       });
       
-      // Close modal and let parent handle payment flow
+      // Emit event with plan data so parent can open renewal modal
+      emit('requiresPayment', {
+        planId: selectedPlanId.value!,
+        billingCycle: billingCycle.value
+      });
+      
       closeModal();
       return;
     }

@@ -297,32 +297,35 @@ def upgrade_subscription(
             # Use the most recent subscription
             existing_subscription = max(existing_subscriptions, key=lambda s: s.created_at)
             
-            # SECURITY: Prevent reactivation of expired subscriptions without payment
+            # If subscription is expired, redirect to manual payment flow
             if existing_subscription.status in [SubscriptionStatus.EXPIRED, SubscriptionStatus.PAST_DUE]:
                 raise HTTPException(
                     status_code=status.HTTP_402_PAYMENT_REQUIRED,
                     detail={
                         "error": "subscription_expired",
-                        "message": "Your subscription has expired. Please complete payment to reactivate it.",
+                        "message": "Tu suscripción ha expirado. Para reactivarla debes completar el proceso de pago.",
                         "action_required": "payment",
                         "subscription_id": existing_subscription.id,
+                        "plan_id": plan_id,
+                        "billing_cycle": billing_cycle,
                         "expired_at": existing_subscription.current_period_end.isoformat() if existing_subscription.current_period_end else None
                     }
                 )
-            
-            # Cancel all other subscriptions to avoid duplicates
-            from datetime import datetime
-            for sub in existing_subscriptions:
-                if sub.id != existing_subscription.id:
-                    sub.status = SubscriptionStatus.CANCELLED
-                    sub.cancelled_at = datetime.utcnow()
-            db.commit()
-            # Use the modular function which includes downgrade validation
-            subscription = upgrade_sub_func(
-                db,
-                existing_subscription.id,
-                plan_id
-            )
+            else:
+                # Cancel all other subscriptions to avoid duplicates
+                from datetime import datetime
+                for sub in existing_subscriptions:
+                    if sub.id != existing_subscription.id:
+                        sub.status = SubscriptionStatus.CANCELLED
+                        sub.cancelled_at = datetime.utcnow()
+                db.commit()
+                
+                # Use the modular function which includes downgrade validation
+                subscription = upgrade_sub_func(
+                    db,
+                    existing_subscription.id,
+                    plan_id
+                )
             
             # Update billing cycle if changed
             if subscription.billing_cycle != billing_cycle:

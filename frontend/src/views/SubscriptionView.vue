@@ -177,7 +177,12 @@
     </div>
 
     <!-- Modals -->
-    <UpgradePlanModal :is-open="showUpgradeModal" @close="showUpgradeModal = false" @upgraded="handleUpgraded" />
+    <UpgradePlanModal 
+      :is-open="showUpgradeModal" 
+      @close="showUpgradeModal = false" 
+      @upgraded="handleUpgraded"
+      @requires-payment="handleRequiresPayment"
+    />
     <RenewalPaymentModal
       :is-open="showRenewalModal"
       :available-plans="availablePlans"
@@ -276,6 +281,12 @@ const handleAlertCountUpdate = (count: number) => {
 
 const handleUpgraded = () => {
   loadData()
+}
+
+const handleRequiresPayment = (data: { planId: number, billingCycle: string }) => {
+  // Close upgrade modal and open renewal modal
+  showUpgradeModal.value = false
+  showRenewalModal.value = true
 }
 
 // Lifecycle
