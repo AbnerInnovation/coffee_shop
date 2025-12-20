@@ -773,17 +773,15 @@ async function createOrder() {
       emit('order-updated', updated);
       emit('close');
     } else {
-      // Validate form using helper (skip validation in POS mode)
-      if (!props.posMode) {
-        const validation = validateOrderForm(
-          form.value,
-          hasItems,
-          authStore.restaurant?.allow_dine_in_without_table
-        );
-        if (!validation.isValid) {
-          validation.errors.forEach(error => showError(error));
-          return;
-        }
+      // Validate form using helper
+      const validation = validateOrderForm(
+        form.value,
+        hasItems,
+        authStore.restaurant?.allow_dine_in_without_table
+      );
+      if (!validation.isValid) {
+        validation.errors.forEach(error => showError(error));
+        return;
       }
 
       // Create new order using composable
