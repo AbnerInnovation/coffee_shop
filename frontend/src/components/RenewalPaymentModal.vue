@@ -313,7 +313,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { XMarkIcon, CheckCircleIcon } from '@heroicons/vue/24/outline'
 import { paymentService, type RenewalResponse } from '@/services/paymentService'
@@ -325,6 +325,8 @@ const { showSuccess, showError } = useToast()
 interface Props {
   isOpen: boolean
   availablePlans: any[]
+  currentPlanId?: number | null
+  currentBillingCycle?: 'monthly' | 'annual'
 }
 
 const props = defineProps<Props>()
@@ -427,4 +429,14 @@ const submitProof = async () => {
     loading.value = false
   }
 }
+
+// Watch for modal opening and pre-select current plan
+watch(() => props.isOpen, (isOpen) => {
+  if (isOpen && props.currentPlanId && !selectedPlanId.value) {
+    selectedPlanId.value = props.currentPlanId
+    if (props.currentBillingCycle) {
+      billingCycle.value = props.currentBillingCycle
+    }
+  }
+})
 </script>

@@ -186,6 +186,8 @@
     <RenewalPaymentModal
       :is-open="showRenewalModal"
       :available-plans="availablePlans"
+      :current-plan-id="subscription?.subscription?.plan?.id"
+      :current-billing-cycle="subscription?.subscription?.billing_cycle as 'monthly' | 'annual' | undefined"
       @close="showRenewalModal = false"
       @success="handleRenewalSuccess"
     />
