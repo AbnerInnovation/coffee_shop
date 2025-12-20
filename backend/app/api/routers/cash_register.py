@@ -69,6 +69,24 @@ async def create_session(
                     detail="You don't have access to this restaurant"
                 )
         
+        # CRITICAL VALIDATION: Check if there's already an open session
+        # This validation applies to ALL users, including SYSADMIN
+        from ...models.cash_register import CashRegisterSession as CashRegisterSessionModel, SessionStatus
+        existing_open_session = db.query(CashRegisterSessionModel)\
+            .filter(
+                CashRegisterSessionModel.restaurant_id == restaurant.id,
+                CashRegisterSessionModel.status == SessionStatus.OPEN
+            )\
+            .first()
+        
+        if existing_open_session:
+            raise HTTPException(
+                status_code=409,
+                detail=f"No se puede abrir una nueva sesión. Ya existe una sesión abierta "
+                       f"(Sesión #{existing_open_session.session_number}) para este restaurante. "
+                       f"Por favor cierra la sesión existente antes de abrir una nueva."
+            )
+        
         # Check subscription status (SYSADMIN bypasses this check)
         from ...middleware.subscription_status import SubscriptionStatusMiddleware
         SubscriptionStatusMiddleware.check_active_subscription(

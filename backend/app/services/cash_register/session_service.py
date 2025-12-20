@@ -59,9 +59,9 @@ def create_session(
         
         if existing_open_session:
             raise ConflictError(
-                f"Cannot open a new session. There is already an open session "
-                f"(Session #{existing_open_session.session_number}) for this restaurant. "
-                f"Please close the existing session before opening a new one.",
+                f"No se puede abrir una nueva sesión. Ya existe una sesión abierta "
+                f"(Sesión #{existing_open_session.session_number}) para este restaurante. "
+                f"Por favor cierra la sesión existente antes de abrir una nueva.",
                 resource="CashRegisterSession"
             )
         

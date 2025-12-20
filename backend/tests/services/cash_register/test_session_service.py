@@ -109,9 +109,9 @@ class TestCreateSession:
         
         # Verify error message contains useful context
         error_message = str(exc_info.value.message)
-        assert "Cannot open a new session" in error_message
-        assert "already an open session" in error_message
-        assert f"Session #{session1.session_number}" in error_message
+        assert "No se puede abrir una nueva sesión" in error_message
+        assert "Ya existe una sesión abierta" in error_message
+        assert f"Sesión #{session1.session_number}" in error_message
     
     def test_create_session_different_restaurants(
         self, 
