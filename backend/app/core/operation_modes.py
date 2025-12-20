@@ -209,7 +209,8 @@ def is_feature_enabled(mode: OperationMode, feature: str) -> bool:
 
 def validate_order_for_mode(
     mode: OperationMode,
-    order_data: dict
+    order_data: dict,
+    allow_dine_in_without_table: bool = False
 ) -> tuple[bool, str]:
     """
     Validate that an order is compatible with the operation mode.
@@ -217,6 +218,7 @@ def validate_order_for_mode(
     Args:
         mode: The operation mode
         order_data: Order data to validate
+        allow_dine_in_without_table: Restaurant setting to allow dine-in without table
         
     Returns:
         Tuple of (is_valid, error_message)
@@ -227,7 +229,9 @@ def validate_order_for_mode(
     order_type = order_data.get('order_type')
     
     # Validate table requirement - only for Dine-in orders
-    if config['requires_table_for_order'] and order_type == OrderType.DINE_IN and not order_data.get('table_id'):
+    # Restaurant setting overrides mode requirement
+    requires_table = config['requires_table_for_order'] and not allow_dine_in_without_table
+    if requires_table and order_type == OrderType.DINE_IN and not order_data.get('table_id'):
         return False, "Este modo requiere asignar una mesa a la orden"
     if order_type == OrderType.DINE_IN and not config['allows_table_service']:
         return False, "Servicio a mesa no disponible en este modo"

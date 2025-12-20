@@ -216,6 +216,11 @@ def create_order_with_items(
     subscription = get_restaurant_subscription(db, restaurant_id)
     operation_mode = subscription.plan.operation_mode if subscription and subscription.plan else None
     
+    # Get restaurant to check allow_dine_in_without_table setting
+    from ...models.restaurant import Restaurant as RestaurantModel
+    restaurant = db.query(RestaurantModel).filter(RestaurantModel.id == restaurant_id).first()
+    allow_dine_in_without_table = restaurant.allow_dine_in_without_table if restaurant else False
+    
     # Determine order_type: use provided, or get default from mode, or infer from table_id
     if order.order_type:
         order_type = order.order_type
@@ -231,7 +236,8 @@ def create_order_with_items(
             {
                 'table_id': order.table_id,
                 'order_type': order_type
-            }
+            },
+            allow_dine_in_without_table
         )
         if not is_valid:
             raise ValueError(error_msg)
