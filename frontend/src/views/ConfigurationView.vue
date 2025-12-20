@@ -37,8 +37,61 @@
           </div>
         </div>
         <div class="p-3 sm:p-4 space-y-3">
-          <!-- Kitchen Print Settings (only if kitchen module is enabled) -->
-          <div v-if="showKitchen" class="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
+          <!-- Advanced Printing Toggle (Cloud only AND not POS mode) -->
+          <div v-if="platformFeatures.cloudOnly.menuManagement && !isPosOnlyMode" class="bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 rounded-lg p-4 border-2 border-purple-200 dark:border-purple-800">
+            <div class="flex items-center justify-between gap-3">
+              <div class="flex items-center gap-3 flex-1 min-w-0">
+                <div class="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex-shrink-0">
+                  <svg class="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <h3 class="text-base font-bold text-gray-900 dark:text-white">
+                    Impresión Avanzada
+                  </h3>
+                  <p class="text-sm text-gray-600 dark:text-gray-400 mt-0.5">
+                    Activa el sistema multi-impresoras con routing por categoría y configuración individual
+                  </p>
+                </div>
+              </div>
+              <button
+                @click="restaurantSettings.toggleAdvancedPrinting"
+                :disabled="isSaving"
+                :class="[
+                  'relative inline-flex h-7 w-12 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-purple-600 focus:ring-offset-2 dark:focus:ring-offset-gray-800',
+                  advancedPrintingEnabled
+                    ? 'bg-purple-600'
+                    : 'bg-gray-300 dark:bg-gray-600',
+                  isSaving ? 'opacity-50 cursor-not-allowed' : ''
+                ]"
+              >
+                <span
+                  :class="[
+                    'pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out',
+                    advancedPrintingEnabled ? 'translate-x-5' : 'translate-x-0'
+                  ]"
+                />
+              </button>
+            </div>
+            
+            <!-- Link to Printer Management when enabled -->
+            <div v-if="advancedPrintingEnabled" class="mt-3 pt-3 border-t border-purple-200 dark:border-purple-800">
+              <router-link
+                to="/printers"
+                class="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg transition-colors duration-200"
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                </svg>
+                Configurar Impresoras
+              </router-link>
+            </div>
+          </div>
+
+          <!-- Kitchen Print Settings (only if kitchen module is enabled AND advanced printing is disabled) -->
+          <div v-if="showKitchen && !advancedPrintingEnabled" class="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
             <div class="flex items-center justify-between gap-3">
               <div class="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
                 <div class="p-1.5 sm:p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg flex-shrink-0">
@@ -76,7 +129,7 @@
             </div>
           </div>
 
-          <!-- Paper Width Settings (only if kitchen module is enabled) -->
+          <!-- Paper Width Settings (only if kitchen module is enabled AND advanced printing is disabled) -->
           <transition
             enter-active-class="transition ease-out duration-200"
             enter-from-class="opacity-0 -translate-y-2"
@@ -85,7 +138,7 @@
             leave-from-class="opacity-100 translate-y-0"
             leave-to-class="opacity-0 -translate-y-2"
           >
-            <div v-if="showKitchen && kitchenPrintEnabled" class="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
+            <div v-if="showKitchen && kitchenPrintEnabled && !advancedPrintingEnabled" class="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
               <div class="flex items-center gap-2 mb-3">
                 <div class="p-1.5 sm:p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex-shrink-0">
                   <svg class="w-5 h-5 sm:w-6 sm:h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -179,8 +232,8 @@
             </div>
           </transition>
 
-          <!-- Customer Print Settings -->
-          <div class="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
+          <!-- Customer Print Settings (only if advanced printing is disabled) -->
+          <div v-if="!advancedPrintingEnabled" class="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
             <div class="flex items-center justify-between gap-3">
               <div class="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
                 <div class="p-1.5 sm:p-2 bg-green-100 dark:bg-green-900/30 rounded-lg flex-shrink-0">
@@ -218,7 +271,7 @@
             </div>
           </div>
 
-          <!-- Customer Paper Width Settings -->
+          <!-- Customer Paper Width Settings (only if advanced printing is disabled) -->
           <transition
             enter-active-class="transition ease-out duration-200"
             enter-from-class="opacity-0 -translate-y-2"
@@ -227,7 +280,7 @@
             leave-from-class="opacity-100 translate-y-0"
             leave-to-class="opacity-0 -translate-y-2"
           >
-            <div v-if="customerPrintEnabled" class="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
+            <div v-if="customerPrintEnabled && !advancedPrintingEnabled" class="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
               <div class="flex items-center gap-2 mb-3">
                 <div class="p-1.5 sm:p-2 bg-green-100 dark:bg-green-900/30 rounded-lg flex-shrink-0">
                   <svg class="w-5 h-5 sm:w-6 sm:h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -548,6 +601,7 @@ import { useI18n } from 'vue-i18n'
 import { ArrowPathIcon } from '@heroicons/vue/24/outline'
 import { useRestaurantSettings } from '@/composables/useRestaurantSettings'
 import { useOperationMode } from '@/composables/useOperationMode'
+import { platformFeatures } from '@/utils/platform'
 
 const { t } = useI18n()
 
@@ -558,6 +612,7 @@ const restaurantSettings = useRestaurantSettings()
 const { showKitchen, isPosOnlyMode } = useOperationMode()
 
 // Computed properties to avoid repetitive .value access
+const advancedPrintingEnabled = computed(() => restaurantSettings.advancedPrintingEnabled.value)
 const currentPaperWidth = computed(() => restaurantSettings.paperWidth.value)
 const currentCustomerPaperWidth = computed(() => restaurantSettings.customerPaperWidth.value)
 const isSaving = computed(() => restaurantSettings.savingSettings.value)

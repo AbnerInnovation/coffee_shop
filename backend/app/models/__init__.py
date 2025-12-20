@@ -23,6 +23,7 @@ from .restaurant_addon import RestaurantAddon
 from .subscription_payment import SubscriptionPayment, PaymentStatus, PaymentMethod
 from .subscription_alert import SubscriptionAlert, AlertType
 from .restaurant import Restaurant
+from .printer import Printer, PrinterType
 
 # Make models available for import from app.models
 __all__ = [
@@ -39,6 +40,7 @@ __all__ = [
     "ReportType",
     "SpecialNoteStats",
     "Restaurant",
+    "Printer", "PrinterType",
     "SubscriptionPlan", "PlanTier",
     "SubscriptionAddon", "AddonType", "AddonCategory",
     "RestaurantSubscription", "SubscriptionStatus", "BillingCycle",

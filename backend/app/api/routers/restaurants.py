@@ -77,6 +77,7 @@ async def update_current_restaurant(
     
     # Update allowed fields
     allowed_fields = [
+        'advanced_printing_enabled',
         'kitchen_print_enabled', 
         'kitchen_print_paper_width', 
         'customer_print_enabled', 

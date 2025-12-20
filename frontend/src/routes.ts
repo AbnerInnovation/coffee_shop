@@ -22,6 +22,7 @@ import RegisterView from './views/RegisterView.vue';
 import LandingView from './views/LandingView.vue';
 import NotFoundView from './views/NotFoundView.vue';
 import PrintTestView from './views/PrintTestView.vue';
+import PrintersView from './views/PrintersView.vue';
 
 // Permission check function type
 export type PermissionCheck = (user: User | null) => boolean;
@@ -61,6 +62,16 @@ export const routes: RouteRecordRaw[] = [
       requiresAuth: true,
       requiresRestaurantContext: true,
       permissionCheck: 'canEditCategories' // Admin only
+    }
+  },
+  {
+    path: '/printers',
+    name: 'Printers',
+    component: PrintersView,
+    meta: { 
+      requiresAuth: true,
+      requiresRestaurantContext: true,
+      permissionCheck: 'canEditCategories' // Admin only (cloud-only)
     }
   },
   {

@@ -11,6 +11,7 @@ if TYPE_CHECKING:
     from .restaurant_subscription import RestaurantSubscription
     from .subscription_payment import SubscriptionPayment
     from .subscription_alert import SubscriptionAlert
+    from .printer import Printer
 
 class Restaurant(BaseModel):
     """
@@ -36,11 +37,14 @@ class Restaurant(BaseModel):
     currency: Mapped[str] = mapped_column(String(3), default="MXN", nullable=False)
     tax_rate: Mapped[Optional[float]] = mapped_column(nullable=True, default=0.0)
     
-    # Kitchen settings
+    # Printing system mode
+    advanced_printing_enabled: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    
+    # Kitchen settings (legacy - used when advanced_printing_enabled = False)
     kitchen_print_enabled: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     kitchen_print_paper_width: Mapped[int] = mapped_column(Integer, default=80, nullable=False)  # 58mm or 80mm
     
-    # Customer receipt settings
+    # Customer receipt settings (legacy - used when advanced_printing_enabled = False)
     customer_print_enabled: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     customer_print_paper_width: Mapped[int] = mapped_column(Integer, default=80, nullable=False)  # 58mm or 80mm
     
@@ -61,6 +65,7 @@ class Restaurant(BaseModel):
     categories: Mapped[List["Category"]] = relationship("Category", back_populates="restaurant", cascade="all, delete-orphan")
     orders: Mapped[List["Order"]] = relationship("Order", back_populates="restaurant", cascade="all, delete-orphan")
     tables: Mapped[List["Table"]] = relationship("Table", back_populates="restaurant", cascade="all, delete-orphan")
+    printers: Mapped[List["Printer"]] = relationship("Printer", back_populates="restaurant", cascade="all, delete-orphan")
     subscription: Mapped[Optional["RestaurantSubscription"]] = relationship("RestaurantSubscription", back_populates="restaurant", uselist=False)
     payments: Mapped[List["SubscriptionPayment"]] = relationship("SubscriptionPayment", back_populates="restaurant", cascade="all, delete-orphan")
     alerts: Mapped[List["SubscriptionAlert"]] = relationship("SubscriptionAlert", back_populates="restaurant", cascade="all, delete-orphan")

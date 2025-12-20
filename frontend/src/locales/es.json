@@ -9,6 +9,7 @@
       "kitchen": "Cocina",
       "tables": "Mesas",
       "categories": "Categorías",
+      "printers": "Impresoras",
       "cash_register": "Caja Registradora",
       "new_order": "Nueva Orden",
       "sysadmin": "Administración",
@@ -768,6 +769,63 @@
           "add": "Agregar",
           "info_title": "Nota",
           "info_text": "Estas configuraciones permiten a los clientes personalizar sus pedidos. Las opciones aparecerán como botones de selección, y los ingredientes removibles como opciones de 'Sin...'."
+        }
+      },
+        "printers": {
+        "title": "Gestión de Impresoras",
+        "description": "Configura y administra las impresoras de tu restaurante",
+        "add_printer": "Agregar Impresora",
+        "edit_printer": "Editar Impresora",
+        "no_printers": "No hay impresoras configuradas",
+        "default": "Predeterminada",
+        "active": "Activa",
+        "inactive": "Inactiva",
+        "connection": "Conexión",
+        "ip": "IP",
+        "paper": "Papel",
+        "copies": "Copias",
+        "categories": "Categorías",
+        "assign_categories": "Asignar Categorías",
+        "assign_categories_title": "Asignar Categorías a Impresora",
+        "assign_categories_description": "Selecciona las categorías que se imprimirán en {name}",
+        "set_as_default": "Marcar como Predeterminada",
+        "activate": "Activar",
+        "deactivate": "Desactivar",
+        "types": {
+          "kitchen": "Cocina",
+          "bar": "Bar",
+          "cashier": "Caja"
+        },
+        "form": {
+          "name": "Nombre",
+          "type": "Tipo de Impresora",
+          "connection_type": "Tipo de Conexión",
+          "ip_address": "Dirección IP",
+          "port": "Puerto",
+          "device_path": "Ruta del Dispositivo",
+          "paper_width": "Ancho del Papel",
+          "is_active": "Impresora activa",
+          "is_default": "Impresora predeterminada",
+          "auto_print": "Impresión automática"
+        },
+        "confirm_delete_title": "Eliminar Impresora",
+        "confirm_delete": "¿Estás seguro de que deseas eliminar la impresora {name}?",
+        "success": {
+          "created": "Impresora creada correctamente",
+          "updated": "Impresora actualizada correctamente",
+          "deleted": "Impresora eliminada correctamente",
+          "activated": "Impresora activada correctamente",
+          "deactivated": "Impresora desactivada correctamente",
+          "set_default": "Impresora marcada como predeterminada",
+          "categories_assigned": "Categorías asignadas correctamente"
+        },
+        "errors": {
+          "load_failed": "Error al cargar las impresoras",
+          "save_failed": "Error al guardar la impresora",
+          "delete_failed": "Error al eliminar la impresora",
+          "toggle_failed": "Error al cambiar el estado de la impresora",
+          "set_default_failed": "Error al marcar como predeterminada",
+          "assign_failed": "Error al asignar categorías"
         }
       }
     },

@@ -6,6 +6,7 @@ from .base import BaseModel
 if TYPE_CHECKING:
     from .order_item import OrderItem
     from .restaurant import Restaurant
+    from .printer import Printer
 
 class Category(BaseModel):
     __tablename__ = "categories"
@@ -24,6 +25,11 @@ class Category(BaseModel):
         "MenuItem", 
         back_populates="category",
         cascade="all, delete-orphan"
+    )
+    printers: Mapped[List["Printer"]] = relationship(
+        "Printer",
+        secondary="category_printer",
+        back_populates="categories"
     )
     
     def __init__(self, name: str, restaurant_id: int, description: Optional[str] = None, visible_in_kitchen: bool = True):

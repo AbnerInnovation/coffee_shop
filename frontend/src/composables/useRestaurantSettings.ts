@@ -12,6 +12,7 @@ export interface PaymentMethodsConfig {
 }
 
 export interface RestaurantSettings {
+  advanced_printing_enabled: boolean
   kitchen_print_enabled: boolean
   kitchen_print_paper_width: number
   customer_print_enabled: boolean
@@ -43,6 +44,7 @@ export function useRestaurantSettings(settingsService: ISettingsService = new Re
   const authStore = useAuthStore()
 
   // Reactive state
+  const advancedPrintingEnabled = ref(false)
   const kitchenPrintEnabled = ref(true)
   const paperWidth = ref(80)
   const customerPrintEnabled = ref(true)
@@ -71,6 +73,9 @@ export function useRestaurantSettings(settingsService: ISettingsService = new Re
 
       // Update local state
       switch (key) {
+        case 'advanced_printing_enabled':
+          advancedPrintingEnabled.value = value as boolean
+          break
         case 'kitchen_print_enabled':
           kitchenPrintEnabled.value = value as boolean
           break
@@ -107,6 +112,15 @@ export function useRestaurantSettings(settingsService: ISettingsService = new Re
   }
 
   // Specific toggle methods with proper typing
+  const toggleAdvancedPrinting = (): Promise<void> => {
+    const newValue = !advancedPrintingEnabled.value
+    const message = newValue 
+      ? 'Impresión avanzada activada'
+      : 'Impresión avanzada desactivada'
+    
+    return updateSetting('advanced_printing_enabled', newValue, message)
+  }
+
   const toggleKitchenPrint = (): Promise<void> => {
     const newValue = !kitchenPrintEnabled.value
     const message = newValue 
@@ -167,6 +181,7 @@ export function useRestaurantSettings(settingsService: ISettingsService = new Re
       loadingSettings.value = true
       const settings = await settingsService.loadSettings()
       
+      advancedPrintingEnabled.value = settings.advanced_printing_enabled ?? false
       kitchenPrintEnabled.value = settings.kitchen_print_enabled ?? true
       paperWidth.value = settings.kitchen_print_paper_width ?? 80
       customerPrintEnabled.value = settings.customer_print_enabled ?? true
@@ -188,6 +203,7 @@ export function useRestaurantSettings(settingsService: ISettingsService = new Re
 
   return {
     // State
+    advancedPrintingEnabled: advancedPrintingEnabled as Ref<boolean>,
     kitchenPrintEnabled: kitchenPrintEnabled as Ref<boolean>,
     paperWidth: paperWidth as Ref<number>,
     customerPrintEnabled: customerPrintEnabled as Ref<boolean>,
@@ -198,6 +214,7 @@ export function useRestaurantSettings(settingsService: ISettingsService = new Re
     loadingSettings: loadingSettings as Ref<boolean>,
     
     // Methods
+    toggleAdvancedPrinting,
     toggleKitchenPrint,
     setPaperWidth,
     toggleCustomerPrint,
